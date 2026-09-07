@@ -1,0 +1,122 @@
+import axios from 'axios';
+import { getAccessToken, getRefreshToken, setTokens, clearAuthStorage } from './storage';
+import { parseApiError } from './errorHandler';
+
+/**
+ * The single HTTP entry point for the app.
+ *
+ * The base URL comes from VITE_API_BASE_URL - never hardcode an API URL in a
+ * component. Components call module services; services call this client.
+ */
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+
+export const apiClient = axios.create({
+  baseURL: BASE_URL,
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT || 30000),
+  headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+});
+
+// --- Request: attach the bearer token --------------------------------------
+apiClient.interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  // Let the browser set the multipart boundary itself.
+  if (config.data instanceof FormData) delete config.headers['Content-Type'];
+
+  return config;
+});
+
+// --- Response: unwrap, and refresh once on 401 -----------------------------
+let refreshPromise = null;
+
+/** Called when the session cannot be recovered. Set by the auth provider. */
+let onSessionExpired = () => {};
+export const setSessionExpiredHandler = (fn) => {
+  onSessionExpired = typeof fn === 'function' ? fn : () => {};
+};
+
+async function refreshAccessToken() {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) throw new Error('No refresh token available');
+
+  // A bare axios call - the instance would recurse through this interceptor.
+  const { data } = await axios.post(
+    `${BASE_URL}/auth/refresh`,
+    { refreshToken },
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+
+  const tokens = data?.data ?? data;
+  setTokens({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
+  return tokens.accessToken;
+}
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const original = error.config;
+    const status = error.response?.status;
+
+    const isRefreshCall = original?.url?.includes('/auth/refresh');
+
+    if (status === 401 && original && !original._retried && !isRefreshCall) {
+      original._retried = true;
+
+      try {
+        // Collapse concurrent 401s into a single refresh.
+        refreshPromise = refreshPromise || refreshAccessToken().finally(() => {
+          refreshPromise = null;
+        });
+
+        const token = await refreshPromise;
+        original.headers.Authorization = `Bearer ${token}`;
+        return apiClient(original);
+      } catch {
+        clearAuthStorage();
+        onSessionExpired();
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+/** Unwraps the standard { success, message, data, meta } envelope. */
+function unwrap(response) {
+  const body = response?.data;
+  if (body && typeof body === 'object' && 'success' in body) {
+    return { data: body.data, meta: body.meta ?? {}, message: body.message };
+  }
+  return { data: body, meta: {}, message: undefined };
+}
+
+async function request(config) {
+  try {
+    return unwrap(await apiClient.request(config));
+  } catch (error) {
+    throw parseApiError(error);
+  }
+}
+
+export const api = {
+  get: (url, config = {}) => request({ ...config, method: 'GET', url }),
+  post: (url, data, config = {}) => request({ ...config, method: 'POST', url, data }),
+  put: (url, data, config = {}) => request({ ...config, method: 'PUT', url, data }),
+  patch: (url, data, config = {}) => request({ ...config, method: 'PATCH', url, data }),
+  delete: (url, config = {}) => request({ ...config, method: 'DELETE', url }),
+
+  /** Multipart upload with optional progress reporting. */
+  upload: (url, formData, { onProgress, ...config } = {}) =>
+    request({
+      ...config,
+      method: 'POST',
+      url,
+      data: formData,
+      onUploadProgress: onProgress
+        ? (e) => onProgress(e.total ? Math.round((e.loaded * 100) / e.total) : 0)
+        : undefined,
+    }),
+};
+
+export default api;
