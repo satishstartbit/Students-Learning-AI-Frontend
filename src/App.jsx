@@ -1,20 +1,22 @@
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from './hooks/useAuth';
+import { Provider } from 'react-redux';
+import { store } from './store';
 import AppRoutes from './routes/AppRoutes';
 import './components/common/common.css';
 
 /**
  * Application root.
  *
- * Providers wrap the router so guards can read the session, and the route
- * tree itself is defined in routes/routeConfig.js.
+ * The Redux store holds the session, so <Provider> wraps the router and the
+ * route guards read auth state through useAuth. The route tree itself is
+ * defined in routes/routeConfig.js.
  */
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
+    <Provider store={store}>
+      <BrowserRouter>
         <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </Provider>
   );
 }

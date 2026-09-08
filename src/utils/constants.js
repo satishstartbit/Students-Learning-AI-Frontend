@@ -20,10 +20,20 @@ export const ROLE_LABELS = Object.freeze({
 
 /** Landing route per role, used after login and by role guards. */
 export const ROLE_HOME_PATH = Object.freeze({
-  [USER_ROLES.SUPER_ADMIN]: '/admin',
-  [USER_ROLES.STUDENT]: '/student',
-  [USER_ROLES.TEACHER]: '/teacher',
-  [USER_ROLES.PARENT]: '/parent',
+  [USER_ROLES.SUPER_ADMIN]: '/admin/dashboard',
+  [USER_ROLES.STUDENT]: '/student/dashboard',
+  [USER_ROLES.TEACHER]: '/teacher/dashboard',
+  [USER_ROLES.PARENT]: '/parent/dashboard',
+});
+
+/**
+ * Where an unauthenticated visitor is sent per area.
+ * Super Admin has its own sign-in page, so an expired admin session returns
+ * there rather than to the shared user login.
+ */
+export const ROLE_LOGIN_PATH = Object.freeze({
+  [USER_ROLES.SUPER_ADMIN]: '/admin/login',
+  default: '/login',
 });
 
 export const USER_STATUS = Object.freeze({

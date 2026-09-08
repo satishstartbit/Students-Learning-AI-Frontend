@@ -1,77 +1,67 @@
-import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
-  getCurrentUser,
-  getCurrentRole,
-  isAuthenticated as checkAuthenticated,
-  persistSession,
-  logout as clearSession,
-  getHomePathForRole,
-} from '../utils/auth';
+  login as loginThunk,
+  logout as logoutThunk,
+  setCredentials,
+  setUser as setUserAction,
+  clearAuthError,
+  selectAuth,
+} from '../store/slices/authSlice';
 import { getPermissionsForRole } from '../utils/permissions';
-import { setSessionExpiredHandler } from '../utils/apiClient';
+import { getHomePathForRole } from '../utils/auth';
 
 /**
- * Shares the authenticated session across the tree.
+ * Access to the authenticated session.
  *
- * Deliberately transport-free: it stores and exposes session state. The actual
- * login/logout HTTP calls live in modules/auth/services and are handed in.
+ * Backed by the Redux auth slice - the single source of truth for who is
+ * signed in. The shape returned here is unchanged from the Context-based
+ * version, so ProtectedRoute, RoleGuard, PublicRoutes and the layouts work
+ * exactly as before.
  */
-const AuthContext = createContext(null);
+export function useAuth() {
+  const dispatch = useDispatch();
+  const { user, token, isAuthenticated, loading, error } = useSelector(selectAuth);
 
-/**
- * Reads the persisted session once, on first render.
- *
- * Restoring from storage is synchronous, so there is no loading phase to
- * model - a stored user whose token has already expired is discarded here
- * rather than in an effect.
- */
-function readStoredSession() {
-  if (checkAuthenticated()) return getCurrentUser();
-  clearSession();
-  return null;
-}
+  /**
+   * Signs in.
+   * @param {object} credentials
+   * @param {Function} request - the API call, from modules/auth/services
+   */
+  const signIn = useCallback(
+    (credentials, request) => dispatch(loginThunk({ credentials, request })).unwrap(),
+    [dispatch]
+  );
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(readStoredSession);
+  const signOut = useCallback((request) => dispatch(logoutThunk({ request })), [dispatch]);
 
-  const signOut = useCallback(() => {
-    clearSession();
-    setUser(null);
-  }, []);
+  const setSession = useCallback((session) => dispatch(setCredentials(session)), [dispatch]);
+  const setUser = useCallback((next) => dispatch(setUserAction(next)), [dispatch]);
+  const clearError = useCallback(() => dispatch(clearAuthError()), [dispatch]);
 
-  /** Accepts the payload of a successful login response. */
-  const signIn = useCallback((session) => setUser(persistSession(session)), []);
+  const role = user?.role ?? null;
 
-  // A refresh failure inside the API client ends the session here too.
-  useEffect(() => {
-    setSessionExpiredHandler(() => setUser(null));
-    return () => setSessionExpiredHandler(null);
-  }, []);
-
-  const value = useMemo(() => {
-    const role = user?.role ?? getCurrentRole();
-
-    return {
+  return useMemo(
+    () => ({
       user,
+      token,
       role,
-      // Session restoration is synchronous; guards keep the flag for symmetry.
+      isAuthenticated,
+      loading,
+      error,
+      // Session restoration happens synchronously when the store is created,
+      // so there is no bootstrap phase. Kept for the guards' API.
       isReady: true,
-      isAuthenticated: Boolean(user) && checkAuthenticated(),
       permissions: getPermissionsForRole(role),
       homePath: getHomePathForRole(role),
       signIn,
       signOut,
+      setSession,
       setUser,
-    };
-  }, [user, signIn, signOut]);
-
-  return createElement(AuthContext.Provider, { value }, children);
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used inside an <AuthProvider>');
-  return context;
+      clearError,
+    }),
+    [user, token, role, isAuthenticated, loading, error, signIn, signOut, setSession, setUser, clearError]
+  );
 }
 
 export default useAuth;

@@ -1,8 +1,10 @@
+@import './theme/variables.css';
+
 /**
  * Global reset.
  *
- * Component styling lives in components/common/common.css - keep this file to
- * document-level concerns only.
+ * Design tokens live in theme/variables.css and component styling in
+ * components/common/common.css - keep this file to document-level concerns.
  */
 :root {
   color-scheme: light dark;
@@ -26,11 +28,11 @@ body,
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-  background: var(--ui-bg, #f7f8fa);
-  color: var(--ui-text, #1a1f29);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
+  background: var(--color-background);
+  color: var(--color-text-primary);
 }
 
 img,
@@ -44,15 +46,15 @@ h1,
 h2,
 h3,
 h4 {
-  line-height: 1.25;
+  line-height: var(--line-height-tight);
 }
 
 a {
-  color: var(--ui-primary, #3b5bdb);
+  color: var(--color-primary);
 }
 
 /* Visible focus for keyboard users everywhere. */
 :focus-visible {
-  outline: 2px solid var(--ui-primary, #3b5bdb);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }

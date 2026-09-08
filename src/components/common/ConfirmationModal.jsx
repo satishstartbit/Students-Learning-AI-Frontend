@@ -17,6 +17,7 @@ export function ConfirmationModal({
   cancelLabel = 'Cancel',
   variant = 'primary',
   loading = false,
+  confirmDisabled = false,
   children,
 }) {
   return (
@@ -32,7 +33,12 @@ export function ConfirmationModal({
           <Button variant="secondary" onClick={onClose} disabled={loading}>
             {cancelLabel}
           </Button>
-          <Button variant={variant} onClick={onConfirm} loading={loading}>
+          <Button
+            variant={variant}
+            onClick={onConfirm}
+            loading={loading}
+            disabled={confirmDisabled}
+          >
             {confirmLabel}
           </Button>
         </>

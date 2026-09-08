@@ -6,6 +6,20 @@ import StudentLayout from '../layouts/StudentLayout';
 import TeacherLayout from '../layouts/TeacherLayout';
 import ParentLayout from '../layouts/ParentLayout';
 
+import LoginPage from '../modules/auth/pages/LoginPage';
+import AdminLoginPage from '../modules/auth/pages/AdminLoginPage';
+import RegisterPage from '../modules/auth/pages/RegisterPage';
+import ForgotPasswordPage from '../modules/auth/pages/ForgotPasswordPage';
+import ResetPasswordPage from '../modules/auth/pages/ResetPasswordPage';
+import VerifyEmailPage from '../modules/auth/pages/VerifyEmailPage';
+
+import AdminDashboardPage from '../modules/superAdmin/pages/AdminDashboardPage';
+import UsersListPage from '../modules/superAdmin/pages/UsersListPage';
+import CreateUserPage from '../modules/superAdmin/pages/CreateUserPage';
+import UserDetailPage from '../modules/superAdmin/pages/UserDetailPage';
+import EditUserPage from '../modules/superAdmin/pages/EditUserPage';
+import RelationshipsPage from '../modules/superAdmin/pages/RelationshipsPage';
+
 /**
  * The single definition of the app's routes.
  *
@@ -21,10 +35,13 @@ export const PUBLIC_ROUTES = {
   layout: PublicLayout,
   requiresAuth: false,
   routes: [
-    { path: '/login', label: 'Sign in', element: null },
-    { path: '/forgot-password', label: 'Forgot password', element: null },
-    { path: '/reset-password', label: 'Reset password', element: null },
-    { path: '/verify-email', label: 'Verify email', element: null },
+    { path: '/login', label: 'Sign in', component: LoginPage },
+    // Separate page AND separate API endpoint - only SUPER_ADMIN is admitted.
+    { path: '/admin/login', label: 'Admin sign in', component: AdminLoginPage },
+    { path: '/register', label: 'Create account', component: RegisterPage },
+    { path: '/forgot-password', label: 'Forgot password', component: ForgotPasswordPage },
+    { path: '/reset-password', label: 'Reset password', component: ResetPasswordPage },
+    { path: '/verify-email', label: 'Verify email', component: VerifyEmailPage },
   ],
 };
 
@@ -34,8 +51,44 @@ export const SUPER_ADMIN_ROUTES = {
   requiresAuth: true,
   allowedRoles: [USER_ROLES.SUPER_ADMIN],
   routes: [
-    { path: '', label: 'Dashboard', permissions: [PERMISSIONS.DASHBOARD_READ], element: null },
-    { path: 'users', label: 'Users', permissions: [PERMISSIONS.USER_READ], element: null },
+    // Index redirects to /admin/dashboard, which is where login lands.
+    { path: '', label: 'Dashboard', redirectTo: '/admin/dashboard' },
+    {
+      path: 'dashboard',
+      label: 'Dashboard',
+      permissions: [PERMISSIONS.DASHBOARD_READ],
+      component: AdminDashboardPage,
+    },
+    {
+      path: 'users',
+      label: 'Users',
+      permissions: [PERMISSIONS.USER_READ],
+      component: UsersListPage,
+    },
+    {
+      path: 'users/create',
+      label: 'Create user',
+      permissions: [PERMISSIONS.USER_CREATE],
+      component: CreateUserPage,
+    },
+    {
+      path: 'users/:id',
+      label: 'User details',
+      permissions: [PERMISSIONS.USER_READ],
+      component: UserDetailPage,
+    },
+    {
+      path: 'users/:id/edit',
+      label: 'Edit user',
+      permissions: [PERMISSIONS.USER_UPDATE],
+      component: EditUserPage,
+    },
+    {
+      path: 'relationships',
+      label: 'Relationships',
+      permissions: [PERMISSIONS.USER_READ],
+      component: RelationshipsPage,
+    },
     {
       path: 'assignments',
       label: 'Assignments',
@@ -60,7 +113,8 @@ export const STUDENT_ROUTES = {
   requiresAuth: true,
   allowedRoles: [USER_ROLES.STUDENT],
   routes: [
-    { path: '', label: 'My Day', permissions: [PERMISSIONS.DASHBOARD_READ], element: null },
+    { path: '', label: 'My Day', redirectTo: '/student/dashboard' },
+    { path: 'dashboard', label: 'My Day', permissions: [PERMISSIONS.DASHBOARD_READ], element: null },
     { path: 'onboarding', label: 'Onboarding', element: null },
     { path: 'check-in', label: 'Check In', permissions: [PERMISSIONS.CHECKIN_CREATE], element: null },
     {
@@ -83,7 +137,13 @@ export const TEACHER_ROUTES = {
   requiresAuth: true,
   allowedRoles: [USER_ROLES.TEACHER],
   routes: [
-    { path: '', label: 'Dashboard', permissions: [PERMISSIONS.DASHBOARD_READ], element: null },
+    { path: '', label: 'Dashboard', redirectTo: '/teacher/dashboard' },
+    {
+      path: 'dashboard',
+      label: 'Dashboard',
+      permissions: [PERMISSIONS.DASHBOARD_READ],
+      element: null,
+    },
     { path: 'students', label: 'Students', permissions: [PERMISSIONS.USER_READ], element: null },
     {
       path: 'assignments',
@@ -107,7 +167,13 @@ export const PARENT_ROUTES = {
   requiresAuth: true,
   allowedRoles: [USER_ROLES.PARENT],
   routes: [
-    { path: '', label: 'Overview', permissions: [PERMISSIONS.DASHBOARD_READ], element: null },
+    { path: '', label: 'Overview', redirectTo: '/parent/dashboard' },
+    {
+      path: 'dashboard',
+      label: 'Overview',
+      permissions: [PERMISSIONS.DASHBOARD_READ],
+      element: null,
+    },
     { path: 'onboarding', label: 'Onboarding', element: null },
     { path: 'children', label: 'My Children', permissions: [PERMISSIONS.USER_READ], element: null },
     { path: 'progress', label: 'Progress', permissions: [PERMISSIONS.PROGRESS_READ], element: null },

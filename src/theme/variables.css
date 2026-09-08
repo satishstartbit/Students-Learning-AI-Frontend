@@ -1,0 +1,170 @@
+/* =====================================================================
+   Theme variables - the single source of truth for every design token.
+   Imported once by components/common/common.css.
+
+   The JS modules in src/theme/ reference these variables by name rather
+   than repeating the values, so a token is defined in exactly one place.
+   ===================================================================== */
+
+:root {
+  /* --- Brand ------------------------------------------------------- */
+  --color-primary: #3b5bdb;
+  --color-primary-hover: #314bb8;
+  --color-primary-soft: #e7ecfd;
+
+  --color-secondary: #6b46c1;
+  --color-secondary-hover: #5b3aa6;
+  --color-secondary-soft: #efe9fb;
+
+  /* --- Surfaces ---------------------------------------------------- */
+  --color-background: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f2f4f7;
+
+  /* --- Text -------------------------------------------------------- */
+  --color-text-primary: #1a1f29;
+  --color-text-secondary: #5b6472;
+  --color-text-inverse: #ffffff;
+
+  /* --- Borders ----------------------------------------------------- */
+  --color-border: #dfe3e8;
+  --color-border-strong: #c4cad2;
+
+  /* --- Status ------------------------------------------------------ */
+  --color-success: #1f9254;
+  --color-success-soft: #e4f4ea;
+  --color-warning: #b26a00;
+  --color-warning-soft: #fdf1de;
+  --color-error: #c02b32;
+  --color-error-soft: #fbe9e9;
+  --color-info: #0f6f9c;
+  --color-info-soft: #e3f2f9;
+
+  /* --- Focus ------------------------------------------------------- */
+  --focus-ring: 0 0 0 3px rgba(59, 91, 219, 0.35);
+  --focus-ring-error: 0 0 0 3px rgba(192, 43, 50, 0.3);
+
+  /* --- Typography -------------------------------------------------- */
+  --font-family-base: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 26px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-base: 1.5;
+
+  /* --- Radius ------------------------------------------------------ */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  /* --- Shadows ----------------------------------------------------- */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.1);
+  --shadow-lg: 0 16px 40px rgba(16, 24, 40, 0.18);
+
+  /* --- Spacing ----------------------------------------------------- */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+
+  /* --- Layout ------------------------------------------------------ */
+  --layout-sidebar-width: 236px;
+  --layout-sidebar-width-collapsed: 64px;
+  --layout-navbar-height: 58px;
+
+  /* --- Elevation --------------------------------------------------- */
+  --z-dropdown: 40;
+  --z-drawer: 800;
+  --z-modal: 800;
+  --z-toast: 1000;
+}
+
+/*
+ * Dark palette.
+ *
+ * Only the colour tokens are redefined - sizing, typography and spacing are
+ * theme-independent. themeSlice writes data-theme onto <html>; with no
+ * explicit choice the OS preference applies.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-primary: #7b93f0;
+    --color-primary-hover: #93a7f5;
+    --color-primary-soft: #222a45;
+
+    --color-secondary: #b18cf0;
+    --color-secondary-hover: #c3a5f5;
+    --color-secondary-soft: #2b2440;
+
+    --color-background: #12151c;
+    --color-surface: #1a1f29;
+    --color-surface-alt: #222836;
+
+    --color-text-primary: #e9edf3;
+    --color-text-secondary: #9aa4b4;
+
+    --color-border: #2f3644;
+    --color-border-strong: #414a5c;
+
+    --color-success: #55c98a;
+    --color-success-soft: #16301f;
+    --color-warning: #e0a353;
+    --color-warning-soft: #34260f;
+    --color-error: #f07a7f;
+    --color-error-soft: #3a1c1e;
+    --color-info: #63b8dd;
+    --color-info-soft: #142c37;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-theme='dark'] {
+  --color-primary: #7b93f0;
+  --color-primary-hover: #93a7f5;
+  --color-primary-soft: #222a45;
+
+  --color-secondary: #b18cf0;
+  --color-secondary-hover: #c3a5f5;
+  --color-secondary-soft: #2b2440;
+
+  --color-background: #12151c;
+  --color-surface: #1a1f29;
+  --color-surface-alt: #222836;
+
+  --color-text-primary: #e9edf3;
+  --color-text-secondary: #9aa4b4;
+
+  --color-border: #2f3644;
+  --color-border-strong: #414a5c;
+
+  --color-success: #55c98a;
+  --color-success-soft: #16301f;
+  --color-warning: #e0a353;
+  --color-warning-soft: #34260f;
+  --color-error: #f07a7f;
+  --color-error-soft: #3a1c1e;
+  --color-info: #63b8dd;
+  --color-info-soft: #142c37;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+}

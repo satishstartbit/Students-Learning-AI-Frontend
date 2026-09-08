@@ -4,7 +4,7 @@ import ProtectedRoutes from './ProtectedRoutes';
 import RoleRoutes from './RoleRoutes';
 import { PUBLIC_ROUTES, ROLE_ROUTE_GROUPS } from './routeConfig';
 import { useAuth } from '../hooks/useAuth';
-import { EmptyState, PageHeader } from '../components/common';
+import { EmptyState, PageHeader, RoleGuard } from '../components/common';
 
 /**
  * Builds the router from routeConfig.
@@ -13,9 +13,11 @@ import { EmptyState, PageHeader } from '../components/common';
  *   ProtectedRoutes (is there a session?)
  *     └── RoleRoutes (does this role own the area?)
  *           └── role layout
- *                 └── page
+ *                 └── RoleGuard (does this route's permission apply?)
+ *                       └── page
  *
- * so no page ever performs its own authorisation check.
+ * so no page performs its own authorisation check. The client guards decide
+ * what renders; the API re-checks every request independently.
  */
 
 /** Stand-in until a module supplies the real page for a route. */
@@ -40,6 +42,21 @@ function RootRedirect() {
   return <Navigate to={isAuthenticated ? homePath : '/login'} replace />;
 }
 
+/** Resolves one config entry into the element the router should render. */
+function renderRouteElement(route) {
+  if (route.redirectTo) return <Navigate to={route.redirectTo} replace />;
+
+  const Component = route.component;
+  const page = Component ? <Component /> : (route.element ?? <RoutePlaceholder label={route.label} />);
+
+  // A route may narrow access further than its area's role gate.
+  if (route.permissions?.length) {
+    return <RoleGuard requiredPermissions={route.permissions}>{page}</RoleGuard>;
+  }
+
+  return page;
+}
+
 export function AppRoutes() {
   const PublicLayout = PUBLIC_ROUTES.layout;
 
@@ -56,11 +73,7 @@ export function AppRoutes() {
         }
       >
         {PUBLIC_ROUTES.routes.map((route) => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={route.element ?? <RoutePlaceholder label={route.label} />}
-          />
+          <Route key={route.path} path={route.path} element={renderRouteElement(route)} />
         ))}
       </Route>
 
@@ -77,9 +90,7 @@ export function AppRoutes() {
                 key={route.path || 'index'}
                 index={route.path === ''}
                 path={route.path === '' ? undefined : route.path}
-                element={
-                  route.element ?? <RoutePlaceholder label={route.label} />
-                }
+                element={renderRouteElement(route)}
               />
             ))}
           </Route>
