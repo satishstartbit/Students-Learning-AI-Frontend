@@ -16,7 +16,7 @@ import { useApi } from '../../../hooks/useApi';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required, email as emailRule } from '../../../utils/validation';
-import { ROLE_LABELS } from '../../../utils/constants';
+import { ROLE_LABELS, listPathForRole } from '../../../utils/constants';
 import adminUserService from '../services/adminUser.service';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
@@ -109,7 +109,7 @@ export default function EditUserPage() {
         title={`Edit ${user.firstName ?? 'user'}`}
         description={`${ROLE_LABELS[user.role] ?? user.role} · ${user.email}`}
         breadcrumbs={[
-          { label: 'Users', to: '/admin/users' },
+          { label: `${ROLE_LABELS[user.role] ?? 'User'}s`, to: listPathForRole(user.role) },
           { label: user.firstName ?? 'User', to: `/admin/users/${id}` },
           { label: 'Edit' },
         ]}

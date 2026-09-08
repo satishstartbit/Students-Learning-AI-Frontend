@@ -42,12 +42,22 @@ function RootRedirect() {
   return <Navigate to={isAuthenticated ? homePath : '/login'} replace />;
 }
 
-/** Resolves one config entry into the element the router should render. */
+/**
+ * Resolves one config entry into the element the router should render.
+ *
+ * `props` lets several routes share one page component with different
+ * settings - the user list is reused for the per-role submenus rather than
+ * being copied three times.
+ */
 function renderRouteElement(route) {
   if (route.redirectTo) return <Navigate to={route.redirectTo} replace />;
 
   const Component = route.component;
-  const page = Component ? <Component /> : (route.element ?? <RoutePlaceholder label={route.label} />);
+  const page = Component ? (
+    <Component {...(route.props ?? {})} />
+  ) : (
+    route.element ?? <RoutePlaceholder label={route.label} />
+  );
 
   // A route may narrow access further than its area's role gate.
   if (route.permissions?.length) {

@@ -1,0 +1,42 @@
+/* =====================================================================
+   Tailwind, scoped so it can coexist with the existing design system.
+
+   Preflight is deliberately NOT imported. Tailwind's base layer resets
+   margins, borders, list styles and form controls globally, which would
+   restyle all 46 existing common components. Importing only the theme and
+   utility layers gives us Tailwind's classes for the shadcn sidebar while
+   leaving everything else exactly as it was.
+   ===================================================================== */
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/*
+ * shadcn's sidebar reads these variables. They are mapped onto the existing
+ * theme tokens rather than given their own values, so the sidebar follows the
+ * same palette as the rest of the app and stays in step with any change to
+ * theme/variables.css - including the dark theme, which those tokens already
+ * handle.
+ */
+@theme inline {
+  --color-sidebar: var(--color-surface);
+  --color-sidebar-foreground: var(--color-text-primary);
+  --color-sidebar-primary: var(--color-primary);
+  --color-sidebar-primary-foreground: var(--color-text-inverse);
+  --color-sidebar-accent: var(--color-primary-soft);
+  --color-sidebar-accent-foreground: var(--color-primary);
+  --color-sidebar-border: var(--color-border);
+  --color-sidebar-ring: var(--color-primary);
+
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-text-primary);
+  --color-muted-foreground: var(--color-text-secondary);
+  --color-border: var(--color-border);
+  --color-accent: var(--color-surface-alt);
+  --color-accent-foreground: var(--color-text-primary);
+  --color-ring: var(--color-primary);
+
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+}

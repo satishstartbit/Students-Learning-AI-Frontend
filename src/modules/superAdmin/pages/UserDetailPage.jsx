@@ -18,9 +18,10 @@ import { useModal } from '../../../hooks/useModal';
 import { toast } from '../../../hooks/useToast';
 import { formatDateTime } from '../../../utils/date';
 import { formatName, titleCase } from '../../../utils/format';
-import { ROLE_LABELS, USER_STATUS } from '../../../utils/constants';
+import { ROLE_LABELS, USER_ROLES, USER_STATUS, listPathForRole } from '../../../utils/constants';
 import { getErrorMessage, parseApiError } from '../../../utils/errorHandler';
 import adminUserService from '../services/adminUser.service';
+import ParentChildrenPanel from '../components/ParentChildrenPanel';
 
 /** One labelled value in the detail grid. */
 function Field({ label, children }) {
@@ -91,7 +92,8 @@ export default function UserDetailPage() {
     try {
       await adminUserService.deleteUser(id);
       toast.success('User permanently deleted');
-      navigate('/admin/users', { replace: true });
+      // Return to the list the deleted account came from.
+      navigate(listPathForRole(user?.role), { replace: true });
     } catch (err) {
       const parsed = parseApiError(err);
       // 409 means the account still owns records that must be handled first.
@@ -113,7 +115,11 @@ export default function UserDetailPage() {
       <PageHeader
         title={formatName(user)}
         description={user.email}
-        breadcrumbs={[{ label: 'Users', to: '/admin/users' }, { label: formatName(user) }]}
+        breadcrumbs={[
+          // Back to the list this account actually belongs to.
+          { label: `${ROLE_LABELS[user.role] ?? 'User'}s`, to: listPathForRole(user.role) },
+          { label: formatName(user) },
+        ]}
         actions={
           <>
             <Button as={Link} to={`/admin/users/${id}/edit`} variant="secondary">
@@ -196,6 +202,14 @@ export default function UserDetailPage() {
               ))}
           </div>
         </Card>
+      )}
+
+      {/*
+        A parent's children are managed here rather than on the relationships
+        page, because adding a child creates the account and the link together.
+      */}
+      {user.role === USER_ROLES.PARENT && (
+        <ParentChildrenPanel parentId={user.id} parentName={formatName(user)} />
       )}
 
       <Card title="Relationships" className="ui-field">

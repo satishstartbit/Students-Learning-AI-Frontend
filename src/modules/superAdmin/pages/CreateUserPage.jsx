@@ -12,7 +12,12 @@ import {
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required, email as emailRule } from '../../../utils/validation';
-import { USER_ROLES, ROLE_LABELS } from '../../../utils/constants';
+import {
+  ADMIN_CREATABLE_ROLES,
+  ROLE_LABELS,
+  USER_ROLES,
+  listPathForRole,
+} from '../../../utils/constants';
 import adminUserService from '../services/adminUser.service';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
@@ -27,7 +32,14 @@ import { buildProfilePayload } from '../../auth/components/profilePayload';
  * new user is emailed a link to set their own, so an admin never sees, sets
  * or transmits a plaintext password.
  */
-const ROLE_OPTIONS = [USER_ROLES.STUDENT, USER_ROLES.TEACHER, USER_ROLES.PARENT].map((r) => ({
+/**
+ * Teacher and Parent only.
+ *
+ * Students are added by their parent, so that the parent-child link is always
+ * created at the same time and no student can end up without a parent. The
+ * API refuses a STUDENT here too.
+ */
+const ROLE_OPTIONS = ADMIN_CREATABLE_ROLES.map((r) => ({
   value: r,
   label: ROLE_LABELS[r],
 }));
@@ -37,7 +49,7 @@ export default function CreateUserPage() {
 
   const form = useForm({
     initialValues: {
-      role: USER_ROLES.STUDENT,
+      role: USER_ROLES.TEACHER,
       firstName: '',
       lastName: '',
       email: '',
@@ -72,7 +84,8 @@ export default function CreateUserPage() {
         title="Create user"
         description="The new user sets their own password from an emailed link."
         breadcrumbs={[
-          { label: 'Users', to: '/admin/users' },
+          // Follows the role picker, so "back" lands on the matching list.
+          { label: `${ROLE_LABELS[role]}s`, to: listPathForRole(role) },
           { label: 'Create user' },
         ]}
       />
@@ -111,7 +124,7 @@ export default function CreateUserPage() {
             <Button type="submit" loading={form.isSubmitting}>
               Create user
             </Button>
-            <Button as={Link} to="/admin/users" variant="secondary">
+            <Button as={Link} to={listPathForRole(role)} variant="secondary">
               Cancel
             </Button>
           </ButtonGroup>

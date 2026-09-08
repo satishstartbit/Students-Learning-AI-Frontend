@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
     },
     async onSubmit(values) {
       const session = await signIn({ ...values, rememberMe }, authService.adminLogin);
-      navigate('/admin/dashboard', { replace: true });
+      navigate('/admin', { replace: true });
       return session;
     },
   });

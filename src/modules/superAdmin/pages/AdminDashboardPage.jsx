@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { PageHeader, StatCard, Card, Button, SectionHeader } from '../../../components/common';
+import { PageHeader, StatCard, Button } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
 import { USER_ROLES } from '../../../utils/constants';
@@ -62,40 +62,6 @@ export default function AdminDashboardPage() {
           loading={suspended.isLoading}
           hint="Accounts that cannot sign in"
         />
-      </div>
-
-      <SectionHeader title="Administration" />
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: 'var(--spacing-lg)',
-        }}
-      >
-        <Card
-          title="Users"
-          subtitle="Create, edit, suspend and delete accounts"
-          footer={
-            <Button as={Link} to="/admin/users" variant="secondary" size="sm">
-              Manage users
-            </Button>
-          }
-        >
-          Search and filter every account on the platform.
-        </Card>
-
-        <Card
-          title="Relationships"
-          subtitle="Parent-child and teacher-student links"
-          footer={
-            <Button as={Link} to="/admin/relationships" variant="secondary" size="sm">
-              Manage relationships
-            </Button>
-          }
-        >
-          Link parents to their children and teachers to their students.
-        </Card>
       </div>
     </>
   );

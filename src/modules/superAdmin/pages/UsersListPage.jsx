@@ -40,7 +40,37 @@ const VERIFIED_OPTIONS = [
   { value: 'false', label: 'Not verified' },
 ];
 
-export default function UsersListPage() {
+/** Sub-heading for each per-role view. */
+const DESCRIPTIONS = {
+  [USER_ROLES.STUDENT]: 'Students are added by their parent, who also sets up their account.',
+  [USER_ROLES.PARENT]: 'Parents manage their own children from their record.',
+  [USER_ROLES.TEACHER]: 'Teachers are assigned students from the Relationships page.',
+};
+
+/** Empty-state copy per view - a locked role needs its own wording. */
+const EMPTY_COPY = {
+  [USER_ROLES.STUDENT]: {
+    title: 'No students yet',
+    description: 'A student account is created by their parent from the parent’s record.',
+  },
+  [USER_ROLES.PARENT]: {
+    title: 'No parents yet',
+    description: 'Parents can register themselves, or be created here.',
+  },
+  [USER_ROLES.TEACHER]: {
+    title: 'No teachers yet',
+    description: 'Teachers can register themselves, or be created here.',
+  },
+};
+
+/**
+ * The Super Admin user list.
+ *
+ * @param fixedRole - when set, the listing is locked to that role and the role
+ *        filter is hidden. The sidebar's Students / Parents / Teachers entries
+ *        reuse this page that way instead of duplicating the screen.
+ */
+export default function UsersListPage({ fixedRole = null }) {
   const navigate = useNavigate();
   const pagination = usePagination();
 
@@ -49,6 +79,9 @@ export default function UsersListPage() {
   const [status, setStatus] = useState('');
   const [emailVerified, setEmailVerified] = useState('');
   const [sort, setSort] = useState({ by: 'created_at', order: 'desc' });
+
+  // A locked role always wins over the dropdown.
+  const effectiveRole = fixedRole ?? role;
 
   const debouncedSearch = useDebounce(search, 350);
 
@@ -62,13 +95,13 @@ export default function UsersListPage() {
         page,
         limit,
         search: debouncedSearch,
-        role,
+        role: effectiveRole,
         status,
         emailVerified,
         sortBy: sort.by,
         sortOrder: sort.order,
       }),
-    [run, page, limit, debouncedSearch, role, status, emailVerified, sort]
+    [run, page, limit, debouncedSearch, effectiveRole, status, emailVerified, sort]
   );
 
   useEffect(() => {
@@ -144,15 +177,30 @@ export default function UsersListPage() {
     },
   ];
 
+  // Students are added by their parent, so there is no "create" here for them.
+  const canCreateHere = fixedRole !== USER_ROLES.STUDENT;
+
+  // Distinguishes "nothing here yet" from "nothing matched your filters".
+  const hasFilters = Boolean(search || status || emailVerified || (!fixedRole && role));
+
+  const heading = fixedRole
+    ? { title: `${ROLE_LABELS[fixedRole]}s`, description: DESCRIPTIONS[fixedRole] }
+    : {
+        title: 'Users',
+        description: 'Search, filter and manage every account on the platform.',
+      };
+
   return (
     <>
       <PageHeader
-        title="Users"
-        description="Search, filter and manage every account on the platform."
+        title={heading.title}
+        description={heading.description}
         actions={
-          <Button as={Link} to="/admin/users/create">
-            Create user
-          </Button>
+          canCreateHere ? (
+            <Button as={Link} to="/admin/users/create">
+              Create user
+            </Button>
+          ) : null
         }
       />
 
@@ -171,13 +219,16 @@ export default function UsersListPage() {
             onChange={(e) => resetTo(setSearch)(e.target.value)}
             onClear={() => resetTo(setSearch)('')}
           />
-          <Select
-            label="Role"
-            options={ROLE_OPTIONS}
-            placeholder="All roles"
-            value={role}
-            onChange={(e) => resetTo(setRole)(e.target.value)}
-          />
+          {/* Hidden when the route already fixes the role. */}
+          {!fixedRole && (
+            <Select
+              label="Role"
+              options={ROLE_OPTIONS}
+              placeholder="All roles"
+              value={role}
+              onChange={(e) => resetTo(setRole)(e.target.value)}
+            />
+          )}
           <Select
             label="Status"
             options={STATUS_OPTIONS}
@@ -206,9 +257,17 @@ export default function UsersListPage() {
         onSort={(by, order) => setSort({ by: by === 'name' ? 'first_name' : by, order })}
         pagination={pagination}
         onPageChange={goToPage}
-        emptyTitle="No users match those filters"
-        emptyDescription="Try clearing the search or changing the filters."
-        caption="Platform users"
+        emptyTitle={
+          hasFilters
+            ? 'No users match those filters'
+            : (EMPTY_COPY[fixedRole]?.title ?? 'No users yet')
+        }
+        emptyDescription={
+          hasFilters
+            ? 'Try clearing the search or changing the filters.'
+            : EMPTY_COPY[fixedRole]?.description
+        }
+        caption={fixedRole ? `${ROLE_LABELS[fixedRole]} accounts` : 'Platform users'}
       />
 
       <Toast />

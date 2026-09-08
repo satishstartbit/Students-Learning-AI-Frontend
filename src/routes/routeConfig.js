@@ -51,20 +51,48 @@ export const SUPER_ADMIN_ROUTES = {
   requiresAuth: true,
   allowedRoles: [USER_ROLES.SUPER_ADMIN],
   routes: [
-    // Index redirects to /admin/dashboard, which is where login lands.
-    { path: '', label: 'Dashboard', redirectTo: '/admin/dashboard' },
+    // Login lands on /admin itself; /admin/dashboard is kept as an alias.
     {
-      path: 'dashboard',
+      path: '',
       label: 'Dashboard',
       permissions: [PERMISSIONS.DASHBOARD_READ],
       component: AdminDashboardPage,
     },
+    { path: 'dashboard', label: 'Dashboard', redirectTo: '/admin' },
+    /*
+     * There is no combined user list - the console is organised by role.
+     * The bare path only forwards, so an old bookmark does not dead-end.
+     */
+    { path: 'users', label: 'Users', redirectTo: '/admin/users/students' },
+
+    /*
+     * Per-role views. One page component, three routes - `fixedRole` locks the
+     * listing to that role and hides the role filter, rather than duplicating
+     * the screen. Static paths outrank `users/:id`, so these never collide
+     * with a user detail route.
+     */
     {
-      path: 'users',
-      label: 'Users',
+      path: 'users/students',
+      label: 'Students',
       permissions: [PERMISSIONS.USER_READ],
       component: UsersListPage,
+      props: { fixedRole: USER_ROLES.STUDENT },
     },
+    {
+      path: 'users/parents',
+      label: 'Parents',
+      permissions: [PERMISSIONS.USER_READ],
+      component: UsersListPage,
+      props: { fixedRole: USER_ROLES.PARENT },
+    },
+    {
+      path: 'users/teachers',
+      label: 'Teachers',
+      permissions: [PERMISSIONS.USER_READ],
+      component: UsersListPage,
+      props: { fixedRole: USER_ROLES.TEACHER },
+    },
+
     {
       path: 'users/create',
       label: 'Create user',
@@ -89,21 +117,6 @@ export const SUPER_ADMIN_ROUTES = {
       permissions: [PERMISSIONS.USER_READ],
       component: RelationshipsPage,
     },
-    {
-      path: 'assignments',
-      label: 'Assignments',
-      permissions: [PERMISSIONS.ASSIGNMENT_READ],
-      element: null,
-    },
-    { path: 'regulation-toolkit', label: 'Regulation Toolkit', element: null },
-    { path: 'rewards', label: 'Rewards', permissions: [PERMISSIONS.REWARD_READ], element: null },
-    {
-      path: 'subscriptions',
-      label: 'Subscriptions',
-      permissions: [PERMISSIONS.SUBSCRIPTION_READ],
-      element: null,
-    },
-    { path: 'plans', label: 'Plans & Discounts', element: null },
   ],
 };
 
@@ -113,8 +126,8 @@ export const STUDENT_ROUTES = {
   requiresAuth: true,
   allowedRoles: [USER_ROLES.STUDENT],
   routes: [
-    { path: '', label: 'My Day', redirectTo: '/student/dashboard' },
-    { path: 'dashboard', label: 'My Day', permissions: [PERMISSIONS.DASHBOARD_READ], element: null },
+    { path: '', label: 'My Day', permissions: [PERMISSIONS.DASHBOARD_READ], element: null },
+    { path: 'dashboard', label: 'My Day', redirectTo: '/student' },
     { path: 'onboarding', label: 'Onboarding', element: null },
     { path: 'check-in', label: 'Check In', permissions: [PERMISSIONS.CHECKIN_CREATE], element: null },
     {
@@ -137,13 +150,13 @@ export const TEACHER_ROUTES = {
   requiresAuth: true,
   allowedRoles: [USER_ROLES.TEACHER],
   routes: [
-    { path: '', label: 'Dashboard', redirectTo: '/teacher/dashboard' },
     {
-      path: 'dashboard',
+      path: '',
       label: 'Dashboard',
       permissions: [PERMISSIONS.DASHBOARD_READ],
       element: null,
     },
+    { path: 'dashboard', label: 'Dashboard', redirectTo: '/teacher' },
     { path: 'students', label: 'Students', permissions: [PERMISSIONS.USER_READ], element: null },
     {
       path: 'assignments',
@@ -167,13 +180,13 @@ export const PARENT_ROUTES = {
   requiresAuth: true,
   allowedRoles: [USER_ROLES.PARENT],
   routes: [
-    { path: '', label: 'Overview', redirectTo: '/parent/dashboard' },
     {
-      path: 'dashboard',
+      path: '',
       label: 'Overview',
       permissions: [PERMISSIONS.DASHBOARD_READ],
       element: null,
     },
+    { path: 'dashboard', label: 'Overview', redirectTo: '/parent' },
     { path: 'onboarding', label: 'Onboarding', element: null },
     { path: 'children', label: 'My Children', permissions: [PERMISSIONS.USER_READ], element: null },
     { path: 'progress', label: 'Progress', permissions: [PERMISSIONS.PROGRESS_READ], element: null },

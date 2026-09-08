@@ -28,16 +28,18 @@ import { buildProfilePayload } from '../components/profilePayload';
  * The form changes with the selected role. SUPER_ADMIN is not offered here,
  * and the API rejects it too, so this is a convenience rather than the control.
  */
+/**
+ * Parent and Teacher only.
+ *
+ * A student does not sign themselves up - their parent adds them, which is
+ * what creates the parent-child link. The API refuses a STUDENT registration
+ * regardless, so this list only shapes the form.
+ */
 const ROLE_OPTIONS = [
-  {
-    value: USER_ROLES.STUDENT,
-    label: 'Student',
-    description: 'I want help planning and working through my schoolwork',
-  },
   {
     value: USER_ROLES.PARENT,
     label: 'Parent',
-    description: 'I want to support and keep track of my child',
+    description: 'I want to support my child and add them to the platform',
   },
   {
     value: USER_ROLES.TEACHER,
@@ -51,7 +53,7 @@ export default function RegisterPage() {
 
   const form = useForm({
     initialValues: {
-      role: USER_ROLES.STUDENT,
+      role: USER_ROLES.PARENT,
       firstName: '',
       lastName: '',
       email: '',

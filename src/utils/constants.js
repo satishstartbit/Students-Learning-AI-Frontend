@@ -20,11 +20,39 @@ export const ROLE_LABELS = Object.freeze({
 
 /** Landing route per role, used after login and by role guards. */
 export const ROLE_HOME_PATH = Object.freeze({
-  [USER_ROLES.SUPER_ADMIN]: '/admin/dashboard',
-  [USER_ROLES.STUDENT]: '/student/dashboard',
-  [USER_ROLES.TEACHER]: '/teacher/dashboard',
-  [USER_ROLES.PARENT]: '/parent/dashboard',
+  [USER_ROLES.SUPER_ADMIN]: '/admin',
+  [USER_ROLES.STUDENT]: '/student',
+  [USER_ROLES.TEACHER]: '/teacher',
+  [USER_ROLES.PARENT]: '/parent',
 });
+
+/**
+ * Roles that can sign themselves up.
+ *
+ * Students are created by their parent through the Parent -> Child flow, and
+ * Super Admin is provisioned directly in the database. The API enforces this
+ * too - the list here only shapes the form.
+ */
+export const SELF_REGISTRABLE_ROLES = Object.freeze([USER_ROLES.PARENT, USER_ROLES.TEACHER]);
+
+/** Roles a Super Admin can create from the admin console. */
+export const ADMIN_CREATABLE_ROLES = Object.freeze([USER_ROLES.TEACHER, USER_ROLES.PARENT]);
+
+/**
+ * Where each role's listing lives in the admin console.
+ *
+ * There is no combined "all users" page - the console is organised by role,
+ * so breadcrumbs and post-delete redirects go back to the list the record
+ * actually belongs to.
+ */
+export const ROLE_LIST_PATH = Object.freeze({
+  [USER_ROLES.STUDENT]: '/admin/users/students',
+  [USER_ROLES.PARENT]: '/admin/users/parents',
+  [USER_ROLES.TEACHER]: '/admin/users/teachers',
+});
+
+/** Falls back to the students list when a role is unknown or missing. */
+export const listPathForRole = (role) => ROLE_LIST_PATH[role] ?? '/admin/users/students';
 
 /**
  * Where an unauthenticated visitor is sent per area.

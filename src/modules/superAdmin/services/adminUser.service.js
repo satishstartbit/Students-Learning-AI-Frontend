@@ -34,6 +34,27 @@ export const resetUserPassword = (id) => api.post(`/admin/users/${id}/reset-pass
 
 export const listRoles = () => api.get('/admin/roles');
 
+/**
+ * Subjects available to filter teachers by.
+ *
+ * Derived server-side from teacher profiles - this schema has no subjects
+ * table, so the list reflects the subjects teachers actually record.
+ */
+export const listSubjects = () => api.get('/admin/subjects');
+
+// --- A parent's children ---------------------------------------------------
+
+/** Children of one parent, managed from that parent's record. */
+export const listParentChildren = (parentId, params = {}) =>
+  api.get(`/admin/users/${parentId}/children`, { params });
+
+/**
+ * Creates a student account and its parent_child link together.
+ * The API forces the role to STUDENT and takes the parent from the URL.
+ */
+export const createParentChild = (parentId, payload) =>
+  api.post(`/admin/users/${parentId}/children`, payload);
+
 // --- Relationships ---------------------------------------------------------
 
 export function listRelationships(params = {}) {
@@ -59,6 +80,9 @@ export default {
   deleteUser,
   resetUserPassword,
   listRoles,
+  listSubjects,
+  listParentChildren,
+  createParentChild,
   listRelationships,
   createRelationship,
   deleteRelationship,

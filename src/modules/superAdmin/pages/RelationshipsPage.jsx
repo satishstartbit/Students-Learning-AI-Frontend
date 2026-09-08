@@ -1,140 +1,173 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   PageHeader,
   Card,
   Button,
-  Select,
   SearchInput,
   DataTable,
-  Badge,
   ConfirmationModal,
   Alert,
   SectionHeader,
+  Badge,
   Toast,
 } from '../../../components/common';
+import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { useModal } from '../../../hooks/useModal';
 import { toast } from '../../../hooks/useToast';
 import { formatDateTime } from '../../../utils/date';
-import { formatName, titleCase } from '../../../utils/format';
+import { formatName } from '../../../utils/format';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import adminUserService from '../services/adminUser.service';
 
 /**
- * Parent-child and teacher-student links.
+ * Teacher to Student assignment.
  *
- * The form only lets you pick valid role combinations - the owner picker is
- * filtered to Parents or Teachers depending on the type, and the other side
- * to Students. The server re-validates the pairing regardless, so this is a
- * usability guard rather than the control.
+ * The form is sequential: Subject narrows the teachers, then a teacher and a
+ * student are chosen, then the pair is assigned.
+ *
+ * Subject is a *filter for finding the right teacher* - it is not stored on
+ * the assignment. user_relationships has no subject column, and subjects live
+ * only in teacher_profiles.profile_data->'subjects', so recording a
+ * per-assignment subject would need a schema change.
+ *
+ * Parent to child links are managed on the parent's own record, not here.
  */
-const TYPE_OPTIONS = [
-  { value: 'parent_child', label: 'Parent → Child' },
-  { value: 'teacher_student', label: 'Teacher → Student' },
-];
-
-/** Which role each side of a link must hold. */
-const OWNER_ROLE = { parent_child: 'PARENT', teacher_student: 'TEACHER' };
-
-/** A searchable user picker backed by the server-side user list. */
-function UserPicker({ label, role, value, onChange, error }) {
-  const [search, setSearch] = useState('');
-  const debounced = useDebounce(search, 350);
-  const { data, isLoading, run } = useApi(adminUserService.listUsers);
-
-  useEffect(() => {
-    run({ role, status: 'active', search: debounced, limit: 20 }).catch(() => {});
-  }, [run, role, debounced]);
-
-  const options = useMemo(
-    () =>
-      (data ?? []).map((u) => ({
-        value: u.id,
-        label: `${formatName(u)} · ${u.email}`,
-      })),
-    [data]
-  );
-
-  return (
-    <div>
-      <SearchInput
-        label={`Search ${label.toLowerCase()}`}
-        placeholder="Name or email"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        onClear={() => setSearch('')}
-      />
-      <Select
-        label={label}
-        options={options}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={isLoading ? 'Loading…' : `Select a ${label.toLowerCase()}`}
-        loading={isLoading}
-        error={error}
-        required
-      />
-    </div>
-  );
-}
+const RELATIONSHIP_TYPE = 'teacher_student';
 
 export default function RelationshipsPage() {
   const pagination = usePagination();
   const { page, limit, applyMeta, goToPage } = pagination;
 
-  const [typeFilter, setTypeFilter] = useState('');
-  const [form, setForm] = useState({ relationshipType: 'parent_child', userId: '', relatedUserId: '' });
+  // --- assignment form ----------------------------------------------------
+  const [subject, setSubject] = useState(null);
+  const [teacherId, setTeacherId] = useState(null);
+  const [studentId, setStudentId] = useState(null);
+  const [studentSearch, setStudentSearch] = useState('');
   const [formError, setFormError] = useState(null);
   const [busy, setBusy] = useState(false);
 
+  const debouncedStudentSearch = useDebounce(studentSearch, 350);
+
+  const subjects = useApi(adminUserService.listSubjects);
+  const teachers = useApi(adminUserService.listUsers);
+  const students = useApi(adminUserService.listUsers);
+  const list = useApi(adminUserService.listRelationships);
+
   const removeModal = useModal();
 
-  const { data, meta, error, isLoading, run } = useApi(adminUserService.listRelationships);
+  const { run: runSubjects } = subjects;
+  const { run: runTeachers } = teachers;
+  const { run: runStudents } = students;
+  const { run: runList, meta } = list;
 
-  const load = useCallback(
-    () => run({ page, limit, relationshipType: typeFilter }),
-    [run, page, limit, typeFilter]
+  // --- reference data -----------------------------------------------------
+  useEffect(() => {
+    runSubjects().catch(() => {});
+  }, [runSubjects]);
+
+  /*
+   * Teachers are fetched only once a subject is chosen, and filtered on the
+   * server - the whole teacher table is never pulled down to filter locally.
+   */
+  useEffect(() => {
+    if (!subject) return;
+    runTeachers({ role: 'TEACHER', status: 'active', subject, limit: 100 }).catch(() => {});
+  }, [runTeachers, subject]);
+
+  // Students are searched server-side, so a large roster stays paged.
+  useEffect(() => {
+    runStudents({
+      role: 'STUDENT',
+      status: 'active',
+      search: debouncedStudentSearch,
+      limit: 50,
+    }).catch(() => {});
+  }, [runStudents, debouncedStudentSearch]);
+
+  // --- assignment list ----------------------------------------------------
+  const [listSearch, setListSearch] = useState('');
+  const debouncedListSearch = useDebounce(listSearch, 350);
+
+  const loadList = useCallback(
+    () =>
+      runList({
+        page,
+        limit,
+        relationshipType: RELATIONSHIP_TYPE,
+        search: debouncedListSearch || undefined,
+      }),
+    [runList, page, limit, debouncedListSearch]
   );
 
   useEffect(() => {
-    load().catch(() => {});
-  }, [load]);
+    loadList().catch(() => {});
+  }, [loadList]);
 
   useEffect(() => {
     if (meta?.total !== undefined) applyMeta(meta);
   }, [meta, applyMeta]);
 
-  const setField = (key) => (value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+  // --- subject change clears the teacher ----------------------------------
+  const handleSubjectChange = (next) => {
+    setSubject(next);
+    // A teacher chosen for the old subject may not teach the new one.
+    setTeacherId(null);
     setFormError(null);
   };
 
-  // Changing the type invalidates the owner, whose required role just changed.
-  const handleTypeChange = (value) => {
-    setForm({ relationshipType: value, userId: '', relatedUserId: '' });
-    setFormError(null);
-  };
+  // --- options ------------------------------------------------------------
+  const subjectOptions = useMemo(
+    () => (subjects.data ?? []).map((s) => ({ value: s, label: s })),
+    [subjects.data]
+  );
 
-  const handleCreate = async (event) => {
+  const teacherOptions = useMemo(
+    () =>
+      (teachers.data ?? []).map((t) => ({
+        value: t.id,
+        label: formatName(t),
+        description: t.email,
+      })),
+    [teachers.data]
+  );
+
+  const studentOptions = useMemo(
+    () =>
+      (students.data ?? []).map((s) => ({
+        value: s.id,
+        label: formatName(s),
+        description: s.email,
+      })),
+    [students.data]
+  );
+
+  const canAssign = Boolean(subject && teacherId && studentId) && !busy;
+
+  const handleAssign = async (event) => {
     event.preventDefault();
+    setFormError(null);
 
-    if (!form.userId || !form.relatedUserId) {
-      setFormError('Select both people to link');
-      return;
-    }
-    if (form.userId === form.relatedUserId) {
-      setFormError('A user cannot be linked to themselves');
-      return;
-    }
+    // The server validates all of this again; this is only for fast feedback.
+    if (!subject) return setFormError('Select a subject');
+    if (!teacherId) return setFormError('Select a teacher');
+    if (!studentId) return setFormError('Select a student');
 
     setBusy(true);
     try {
-      await adminUserService.createRelationship(form);
-      toast.success('Relationship created');
-      setForm({ relationshipType: form.relationshipType, userId: '', relatedUserId: '' });
-      await load();
+      await adminUserService.createRelationship({
+        relationshipType: RELATIONSHIP_TYPE,
+        userId: teacherId,
+        relatedUserId: studentId,
+      });
+
+      toast.success('Student assigned to teacher');
+      setStudentId(null);
+      setStudentSearch('');
+      await loadList();
     } catch (err) {
       setFormError(getErrorMessage(err));
     } finally {
@@ -142,13 +175,13 @@ export default function RelationshipsPage() {
     }
   };
 
-  const handleRemove = async () => {
+  const handleUnassign = async () => {
     setBusy(true);
     try {
       await adminUserService.deleteRelationship(removeModal.payload.id);
-      toast.success('Relationship removed');
+      toast.success('Student unassigned');
       removeModal.close();
-      await load();
+      await loadList();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -156,129 +189,166 @@ export default function RelationshipsPage() {
     }
   };
 
+  // --- table --------------------------------------------------------------
   const columns = [
     {
-      key: 'relationshipType',
-      header: 'Type',
-      render: (row) => <Badge variant="info">{titleCase(row.relationshipType)}</Badge>,
-    },
-    {
       key: 'owner',
-      header: 'Parent / Teacher',
-      render: (row) => `${formatName(row.owner)} · ${row.owner?.email ?? ''}`,
+      header: 'Teacher',
+      render: (row) => (
+        <Link to={`/admin/users/${row.owner?.id}`} className="font-semibold">
+          {formatName(row.owner)}
+        </Link>
+      ),
     },
     {
       key: 'related',
       header: 'Student',
-      render: (row) => `${formatName(row.related)} · ${row.related?.email ?? ''}`,
+      render: (row) => (
+        <Link to={`/admin/users/${row.related?.id}`}>{formatName(row.related)}</Link>
+      ),
     },
-    { key: 'createdAt', header: 'Linked', render: (row) => formatDateTime(row.createdAt) },
+    { key: 'email', header: 'Student email', render: (row) => row.related?.email ?? '—' },
+    {
+      key: 'status',
+      header: 'Status',
+      render: () => (
+        <Badge variant="success" dot>
+          Assigned
+        </Badge>
+      ),
+    },
+    { key: 'createdAt', header: 'Assigned on', render: (row) => formatDateTime(row.createdAt) },
     {
       key: 'actions',
       header: 'Actions',
       align: 'right',
       render: (row) => (
         <Button size="sm" variant="secondary" onClick={() => removeModal.open(row)}>
-          Unlink
+          Unassign
         </Button>
       ),
     },
   ];
 
-  const ownerRole = OWNER_ROLE[form.relationshipType];
-  const ownerLabel = ownerRole === 'PARENT' ? 'Parent' : 'Teacher';
+  const noSubjects = !subjects.isLoading && subjectOptions.length === 0;
 
   return (
     <>
       <PageHeader
-        title="Relationships"
-        description="Link parents to their children and teachers to their students."
+        title="Teacher assignments"
+        description="Pick a subject to find the right teacher, then assign a student. Parent and child links are managed on the parent's own record."
       />
 
-      <Card title="Create a link" className="ui-field">
+      <Card title="Assign a student to a teacher" className="ui-field">
         {formError && (
           <Alert variant="error" className="ui-field">
             {formError}
           </Alert>
         )}
 
-        <form onSubmit={handleCreate}>
-          <Select
-            label="Relationship type"
-            options={TYPE_OPTIONS}
-            value={form.relationshipType}
-            onChange={(e) => handleTypeChange(e.target.value)}
-            placeholder="Choose a type"
-            required
-          />
+        {noSubjects && (
+          <Alert variant="warning" title="No subjects found" className="ui-field">
+            Subjects come from each teacher&apos;s profile. Add subjects to a teacher (Users →
+            Teachers → Edit) and they will appear here.
+          </Alert>
+        )}
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-              gap: 'var(--spacing-lg)',
-            }}
-          >
-            <UserPicker
-              label={ownerLabel}
-              role={ownerRole}
-              value={form.userId}
-              onChange={setField('userId')}
+        <form onSubmit={handleAssign}>
+          <div className="grid gap-4 md:grid-cols-3">
+            <SearchableSelect
+              label="Subject"
+              required
+              options={subjectOptions}
+              value={subject}
+              onChange={handleSubjectChange}
+              loading={subjects.isLoading}
+              placeholder="Select subject"
+              searchPlaceholder="Search subjects…"
+              emptyMessage="No subjects available"
             />
-            <UserPicker
+
+            <SearchableSelect
+              label="Teacher"
+              required
+              options={teacherOptions}
+              value={teacherId}
+              onChange={setTeacherId}
+              loading={teachers.isLoading}
+              disabled={!subject}
+              disabledMessage="Select a subject first"
+              placeholder="Search and select teacher"
+              searchPlaceholder="Search teacher…"
+              emptyMessage={`No teachers teach ${subject ?? 'this subject'}`}
+            />
+
+            <SearchableSelect
               label="Student"
-              role="STUDENT"
-              value={form.relatedUserId}
-              onChange={setField('relatedUserId')}
+              required
+              options={studentOptions}
+              value={studentId}
+              onChange={setStudentId}
+              loading={students.isLoading}
+              placeholder="Search and select student"
+              searchPlaceholder="Search student…"
+              emptyMessage="No students found"
+              // Searching happens on the server, so do not filter again here.
+              onSearchChange={setStudentSearch}
+              filterLocally={false}
             />
           </div>
 
-          <Button type="submit" loading={busy}>
-            Link
-          </Button>
+          <div className="flex justify-end">
+            <Button type="submit" loading={busy} disabled={!canAssign}>
+              Assign student
+            </Button>
+          </div>
         </form>
       </Card>
 
       <SectionHeader
-        title="Existing relationships"
+        title="Current assignments"
+        description="Every teacher-student link on the platform."
         actions={
-          <Select
-            options={TYPE_OPTIONS}
-            value={typeFilter}
+          <SearchInput
+            placeholder="Search teacher or student"
+            value={listSearch}
             onChange={(e) => {
-              setTypeFilter(e.target.value);
+              setListSearch(e.target.value);
               goToPage(1);
             }}
-            placeholder="All types"
-            fieldClassName="ui-sectionheader"
+            onClear={() => setListSearch('')}
           />
         }
       />
 
       <DataTable
         columns={columns}
-        data={data ?? []}
-        isLoading={isLoading}
-        error={error}
-        onRetry={load}
+        data={list.data ?? []}
+        isLoading={list.isLoading}
+        error={list.error}
+        onRetry={loadList}
         pagination={pagination}
         onPageChange={goToPage}
-        emptyTitle="No relationships yet"
-        emptyDescription="Use the form above to link a parent or teacher to a student."
-        caption="User relationships"
+        emptyTitle={listSearch ? 'No assignments match that search' : 'No students assigned yet'}
+        emptyDescription={
+          listSearch
+            ? 'Try a different name.'
+            : 'Use the form above to assign a student to a teacher.'
+        }
+        caption="Teacher and student assignments"
       />
 
       <ConfirmationModal
         isOpen={removeModal.isOpen}
         onClose={removeModal.close}
-        onConfirm={handleRemove}
-        title="Remove this link?"
+        onConfirm={handleUnassign}
+        title="Unassign this student?"
         message={
           removeModal.payload
-            ? `${formatName(removeModal.payload.owner)} will no longer be linked to ${formatName(removeModal.payload.related)}.`
+            ? `${formatName(removeModal.payload.related)} will no longer be assigned to ${formatName(removeModal.payload.owner)}. Neither account is deleted.`
             : ''
         }
-        confirmLabel="Unlink"
+        confirmLabel="Unassign"
         variant="danger"
         loading={busy}
       />
