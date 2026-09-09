@@ -165,9 +165,6 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
         className="ui-field"
         actions={
           <ButtonGroup>
-            <Button size="sm" variant="secondary" onClick={linkModal.open}>
-              Link existing
-            </Button>
             <Button size="sm" onClick={createModal.open}>
               Add child
             </Button>

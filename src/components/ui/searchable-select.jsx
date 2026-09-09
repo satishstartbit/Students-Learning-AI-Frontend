@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '../../lib/utils';
 
 /**
@@ -7,9 +8,17 @@ import { cn } from '../../lib/utils';
  * Generic on purpose - Subject, Teacher, Student and anything else reuse this
  * rather than each page growing its own dropdown.
  *
- * Filtering happens locally over `options`. When the caller is searching on
- * the server, pass `onSearchChange` and hand back already-filtered options;
- * set `filterLocally={false}` so the list is not filtered twice.
+ * The menu renders in a portal on <body>, positioned against the trigger's
+ * bounding box. That is not decoration: the control is used inside .ui-card,
+ * which sets `overflow: hidden`, and an absolutely-positioned child would be
+ * clipped at the card's edge. No z-index can escape a clipping ancestor - the
+ * element has to leave the subtree. The portal also sidesteps any stacking
+ * context an ancestor happens to create, so the menu works inside modals and
+ * scroll containers too.
+ *
+ * Filtering happens locally over `options`. When the caller searches on the
+ * server, pass `onSearchChange` and hand back already-filtered options; set
+ * `filterLocally={false}` so the list is not filtered twice.
  *
  * @param options            array of items
  * @param value              currently selected value
@@ -27,6 +36,9 @@ import { cn } from '../../lib/utils';
  * @param onSearchChange     called as the user types (for server-side search)
  * @param filterLocally      filter `options` in the browser (default true)
  */
+const MENU_MAX_HEIGHT = 288;
+const MENU_GAP = 4;
+
 export function SearchableSelect({
   options = [],
   value = null,
@@ -57,8 +69,10 @@ export function SearchableSelect({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
+  const [position, setPosition] = useState(null);
 
-  const containerRef = useRef(null);
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
   const searchRef = useRef(null);
   const optionRefs = useRef([]);
 
@@ -72,31 +86,76 @@ export function SearchableSelect({
 
     const term = search.trim().toLowerCase();
     return options.filter((o) => {
-      const label = String(getOptionLabel(o) ?? '').toLowerCase();
+      const optionLabel = String(getOptionLabel(o) ?? '').toLowerCase();
       const description = String(getOptionDescription(o) ?? '').toLowerCase();
-      return label.includes(term) || description.includes(term);
+      return optionLabel.includes(term) || description.includes(term);
     });
   }, [options, search, filterLocally, getOptionLabel, getOptionDescription]);
 
   /**
-   * Closing also resets the search box.
+   * Anchors the portal to the trigger.
    *
-   * Done here rather than in an effect watching `open`: clearing state from an
-   * effect body triggers an extra render pass, and every close already goes
-   * through this function.
+   * Flips above when there is not enough room below, so the menu is never
+   * stranded off-screen near the bottom of the viewport.
    */
+  const updatePosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const dropUp = spaceBelow < MENU_MAX_HEIGHT && rect.top > spaceBelow;
+
+    setPosition({
+      left: rect.left,
+      width: rect.width,
+      top: dropUp ? undefined : rect.bottom + MENU_GAP,
+      bottom: dropUp ? window.innerHeight - rect.top + MENU_GAP : undefined,
+      maxHeight: Math.max(
+        160,
+        Math.min(MENU_MAX_HEIGHT, (dropUp ? rect.top : spaceBelow) - MENU_GAP * 2)
+      ),
+    });
+  }, []);
+
+  /** Closing also resets the search box. Every close path goes through here. */
   const close = useCallback(() => {
     setOpen(false);
     setSearch('');
     setActiveIndex(0);
+    setPosition(null);
   }, []);
 
-  // Close on outside click or Escape.
+  // Measure before paint so the menu never flashes in the wrong place.
+  useLayoutEffect(() => {
+    if (open) updatePosition();
+  }, [open, updatePosition]);
+
+  // Keep it anchored while the page moves underneath it.
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const onScroll = () => updatePosition();
+    // Capture phase so scrolling in any ancestor container is caught, not
+    // just the window.
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onScroll);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [open, updatePosition]);
+
+  // Close on outside click or Escape. The menu lives outside the trigger's
+  // subtree, so both have to be checked.
   useEffect(() => {
     if (!open) return undefined;
 
     const onPointerDown = (event) => {
-      if (!containerRef.current?.contains(event.target)) close();
+      const insideTrigger = triggerRef.current?.contains(event.target);
+      const insideMenu = menuRef.current?.contains(event.target);
+      if (!insideTrigger && !insideMenu) close();
     };
     const onKeyDown = (event) => {
       if (event.key === 'Escape') close();
@@ -110,12 +169,10 @@ export function SearchableSelect({
     };
   }, [open, close]);
 
-  // Focus the search box when the list opens.
   useEffect(() => {
     if (open) searchRef.current?.focus();
   }, [open]);
 
-  // Keep the highlighted row in view.
   useEffect(() => {
     optionRefs.current[activeIndex]?.scrollIntoView({ block: 'nearest' });
   }, [activeIndex]);
@@ -148,8 +205,112 @@ export function SearchableSelect({
     .filter(Boolean)
     .join(' ');
 
+  const menu = open && position && (
+    <div
+      ref={menuRef}
+      className="fixed overflow-hidden rounded-[var(--radius-md)] border"
+      style={{
+        left: position.left,
+        width: position.width,
+        top: position.top,
+        bottom: position.bottom,
+        background: 'var(--color-surface)',
+        borderColor: 'var(--color-border)',
+        boxShadow: 'var(--shadow-lg)',
+        // Above the modal overlay (800) but below toasts (1000), so the
+        // control still works inside a dialog.
+        zIndex: 900,
+      }}
+    >
+      <div
+        className="flex items-center gap-2 border-b px-3 py-2"
+        style={{ borderColor: 'var(--color-border)' }}
+      >
+        <span aria-hidden="true" className="text-xs opacity-60">
+          🔍
+        </span>
+        <input
+          ref={searchRef}
+          type="text"
+          value={search}
+          placeholder={searchPlaceholder}
+          aria-label={searchPlaceholder}
+          aria-controls={listboxId}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setActiveIndex(0);
+            onSearchChange?.(event.target.value);
+          }}
+          onKeyDown={handleKeyDown}
+          className="w-full appearance-none border-0 bg-transparent text-sm outline-none"
+          style={{ color: 'var(--color-text-primary)' }}
+        />
+      </div>
+
+      <ul
+        id={listboxId}
+        role="listbox"
+        aria-label={label ?? placeholder}
+        className="m-0 list-none overflow-y-auto p-1"
+        style={{ maxHeight: position.maxHeight }}
+      >
+        {loading && (
+          <li
+            className="px-3 py-3 text-sm"
+            style={{ color: 'var(--color-text-secondary)' }}
+            aria-live="polite"
+          >
+            Loading…
+          </li>
+        )}
+
+        {!loading && visible.length === 0 && (
+          <li className="px-3 py-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            {emptyMessage}
+          </li>
+        )}
+
+        {!loading &&
+          visible.map((option, index) => {
+            const optionValue = getOptionValue(option);
+            const isSelected = optionValue === value;
+            const isActive = index === activeIndex;
+
+            return (
+              <li
+                key={optionValue}
+                ref={(node) => {
+                  optionRefs.current[index] = node;
+                }}
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => commit(option)}
+                onMouseEnter={() => setActiveIndex(index)}
+                className="flex cursor-pointer flex-col rounded-[var(--radius-sm)] px-3 py-2 text-sm"
+                style={{
+                  background: isSelected || isActive ? 'var(--color-primary-soft)' : 'transparent',
+                  color: isSelected ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                  fontWeight: isSelected ? 600 : 400,
+                }}
+              >
+                <span className="truncate">{getOptionLabel(option)}</span>
+                {getOptionDescription(option) && (
+                  <span
+                    className="truncate text-xs font-normal"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
+                    {getOptionDescription(option)}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+      </ul>
+    </div>
+  );
+
   return (
-    <div className={cn('mb-4 flex flex-col gap-1', className)} ref={containerRef}>
+    <div className={cn('mb-4 flex flex-col gap-1', className)}>
       {label && (
         <label
           htmlFor={controlId}
@@ -166,178 +327,78 @@ export function SearchableSelect({
         </label>
       )}
 
-      <div className="relative">
-        <button
-          id={controlId}
-          type="button"
-          role="combobox"
-          aria-expanded={open}
-          aria-controls={open ? listboxId : undefined}
-          aria-haspopup="listbox"
-          aria-invalid={Boolean(error)}
-          aria-describedby={describedBy || undefined}
-          disabled={disabled}
-          onClick={() => {
-            if (disabled) return;
-            if (open) close();
-            else setOpen(true);
-          }}
-          className={cn(
-            'flex w-full cursor-pointer appearance-none items-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-left text-sm',
-            'border transition-colors outline-none',
-            'focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary)]/35',
-            disabled && 'cursor-not-allowed opacity-60'
-          )}
-          style={{
-            background: disabled ? 'var(--color-surface-alt)' : 'var(--color-surface)',
-            borderColor: error ? 'var(--color-error)' : 'var(--color-border)',
-            color: 'var(--color-text-primary)',
-          }}
-        >
-          <span className="min-w-0 flex-1 truncate">
-            {selected ? (
-              <span className="flex min-w-0 flex-col">
-                <span className="truncate">{getOptionLabel(selected)}</span>
-                {getOptionDescription(selected) && (
-                  <span
-                    className="truncate text-xs"
-                    style={{ color: 'var(--color-text-secondary)' }}
-                  >
-                    {getOptionDescription(selected)}
-                  </span>
-                )}
-              </span>
-            ) : (
-              <span style={{ color: 'var(--color-text-secondary)' }}>
-                {disabled && disabledMessage ? disabledMessage : placeholder}
-              </span>
-            )}
-          </span>
-
-          {clearable && selected && !disabled && (
-            <span
-              role="button"
-              tabIndex={0}
-              aria-label="Clear selection"
-              onClick={(event) => {
-                event.stopPropagation();
-                onChange?.(null, null);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onChange?.(null, null);
-                }
-              }}
-              className="rounded p-0.5 text-xs hover:opacity-70"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              ✕
+      <button
+        ref={triggerRef}
+        id={controlId}
+        type="button"
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={open ? listboxId : undefined}
+        aria-haspopup="listbox"
+        aria-invalid={Boolean(error)}
+        aria-describedby={describedBy || undefined}
+        disabled={disabled}
+        onClick={() => {
+          if (disabled) return;
+          if (open) close();
+          else setOpen(true);
+        }}
+        className={cn(
+          'flex w-full cursor-pointer appearance-none items-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-left text-sm',
+          'border transition-colors outline-none',
+          'focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary)]/35',
+          disabled && 'cursor-not-allowed opacity-60'
+        )}
+        style={{
+          background: disabled ? 'var(--color-surface-alt)' : 'var(--color-surface)',
+          borderColor: error ? 'var(--color-error)' : 'var(--color-border)',
+          color: 'var(--color-text-primary)',
+        }}
+      >
+        <span className="min-w-0 flex-1 truncate">
+          {selected ? (
+            <span className="flex min-w-0 flex-col">
+              <span className="truncate">{getOptionLabel(selected)}</span>
+              {getOptionDescription(selected) && (
+                <span className="truncate text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                  {getOptionDescription(selected)}
+                </span>
+              )}
+            </span>
+          ) : (
+            <span style={{ color: 'var(--color-text-secondary)' }}>
+              {disabled && disabledMessage ? disabledMessage : placeholder}
             </span>
           )}
+        </span>
 
-          <span aria-hidden="true" className="text-xs opacity-60">
-            ▾
-          </span>
-        </button>
-
-        {open && (
-          <div
-            className="absolute z-40 mt-1 w-full overflow-hidden rounded-[var(--radius-md)] border shadow-lg"
-            style={{
-              background: 'var(--color-surface)',
-              borderColor: 'var(--color-border)',
-              boxShadow: 'var(--shadow-md)',
+        {clearable && selected && !disabled && (
+          <span
+            role="button"
+            tabIndex={0}
+            aria-label="Clear selection"
+            onClick={(event) => {
+              event.stopPropagation();
+              onChange?.(null, null);
             }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                event.stopPropagation();
+                onChange?.(null, null);
+              }
+            }}
+            className="rounded p-0.5 text-xs hover:opacity-70"
+            style={{ color: 'var(--color-text-secondary)' }}
           >
-            <div
-              className="flex items-center gap-2 border-b px-3 py-2"
-              style={{ borderColor: 'var(--color-border)' }}
-            >
-              <span aria-hidden="true" className="text-xs opacity-60">
-                🔍
-              </span>
-              <input
-                ref={searchRef}
-                type="text"
-                value={search}
-                placeholder={searchPlaceholder}
-                aria-label={searchPlaceholder}
-                aria-controls={listboxId}
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  setActiveIndex(0);
-                  onSearchChange?.(event.target.value);
-                }}
-                onKeyDown={handleKeyDown}
-                className="w-full appearance-none border-0 bg-transparent text-sm outline-none"
-                style={{ color: 'var(--color-text-primary)' }}
-              />
-            </div>
-
-            <ul
-              id={listboxId}
-              role="listbox"
-              aria-label={label ?? placeholder}
-              className="m-0 max-h-64 list-none overflow-y-auto p-1"
-            >
-              {loading && (
-                <li
-                  className="px-3 py-3 text-sm"
-                  style={{ color: 'var(--color-text-secondary)' }}
-                  aria-live="polite"
-                >
-                  Loading…
-                </li>
-              )}
-
-              {!loading && visible.length === 0 && (
-                <li className="px-3 py-3 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                  {emptyMessage}
-                </li>
-              )}
-
-              {!loading &&
-                visible.map((option, index) => {
-                  const optionValue = getOptionValue(option);
-                  const isSelected = optionValue === value;
-                  const isActive = index === activeIndex;
-
-                  return (
-                    <li
-                      key={optionValue}
-                      ref={(node) => {
-                        optionRefs.current[index] = node;
-                      }}
-                      role="option"
-                      aria-selected={isSelected}
-                      onClick={() => commit(option)}
-                      onMouseEnter={() => setActiveIndex(index)}
-                      className="flex cursor-pointer flex-col rounded-[var(--radius-sm)] px-3 py-2 text-sm"
-                      style={{
-                        background:
-                          isSelected || isActive ? 'var(--color-primary-soft)' : 'transparent',
-                        color: isSelected ? 'var(--color-primary)' : 'var(--color-text-primary)',
-                        fontWeight: isSelected ? 600 : 400,
-                      }}
-                    >
-                      <span className="truncate">{getOptionLabel(option)}</span>
-                      {getOptionDescription(option) && (
-                        <span
-                          className="truncate text-xs font-normal"
-                          style={{ color: 'var(--color-text-secondary)' }}
-                        >
-                          {getOptionDescription(option)}
-                        </span>
-                      )}
-                    </li>
-                  );
-                })}
-            </ul>
-          </div>
+            ✕
+          </span>
         )}
-      </div>
+
+        <span aria-hidden="true" className="text-xs opacity-60">
+          ▾
+        </span>
+      </button>
 
       {hint && !error && (
         <span
@@ -359,6 +420,8 @@ export function SearchableSelect({
           {error}
         </span>
       )}
+
+      {menu && createPortal(menu, document.body)}
     </div>
   );
 }
