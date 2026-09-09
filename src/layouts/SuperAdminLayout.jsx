@@ -1,4 +1,4 @@
-import { LuGraduationCap, LuLayoutDashboard, LuLink, LuSchool, LuUsers, LuUsersRound } from 'react-icons/lu';
+import { LuDatabase, LuGraduationCap, LuLayoutDashboard, LuLink, LuSchool, LuUsers, LuUsersRound } from 'react-icons/lu';
 import AuthenticatedLayout from './AuthenticatedLayout';
 
 /**
@@ -23,6 +23,7 @@ const NAV_ITEMS = [
         ],
       },
       { to: '/admin/relationships', label: 'Relationships', icon: LuLink },
+      { to: '/admin/masters', label: 'Master Management', icon: LuDatabase },
     ],
   },
 ];
