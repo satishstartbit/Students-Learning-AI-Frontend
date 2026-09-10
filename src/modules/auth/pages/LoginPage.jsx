@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Card, Input, PasswordInput, Button, Alert, Checkbox } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
 import { useAuth } from '../../../hooks/useAuth';
-import { required, email as emailRule } from '../../../utils/validation';
+import { required } from '../../../utils/validation';
 import authService from '../services/auth.service';
 
 /**
@@ -20,9 +20,9 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
 
   const form = useForm({
-    initialValues: { email: '', password: '' },
+    initialValues: { identifier: '', password: '' },
     validationSchema: {
-      email: [required('Enter your email address'), emailRule()],
+      identifier: [required('Enter your username, email, or phone number')],
       password: [required('Enter your password')],
     },
     async onSubmit(values) {
@@ -45,11 +45,11 @@ export default function LoginPage() {
 
       <form onSubmit={form.handleSubmit} noValidate>
         <Input
-          label="Email"
-          type="email"
-          autoComplete="email"
+          label="Username, email, or phone number"
+          type="text"
+          autoComplete="username"
           required
-          {...form.getFieldProps('email')}
+          {...form.getFieldProps('identifier')}
         />
 
         <PasswordInput label="Password" required {...form.getFieldProps('password')} />

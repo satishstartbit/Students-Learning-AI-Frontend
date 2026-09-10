@@ -5,6 +5,7 @@ import { useApi } from '../../../../hooks/useApi';
 import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
+import { formatCurrency } from '../../../../utils/format';
 import billingService from '../../services/billing.service';
 
 const STATUS_OPTIONS = [
@@ -71,7 +72,11 @@ export default function SubscriptionPlansListPage() {
     { key: 'name', header: 'Plan', sortable: true, render: (row) => <strong>{row.name}</strong> },
     { key: 'planType', header: 'Type', render: (row) => row.planType },
     { key: 'billingCycle', header: 'Billing', render: (row) => row.billingCycle },
-    { key: 'price', header: 'Price', render: (row) => <Badge variant="primary">{row.currency} {row.price}</Badge> },
+    {
+      key: 'price',
+      header: 'Price',
+      render: (row) => <Badge variant="primary">{formatCurrency(row.price, row.currency)}</Badge>,
+    },
     { key: 'is_active', header: 'Status', render: (row) => <StatusBadge status={row.isActive ? 'active' : 'inactive'} /> },
     {
       key: 'actions',

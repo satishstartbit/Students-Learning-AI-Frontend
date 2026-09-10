@@ -1,8 +1,14 @@
 /**
  * Date helpers built on Intl - no date library dependency.
- * The API returns TIMESTAMPTZ (UTC); these render in the viewer's locale.
+ *
+ * The API returns TIMESTAMPTZ (UTC, ISO 8601); these render it in the
+ * signed-in user's own locale and timezone (utils/locale.js), not the
+ * browser's - Canada spans six timezones, so "the browser's local time" is
+ * not a safe stand-in for "the user's timezone" the way it might be for a
+ * single-timezone country. Pass `timeZone`/`locale` in `options` to override
+ * per call; every function here defaults to the active user preference.
  */
-const LOCALE = undefined; // follow the browser
+import { getActiveLocale, getActiveTimezone } from './locale';
 
 export function toDate(value) {
   if (!value) return null;
@@ -12,38 +18,46 @@ export function toDate(value) {
 
 export const isValidDate = (value) => toDate(value) !== null;
 
-export function formatDate(value, options = {}) {
+export function formatDate(value, { locale, timeZone, ...options } = {}) {
   const d = toDate(value);
   if (!d) return '';
-  return new Intl.DateTimeFormat(LOCALE, {
+  return new Intl.DateTimeFormat(locale ?? getActiveLocale(), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: timeZone ?? getActiveTimezone(),
     ...options,
   }).format(d);
 }
 
-export function formatDateTime(value, options = {}) {
+export function formatDateTime(value, { locale, timeZone, ...options } = {}) {
   const d = toDate(value);
   if (!d) return '';
-  return new Intl.DateTimeFormat(LOCALE, {
+  return new Intl.DateTimeFormat(locale ?? getActiveLocale(), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
+    timeZone: timeZone ?? getActiveTimezone(),
     ...options,
   }).format(d);
 }
 
-export function formatTime(value, options = {}) {
+export function formatTime(value, { locale, timeZone, ...options } = {}) {
   const d = toDate(value);
   if (!d) return '';
-  return new Intl.DateTimeFormat(LOCALE, {
+  return new Intl.DateTimeFormat(locale ?? getActiveLocale(), {
     hour: 'numeric',
     minute: '2-digit',
+    timeZone: timeZone ?? getActiveTimezone(),
     ...options,
   }).format(d);
+}
+
+/** Long-form Canadian date: "September 10, 2026". */
+export function formatLongDate(value, options = {}) {
+  return formatDate(value, { month: 'long', ...options });
 }
 
 /** YYYY-MM-DD in local time - the format DATE columns expect. */
@@ -112,7 +126,7 @@ export function formatRelative(value) {
   const days = daysUntil(value);
   if (days === null) return '';
 
-  const rtf = new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto' });
+  const rtf = new Intl.RelativeTimeFormat(getActiveLocale(), { numeric: 'auto' });
   if (Math.abs(days) < 7) return rtf.format(days, 'day');
   if (Math.abs(days) < 30) return rtf.format(Math.round(days / 7), 'week');
   return rtf.format(Math.round(days / 30), 'month');
@@ -145,6 +159,7 @@ export default {
   formatDate,
   formatDateTime,
   formatTime,
+  formatLongDate,
   toDateInputValue,
   toTimeInputValue,
   daysUntil,

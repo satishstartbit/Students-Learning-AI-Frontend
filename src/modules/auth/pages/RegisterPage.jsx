@@ -15,6 +15,7 @@ import {
   required,
   email as emailRule,
   password as passwordRule,
+  phone as phoneRule,
   matches,
 } from '../../../utils/validation';
 import { USER_ROLES } from '../../../utils/constants';
@@ -65,6 +66,7 @@ export default function RegisterPage() {
       role: [required('Choose how you will use the platform')],
       firstName: [required('Enter your first name')],
       email: [required('Enter your email address'), emailRule()],
+      phone: [phoneRule()],
       password: [required('Choose a password'), passwordRule()],
       confirmPassword: [
         required('Confirm your password'),

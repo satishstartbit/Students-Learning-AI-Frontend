@@ -97,17 +97,24 @@ export function useForm({ initialValues = {}, validationSchema = {}, onSubmit } 
     [onSubmit, validate, values]
   );
 
-  const reset = useCallback(
-    (nextValues) => {
-      const next = nextValues ?? baseline;
-      setBaseline(next);
+  /*
+   * A stable identity (no `baseline` dependency) on purpose: a caller that
+   * seeds the form from an effect - e.g. EditUserPage's
+   * `useEffect(() => reset(...), [user, reset])` - would otherwise get a new
+   * `reset` on every call, which re-fires that effect and resets again,
+   * forever. The functional updater reads the latest baseline without
+   * needing it in the closure.
+   */
+  const reset = useCallback((nextValues) => {
+    setBaseline((prevBaseline) => {
+      const next = nextValues ?? prevBaseline;
       setValues(next);
-      setErrors({});
-      setTouched({});
-      setSubmitError(null);
-    },
-    [baseline]
-  );
+      return next;
+    });
+    setErrors({});
+    setTouched({});
+    setSubmitError(null);
+  }, []);
 
   const isDirty = useMemo(
     () => JSON.stringify(values) !== JSON.stringify(baseline),

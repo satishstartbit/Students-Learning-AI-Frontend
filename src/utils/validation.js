@@ -1,5 +1,7 @@
 import { validateFile, validateImage } from './file';
 import { isValidDate, toDate } from './date';
+import { isValidPhoneNumber } from './phone';
+import { isValidCanadianPostalCode } from './postalCode';
 
 /**
  * Form validation primitives plus a small rule runner used by useForm.
@@ -87,6 +89,18 @@ export const image = (options) => (value) => {
 export const oneOf = (allowed, message) => (value) =>
   isEmpty(value) || allowed.includes(value) ? null : message || 'Select a valid option';
 
+/** Accepts (416) 555-1234, 416-555-1234, 4165551234, +1 416 555 1234, ... */
+export const phone =
+  (message = 'Enter a valid phone number') =>
+  (value) =>
+    isEmpty(value) || isValidPhoneNumber(value) ? null : message;
+
+/** e.g. K1A 0B1 - with or without the space, any case. */
+export const postalCode =
+  (message = 'Enter a valid postal code, e.g. K1A 0B1') =>
+  (value) =>
+    isEmpty(value) || isValidCanadianPostalCode(value) ? null : message;
+
 // --- Runner ----------------------------------------------------------------
 
 /** Applies one field's rules and returns the first error, or null. */
@@ -129,6 +143,8 @@ export default {
   file,
   image,
   oneOf,
+  phone,
+  postalCode,
   validateField,
   validateForm,
 };

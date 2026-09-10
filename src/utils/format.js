@@ -1,12 +1,17 @@
 /**
  * Display formatting helpers. Presentation only - no business rules.
  */
-const LOCALE = undefined;
+import { getActiveLocale, DEFAULT_CURRENCY } from './locale';
 
-export function formatCurrency(amount, currency = 'CAD', options = {}) {
+/**
+ * Not Canada-only: `currency` defaults to the app's configured default (CAD)
+ * rather than being hardcoded, so a future non-Canadian plan is a config
+ * change, not a code change. Locale defaults to the active user's own.
+ */
+export function formatCurrency(amount, currency = DEFAULT_CURRENCY, options = {}) {
   const value = Number(amount);
   if (!Number.isFinite(value)) return '';
-  return new Intl.NumberFormat(LOCALE, {
+  return new Intl.NumberFormat(getActiveLocale(), {
     style: 'currency',
     currency,
     ...options,
@@ -16,14 +21,14 @@ export function formatCurrency(amount, currency = 'CAD', options = {}) {
 export function formatNumber(value, options = {}) {
   const n = Number(value);
   if (!Number.isFinite(n)) return '';
-  return new Intl.NumberFormat(LOCALE, options).format(n);
+  return new Intl.NumberFormat(getActiveLocale(), options).format(n);
 }
 
 /** 0.42 -> "42%"; pass isRatio=false for an already-scaled 42. */
 export function formatPercentage(value, { isRatio = true, decimals = 0 } = {}) {
   const n = Number(value);
   if (!Number.isFinite(n)) return '';
-  return new Intl.NumberFormat(LOCALE, {
+  return new Intl.NumberFormat(getActiveLocale(), {
     style: 'percent',
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

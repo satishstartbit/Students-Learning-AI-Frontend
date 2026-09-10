@@ -20,6 +20,17 @@ import UserDetailPage from '../modules/superAdmin/pages/UserDetailPage';
 import EditUserPage from '../modules/superAdmin/pages/EditUserPage';
 import RelationshipsPage from '../modules/superAdmin/pages/RelationshipsPage';
 
+import ParentChildrenPage from '../modules/parent/pages/ParentChildrenPage';
+
+import TeacherDashboardPage from '../modules/teacher/pages/TeacherDashboardPage';
+import MyStudentsPage from '../modules/teacher/pages/MyStudentsPage';
+import AssignmentsListPage from '../modules/teacher/pages/AssignmentsListPage';
+import AssignmentFormPage from '../modules/teacher/pages/AssignmentFormPage';
+import AssignmentDetailsPage from '../modules/teacher/pages/AssignmentDetailsPage';
+
+import MyAssignmentsPage from '../modules/student/pages/MyAssignmentsPage';
+import StudentAssignmentDetailPage from '../modules/student/pages/AssignmentDetailPage';
+
 import MasterDashboardPage from '../modules/masterManagement/pages/MasterDashboardPage';
 import MasterListPage from '../modules/masterManagement/pages/MasterListPage';
 import MasterFormPage from '../modules/masterManagement/pages/MasterFormPage';
@@ -218,9 +229,14 @@ export const STUDENT_ROUTES = {
       path: 'assignments',
       label: 'Assignments',
       permissions: [PERMISSIONS.ASSIGNMENT_READ],
-      element: null,
+      component: MyAssignmentsPage,
     },
-    { path: 'assignments/:assignmentId', label: 'Assignment', element: null },
+    {
+      path: 'assignments/:assignmentId',
+      label: 'Assignment',
+      permissions: [PERMISSIONS.ASSIGNMENT_READ],
+      component: StudentAssignmentDetailPage,
+    },
     { path: 'calendar', label: 'Planner', element: null },
     { path: 'focus', label: 'Focus', element: null },
     { path: 'toolkit', label: 'Toolkit', element: null },
@@ -238,21 +254,33 @@ export const TEACHER_ROUTES = {
       path: '',
       label: 'Dashboard',
       permissions: [PERMISSIONS.DASHBOARD_READ],
-      element: null,
+      component: TeacherDashboardPage,
     },
     { path: 'dashboard', label: 'Dashboard', redirectTo: '/teacher' },
-    { path: 'students', label: 'Students', permissions: [PERMISSIONS.USER_READ], element: null },
+    { path: 'students', label: 'Students', permissions: [PERMISSIONS.USER_READ], component: MyStudentsPage },
     {
       path: 'assignments',
       label: 'Assignments',
       permissions: [PERMISSIONS.ASSIGNMENT_READ],
-      element: null,
+      component: AssignmentsListPage,
     },
     {
       path: 'assignments/new',
       label: 'New Assignment',
       permissions: [PERMISSIONS.ASSIGNMENT_CREATE],
-      element: null,
+      component: AssignmentFormPage,
+    },
+    {
+      path: 'assignments/:id',
+      label: 'Assignment Details',
+      permissions: [PERMISSIONS.ASSIGNMENT_READ],
+      component: AssignmentDetailsPage,
+    },
+    {
+      path: 'assignments/:id/edit',
+      label: 'Edit Assignment',
+      permissions: [PERMISSIONS.ASSIGNMENT_UPDATE],
+      component: AssignmentFormPage,
     },
     { path: 'progress', label: 'Progress', permissions: [PERMISSIONS.PROGRESS_READ], element: null },
   ],
@@ -272,7 +300,12 @@ export const PARENT_ROUTES = {
     },
     { path: 'dashboard', label: 'Overview', redirectTo: '/parent' },
     { path: 'onboarding', label: 'Onboarding', element: null },
-    { path: 'children', label: 'My Children', permissions: [PERMISSIONS.USER_READ], element: null },
+    {
+      path: 'children',
+      label: 'My Children',
+      permissions: [PERMISSIONS.USER_READ],
+      component: ParentChildrenPage,
+    },
     { path: 'progress', label: 'Progress', permissions: [PERMISSIONS.PROGRESS_READ], element: null },
     {
       path: 'subscription',

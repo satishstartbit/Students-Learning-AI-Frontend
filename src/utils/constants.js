@@ -84,6 +84,29 @@ export const ASSIGNMENT_SOURCE_TYPE = Object.freeze({
   OCR: 'ocr',
 });
 
+/**
+ * Assignment Management (Teacher/Student CRUD, publish/archive workflow) -
+ * a separate feature from the OCR/homework-capture ASSIGNMENT_STATUS above.
+ * Deliberately distinct enums since the two features model different things
+ * under similar-sounding names; do not reuse ASSIGNMENT_STATUS here.
+ */
+export const ASSIGNMENT_CRUD_STATUS = Object.freeze({
+  DRAFT: 'draft',
+  PUBLISHED: 'published',
+  ARCHIVED: 'archived',
+  COMPLETED: 'completed',
+});
+
+/** Per-student recipient status on an assignment. */
+export const ASSIGNMENT_RECIPIENT_STATUS = Object.freeze({
+  ASSIGNED: 'assigned',
+  IN_PROGRESS: 'in_progress',
+  SUBMITTED: 'submitted',
+  REVIEWED: 'reviewed',
+  COMPLETED: 'completed',
+  RETURNED: 'returned',
+});
+
 export const TASK_STATUS = Object.freeze({
   PENDING: 'pending',
   IN_PROGRESS: 'in_progress',
@@ -164,6 +187,18 @@ export const STATUS_TONE = Object.freeze({
   deleted: 'danger',
   abandoned: 'danger',
   incomplete: 'danger',
+
+  // Assignment Management (draft/published/archived reuse `completed`/
+  // `in_progress` above where the value is shared). "overdue" is never a
+  // backend value - it is derived client-side for display only.
+  draft: 'neutral',
+  published: 'info',
+  archived: 'neutral',
+  assigned: 'neutral',
+  submitted: 'warning',
+  reviewed: 'info',
+  returned: 'warning',
+  overdue: 'danger',
 });
 
 export const STORAGE_KEYS = Object.freeze({

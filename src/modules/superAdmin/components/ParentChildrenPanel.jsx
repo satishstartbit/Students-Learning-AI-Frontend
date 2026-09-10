@@ -27,6 +27,7 @@ import { getErrorMessage } from '../../../utils/errorHandler';
 import adminUserService from '../services/adminUser.service';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
+import { usePhotoField } from '../../../hooks/usePhotoField';
 
 /**
  * A parent's children, shown on the parent's own record.
@@ -62,6 +63,8 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
   }, [load]);
 
   // --- create a new child -------------------------------------------------
+  const createPhoto = usePhotoField();
+
   const createForm = useForm({
     initialValues: { firstName: '', lastName: '', email: '', phone: '' },
     validationSchema: {
@@ -69,17 +72,19 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
       email: [required('Enter an email address'), emailRule()],
     },
     async onSubmit(values) {
-      await adminUserService.createParentChild(parentId, {
+      const { data } = await adminUserService.createParentChild(parentId, {
         firstName: values.firstName,
         lastName: values.lastName || null,
         email: values.email,
         phone: values.phone || null,
         profile: buildProfilePayload('STUDENT', values),
+        photoFile: createPhoto.file,
       });
 
-      toast.success('Child created and linked to this parent');
+      toast.success(`Child created and linked to this parent - username "${data.username}"`);
       createModal.close();
       createForm.reset({ firstName: '', lastName: '', email: '', phone: '' });
+      createPhoto.reset();
       await load();
     },
   });
@@ -203,7 +208,9 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
                   <Link to={`/admin/users/${child.id}`} style={{ fontWeight: 600 }}>
                     {formatName(child)}
                   </Link>
-                  <div className="ui-hint">{child.email}</div>
+                  <div className="ui-hint">
+                    {child.username} · {child.email}
+                  </div>
                 </div>
 
                 <StatusBadge status={child.status} />
@@ -283,7 +290,12 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
           <Input label="Phone" type="tel" {...createForm.getFieldProps('phone')} />
 
           <SectionHeader title="Student profile" as="h3" />
-          <RoleProfileFields role="STUDENT" getProps={createForm.getFieldProps} includeAdminOnly />
+          <RoleProfileFields
+            role="STUDENT"
+            getProps={createForm.getFieldProps}
+            includeAdminOnly
+            photo={createPhoto}
+          />
         </form>
       </Modal>
 

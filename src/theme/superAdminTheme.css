@@ -1,0 +1,159 @@
+/* =====================================================================
+   Super Admin theme - scoped to `.admin-theme`, a class layouts/
+   SuperAdminLayout.jsx puts on <body> for as long as it is mounted (see
+   that file for why it's a body class rather than a wrapping element).
+   Nothing here is imported by, or affects, the Teacher/Student/Parent
+   layouts - they never add this class.
+
+   Two things happen inside `.admin-theme`:
+
+   1. The whole color-token set from theme/variables.css is pinned to its
+      light-mode values. Without this, a system/user dark-mode preference
+      would still flip `--color-text-primary` etc. to their dark variants
+      (see variables.css's `prefers-color-scheme`/`data-theme` blocks) while
+      the sidebar and main content below are forced to a fixed black/white
+      look - pairing light-on-dark text with a forced-white background would
+      break contrast. Pinning the whole set keeps every shared common/*
+      component (cards, tables, forms, buttons) internally consistent no
+      matter the visitor's OS theme. This part works via ordinary CSS
+      inheritance: common.css's own rules (e.g. `.ui-card { background:
+      var(--color-surface); }`) read these variables at runtime.
+
+   2. The sidebar is styled directly by data-slot/data-sidebar attribute,
+      NOT by overriding `--color-sidebar`/`--color-sidebar-accent`/etc.
+      Those look like the right lever (styles/tailwind.css maps them onto
+      the tokens above: `--color-sidebar: var(--color-surface)`, and so on)
+      but Tailwind v4's `@theme inline` resolves that mapping at build
+      time - the compiled `.bg-sidebar` utility is literally
+      `background-color: var(--color-surface)`, never mentioning
+      `--color-sidebar` at all. Overriding `--color-sidebar` is therefore
+      inert; it has to be the actual sidebar elements that get a
+      background/color, with a plain (unlayered) rule so it outranks the
+      `@layer utilities`-wrapped Tailwind classes without needing
+      `!important`. `components/ui/sidebar.jsx` and layouts/AppSidebar.jsx
+      are the source of the data-slot values used below - not modified by
+      this file, only targeted by it.
+
+   CSS set on <body> reaches everything, including content rendered
+   through createPortal (Modal, Drawer, MultiSelect, SearchableSelect all
+   portal to document.body, a sibling of the app root under the same
+   <body>) - so dialogs and dropdowns opened from an admin page pick up
+   part 1 too. No touching the shared component files either way, and no
+   risk of leaking into another role's layout, which never adds this
+   class.
+   ===================================================================== */
+
+.admin-theme {
+  /* --- Pinned light palette (see rationale above) ------------------- */
+  --color-primary: #0f766e;
+  --color-primary-hover: #115e59;
+  --color-primary-soft: #e6f4f1;
+
+  --color-secondary: #2f6feb;
+  --color-secondary-hover: #2559c4;
+  --color-secondary-soft: #eaf2fb;
+
+  --color-background: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f6f7f9;
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-inverse: #ffffff;
+
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+
+  --color-success: #15803d;
+  --color-success-soft: #e8f5ec;
+  --color-warning: #b45309;
+  --color-warning-soft: #fdf3e5;
+  --color-error: #be123c;
+  --color-error-soft: #fdecef;
+  --color-info: #0369a1;
+  --color-info-soft: #e8f2f9;
+
+  --focus-ring: 0 0 0 3px rgba(15, 118, 110, 0.3);
+  --focus-ring-error: 0 0 0 3px rgba(190, 18, 60, 0.28);
+
+  --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.05);
+  --shadow-md: 0 4px 14px rgba(17, 24, 39, 0.08);
+  --shadow-lg: 0 18px 44px rgba(17, 24, 39, 0.16);
+}
+
+/* The loading overlay is the one place common.css hardcodes a dark-mode
+   tint outside the token system (see common.css's ui-loader--overlay) -
+   pin it too so a dark OS preference cannot show a dark overlay on the
+   Super Admin panel's forced-white background. */
+@media (prefers-color-scheme: dark) {
+  .admin-theme .ui-loader--overlay {
+    background: rgba(255, 255, 255, 0.7);
+  }
+}
+
+/* --------------------------------------------------------------------
+   Sidebar: black background, white text/icons (see note 2 above for why
+   this targets elements directly instead of the sidebar-* tokens).
+   -------------------------------------------------------------------- */
+
+.admin-theme [data-slot='sidebar'] {
+  background-color: #000000;
+  color: #ffffff;
+  border-color: #2a2a2a;
+}
+
+/* Icons use `currentColor` by default (react-icons SVGs), so they follow
+   the `color: #fff` above automatically - no separate icon rule needed. */
+
+.admin-theme [data-slot='sidebar-group-label'] {
+  /* Overrides `text-muted-foreground`, which resolves to the same dark
+     gray used for secondary text everywhere else in the app. */
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.admin-theme [data-slot='sidebar-menu-sub'] {
+  border-color: #2a2a2a;
+}
+
+.admin-theme [data-slot='sidebar-menu-button'],
+.admin-theme [data-slot='sidebar-menu-sub-button'],
+.admin-theme [data-slot='sidebar-menu-action'],
+.admin-theme [data-slot='sidebar-group-action'] {
+  color: #ffffff;
+}
+
+/* Hover, active and selected menu items share one accent fill (the
+   button already bolds the active item's label on top of this, per
+   MENU_BUTTON_BASE in components/ui/sidebar.jsx), giving clear feedback
+   without breaking the black-and-white palette. */
+.admin-theme [data-slot='sidebar-menu-button']:hover,
+.admin-theme [data-slot='sidebar-menu-sub-button']:hover,
+.admin-theme [data-slot='sidebar-menu-action']:hover,
+.admin-theme [data-slot='sidebar-group-action']:hover,
+.admin-theme [data-slot='sidebar-menu-button'][data-active='true'],
+.admin-theme [data-slot='sidebar-menu-sub-button'][data-active='true'] {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+/* Keyboard-focus ring: white reads clearly on black, where the default
+   teal ring would not. Tailwind's `ring` utilities read `--tw-ring-color`
+   at the point the box-shadow is drawn (an internal implementation
+   variable, not a theme-mapped one, so - unlike --color-sidebar-ring -
+   overriding it here does take effect). */
+.admin-theme [data-slot='sidebar-menu-button']:focus-visible,
+.admin-theme [data-slot='sidebar-menu-sub-button']:focus-visible {
+  --tw-ring-color: #ffffff;
+}
+
+/* The brand mark and the account avatar are inverted (white chip, black
+   glyph) so they read as deliberate accents against the black sidebar. */
+.admin-theme [data-slot='sidebar-header'] .bg-sidebar-primary {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.admin-theme [data-slot='sidebar-footer'] .bg-sidebar-accent {
+  background-color: #1a1a1a;
+  color: #ffffff;
+}

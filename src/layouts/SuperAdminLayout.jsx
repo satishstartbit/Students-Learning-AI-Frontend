@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { LuDatabase, LuGraduationCap, LuLayoutDashboard, LuLink, LuSchool, LuUsers, LuUsersRound } from 'react-icons/lu';
 import AuthenticatedLayout from './AuthenticatedLayout';
+import '../theme/superAdminTheme.css';
 
 /**
  * Navigation for the Super Admin area (/admin/*).
@@ -29,6 +31,22 @@ const NAV_ITEMS = [
 ];
 
 export function SuperAdminLayout({ children }) {
+  /*
+   * Scoped via a class on <body>, not a wrapping div, because Modal/Drawer/
+   * MultiSelect/SearchableSelect (components/common) render through
+   * createPortal(..., document.body) - a wrapping div here would never be
+   * an ancestor of that portaled content in the DOM, so its CSS variables
+   * (theme/superAdminTheme.css) would not reach dialogs or dropdowns opened
+   * from an admin page. <body> is an ancestor of both the app root and any
+   * portal target, so this reaches everything the Super Admin panel can
+   * render. Removed on unmount so navigating to another role's layout
+   * (a different top-level route) restores the default theme immediately.
+   */
+  useEffect(() => {
+    document.body.classList.add('admin-theme');
+    return () => document.body.classList.remove('admin-theme');
+  }, []);
+
   return (
     <AuthenticatedLayout navItems={NAV_ITEMS} title="Admin Console" subtitle="Super Admin" brand="AC">
       {children}

@@ -132,6 +132,7 @@ export default function UsersListPage({ fixedRole = null }) {
         </Link>
       ),
     },
+    { key: 'username', header: 'Username', sortable: true },
     { key: 'email', header: 'Email', sortable: true },
     {
       key: 'role',

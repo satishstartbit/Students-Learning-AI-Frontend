@@ -171,7 +171,7 @@ export function Sidebar({
           aria-label="Sidebar"
           aria-hidden={!openMobile}
           className={cn(
-            'bg-sidebar text-sidebar-foreground fixed inset-y-0 z-50 flex w-(--sidebar-width-mobile) flex-col shadow-lg transition-transform duration-200 ease-linear md:hidden',
+            'bg-sidebar text-sidebar-foreground fixed inset-y-0 z-50 flex w-(--sidebar-width-mobile) max-w-[85vw] flex-col shadow-lg transition-transform duration-200 ease-linear md:hidden',
             side === 'left' ? 'left-0' : 'right-0',
             openMobile
               ? 'translate-x-0'

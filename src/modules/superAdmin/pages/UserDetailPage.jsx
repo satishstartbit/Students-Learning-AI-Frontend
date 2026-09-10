@@ -152,6 +152,7 @@ export default function UserDetailPage() {
 
       <Card title="Account" className="ui-field">
         <div style={GRID}>
+          <Field label="Username">{user.username}</Field>
           <Field label="Role">
             <Badge variant="primary">{ROLE_LABELS[user.role] ?? user.role}</Badge>
           </Field>

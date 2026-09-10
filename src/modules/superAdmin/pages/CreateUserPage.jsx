@@ -3,6 +3,7 @@ import {
   PageHeader,
   Card,
   Input,
+  Select,
   Button,
   Alert,
   Radio,
@@ -11,7 +12,8 @@ import {
 } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
-import { required, email as emailRule } from '../../../utils/validation';
+import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
+import { CANADIAN_TIMEZONES, DEFAULT_TIMEZONE } from '../../../utils/locale';
 import {
   ADMIN_CREATABLE_ROLES,
   ROLE_LABELS,
@@ -44,6 +46,11 @@ const ROLE_OPTIONS = ADMIN_CREATABLE_ROLES.map((r) => ({
   label: ROLE_LABELS[r],
 }));
 
+const TIMEZONE_OPTIONS = CANADIAN_TIMEZONES.map((tz) => ({
+  value: tz.value,
+  label: `${tz.label} (${tz.value})`,
+}));
+
 export default function CreateUserPage() {
   const navigate = useNavigate();
 
@@ -54,11 +61,13 @@ export default function CreateUserPage() {
       lastName: '',
       email: '',
       phone: '',
+      timezone: DEFAULT_TIMEZONE,
     },
     validationSchema: {
       role: [required('Choose a role')],
       firstName: [required('Enter a first name')],
       email: [required('Enter an email address'), emailRule()],
+      phone: [phoneRule()],
     },
     async onSubmit(values) {
       const { data } = await adminUserService.createUser({
@@ -67,10 +76,13 @@ export default function CreateUserPage() {
         lastName: values.lastName || null,
         email: values.email,
         phone: values.phone || null,
+        timezone: values.timezone || undefined,
         profile: buildProfilePayload(values.role, values),
       });
 
-      toast.success('User created. They have been emailed a link to set their password.');
+      toast.success(
+        `User created - username "${data.username}". They have been emailed a link to set their password.`
+      );
       navigate(`/admin/users/${data.id}`);
       return data;
     },
@@ -114,7 +126,18 @@ export default function CreateUserPage() {
           <Input label="First name" required {...form.getFieldProps('firstName')} />
           <Input label="Last name" {...form.getFieldProps('lastName')} />
           <Input label="Email" type="email" required {...form.getFieldProps('email')} />
-          <Input label="Phone" type="tel" {...form.getFieldProps('phone')} />
+          <Input
+            label="Phone"
+            type="tel"
+            hint="e.g. (416) 555-1234"
+            {...form.getFieldProps('phone')}
+          />
+          <Select
+            label="Timezone"
+            options={TIMEZONE_OPTIONS}
+            hint="Used to display dates and times to this user"
+            {...form.getFieldProps('timezone')}
+          />
 
           <SectionHeader title={`${ROLE_LABELS[role]} profile`} as="h3" />
 

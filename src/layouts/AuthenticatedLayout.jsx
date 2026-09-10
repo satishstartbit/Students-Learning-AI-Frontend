@@ -1,7 +1,11 @@
+import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { LuPanelLeft } from 'react-icons/lu';
 import { Toast } from '../components/common';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
+import { useAuth } from '../hooks/useAuth';
+import { setActiveTimezone, setActiveLocale } from '../utils/locale';
+import NotificationBell from '../modules/notifications/components/NotificationBell';
 import AppSidebar from './AppSidebar';
 
 /**
@@ -18,13 +22,25 @@ import AppSidebar from './AppSidebar';
  * component library.
  */
 export function AuthenticatedLayout({ navItems = [], title, subtitle, brand, children }) {
+  const { user } = useAuth();
+
+  // Every date/currency formatted anywhere in the app (utils/date.js,
+  // utils/format.js) reads the active timezone/locale rather than the
+  // browser's own - this is the one place that active value is set, from
+  // whichever signed-in user is viewing. Runs for every authenticated role
+  // since this layout wraps all of them.
+  useEffect(() => {
+    setActiveTimezone(user?.timezone);
+    setActiveLocale(user?.locale);
+  }, [user?.timezone, user?.locale]);
+
   return (
     <SidebarProvider>
       <AppSidebar title={title} subtitle={subtitle} brand={brand} navItems={navItems} />
 
       <SidebarInset>
         <header
-          className="flex h-14 shrink-0 items-center gap-2 border-b px-4"
+          className="flex h-14 min-w-0 shrink-0 items-center gap-2 border-b px-3 sm:px-4"
           style={{
             background: 'var(--color-surface)',
             borderColor: 'var(--color-border)',
@@ -33,7 +49,10 @@ export function AuthenticatedLayout({ navItems = [], title, subtitle, brand, chi
           <SidebarTrigger>
             <LuPanelLeft aria-hidden="true" />
           </SidebarTrigger>
-          <span className="text-sm font-semibold">{title}</span>
+          <span className="min-w-0 truncate text-sm font-semibold">{title}</span>
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <NotificationBell />
+          </div>
         </header>
 
         {/*
