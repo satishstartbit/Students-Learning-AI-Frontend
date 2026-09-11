@@ -34,6 +34,7 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Ask me anyt
         placeholder={placeholder}
         rows={1}
         disabled={disabled}
+        reserveHelper={false}
         fieldClassName="ai-chat-input__field"
       />
       <Button onClick={send} disabled={disabled || !value.trim()} loading={disabled}>

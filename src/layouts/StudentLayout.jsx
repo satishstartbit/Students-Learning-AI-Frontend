@@ -37,7 +37,7 @@ const NAV_ITEMS = [
 function StudentShellLoading() {
   return (
     <div role="status" className="grid h-svh place-items-center">
-      <span className="size-10 animate-spin rounded-full border-4 border-(--color-border) border-t-(--color-primary)" />
+      <span className="size-10 animate-spin rounded-full border-4 border-(--color-border-default) border-t-(--accent-base)" />
       <span className="sr-only">Loading</span>
     </div>
   );

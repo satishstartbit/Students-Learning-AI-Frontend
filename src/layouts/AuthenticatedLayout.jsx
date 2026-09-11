@@ -37,8 +37,8 @@ export function AuthenticatedLayout({ navItems = [], title, subtitle, brand, chi
         <header
           className="flex h-14 min-w-0 shrink-0 items-center gap-2 border-b px-3 sm:px-4"
           style={{
-            background: 'var(--color-surface)',
-            borderColor: 'var(--color-border)',
+            background: 'var(--color-bg-surface)',
+            borderColor: 'var(--color-border-default)',
           }}
         >
           <SidebarTrigger>

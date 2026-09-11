@@ -24,6 +24,7 @@ export { default as SearchInput } from './SearchInput';
 export { default as PasswordInput } from './PasswordInput';
 export { default as FormField } from './FormField';
 export { default as FormError } from './FormError';
+export { default as FieldHelper } from './FieldHelper';
 export { default as Label } from './Label';
 
 // --- Buttons ------------------------------------------------------------
@@ -50,6 +51,10 @@ export { default as Tabs } from './Tabs';
 export { default as Badge } from './Badge';
 export { default as StatusBadge } from './StatusBadge';
 export { default as Avatar } from './Avatar';
+export { default as BrandMark } from './BrandMark';
+export { default as StickyNote } from './StickyNote';
+export { default as StickyNoteColorPicker } from './StickyNoteColorPicker';
+export { default as StickyBoard } from './StickyBoard';
 
 // --- Data display -------------------------------------------------------
 export { default as Table } from './Table';

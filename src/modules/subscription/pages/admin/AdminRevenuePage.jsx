@@ -69,7 +69,7 @@ export default function AdminRevenuePage() {
       align: 'right',
       render: (row) =>
         row.refunded > 0 ? (
-          <span style={{ color: 'var(--color-error)' }}>
+          <span style={{ color: 'var(--color-danger-fg)' }}>
             −{formatCurrency(row.refunded, row.currency)}
           </span>
         ) : (

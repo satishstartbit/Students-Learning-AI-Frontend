@@ -1,10 +1,14 @@
 import { forwardRef, useId } from 'react';
 import Label from './Label';
-import FormError from './FormError';
+import FieldHelper from './FieldHelper';
 
 /**
- * Text input with label, hint, error and optional adornments.
+ * Text input with label, helper line, error and optional adornments.
  * Fully controlled - pass value/onChange (or spread useForm's getFieldProps).
+ *
+ * The helper line below the field is always present, so an error appearing on
+ * blur never moves the rest of the form - pass reserveHelper={false} only for
+ * a control that never validates.
  */
 export const Input = forwardRef(function Input(
   {
@@ -22,6 +26,7 @@ export const Input = forwardRef(function Input(
     optional = false,
     disabled = false,
     readOnly = false,
+    reserveHelper = true,
     startAdornment,
     endAdornment,
     className = '',
@@ -32,10 +37,7 @@ export const Input = forwardRef(function Input(
 ) {
   const generatedId = useId();
   const inputId = id || `${name || 'input'}-${generatedId}`;
-
-  const hintId = hint ? `${inputId}-hint` : undefined;
-  const errorId = error ? `${inputId}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
+  const helperId = hint || error ? `${inputId}-helper` : undefined;
 
   const control = (
     <input
@@ -51,14 +53,16 @@ export const Input = forwardRef(function Input(
       readOnly={readOnly}
       required={required}
       aria-invalid={Boolean(error)}
-      aria-describedby={describedBy}
+      aria-describedby={helperId}
       className={`ui-input ${error ? 'ui-input--error' : ''} ${className}`.trim()}
       {...rest}
     />
   );
 
   return (
-    <div className={`ui-field ${fieldClassName}`.trim()}>
+    <div
+      className={`ui-field ui-field--control ${disabled ? 'ui-field--disabled' : ''} ${fieldClassName}`.trim()}
+    >
       {label && (
         <Label htmlFor={inputId} required={required} optional={optional}>
           {label}
@@ -79,12 +83,7 @@ export const Input = forwardRef(function Input(
         control
       )}
 
-      {hint && !error && (
-        <span id={hintId} className="ui-hint">
-          {hint}
-        </span>
-      )}
-      <FormError id={errorId}>{error}</FormError>
+      <FieldHelper id={helperId} hint={hint} error={error} reserve={reserveHelper} />
     </div>
   );
 });

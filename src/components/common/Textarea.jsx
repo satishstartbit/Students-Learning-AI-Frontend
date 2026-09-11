@@ -1,6 +1,6 @@
 import { forwardRef, useId } from 'react';
 import Label from './Label';
-import FormError from './FormError';
+import FieldHelper from './FieldHelper';
 
 /** Multi-line text input with an optional character counter. */
 export const Textarea = forwardRef(function Textarea(
@@ -21,6 +21,7 @@ export const Textarea = forwardRef(function Textarea(
     optional = false,
     disabled = false,
     readOnly = false,
+    reserveHelper = true,
     className = '',
     fieldClassName = '',
     ...rest
@@ -29,15 +30,14 @@ export const Textarea = forwardRef(function Textarea(
 ) {
   const generatedId = useId();
   const inputId = id || `${name || 'textarea'}-${generatedId}`;
-
-  const hintId = hint ? `${inputId}-hint` : undefined;
-  const errorId = error ? `${inputId}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
+  const helperId = hint || error ? `${inputId}-helper` : undefined;
 
   const length = String(value ?? '').length;
 
   return (
-    <div className={`ui-field ${fieldClassName}`.trim()}>
+    <div
+      className={`ui-field ui-field--control ${disabled ? 'ui-field--disabled' : ''} ${fieldClassName}`.trim()}
+    >
       {label && (
         <Label htmlFor={inputId} required={required} optional={optional}>
           {label}
@@ -58,23 +58,19 @@ export const Textarea = forwardRef(function Textarea(
         readOnly={readOnly}
         required={required}
         aria-invalid={Boolean(error)}
-        aria-describedby={describedBy}
+        aria-describedby={helperId}
         className={`ui-textarea ${error ? 'ui-textarea--error' : ''} ${className}`.trim()}
         {...rest}
       />
 
-      {showCount && maxLength && (
-        <span className="ui-hint" style={{ alignSelf: 'flex-end' }} aria-live="polite">
-          {length} / {maxLength}
-        </span>
-      )}
-
-      {hint && !error && (
-        <span id={hintId} className="ui-hint">
-          {hint}
-        </span>
-      )}
-      <FormError id={errorId}>{error}</FormError>
+      {/* The counter shares the helper's line, so showing it costs no height. */}
+      <FieldHelper id={helperId} hint={hint} error={error} reserve={reserveHelper}>
+        {showCount && maxLength && (
+          <span className="ui-helper__count" aria-live="polite">
+            {length} / {maxLength}
+          </span>
+        )}
+      </FieldHelper>
     </div>
   );
 });

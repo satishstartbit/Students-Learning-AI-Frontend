@@ -108,7 +108,7 @@ function GroupedAssignments({ groups, otherKey, savingId, onStatusChange, onUnas
               <div
                 key={`${sg.subject}|${sg.grade}`}
                 className="border-l-2 pl-3"
-                style={{ borderColor: 'var(--color-border)' }}
+                style={{ borderColor: 'var(--color-border-default)' }}
               >
                 <div className="mb-1 text-sm font-semibold">
                   → {sg.subject || 'No subject'} — {sg.grade || 'No grade'}

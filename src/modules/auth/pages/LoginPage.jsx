@@ -36,42 +36,48 @@ export default function LoginPage() {
   });
 
   return (
-    <Card title="Sign in" subtitle="Welcome back">
-      {form.submitError && (
-        <Alert variant="error" className="ui-field">
-          {form.submitError}
-        </Alert>
-      )}
+    <>
+      <Card title="Welcome back" subtitle="Sign in to pick up where you left off.">
+        {form.submitError && (
+          <Alert variant="error" className="ui-field">
+            {form.submitError}
+          </Alert>
+        )}
 
-      <form onSubmit={form.handleSubmit} noValidate>
-        <Input
-          label="Username, email, or phone number"
-          type="text"
-          autoComplete="username"
-          required
-          {...form.getFieldProps('identifier')}
-        />
+        <form onSubmit={form.handleSubmit} noValidate>
+          <Input
+            label="Email"
+            hint="Username or phone number also work"
+            type="text"
+            autoComplete="username"
+            required
+            {...form.getFieldProps('identifier')}
+          />
 
-        <PasswordInput label="Password" required {...form.getFieldProps('password')} />
+          <PasswordInput label="Password" required {...form.getFieldProps('password')} />
 
-        <Checkbox
-          name="rememberMe"
-          label="Remember me"
-          checked={rememberMe}
-          onChange={(e) => setRememberMe(e.target.checked)}
-        />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
+            <Checkbox
+              name="rememberMe"
+              label="Remember me"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="mb-0"
+            />
+            <Link to="/forgot-password" style={{ fontSize: 'var(--font-size-sm)' }}>
+              Forgot your password?
+            </Link>
+          </div>
 
-        <Button type="submit" fullWidth loading={form.isSubmitting}>
-          Sign in
-        </Button>
-      </form>
+          <Button type="submit" fullWidth loading={form.isSubmitting}>
+            Sign in
+          </Button>
+        </form>
+      </Card>
 
-      <p style={{ marginTop: 'var(--spacing-lg)', fontSize: 'var(--font-size-sm)' }}>
-        <Link to="/forgot-password">Forgot your password?</Link>
-      </p>
-      <p style={{ marginTop: 'var(--spacing-sm)', fontSize: 'var(--font-size-sm)' }}>
+      <p className="ui-shell__public-footer">
         New here? <Link to="/register">Create an account</Link>
       </p>
-    </Card>
+    </>
   );
 }

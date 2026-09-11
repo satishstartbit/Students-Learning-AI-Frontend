@@ -25,6 +25,7 @@ import {
   useSidebar,
 } from '../components/ui/sidebar';
 import { Tooltip } from '../components/ui/tooltip';
+import BrandMark from '../components/common/BrandMark';
 import { useAuth } from '../hooks/useAuth';
 import { ROLE_LABELS, USER_ROLES } from '../utils/constants';
 import { formatName, getInitials } from '../utils/format';
@@ -236,7 +237,7 @@ function UserMenu() {
   );
 
   const menuItem =
-    'flex w-full cursor-pointer appearance-none items-center gap-2 rounded-[var(--radius-sm)] border-0 bg-transparent px-2 py-1.5 text-left text-sm hover:bg-[color:var(--color-surface-alt)] disabled:cursor-not-allowed disabled:opacity-50';
+    'flex w-full cursor-pointer appearance-none items-center gap-2 rounded-[var(--radius-sm)] border-0 bg-transparent px-2 py-1.5 text-left text-sm hover:bg-[color:var(--color-bg-surface-sunken)] disabled:cursor-not-allowed disabled:opacity-50';
 
   return (
     <SidebarMenuItem ref={containerRef} className="relative">
@@ -262,15 +263,15 @@ function UserMenu() {
           // Opens upward: the tile sits at the bottom of the sidebar.
           className="absolute bottom-full left-0 z-50 mb-2 w-60 overflow-hidden rounded-[var(--radius-md)] border p-1 shadow-lg"
           style={{
-            background: 'var(--color-surface)',
-            borderColor: 'var(--color-border)',
-            boxShadow: 'var(--shadow-lg)',
+            background: 'var(--color-bg-surface)',
+            borderColor: 'var(--color-border-default)',
+            boxShadow: 'var(--elevation-3)',
             color: 'var(--color-text-primary)',
           }}
         >
           <div
             className="flex items-center gap-2 border-b px-2 py-2"
-            style={{ borderColor: 'var(--color-border)' }}
+            style={{ borderColor: 'var(--color-border-default)' }}
           >
             {avatar}
             <span className="flex min-w-0 flex-col leading-tight">
@@ -298,13 +299,13 @@ function UserMenu() {
             </button>
           </div>
 
-          <div className="border-t pt-1" style={{ borderColor: 'var(--color-border)' }}>
+          <div className="border-t pt-1" style={{ borderColor: 'var(--color-border-default)' }}>
             <button
               type="button"
               role="menuitem"
               onClick={handleSignOut}
               className={menuItem}
-              style={{ color: 'var(--color-error)' }}
+              style={{ color: 'var(--color-danger-fg)' }}
             >
               <LuLogOut aria-hidden="true" />
               <span>Log out</span>
@@ -316,12 +317,7 @@ function UserMenu() {
   );
 }
 
-export default function AppSidebar({
-  title = 'Executive Functioning',
-  subtitle,
-  brand = 'EF',
-  navItems = [],
-}) {
+export default function AppSidebar({ subtitle, navItems = [] }) {
   const isPathActive = useIsPathActive();
 
   // Accepts both a flat list and { group, items } sections.
@@ -334,17 +330,15 @@ export default function AppSidebar({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton as={NavLink} to="/" size="lg" tooltip={title}>
-              <span
-                aria-hidden="true"
-                className="bg-sidebar-primary text-sidebar-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold"
-              >
-                {brand}
-              </span>
-              <span className="flex min-w-0 flex-1 flex-col text-left leading-tight">
-                <span className="truncate text-sm font-semibold">{title}</span>
-                {subtitle && <span className="truncate text-xs opacity-70">{subtitle}</span>}
-              </span>
+            {/* One shared brand mark everywhere, rather than each role's own
+                initials+name pair (was "ML"/"My Learning", "TP"/"Teacher
+                Portal", "FP"/"Family Portal") - subtitle still carries the
+                role label underneath it. */}
+            <SidebarMenuButton as={NavLink} to="/" size="lg" tooltip="Home">
+              <BrandMark size="sm" className="min-w-0 flex-1" />
+              {subtitle && (
+                <span className="truncate text-xs opacity-70">{subtitle}</span>
+              )}
               <LuChevronsUpDown aria-hidden="true" className="ml-auto shrink-0 opacity-70" />
             </SidebarMenuButton>
           </SidebarMenuItem>

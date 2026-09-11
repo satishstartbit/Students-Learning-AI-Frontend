@@ -1,18 +1,18 @@
 import { colors, toneColors } from './colors';
 import { typography, fontFamily, fontSize, fontWeight, lineHeight } from './typography';
-import { spacing, radius, layout } from './spacing';
+import { spacing, radius, dimension, layout } from './spacing';
 import { shadows, focusRing, zIndex } from './shadows';
 
 /**
  * Central theme entry point.
  *
- * Token values live in theme/variables.css; the JS modules here expose them
- * by name for JS-applied styles. Import from this file rather than reaching
- * into individual token modules.
+ * Token values live in theme/variables.css/accent.css; the JS modules here
+ * expose them by name for JS-applied styles. Import from this file rather
+ * than reaching into individual token modules.
  */
 export { colors, toneColors };
 export { typography, fontFamily, fontSize, fontWeight, lineHeight };
-export { spacing, radius, layout };
+export { spacing, radius, dimension, layout };
 export { shadows, focusRing, zIndex };
 
 export const theme = {
@@ -21,6 +21,7 @@ export const theme = {
   typography,
   spacing,
   radius,
+  dimension,
   layout,
   shadows,
   focusRing,

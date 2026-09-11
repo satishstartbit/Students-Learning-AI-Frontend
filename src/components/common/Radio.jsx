@@ -2,8 +2,9 @@ import { useId } from 'react';
 import FormError from './FormError';
 
 /**
- * Radio group. Grouped in a fieldset so assistive tech announces the legend
- * with each option.
+ * Radio group: exactly one option from a visible set of two or more. Past
+ * about five options, reach for Select instead. Grouped in a fieldset so
+ * assistive tech announces the legend with each option.
  *
  * @param options - [{ value, label, description, disabled }]
  */
@@ -47,15 +48,21 @@ export function Radio({
           const optionId = `${groupName}-${option.value}`;
           const isDisabled = disabled || option.disabled;
 
+          const rowClass = [
+            'ui-choice',
+            isDisabled && 'ui-choice--disabled',
+            error && 'ui-choice--error',
+          ]
+            .filter(Boolean)
+            .join(' ');
+
           return (
-            <label
-              key={option.value}
-              htmlFor={optionId}
-              className={`ui-choice ${isDisabled ? 'ui-choice--disabled' : ''}`.trim()}
-            >
+            /* The whole row is the 48px hit target, not just the 24px control. */
+            <label key={option.value} htmlFor={optionId} className={rowClass}>
               <input
                 id={optionId}
                 type="radio"
+                className="ui-choice__control"
                 name={groupName}
                 value={option.value}
                 checked={value === option.value}

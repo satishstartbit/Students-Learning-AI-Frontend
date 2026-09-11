@@ -6,6 +6,10 @@ import Input from './Input';
  *
  * Debouncing belongs to the caller (useDebounce) so this component stays a
  * pure controlled input.
+ *
+ * A filter box never validates, so it does not reserve the empty helper line
+ * the way a form field does - that would only add dead space to a toolbar.
+ * Pass a hint or error and the line appears as usual.
  */
 export const SearchInput = forwardRef(function SearchInput(
   { value, onChange, onClear, placeholder = 'Search…', name = 'search', ...props },
@@ -24,6 +28,7 @@ export const SearchInput = forwardRef(function SearchInput(
       value={value}
       onChange={onChange}
       placeholder={placeholder}
+      reserveHelper={false}
       startAdornment={<span aria-hidden="true">🔍</span>}
       endAdornment={
         value ? (

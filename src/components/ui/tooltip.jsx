@@ -73,9 +73,9 @@ export function Tooltip({ label, enabled = true, side = 'right', children, class
                 side === 'right'
                   ? 'translate(0.5rem, -50%)'
                   : 'translate(calc(-100% - 0.5rem), -50%)',
-              background: 'var(--color-text-primary)',
-              color: 'var(--color-surface)',
-              boxShadow: 'var(--shadow-md)',
+              background: 'var(--color-bg-inverse)',
+              color: 'var(--color-text-on-dark)',
+              boxShadow: 'var(--elevation-3)',
             }}
           >
             {label}

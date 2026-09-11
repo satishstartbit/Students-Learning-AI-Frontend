@@ -1,6 +1,6 @@
 import { forwardRef, useId } from 'react';
 import Label from './Label';
-import FormError from './FormError';
+import FieldHelper from './FieldHelper';
 
 /**
  * Single-choice select.
@@ -22,6 +22,7 @@ export const Select = forwardRef(function Select(
     optional = false,
     disabled = false,
     loading = false,
+    reserveHelper = true,
     className = '',
     fieldClassName = '',
     ...rest
@@ -30,17 +31,19 @@ export const Select = forwardRef(function Select(
 ) {
   const generatedId = useId();
   const inputId = id || `${name || 'select'}-${generatedId}`;
-
-  const hintId = hint ? `${inputId}-hint` : undefined;
-  const errorId = error ? `${inputId}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
+  const helperId = hint || error ? `${inputId}-helper` : undefined;
 
   const normalised = options.map((o) =>
     typeof o === 'object' && o !== null ? o : { value: o, label: String(o) }
   );
 
+  // Nothing chosen yet: the placeholder option reads as a placeholder.
+  const showingPlaceholder = value == null || value === '';
+
   return (
-    <div className={`ui-field ${fieldClassName}`.trim()}>
+    <div
+      className={`ui-field ui-field--control ${disabled ? 'ui-field--disabled' : ''} ${fieldClassName}`.trim()}
+    >
       {label && (
         <Label htmlFor={inputId} required={required} optional={optional}>
           {label}
@@ -57,9 +60,11 @@ export const Select = forwardRef(function Select(
         disabled={disabled || loading}
         required={required}
         aria-invalid={Boolean(error)}
-        aria-describedby={describedBy}
+        aria-describedby={helperId}
         aria-busy={loading || undefined}
-        className={`ui-select ${error ? 'ui-select--error' : ''} ${className}`.trim()}
+        className={`ui-select ${showingPlaceholder ? 'ui-select--placeholder' : ''} ${
+          error ? 'ui-select--error' : ''
+        } ${className}`.trim()}
         {...rest}
       >
         <option value="" disabled={required}>
@@ -73,12 +78,7 @@ export const Select = forwardRef(function Select(
         ))}
       </select>
 
-      {hint && !error && (
-        <span id={hintId} className="ui-hint">
-          {hint}
-        </span>
-      )}
-      <FormError id={errorId}>{error}</FormError>
+      <FieldHelper id={helperId} hint={hint} error={error} reserve={reserveHelper} />
     </div>
   );
 });

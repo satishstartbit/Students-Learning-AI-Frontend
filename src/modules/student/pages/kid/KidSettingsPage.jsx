@@ -10,6 +10,7 @@ import { KidAvatar } from '../../components/kid/KidAvatar';
 import { KidButton } from '../../components/kid/KidButton';
 import { GearIcon } from '../../components/kid/KidIcons';
 import { KidPageHeader } from '../../components/kid/KidPageHeader';
+import { KidToggle } from '../../components/kid/KidToggle';
 
 const SECTION = 'rounded-[1.75rem] bg-kid-sheet p-5 shadow-paper sm:p-7';
 
@@ -50,26 +51,12 @@ export default function KidSettingsPage() {
             Turns off moving pictures and confetti.
           </p>
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={calm}
+        <KidToggle
+          checked={calm}
+          onCheckedChange={setCalm}
           aria-labelledby={`${uid}-calm`}
           aria-describedby={`${uid}-calm-help`}
-          onClick={() => setCalm(!calm)}
-          className={cn(
-            'relative h-11 w-[4.5rem] shrink-0 rounded-full border-2 transition-colors',
-            calm ? 'border-kid-teal-deep bg-kid-teal' : 'border-kid-edge bg-kid-paper-deep'
-          )}
-        >
-          <span
-            aria-hidden="true"
-            className={cn(
-              'absolute top-1/2 size-8 -translate-y-1/2 rounded-full bg-white shadow-paper transition-[left]',
-              calm ? 'left-[calc(100%-2.25rem)]' : 'left-1'
-            )}
-          />
-        </button>
+        />
       </section>
 
       <section className={cn(SECTION, 'flex flex-wrap items-center justify-between gap-5')}>

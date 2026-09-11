@@ -7,6 +7,7 @@ import {
   Button,
   Alert,
   Radio,
+  Checkbox,
   SectionHeader,
   EmptyState,
 } from '../../../components/common';
@@ -61,6 +62,7 @@ export default function RegisterPage() {
       phone: '',
       password: '',
       confirmPassword: '',
+      agreeToTerms: false,
     },
     validationSchema: {
       role: [required('Choose how you will use the platform')],
@@ -72,6 +74,7 @@ export default function RegisterPage() {
         required('Confirm your password'),
         matches('password', 'Passwords do not match'),
       ],
+      agreeToTerms: [(value) => (value ? null : 'You must agree to the terms and the privacy policy')],
     },
     async onSubmit(values) {
       const result = await authService.register({
@@ -110,67 +113,79 @@ export default function RegisterPage() {
   const role = form.values.role;
 
   return (
-    <Card title="Create an account" subtitle="Tell us who you are">
-      {form.submitError && (
-        <Alert variant="error" className="ui-field">
-          {form.submitError}
-        </Alert>
-      )}
+    <>
+      <Card title="Let's get you set up" subtitle="It takes about two minutes.">
+        {form.submitError && (
+          <Alert variant="error" className="ui-field">
+            {form.submitError}
+          </Alert>
+        )}
 
-      <form onSubmit={form.handleSubmit} noValidate>
-        <Radio
-          name="role"
-          label="I am a"
-          options={ROLE_OPTIONS}
-          value={role}
-          onChange={form.handleChange}
-          error={form.touched.role ? form.errors.role : null}
-          required
-        />
+        <form onSubmit={form.handleSubmit} noValidate>
+          <Radio
+            name="role"
+            label="I am a"
+            options={ROLE_OPTIONS}
+            value={role}
+            onChange={form.handleChange}
+            error={form.touched.role ? form.errors.role : null}
+            required
+          />
 
-        <SectionHeader title="Your details" as="h3" />
+          <SectionHeader title="Your details" as="h3" />
 
-        <Input label="First name" required {...form.getFieldProps('firstName')} />
-        <Input label="Last name" {...form.getFieldProps('lastName')} />
-        <Input
-          label="Email"
-          type="email"
-          autoComplete="email"
-          required
-          {...form.getFieldProps('email')}
-        />
-        <Input label="Phone" type="tel" {...form.getFieldProps('phone')} />
+          <Input label="First name" required {...form.getFieldProps('firstName')} />
+          <Input label="Last name" {...form.getFieldProps('lastName')} />
+          <Input
+            label="Email"
+            type="email"
+            autoComplete="email"
+            required
+            {...form.getFieldProps('email')}
+          />
+          <Input label="Phone" type="tel" {...form.getFieldProps('phone')} />
 
-        <PasswordInput
-          label="Password"
-          autoComplete="new-password"
-          hint="At least 8 characters, with upper case, lower case and a number"
-          required
-          {...form.getFieldProps('password')}
-        />
-        <PasswordInput
-          label="Confirm password"
-          autoComplete="new-password"
-          required
-          {...form.getFieldProps('confirmPassword')}
-        />
+          <PasswordInput
+            label="Create a password"
+            autoComplete="new-password"
+            hint="At least 8 characters."
+            required
+            {...form.getFieldProps('password')}
+          />
+          <PasswordInput
+            label="Confirm password"
+            autoComplete="new-password"
+            required
+            {...form.getFieldProps('confirmPassword')}
+          />
 
-        <SectionHeader
-          title={`About you as a ${role.toLowerCase()}`}
-          description="All optional - you can fill these in later"
-          as="h3"
-        />
+          <SectionHeader
+            title={`About you as a ${role.toLowerCase()}`}
+            description="All optional - you can fill these in later"
+            as="h3"
+          />
 
-        <RoleProfileFields role={role} getProps={form.getFieldProps} />
+          <RoleProfileFields role={role} getProps={form.getFieldProps} />
 
-        <Button type="submit" fullWidth loading={form.isSubmitting}>
-          Create account
-        </Button>
-      </form>
+          {/* Plain text, not links - there's no terms/privacy page in this app yet
+              to point to; add real links here once one exists. */}
+          <Checkbox
+            name="agreeToTerms"
+            label="I agree to the terms and the privacy policy"
+            checked={form.values.agreeToTerms}
+            onChange={form.handleChange}
+            error={form.touched.agreeToTerms ? form.errors.agreeToTerms : null}
+          />
 
-      <p style={{ marginTop: 'var(--spacing-lg)', fontSize: 'var(--font-size-sm)' }}>
+          <Button type="submit" fullWidth loading={form.isSubmitting}>
+            Create account
+          </Button>
+        </form>
+      </Card>
+
+      <p className="ui-shell__public-footer">
         Already have an account? <Link to="/login">Sign in</Link>
       </p>
-    </Card>
+    </>
   );
 }

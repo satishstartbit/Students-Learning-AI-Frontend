@@ -1,9 +1,9 @@
 import { useId } from 'react';
 import Label from './Label';
-import FormError from './FormError';
+import FieldHelper from './FieldHelper';
 
 /**
- * Wraps a control with its label, hint and error, and wires up the
+ * Wraps a control with its label, helper line and error, and wires up the
  * accessibility attributes so each input does not have to.
  *
  * Children may be a node, or a function receiving { id, describedBy, invalid }.
@@ -11,6 +11,9 @@ import FormError from './FormError';
  *   <FormField label="Email" error={errors.email}>
  *     {(props) => <input {...props} />}
  *   </FormField>
+ *
+ * Pass `disabled` when the control inside is disabled, so the label and helper
+ * line mute with it.
  */
 export function FormField({
   label,
@@ -18,21 +21,22 @@ export function FormField({
   error,
   required = false,
   optional = false,
+  disabled = false,
+  reserveHelper = true,
   htmlFor,
   className = '',
   children,
 }) {
   const generatedId = useId();
   const id = htmlFor || generatedId;
+  const helperId = hint || error ? `${id}-helper` : undefined;
 
-  const hintId = hint ? `${id}-hint` : undefined;
-  const errorId = error ? `${id}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
-
-  const controlProps = { id, 'aria-describedby': describedBy, 'aria-invalid': Boolean(error) };
+  const controlProps = { id, 'aria-describedby': helperId, 'aria-invalid': Boolean(error) };
 
   return (
-    <div className={`ui-field ${className}`.trim()}>
+    <div
+      className={`ui-field ui-field--control ${disabled ? 'ui-field--disabled' : ''} ${className}`.trim()}
+    >
       {label && (
         <Label htmlFor={id} required={required} optional={optional}>
           {label}
@@ -41,13 +45,7 @@ export function FormField({
 
       {typeof children === 'function' ? children(controlProps) : children}
 
-      {hint && !error && (
-        <span id={hintId} className="ui-hint">
-          {hint}
-        </span>
-      )}
-
-      <FormError id={errorId}>{error}</FormError>
+      <FieldHelper id={helperId} hint={hint} error={error} reserve={reserveHelper} />
     </div>
   );
 }

@@ -36,7 +36,7 @@ function PlanCard({ plan, selected, onSelect }) {
   return (
     <Card
       className="ui-field"
-      style={selected ? { borderColor: 'var(--color-primary)', borderWidth: 2 } : undefined}
+      style={selected ? { borderColor: 'var(--accent-base)', borderWidth: 2 } : undefined}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
@@ -362,7 +362,7 @@ export default function ParentSubscriptionPage() {
                   <span>{formatCurrency(quote?.subtotal ?? selectedPlan.price, selectedPlan.currency)}</span>
                 </div>
                 {quote?.discount > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-success)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-success-fg)' }}>
                     <span>Discount {quote.coupon ? `(${quote.coupon.code})` : ''}</span>
                     <span>−{formatCurrency(quote.discount, selectedPlan.currency)}</span>
                   </div>
@@ -375,7 +375,7 @@ export default function ParentSubscriptionPage() {
                     fontSize: '1.1rem',
                     marginTop: 'var(--spacing-sm)',
                     paddingTop: 'var(--spacing-sm)',
-                    borderTop: '1px solid var(--color-border)',
+                    borderTop: '1px solid var(--color-border-default)',
                   }}
                 >
                   <span>Total due today</span>

@@ -1,4 +1,5 @@
 @import './theme/variables.css';
+@import './theme/accent.css';
 
 /**
  * Global reset.
@@ -31,7 +32,7 @@ body {
   font-family: var(--font-family-base);
   font-size: var(--font-size-md);
   line-height: var(--line-height-base);
-  background: var(--color-background);
+  background: var(--color-bg-canvas);
   color: var(--color-text-primary);
 }
 
@@ -50,11 +51,11 @@ h4 {
 }
 
 a {
-  color: var(--color-primary);
+  color: var(--accent-base);
 }
 
 /* Visible focus for keyboard users everywhere. */
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--accent-ring);
   outline-offset: 2px;
 }

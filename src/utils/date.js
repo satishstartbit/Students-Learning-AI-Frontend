@@ -83,6 +83,24 @@ export function getDateKey(value = new Date(), { timeZone } = {}) {
   return parts ? `${parts.year}-${parts.month}-${parts.day}` : '';
 }
 
+/**
+ * Formats a calendar day key ("2026-10-14", as getDateKey returns). A day
+ * is not an instant, so there is no timezone to convert through: parsing
+ * "2026-10-14" as a timestamp would land on Oct 13 anywhere west of UTC.
+ * Use this for calendar and planner cells.
+ */
+export function formatDateKey(dateKey, { locale, ...options } = {}) {
+  const [year, month, day] = String(dateKey ?? '').split('-').map(Number);
+  if (!year || !month || !day) return '';
+  return new Intl.DateTimeFormat(locale ?? getActiveLocale(), {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    ...options,
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+}
+
 /** Long-form Canadian date: "September 10, 2026". */
 export function formatLongDate(value, options = {}) {
   return formatDate(value, { month: 'long', ...options });
@@ -190,6 +208,7 @@ export default {
   formatLongDate,
   getHourInTimezone,
   getDateKey,
+  formatDateKey,
   toDateInputValue,
   toTimeInputValue,
   daysUntil,

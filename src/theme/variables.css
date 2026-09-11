@@ -4,49 +4,106 @@
 
    The JS modules in src/theme/ reference these variables by name rather
    than repeating the values, so a token is defined in exactly one place.
+
+   Accent (the 5 selectable brand families - Ocean/Sunset/Forest/Lavender/
+   Bubblegum) lives in the separate theme/accent.css, imported right after
+   this file - kept apart so the largest single addition in this migration
+   isn't sitting in the file every session is most likely to touch.
    ===================================================================== */
 
 :root {
   /*
-   * Palette taken from the platform design: deep teal actions on a soft
-   * off-white ground, white cards, and a blue tint for selected rows.
+   * Warm-neutral palette: Ocean/700 accent (see accent.css) on a warm
+   * off-white ground, white cards, warm-neutral text/borders rather than
+   * cool grays. Every pair below is verified >= 4.5:1 (text/icon) or
+   * >= 3:1 (non-text UI, e.g. border-control/warning-border).
    */
 
-  /* --- Brand ------------------------------------------------------- */
-  --color-primary: #0f766e;
-  --color-primary-hover: #115e59;
-  --color-primary-soft: #e6f4f1;
+  /* --- Surfaces ------------------------------------------------------ */
+  --color-bg-canvas: #fbf9f7;
+  --color-bg-surface: #ffffff;
+  --color-bg-surface-raised: #ffffff; /* light mode conveys "raised" via elevation, not a surface step */
+  --color-bg-surface-sunken: #f1ece7;
+  --color-bg-inverse: #2a2521; /* reuses text-primary - formalizes what Tooltip already did manually */
+  --color-bg-scrim: rgba(38, 30, 20, 0.5);
 
+  /* --- Text ------------------------------------------------------------
+   * text-on-dark is for content placed on a permanently-dark surface
+   * regardless of app mode (e.g. the Super Admin sidebar) - fixed white,
+   * does not redefine in the dark blocks below. text-inverse is the
+   * genuinely mode-flipping token (white in light, near-black in dark).
+   */
+  --color-text-primary: #2a2521;
+  --color-text-secondary: #67605b;
+  --color-text-tertiary: #948c85; /* placeholders, disabled-control text */
+  --color-text-disabled: #b3aaa2;
+  --color-text-on-dark: #ffffff;
+  --color-text-inverse: #ffffff;
+
+  /* --- Borders --------------------------------------------------------- */
+  --color-border-default: #e8e1da;
+  --color-border-strong: #d3c7bc;
+  /* Outline of an unselected checkbox/radio - kept >= 3:1 against the surface. */
+  --color-border-control: #8a8079;
+
+  /* --- Icons (aliases - no component separates icon colour from text) - */
+  --color-icon-primary: var(--color-text-primary);
+  --color-icon-secondary: var(--color-text-secondary);
+  --color-icon-disabled: var(--color-text-disabled);
+  --color-icon-inverse: var(--color-text-on-dark);
+
+  /* --- Interaction states ------------------------------------------- */
+  --color-state-hover-overlay: rgba(40, 32, 20, 0.04);
+  --color-state-pressed-overlay: rgba(40, 32, 20, 0.08);
+  --color-state-selected-bg: var(--accent-soft);
+  --color-state-disabled-bg: var(--color-bg-surface-sunken);
+  --color-state-disabled-fg: var(--color-text-disabled);
+
+  /* --- Status: success/warning/danger/info, each bg/fg/border/solid/on-solid.
+   * Solids invert by scheme - light: dark solid + white on-solid; dark:
+   * bright solid + a shared warm near-black on-solid. Both clear 4.5:1. */
+  --color-success-bg: #e3f3e8;
+  --color-success-fg: #13752f;
+  --color-success-border: #8fcba3;
+  --color-success-solid: #13752f;
+  --color-success-on-solid: #ffffff;
+
+  --color-warning-bg: #fef3c7;
+  --color-warning-fg: #92400e;
+  /* Outline amber - lighter than -fg but still >= 3:1 against -bg, since the
+     outline is what marks the state. */
+  --color-warning-border: #a5610a;
+  --color-warning-solid: #92400e;
+  --color-warning-on-solid: #ffffff;
+
+  /* "danger" (not "error") to match Badge's variant prop, which already used
+     this name before the CSS token did. */
+  --color-danger-bg: #fdecef;
+  --color-danger-fg: #be123c;
+  --color-danger-hover: #9f1239; /* internal use (Button danger hover) - not one of the 5 status parts */
+  --color-danger-border: #e8a0b3;
+  --color-danger-solid: #be123c;
+  --color-danger-on-solid: #ffffff;
+
+  --color-info-bg: #e8f2f9;
+  --color-info-fg: #0369a1;
+  --color-info-border: #a8cfe3;
+  --color-info-solid: #0369a1;
+  --color-info-on-solid: #ffffff;
+
+  /* --- Secondary -------------------------------------------------------
+   * Its own hue, unspecified by the accent spec - kept apart from
+   * accent/base so a lower-emphasis highlight never reads as the one
+   * primary action colour. Not part of the new token vocabulary below,
+   * so it keeps its pre-existing flat name rather than a --color-bg-x
+   * or --accent-x style path.
+   */
   --color-secondary: #2f6feb;
   --color-secondary-hover: #2559c4;
   --color-secondary-soft: #eaf2fb;
 
-  /* --- Surfaces ---------------------------------------------------- */
-  --color-background: #f6f7f9;
-  --color-surface: #ffffff;
-  --color-surface-alt: #f1f3f6;
-
-  /* --- Text -------------------------------------------------------- */
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-inverse: #ffffff;
-
-  /* --- Borders ----------------------------------------------------- */
-  --color-border: #e5e7eb;
-  --color-border-strong: #d1d5db;
-
-  /* --- Status ------------------------------------------------------ */
-  --color-success: #15803d;
-  --color-success-soft: #e8f5ec;
-  --color-warning: #b45309;
-  --color-warning-soft: #fdf3e5;
-  --color-error: #be123c;
-  --color-error-soft: #fdecef;
-  --color-info: #0369a1;
-  --color-info-soft: #e8f2f9;
-
-  /* --- Focus ------------------------------------------------------- */
-  --focus-ring: 0 0 0 3px rgba(15, 118, 110, 0.3);
+  /* --- Focus ----------------------------------------------------------- */
+  --focus-ring: 0 0 0 3px rgba(11, 114, 133, 0.3);
   --focus-ring-error: 0 0 0 3px rgba(190, 18, 60, 0.28);
 
   /* --- Typography -------------------------------------------------- */
@@ -68,109 +125,260 @@
   --line-height-tight: 1.25;
   --line-height-base: 1.5;
 
-  /* --- Radius ------------------------------------------------------ */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-pill: 999px;
+  /* --- Radius -------------------------------------------------------- */
+  --radius-none: 0px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-full: 9999px;
 
-  /* --- Shadows ----------------------------------------------------- */
-  /* The design uses hairline borders and very soft lift, not heavy shadow. */
-  --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.05);
-  --shadow-md: 0 4px 14px rgba(17, 24, 39, 0.08);
-  --shadow-lg: 0 18px 44px rgba(17, 24, 39, 0.16);
+  /* --- Elevation (shadow) ---------------------------------------------
+   * Warm brown-black (matches --shadow-sticky, already spec-compliant),
+   * not pure black. 1=resting cards/list rows, 2=raised/hover cards,
+   * 3=dropdown/popover/tooltip, 4=modal/sheet/scrim. */
+  --elevation-1: 0 1px 2px rgba(46, 35, 20, 0.05);
+  --elevation-2: 0 4px 14px rgba(46, 35, 20, 0.08);
+  --elevation-3: 0 8px 24px rgba(46, 35, 20, 0.12);
+  --elevation-4: 0 18px 44px rgba(46, 35, 20, 0.16);
 
-  /* --- Spacing ----------------------------------------------------- */
+  /* --- Spacing --------------------------------------------------------
+   * NOTE: --spacing-lg changed value (16px -> 20px) in this migration.
+   * The old 16px step is now --spacing-base. Every previous
+   * var(--spacing-lg) reference was rewritten to var(--spacing-base) in
+   * the same pass that introduced this new scale - the two must never be
+   * out of sync. */
+  --spacing-0: 0px;
+  --spacing-2xs: 2px;
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 12px;
-  --spacing-lg: 16px;
+  --spacing-base: 16px;
+  --spacing-lg: 20px;
   --spacing-xl: 24px;
   --spacing-2xl: 32px;
+  --spacing-3xl: 40px;
+  --spacing-4xl: 48px;
+  --spacing-5xl: 64px;
+  --spacing-6xl: 96px;
+
+  /* --- Dimensions ------------------------------------------------------
+   * Generic scale for icons/controls/avatars. --btn-x and --field-x below
+   * are their own already-shipped bespoke scale - not forced onto this one.
+   */
+  --icon-size-xs: 16px;
+  --icon-size-sm: 20px;
+  --icon-size-md: 24px;
+  --icon-size-lg: 32px;
+  --control-height-sm: 32px;
+  --control-height-md: 40px;
+  --control-height-lg: 48px;
+  --control-height-touch-target: 48px;
+  --avatar-size-xs: 24px;
+  --avatar-size-sm: 32px;
+  --avatar-size-md: 40px;
+  --avatar-size-lg: 56px;
+  --avatar-size-xl: 80px;
+
+  /* --- Controls (legacy names, still used by Checkbox/Radio) ---------- */
+  --size-control: 24px; /* checkbox / radio box */
+  --size-touch-target: 48px; /* minimum hit area of a control row */
+
+  /* --- Button ------------------------------------------------------ */
+  /* Md and Lg meet the preferred touch target; Sm is the 44px WCAG 2.5.5 minimum. */
+  --btn-height-sm: 44px;
+  --btn-height-md: var(--size-touch-target);
+  --btn-height-lg: 60px;
+  --btn-padding-x-sm: 16px;
+  --btn-padding-x-md: 24px;
+  --btn-padding-x-lg: 32px;
+  --btn-font-size-sm: 14px;
+  --btn-font-size-md: 16px;
+  --btn-font-size-lg: 18px;
+  --btn-icon-size-sm: 16px;
+  --btn-icon-size-md: 18px;
+  --btn-icon-size-lg: 20px;
+  --btn-radius-sm: 8px;
+  --btn-radius-md: 10px;
+  --btn-radius-lg: 12px;
+
+  /* --- Field ------------------------------------------------------- */
+  /* Text Field: 48px at rest, the same touch target as an Md button. The
+     helper line under a field is always rendered, so its line box counts
+     towards the height every form row reserves. */
+  --field-height: var(--size-touch-target);
+  --field-min-height-multiline: 120px;
+  --field-padding-x: 16px;
+  --field-padding-y-multiline: 12px;
+  --field-font-size: 16px;
+  --field-radius: 10px;
+  --field-gap: 8px;
+  --field-helper-font-size: 12px;
+  --field-helper-line-height: 16px;
+
+  /*
+   * --- Sticky note ---------------------------------------------------
+   * Six paper tones, chosen by the student - decoration, not meaning, so
+   * these never carry status and are never referenced from anywhere status
+   * is decided. Fixed, not theme-reactive: a Post-it keeps its colour
+   * regardless of the room's lighting, so these hold the same values in
+   * dark mode rather than following --color-bg-surface/--color-text-primary.
+   * "lavender", not "purple" - see the migration note in activeContext.md
+   * for why the name was kept.
+   */
+  --sticky-ink: #34302a;
+  --sticky-yellow: #fdedab;
+  --sticky-yellow-border: #e8cf5e;
+  --sticky-pink: #f7cddb;
+  --sticky-pink-border: #e893ae;
+  --sticky-blue: #c3ddf5;
+  --sticky-blue-border: #85b3e0;
+  --sticky-green: #cdeac0;
+  --sticky-green-border: #8fc975;
+  --sticky-lavender: #ddd4f5;
+  --sticky-lavender-border: #ac97e0;
+  --sticky-orange: #fbdab0;
+  --sticky-orange-border: #eaa855;
+  /* Elevation/Sticky - tighter and warmer than --elevation-2, so paper reads
+     as sitting just above the board rather than floating a card's height. */
+  --shadow-sticky: 0 1px 0 rgba(46, 35, 20, 0.06), 0 8px 16px -9px rgba(46, 35, 20, 0.45);
+  --shadow-sticky-lift: 0 2px 0 rgba(46, 35, 20, 0.07), 0 14px 22px -10px rgba(46, 35, 20, 0.5);
 
   /* --- Layout ------------------------------------------------------ */
   --layout-sidebar-width: 236px;
   --layout-sidebar-width-collapsed: 64px;
   --layout-navbar-height: 58px;
 
-  /* --- Elevation --------------------------------------------------- */
+  /* --- Z-index ---------------------------------------------------------
+   * --z-dropdown: the non-portaled Dropdown.jsx menu only.
+   * --z-modal: Modal & Drawer's shared overlay (consolidates the old,
+   *   identically-valued --z-drawer and the dead --z-modal into one token).
+   * --z-popover: portaled MultiSelect/SearchableSelect menus, Tooltip, and
+   *   the full-page loader takeover - tokenizes the value these already,
+   *   deliberately used (see the .ui-loader--fullscreen/MultiSelect/
+   *   SearchableSelect comments) so a combobox opened inside a dialog keeps
+   *   rendering above it. Do not renumber this below --z-modal. */
   --z-dropdown: 40;
-  --z-drawer: 800;
   --z-modal: 800;
+  --z-popover: 900;
   --z-toast: 1000;
 }
 
 /*
  * Dark palette.
  *
- * Only the colour tokens are redefined - sizing, typography and spacing are
- * theme-independent. themeSlice writes data-theme onto <html>; with no
- * explicit choice the OS preference applies.
+ * Only the colour tokens are redefined - sizing, typography, spacing,
+ * radius and z-index are theme-independent. themeSlice writes data-theme
+ * onto <html>; with no explicit choice the OS preference applies.
+ * text-on-dark is intentionally NOT redefined here (see its definition
+ * above). Accent's own dark values live in accent.css.
  */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --color-primary: #5eead4;
-    --color-primary-hover: #7ff0dd;
-    --color-primary-soft: #10312e;
+    --color-bg-canvas: #17191c;
+    --color-bg-surface: #1f2226;
+    --color-bg-surface-raised: #262a2f; /* one clean step up from surface, since dark shadows read as "nearly invisible" */
+    --color-bg-surface-sunken: #262a2f;
+    --color-bg-inverse: #f6f7f9;
+    --color-bg-scrim: rgba(10, 8, 6, 0.6);
+
+    --color-text-primary: #efeae6;
+    --color-text-secondary: #aca49d;
+    --color-text-tertiary: #7d766f;
+    --color-text-disabled: #6b655f;
+    --color-text-inverse: #14110d;
+
+    --color-border-default: #33302c;
+    --color-border-strong: #47423c;
+    --color-border-control: #8b8580;
+
+    --color-success-bg: #163a22;
+    --color-success-fg: #6ed495;
+    --color-success-border: #2f6b45;
+    --color-success-solid: #6ed495;
+    --color-success-on-solid: #14110d;
+
+    --color-warning-bg: #3a2a12;
+    --color-warning-fg: #f0b96b;
+    --color-warning-border: #c98a3e;
+    --color-warning-solid: #f0b96b;
+    --color-warning-on-solid: #14110d;
+
+    --color-danger-bg: #3b1519;
+    --color-danger-fg: #f5949a;
+    --color-danger-hover: #f7abb0;
+    --color-danger-border: #7a3438;
+    --color-danger-solid: #f5949a;
+    --color-danger-on-solid: #14110d;
+
+    --color-info-bg: #142c37;
+    --color-info-fg: #63b8dd;
+    --color-info-border: #2f5c6e;
+    --color-info-solid: #63b8dd;
+    --color-info-on-solid: #14110d;
 
     --color-secondary: #7ea9f5;
     --color-secondary-hover: #9bbdf8;
     --color-secondary-soft: #16233c;
 
-    --color-background: #12151c;
-    --color-surface: #1a1f29;
-    --color-surface-alt: #222836;
-
-    --color-text-primary: #e9edf3;
-    --color-text-secondary: #9aa4b4;
-
-    --color-border: #2f3644;
-    --color-border-strong: #414a5c;
-
-    --color-success: #55c98a;
-    --color-success-soft: #16301f;
-    --color-warning: #e0a353;
-    --color-warning-soft: #34260f;
-    --color-error: #f07a7f;
-    --color-error-soft: #3a1c1e;
-    --color-info: #63b8dd;
-    --color-info-soft: #142c37;
-
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+    --elevation-1: 0 1px 2px rgba(20, 16, 12, 0.15);
+    --elevation-2: 0 4px 14px rgba(20, 16, 12, 0.2);
+    --elevation-3: 0 8px 24px rgba(20, 16, 12, 0.22);
+    --elevation-4: 0 18px 44px rgba(20, 16, 12, 0.25);
   }
 }
 
 :root[data-theme='dark'] {
-  --color-primary: #5eead4;
-  --color-primary-hover: #7ff0dd;
-  --color-primary-soft: #10312e;
+  --color-bg-canvas: #17191c;
+  --color-bg-surface: #1f2226;
+  --color-bg-surface-raised: #262a2f;
+  --color-bg-surface-sunken: #262a2f;
+  --color-bg-inverse: #f6f7f9;
+  --color-bg-scrim: rgba(10, 8, 6, 0.6);
+
+  --color-text-primary: #efeae6;
+  --color-text-secondary: #aca49d;
+  --color-text-tertiary: #7d766f;
+  --color-text-disabled: #6b655f;
+  --color-text-inverse: #14110d;
+
+  --color-border-default: #33302c;
+  --color-border-strong: #47423c;
+  --color-border-control: #8b8580;
+
+  --color-success-bg: #163a22;
+  --color-success-fg: #6ed495;
+  --color-success-border: #2f6b45;
+  --color-success-solid: #6ed495;
+  --color-success-on-solid: #14110d;
+
+  --color-warning-bg: #3a2a12;
+  --color-warning-fg: #f0b96b;
+  --color-warning-border: #c98a3e;
+  --color-warning-solid: #f0b96b;
+  --color-warning-on-solid: #14110d;
+
+  --color-danger-bg: #3b1519;
+  --color-danger-fg: #f5949a;
+  --color-danger-hover: #f7abb0;
+  --color-danger-border: #7a3438;
+  --color-danger-solid: #f5949a;
+  --color-danger-on-solid: #14110d;
+
+  --color-info-bg: #142c37;
+  --color-info-fg: #63b8dd;
+  --color-info-border: #2f5c6e;
+  --color-info-solid: #63b8dd;
+  --color-info-on-solid: #14110d;
 
   --color-secondary: #7ea9f5;
   --color-secondary-hover: #9bbdf8;
   --color-secondary-soft: #16233c;
 
-  --color-background: #12151c;
-  --color-surface: #1a1f29;
-  --color-surface-alt: #222836;
-
-  --color-text-primary: #e9edf3;
-  --color-text-secondary: #9aa4b4;
-
-  --color-border: #2f3644;
-  --color-border-strong: #414a5c;
-
-  --color-success: #55c98a;
-  --color-success-soft: #16301f;
-  --color-warning: #e0a353;
-  --color-warning-soft: #34260f;
-  --color-error: #f07a7f;
-  --color-error-soft: #3a1c1e;
-  --color-info: #63b8dd;
-  --color-info-soft: #142c37;
-
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+  --elevation-1: 0 1px 2px rgba(20, 16, 12, 0.15);
+  --elevation-2: 0 4px 14px rgba(20, 16, 12, 0.2);
+  --elevation-3: 0 8px 24px rgba(20, 16, 12, 0.22);
+  --elevation-4: 0 18px 44px rgba(20, 16, 12, 0.25);
 }

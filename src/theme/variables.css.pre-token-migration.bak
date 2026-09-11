@@ -1,0 +1,286 @@
+/* =====================================================================
+   Theme variables - the single source of truth for every design token.
+   Imported once by components/common/common.css.
+
+   The JS modules in src/theme/ reference these variables by name rather
+   than repeating the values, so a token is defined in exactly one place.
+   ===================================================================== */
+
+:root {
+  /*
+   * Brand: Ocean theme - Ocean/700 accent on a warm off-white ground, white
+   * cards, warm-neutral text and borders rather than cool grays. Every pair
+   * below is verified >= 4.5:1 (text/icon) or >= 3:1 (non-text UI, e.g.
+   * border-control/warning-border) - see the brand rollout note in
+   * activeContext.md for the exact pairs checked.
+   */
+
+  /* --- Brand --------------------------------------------------------
+   * accent/base = Ocean/700. Never render text directly in this colour -
+   * pair it with --color-on-primary on a solid fill, or use --color-primary
+   * as an icon/border accent against the neutral text tokens instead.
+   */
+  --color-primary: #0b7285;
+  --color-primary-hover: #095f70;
+  --color-primary-soft: #e3f2f6;
+  /* Label/icon colour on a solid primary fill (design token accent/on). */
+  --color-on-primary: #ffffff;
+
+  /* Secondary is its own hue (unspecified by the brand spec) - kept apart
+     from accent/base so a lower-emphasis highlight never reads as the one
+     primary action colour. */
+  --color-secondary: #2f6feb;
+  --color-secondary-hover: #2559c4;
+  --color-secondary-soft: #eaf2fb;
+
+  /* --- Surfaces ---------------------------------------------------- */
+  --color-background: #fbf9f7;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f1ece7;
+
+  /* --- Text -------------------------------------------------------- */
+  --color-text-primary: #2a2521;
+  --color-text-secondary: #67605b;
+  /* Placeholders and the muted text of a disabled control. */
+  --color-text-tertiary: #948c85;
+  --color-text-inverse: #ffffff;
+  --color-text-disabled: #b3aaa2;
+
+  /* --- Borders ----------------------------------------------------- */
+  --color-border: #e8e1da;
+  --color-border-strong: #d3c7bc;
+  /* Outline of an unselected checkbox/radio - kept >= 3:1 against the surface. */
+  --color-border-control: #8a8079;
+
+  /* --- Status ------------------------------------------------------ */
+  --color-success: #13752f;
+  --color-success-soft: #e3f3e8;
+  --color-warning: #92400e;
+  --color-warning-soft: #fef3c7;
+  /*
+   * Outline amber - lighter than --color-warning (the text amber) but still
+   * >= 3:1 against --color-warning-soft, since the outline is what marks the
+   * state.
+   */
+  --color-warning-border: #a5610a;
+  --color-error: #be123c;
+  --color-error-hover: #9f1239;
+  --color-error-soft: #fdecef;
+  --color-on-error: #ffffff;
+  --color-info: #0369a1;
+  --color-info-soft: #e8f2f9;
+
+  /* --- Focus ------------------------------------------------------- */
+  --focus-ring: 0 0 0 3px rgba(11, 114, 133, 0.3);
+  --focus-ring-error: 0 0 0 3px rgba(190, 18, 60, 0.28);
+  /* accent/ring - the 2px focus border of a text field, and nowhere else. */
+  --color-ring: #0b7285;
+
+  /* --- Typography -------------------------------------------------- */
+  --font-family-base: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 26px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-base: 1.5;
+
+  /* --- Radius ------------------------------------------------------ */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  /* --- Shadows ----------------------------------------------------- */
+  /* The design uses hairline borders and very soft lift, not heavy shadow. */
+  --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.05);
+  --shadow-md: 0 4px 14px rgba(17, 24, 39, 0.08);
+  --shadow-lg: 0 18px 44px rgba(17, 24, 39, 0.16);
+
+  /* --- Spacing ----------------------------------------------------- */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+
+  /* --- Controls ---------------------------------------------------- */
+  --size-control: 24px; /* checkbox / radio box */
+  --size-touch-target: 48px; /* minimum hit area of a control row */
+
+  /* --- Button ------------------------------------------------------ */
+  /* Md and Lg meet the preferred touch target; Sm is the 44px WCAG 2.5.5 minimum. */
+  --btn-height-sm: 44px;
+  --btn-height-md: var(--size-touch-target);
+  --btn-height-lg: 60px;
+  --btn-padding-x-sm: 16px;
+  --btn-padding-x-md: 24px;
+  --btn-padding-x-lg: 32px;
+  --btn-font-size-sm: 14px;
+  --btn-font-size-md: 16px;
+  --btn-font-size-lg: 18px;
+  --btn-icon-size-sm: 16px;
+  --btn-icon-size-md: 18px;
+  --btn-icon-size-lg: 20px;
+  --btn-radius-sm: 8px;
+  --btn-radius-md: 10px;
+  --btn-radius-lg: 12px;
+
+  /* --- Field ------------------------------------------------------- */
+  /* Text Field: 48px at rest, the same touch target as an Md button. The
+     helper line under a field is always rendered, so its line box counts
+     towards the height every form row reserves. */
+  --field-height: var(--size-touch-target);
+  --field-min-height-multiline: 120px;
+  --field-padding-x: 16px;
+  --field-padding-y-multiline: 12px;
+  --field-font-size: 16px;
+  --field-radius: 10px;
+  --field-gap: 8px;
+  --field-helper-font-size: 12px;
+  --field-helper-line-height: 16px;
+
+  /*
+   * --- Sticky note ---------------------------------------------------
+   * Six paper tones, chosen by the student - decoration, not meaning, so
+   * these never carry status and are never referenced from anywhere status
+   * is decided. Fixed, not theme-reactive: a Post-it keeps its colour
+   * regardless of the room's lighting, so these hold the same values in
+   * dark mode rather than following --color-surface/--color-text-primary.
+   */
+  --sticky-ink: #34302a;
+  --sticky-yellow: #fdedab;
+  --sticky-yellow-edge: #e8cf5e;
+  --sticky-pink: #f7cddb;
+  --sticky-pink-edge: #e893ae;
+  --sticky-blue: #c3ddf5;
+  --sticky-blue-edge: #85b3e0;
+  --sticky-green: #cdeac0;
+  --sticky-green-edge: #8fc975;
+  --sticky-lavender: #ddd4f5;
+  --sticky-lavender-edge: #ac97e0;
+  --sticky-orange: #fbdab0;
+  --sticky-orange-edge: #eaa855;
+  /* Elevation/Sticky - tighter and warmer than --shadow-md, so paper reads
+     as sitting just above the board rather than floating a card's height. */
+  --shadow-sticky: 0 1px 0 rgba(46, 35, 20, 0.06), 0 8px 16px -9px rgba(46, 35, 20, 0.45);
+  --shadow-sticky-lift: 0 2px 0 rgba(46, 35, 20, 0.07), 0 14px 22px -10px rgba(46, 35, 20, 0.5);
+
+  /* --- Layout ------------------------------------------------------ */
+  --layout-sidebar-width: 236px;
+  --layout-sidebar-width-collapsed: 64px;
+  --layout-navbar-height: 58px;
+
+  /* --- Elevation --------------------------------------------------- */
+  --z-dropdown: 40;
+  --z-drawer: 800;
+  --z-modal: 800;
+  --z-toast: 1000;
+}
+
+/*
+ * Dark palette.
+ *
+ * Only the colour tokens are redefined - sizing, typography and spacing are
+ * theme-independent. themeSlice writes data-theme onto <html>; with no
+ * explicit choice the OS preference applies.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-primary: #5fd6e8;
+    --color-primary-hover: #7ee1ef;
+    --color-primary-soft: #123138;
+    --color-on-primary: #07272c;
+
+    --color-secondary: #7ea9f5;
+    --color-secondary-hover: #9bbdf8;
+    --color-secondary-soft: #16233c;
+
+    /* Warm-dark, not cool-dark - the same brand ground as the light canvas,
+       just inverted, rather than a generic slate. */
+    --color-background: #17191c;
+    --color-surface: #1f2226;
+    --color-surface-alt: #262a2f;
+
+    --color-text-primary: #efeae6;
+    --color-text-secondary: #aca49d;
+    --color-text-tertiary: #7d766f;
+    --color-text-disabled: #6b655f;
+
+    --color-border: #33302c;
+    --color-border-strong: #47423c;
+    --color-border-control: #8b8580;
+
+    --color-success: #6ed495;
+    --color-success-soft: #163a22;
+    --color-warning: #f0b96b;
+    --color-warning-soft: #3a2a12;
+    --color-warning-border: #c98a3e;
+    --color-error: #f5949a;
+    --color-error-hover: #f7abb0;
+    --color-error-soft: #3b1519;
+    --color-on-error: #3a0b10;
+    --color-info: #63b8dd;
+    --color-info-soft: #142c37;
+
+    --color-ring: #5fd6e8;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-theme='dark'] {
+  --color-primary: #5fd6e8;
+  --color-primary-hover: #7ee1ef;
+  --color-primary-soft: #123138;
+  --color-on-primary: #07272c;
+
+  --color-secondary: #7ea9f5;
+  --color-secondary-hover: #9bbdf8;
+  --color-secondary-soft: #16233c;
+
+  --color-background: #17191c;
+  --color-surface: #1f2226;
+  --color-surface-alt: #262a2f;
+
+  --color-text-primary: #efeae6;
+  --color-text-secondary: #aca49d;
+  --color-text-tertiary: #7d766f;
+  --color-text-disabled: #6b655f;
+
+  --color-border: #33302c;
+  --color-border-strong: #47423c;
+  --color-border-control: #8b8580;
+
+  --color-success: #6ed495;
+  --color-success-soft: #163a22;
+  --color-warning: #f0b96b;
+  --color-warning-soft: #3a2a12;
+  --color-warning-border: #c98a3e;
+  --color-error: #f5949a;
+  --color-error-hover: #f7abb0;
+  --color-error-soft: #3b1519;
+  --color-on-error: #3a0b10;
+  --color-info: #63b8dd;
+  --color-info-soft: #142c37;
+
+  --color-ring: #5fd6e8;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+}

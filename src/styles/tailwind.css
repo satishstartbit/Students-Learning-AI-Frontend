@@ -48,36 +48,47 @@
  * theme. The K-5 kid theme re-points them inside `.kid-theme` only.
  */
 :root {
-  --background: var(--color-background);
+  --background: var(--color-bg-canvas);
   --foreground: var(--color-text-primary);
-  --card: var(--color-surface);
+  --card: var(--color-bg-surface);
   --card-foreground: var(--color-text-primary);
-  --popover: var(--color-surface);
+  --popover: var(--color-bg-surface);
   --popover-foreground: var(--color-text-primary);
-  --primary: var(--color-primary);
-  --primary-foreground: var(--color-text-inverse);
-  --secondary: var(--color-surface-alt);
+  --primary: var(--accent-base);
+  /*
+   * On-accent, not plain white: a family's dark-mode base can't reliably
+   * take white text at every lightness, so accent-on is the token that
+   * carries the correct colour for whatever's on top of accent-base.
+   */
+  --primary-foreground: var(--accent-on);
+  --secondary: var(--color-bg-surface-sunken);
   --secondary-foreground: var(--color-text-primary);
-  --muted: var(--color-surface-alt);
+  --muted: var(--color-bg-surface-sunken);
   --muted-foreground: var(--color-text-secondary);
-  --accent: var(--color-surface-alt);
+  --accent: var(--color-bg-surface-sunken);
   --accent-foreground: var(--color-text-primary);
-  --destructive: var(--color-error);
-  --border: var(--color-border);
+  --destructive: var(--color-danger-fg);
+  --border: var(--color-border-default);
   --input: var(--color-border-strong);
-  --ring: var(--color-primary);
+  --ring: var(--accent-ring);
+
+  /* Beyond shadcn's set: a tinted accent, and warning for recoverable states (overdue). */
+  --primary-soft: var(--accent-soft);
+  --warning: var(--color-warning-fg);
+  --warning-soft: var(--color-warning-bg);
+  --warning-border: var(--color-warning-border);
 }
 
 @theme inline {
   /* The app sidebar (components/ui/sidebar.jsx). */
-  --color-sidebar: var(--color-surface);
+  --color-sidebar: var(--color-bg-surface);
   --color-sidebar-foreground: var(--color-text-primary);
-  --color-sidebar-primary: var(--color-primary);
-  --color-sidebar-primary-foreground: var(--color-text-inverse);
-  --color-sidebar-accent: var(--color-primary-soft);
-  --color-sidebar-accent-foreground: var(--color-primary);
-  --color-sidebar-border: var(--color-border);
-  --color-sidebar-ring: var(--color-primary);
+  --color-sidebar-primary: var(--accent-base);
+  --color-sidebar-primary-foreground: var(--color-text-on-dark);
+  --color-sidebar-accent: var(--accent-soft);
+  --color-sidebar-accent-foreground: var(--accent-base);
+  --color-sidebar-border: var(--color-border-default);
+  --color-sidebar-ring: var(--accent-ring);
 
   /* shadcn semantic colours - bg-primary, text-muted-foreground, ... */
   --color-background: var(--background);
@@ -98,9 +109,19 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-primary-soft: var(--primary-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
 
+  --radius-none: var(--radius-none);
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-full: var(--radius-full);
 
   /*
    * K-5 kid theme - bg-kid-paper, text-kid-ink, font-kid-display, ...

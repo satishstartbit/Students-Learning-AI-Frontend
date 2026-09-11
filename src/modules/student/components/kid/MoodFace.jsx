@@ -1,4 +1,4 @@
-const INK = '#3b2a14';
+const INK = 'var(--mood-face-ink)';
 
 const HAPPY_EYES = (
   <g stroke={INK} strokeWidth="3.5" strokeLinecap="round" fill="none">
@@ -18,8 +18,8 @@ const FACES = {
   great: (
     <>
       {HAPPY_EYES}
-      <path d="M19 37 Q32 56 45 37 Z" fill="#7a3a1a" />
-      <path d="M25 45 Q32 51 39 45 Q32 42 25 45 Z" fill="#ee8c8c" />
+      <path d="M19 37 Q32 56 45 37 Z" fill="var(--mood-great-mouth)" />
+      <path d="M25 45 Q32 51 39 45 Q32 42 25 45 Z" fill="var(--mood-great-tongue)" />
     </>
   ),
   good: (
@@ -48,7 +48,7 @@ const FACES = {
     <>
       {DOT_EYES}
       <path d="M22 47 Q32 37 42 47" stroke={INK} strokeWidth="3.5" strokeLinecap="round" fill="none" />
-      <path d="M46 33 q3.5 5 0 8 q-3.5 -3 0 -8z" fill="#7fb6e0" />
+      <path d="M46 33 q3.5 5 0 8 q-3.5 -3 0 -8z" fill="var(--mood-sad-tear)" />
     </>
   ),
 };
@@ -57,9 +57,9 @@ const FACES = {
 export function MoodFace({ mood, className }) {
   return (
     <svg aria-hidden="true" focusable="false" viewBox="0 0 64 64" className={className}>
-      <circle cx="32" cy="32" r="29" fill="#f8cd45" stroke="#e7ad22" strokeWidth="2" />
-      <circle cx="17" cy="40" r="5" fill="#f59f8f" opacity="0.5" />
-      <circle cx="47" cy="40" r="5" fill="#f59f8f" opacity="0.5" />
+      <circle cx="32" cy="32" r="29" fill="var(--mood-face-bg)" stroke="var(--mood-face-border)" strokeWidth="2" />
+      <circle cx="17" cy="40" r="5" fill="var(--mood-face-cheek)" opacity="0.5" />
+      <circle cx="47" cy="40" r="5" fill="var(--mood-face-cheek)" opacity="0.5" />
       {FACES[mood] ?? FACES.good}
     </svg>
   );

@@ -25,7 +25,13 @@ export function ProgressCard({
           <p className="ui-statcard__label">{title}</p>
           <div className="ui-statcard__value">
             {value}
-            <span style={{ fontSize: 14, fontWeight: 500, opacity: 0.7 }}>
+            <span
+              style={{
+                fontSize: 'var(--font-size-md)',
+                fontWeight: 'var(--font-weight-medium)',
+                color: 'var(--color-text-secondary)',
+              }}
+            >
               {' '}
               / {max}
               {unit ? ` ${unit}` : ''}

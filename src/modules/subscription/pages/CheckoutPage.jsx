@@ -142,7 +142,7 @@ export default function CheckoutPage() {
               Online payments are not configured yet (VITE_STRIPE_PUBLISHABLE_KEY is missing). Please
               contact support to complete your subscription.
             </Alert>
-          )}
+          )} 
         </Card>
 
         <Card>
@@ -162,7 +162,7 @@ export default function CheckoutPage() {
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  color: 'var(--color-success)',
+                  color: 'var(--color-success-fg)',
                 }}
               >
                 <span>Discount{checkout.coupon ? ` (${checkout.coupon.code})` : ''}</span>
@@ -175,7 +175,7 @@ export default function CheckoutPage() {
                 justifyContent: 'space-between',
                 fontWeight: 700,
                 paddingTop: 'var(--spacing-sm)',
-                borderTop: '1px solid var(--color-border)',
+                borderTop: '1px solid var(--color-border-default)',
               }}
             >
               <span>Total due today</span>

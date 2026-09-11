@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Label from './Label';
-import FormError from './FormError';
+import FieldHelper from './FieldHelper';
 import Badge from './Badge';
 
 const MENU_MAX_HEIGHT = 320;
@@ -167,8 +167,8 @@ export function MultiSelect({
 
   const clearAll = () => onChange?.([]);
 
-  const hintId = hint ? `${controlId}-hint` : undefined;
-  const errorId = error ? `${controlId}-error` : undefined;
+  const helperText = hint && maxSelected != null ? `${hint} (up to ${maxSelected})` : hint;
+  const helperId = helperText || error ? `${controlId}-helper` : undefined;
 
   const menu = isOpen && position && (
     <div
@@ -181,7 +181,7 @@ export function MultiSelect({
         top: position.top,
         bottom: position.bottom,
         maxHeight: position.maxHeight,
-        zIndex: 900,
+        zIndex: 'var(--z-popover)',
       }}
     >
       {searchable && (
@@ -272,7 +272,10 @@ export function MultiSelect({
   );
 
   return (
-    <div className={`ui-field ${className}`.trim()} ref={containerRef}>
+    <div
+      className={`ui-field ui-field--control ${disabled ? 'ui-field--disabled' : ''} ${className}`.trim()}
+      ref={containerRef}
+    >
       {label && (
         <Label htmlFor={controlId} required={required}>
           {label}
@@ -284,7 +287,9 @@ export function MultiSelect({
           ref={triggerRef}
           id={controlId}
           type="button"
-          className="ui-multiselect__control"
+          className={`ui-multiselect__control ${
+            error ? 'ui-multiselect__control--error' : ''
+          }`.trim()}
           onClick={() => {
             if (disabled) return;
             if (isOpen) closeMenu();
@@ -294,7 +299,7 @@ export function MultiSelect({
           aria-haspopup="listbox"
           aria-expanded={isOpen}
           aria-invalid={Boolean(error)}
-          aria-describedby={[hintId, errorId].filter(Boolean).join(' ') || undefined}
+          aria-describedby={helperId}
         >
           {value.length === 0 ? (
             <span className="ui-multiselect__placeholder">{placeholder}</span>
@@ -320,13 +325,7 @@ export function MultiSelect({
         </button>
       </div>
 
-      {hint && !error && (
-        <span id={hintId} className="ui-hint">
-          {hint}
-          {maxSelected != null && ` (up to ${maxSelected})`}
-        </span>
-      )}
-      <FormError id={errorId}>{error}</FormError>
+      <FieldHelper id={helperId} hint={helperText} error={error} />
 
       {menu && createPortal(menu, document.body)}
     </div>

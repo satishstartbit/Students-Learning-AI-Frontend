@@ -44,30 +44,35 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Card title="Forgot your password?" subtitle="We will email you a reset link">
-      {form.submitError && (
-        <Alert variant="error" className="ui-field">
-          {form.submitError}
-        </Alert>
-      )}
+    <>
+      <Card
+        title="Forgot your password?"
+        subtitle="Give us your email and we will send a link to set a new one."
+      >
+        {form.submitError && (
+          <Alert variant="error" className="ui-field">
+            {form.submitError}
+          </Alert>
+        )}
 
-      <form onSubmit={form.handleSubmit} noValidate>
-        <Input
-          label="Email"
-          type="email"
-          autoComplete="email"
-          required
-          {...form.getFieldProps('email')}
-        />
+        <form onSubmit={form.handleSubmit} noValidate>
+          <Input
+            label="Email"
+            type="email"
+            autoComplete="email"
+            required
+            {...form.getFieldProps('email')}
+          />
 
-        <Button type="submit" fullWidth loading={form.isSubmitting}>
-          Send reset link
-        </Button>
-      </form>
+          <Button type="submit" fullWidth loading={form.isSubmitting}>
+            Send the link
+          </Button>
+        </form>
+      </Card>
 
-      <p style={{ marginTop: 'var(--spacing-lg)', fontSize: 'var(--font-size-sm)' }}>
+      <p className="ui-shell__public-footer">
         <Link to="/login">Back to sign in</Link>
       </p>
-    </Card>
+    </>
   );
 }

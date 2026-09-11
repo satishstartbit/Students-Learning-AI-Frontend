@@ -201,7 +201,7 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
                   alignItems: 'center',
                   gap: 'var(--spacing-md)',
                   padding: 'var(--spacing-md) 0',
-                  borderBottom: '1px solid var(--color-border)',
+                  borderBottom: '1px solid var(--color-border-default)',
                 }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>

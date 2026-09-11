@@ -70,34 +70,99 @@
   --accent: var(--kid-sky);
   --accent-foreground: var(--kid-navy);
   --destructive: var(--kid-coral);
+  --primary-soft: var(--accent-soft);
+  --warning: var(--color-warning-fg);
+  --warning-soft: var(--color-warning-bg);
+  --warning-border: var(--color-warning-border);
   --border: var(--kid-edge);
   --input: #cdbd9f;
   --ring: var(--kid-teal);
 
-  /* --- Legacy tokens (theme/variables.css) ------------------------- */
-  --color-primary: var(--kid-teal);
-  --color-primary-hover: var(--kid-teal-deep);
-  --color-primary-soft: #dcefee;
+  /* --- Legacy tokens (theme/variables.css), renamed to match the token
+     migration - the kid palette values themselves (--kid-*) are untouched,
+     only what these re-pointing targets are called. Every alias-style
+     token (icon, state, bg-inverse, etc.) has to be redeclared here too,
+     not just the renamed ones - .kid-theme has no :root fallback, so an
+     alias defined only at :root (e.g. --color-icon-primary: var(--color-
+     text-primary)) would resolve against :root's own text colour, not
+     this scope's, unless restated here. */
+  --accent-base: var(--kid-teal);
+  --accent-hover: var(--kid-teal-deep);
+  --accent-pressed: var(--kid-teal-deep);
+  --accent-soft: #dcefee;
+  --accent-soft-hover: #c9e8e6;
+  --accent-border: #a9d6d3;
+  --accent-on: #ffffff;
+  --accent-ring: var(--kid-teal);
   --color-secondary: var(--kid-blue);
   --color-secondary-hover: var(--kid-navy);
   --color-secondary-soft: var(--kid-sky);
-  --color-background: var(--kid-paper);
-  --color-surface: var(--kid-sheet);
-  --color-surface-alt: #f3ecdf;
+  --color-bg-canvas: var(--kid-paper);
+  --color-bg-surface: var(--kid-sheet);
+  --color-bg-surface-raised: var(--kid-sheet);
+  --color-bg-surface-sunken: #f3ecdf;
+  --color-bg-inverse: var(--kid-ink);
+  --color-bg-scrim: rgb(44 38 33 / 0.5);
   --color-text-primary: var(--kid-ink);
   --color-text-secondary: var(--kid-ink-soft);
-  --color-text-inverse: #ffffff;
-  --color-border: var(--kid-edge);
+  --color-text-tertiary: #8a7f73;
+  --color-text-disabled: #a39684;
+  --color-text-on-dark: #ffffff;
+  --color-text-inverse: #ffffff; /* kid theme is always light, so this never needs to flip */
+  --color-icon-primary: var(--color-text-primary);
+  --color-icon-secondary: var(--color-text-secondary);
+  --color-icon-disabled: var(--color-text-disabled);
+  --color-icon-inverse: var(--color-text-on-dark);
+  --color-state-hover-overlay: rgb(40 32 20 / 0.04);
+  --color-state-pressed-overlay: rgb(40 32 20 / 0.08);
+  --color-state-selected-bg: var(--accent-soft);
+  --color-state-disabled-bg: var(--color-bg-surface-sunken);
+  --color-state-disabled-fg: var(--color-text-disabled);
+  --color-border-default: var(--kid-edge);
   --color-border-strong: #cdbd9f;
-  --color-success: #2f7a2c;
-  --color-success-soft: #e3f0d8;
-  --color-warning: #8f520a;
-  --color-warning-soft: #fbefd4;
-  --color-error: var(--kid-coral);
-  --color-error-soft: var(--kid-coral-soft);
-  --color-info: #2a5c9e;
-  --color-info-soft: #e1ebf8;
+  --color-border-control: #9c8f7f;
+  --color-success-bg: #e3f0d8;
+  --color-success-fg: #2f7a2c;
+  --color-success-border: #a8d191;
+  --color-success-solid: #2f7a2c;
+  --color-success-on-solid: #ffffff;
+  --color-warning-bg: #fbefd4;
+  --color-warning-fg: #8f520a;
+  --color-warning-border: #e9a53a;
+  --color-warning-solid: #8f520a;
+  --color-warning-on-solid: #ffffff;
+  --color-danger-bg: var(--kid-coral-soft);
+  --color-danger-fg: var(--kid-coral);
+  --color-danger-hover: #8a3522;
+  --color-danger-border: #e4a08e;
+  --color-danger-solid: var(--kid-coral);
+  --color-danger-on-solid: #ffffff;
+  --color-info-bg: #e1ebf8;
+  --color-info-fg: #2a5c9e;
+  --color-info-border: #a8c5e8;
+  --color-info-solid: #2a5c9e;
+  --color-info-on-solid: #ffffff;
   --focus-ring: 0 0 0 3px rgb(31 122 128 / 0.35);
+
+  /* --- Mood check-in (MoodFace.jsx/CheckInCard.jsx) -------------------
+   * The face illustration is one shared design across all 5 moods (only
+   * the eyes/mouth linework differs, in --mood-face-ink) - there is no
+   * per-mood bg/fg/border palette to extract, so this tokenizes exactly
+   * what was hardcoded rather than inventing per-mood colours that don't
+   * exist in the product today. */
+  --mood-face-bg: #f8cd45;
+  --mood-face-border: #e7ad22;
+  --mood-face-cheek: #f59f8f;
+  --mood-face-ink: #3b2a14;
+  --mood-great-mouth: #7a3a1a;
+  --mood-great-tongue: #ee8c8c;
+  --mood-sad-tear: #7fb6e0;
+
+  /* Fields: the same 48px target, with the larger kid type on the helper line. */
+  --field-radius: 16px;
+  --field-font-size: 18px;
+  --field-helper-font-size: 14px;
+  --field-helper-line-height: 20px;
 
   --font-family-base: var(--kid-font-body);
   --font-size-xs: 13px;
@@ -111,9 +176,10 @@
   --radius-md: 16px;
   --radius-lg: 22px;
 
-  --shadow-sm: 0 1px 0 rgb(92 70 45 / 0.07);
-  --shadow-md: 0 14px 24px -16px rgb(92 70 45 / 0.55);
-  --shadow-lg: 0 26px 40px -22px rgb(92 70 45 / 0.6);
+  --elevation-1: 0 1px 0 rgb(92 70 45 / 0.07);
+  --elevation-2: 0 14px 24px -16px rgb(92 70 45 / 0.55);
+  --elevation-3: 0 14px 24px -16px rgb(92 70 45 / 0.55);
+  --elevation-4: 0 26px 40px -22px rgb(92 70 45 / 0.6);
 
   font-family: var(--kid-font-body);
   font-size: 1.0625rem;

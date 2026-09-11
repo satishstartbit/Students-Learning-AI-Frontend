@@ -25,7 +25,7 @@ function ThemePreview({ config }) {
         <span
           key={key}
           title={key}
-          style={{ width: 16, height: 16, borderRadius: 4, background: config?.[key] ?? '#ccc', border: '1px solid var(--color-border, #ddd)' }}
+          style={{ width: 16, height: 16, borderRadius: 4, background: config?.[key] ?? '#ccc', border: '1px solid var(--color-border-default, #ddd)' }}
         />
       ))}
     </div>

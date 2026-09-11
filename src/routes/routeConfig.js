@@ -32,6 +32,9 @@ import TeacherProfilePage from '../modules/teacher/pages/TeacherProfilePage';
 
 import MyAssignmentsPage from '../modules/student/pages/MyAssignmentsPage';
 import StudentAssignmentDetailPage from '../modules/student/pages/AssignmentDetailPage';
+import StudentHomePage from '../modules/student/pages/StudentHomePage';
+import FocusTimerPage from '../modules/student/pages/FocusTimerPage';
+import RewardsPage from '../modules/student/pages/RewardsPage';
 import GradeBandPage from '../modules/student/pages/GradeBandPage';
 import KidHomePage from '../modules/student/pages/kid/KidHomePage';
 import KidAssignmentsPage from '../modules/student/pages/kid/KidAssignmentsPage';
@@ -262,7 +265,7 @@ export const STUDENT_ROUTES = {
       label: 'My Day',
       permissions: [PERMISSIONS.DASHBOARD_READ],
       component: GradeBandPage,
-      props: { junior: KidHomePage, label: 'My Day' },
+      props: { junior: KidHomePage, standard: StudentHomePage },
     },
     { path: 'dashboard', label: 'My Day', redirectTo: '/student' },
     { path: 'onboarding', label: 'Onboarding', element: null },
@@ -307,8 +310,9 @@ export const STUDENT_ROUTES = {
     {
       path: 'focus',
       label: 'Focus',
+      permissions: [PERMISSIONS.FOCUS_READ],
       component: GradeBandPage,
-      props: { junior: KidComingSoonPage, label: 'Focus', feature: 'focus' },
+      props: { junior: KidComingSoonPage, standard: FocusTimerPage, feature: 'focus' },
     },
     { path: 'toolkit', label: 'Toolkit', element: null },
     {
@@ -316,7 +320,7 @@ export const STUDENT_ROUTES = {
       label: 'Rewards',
       permissions: [PERMISSIONS.REWARD_READ],
       component: GradeBandPage,
-      props: { junior: KidComingSoonPage, label: 'Rewards', feature: 'rewards' },
+      props: { junior: KidComingSoonPage, standard: RewardsPage, feature: 'rewards' },
     },
     // K-5 only (calm mode, log out) - Grade 6+ use the account menu instead.
     {

@@ -1,0 +1,253 @@
+/* =====================================================================
+   K-5 "My Learning Space" theme.
+
+   The warm cut-paper look from the student mockup, for students in
+   Kindergarten to Grade 5. Everything is scoped to `.kid-theme` (set by
+   layouts/KidLayout.jsx), so no other area of the app changes.
+
+   Always light - a dark craft-paper palette would be its own design pass.
+   The legacy --color-* tokens are re-pointed as well, so the older shared
+   components shown inside the kid shell (assignment detail, AI helper) pick
+   up the same palette and the larger type.
+
+   Imported by KidLayout, so it lands after index.css in the bundle. The
+   `revert-layer` rules below depend on that order.
+   ===================================================================== */
+
+.kid-theme {
+  color-scheme: light;
+
+  /* --- Paper & ink -------------------------------------------------- */
+  --kid-paper: #f5eee1;
+  --kid-paper-deep: #ebe0cb;
+  --kid-sheet: #fdfaf3;
+  --kid-sidebar: #f8f3ea;
+  --kid-edge: #e2d5bd;
+  --kid-ink: #2c2621;
+  --kid-ink-soft: #62584e;
+
+  /* --- Craft colours ------------------------------------------------ */
+  --kid-teal: #1f7a80;
+  --kid-teal-deep: #155d62;
+  --kid-sky: #d3e3f6;
+  --kid-navy: #1f3b63;
+  --kid-blue: #3565b0;
+  --kid-pink: #f4b6c1;
+  --kid-yellow: #faeaa9;
+  --kid-sun: #f6c445;
+  --kid-green: #d9e8c3;
+  --kid-green-deep: #3f8a3c;
+  --kid-lavender: #ddd2f6;
+  --kid-purple: #5d4cb0;
+  --kid-mint: #cdeee1;
+  --kid-orange: #f8c890;
+  --kid-coral: #a8412b;
+  --kid-coral-soft: #fbdcd2;
+
+  /*
+   * --- Type ----------------------------------------------------------
+   * Self-hosted via @fontsource (see KidLayout) - no third-party font
+   * requests from a children's area. Andika is built for beginning readers:
+   * single-storey a and g, and a distinct l / I / 1.
+   */
+  --kid-font-display: 'Fredoka Variable', 'Fredoka', 'Trebuchet MS', system-ui, sans-serif;
+  --kid-font-body: 'Andika', 'Segoe UI', system-ui, sans-serif;
+  --kid-font-hand: 'Patrick Hand', 'Segoe Print', 'Comic Sans MS', cursive;
+
+  /* --- shadcn tokens (see styles/tailwind.css) ---------------------- */
+  --background: var(--kid-paper);
+  --foreground: var(--kid-ink);
+  --card: var(--kid-sheet);
+  --card-foreground: var(--kid-ink);
+  --popover: var(--kid-sheet);
+  --popover-foreground: var(--kid-ink);
+  --primary: var(--kid-teal);
+  --primary-foreground: #ffffff;
+  --secondary: var(--kid-sky);
+  --secondary-foreground: var(--kid-navy);
+  --muted: var(--kid-paper-deep);
+  --muted-foreground: var(--kid-ink-soft);
+  --accent: var(--kid-sky);
+  --accent-foreground: var(--kid-navy);
+  --destructive: var(--kid-coral);
+  --primary-soft: var(--color-primary-soft);
+  --warning: var(--color-warning);
+  --warning-soft: var(--color-warning-soft);
+  --warning-border: var(--color-warning-border);
+  --border: var(--kid-edge);
+  --input: #cdbd9f;
+  --ring: var(--kid-teal);
+
+  /* --- Legacy tokens (theme/variables.css) ------------------------- */
+  --color-primary: var(--kid-teal);
+  --color-primary-hover: var(--kid-teal-deep);
+  --color-primary-soft: #dcefee;
+  --color-on-primary: #ffffff;
+  --color-secondary: var(--kid-blue);
+  --color-secondary-hover: var(--kid-navy);
+  --color-secondary-soft: var(--kid-sky);
+  --color-background: var(--kid-paper);
+  --color-surface: var(--kid-sheet);
+  --color-surface-alt: #f3ecdf;
+  --color-text-primary: var(--kid-ink);
+  --color-text-secondary: var(--kid-ink-soft);
+  --color-text-inverse: #ffffff;
+  --color-text-tertiary: #8a7f73;
+  --color-text-disabled: #a39684;
+  --color-border: var(--kid-edge);
+  --color-border-strong: #cdbd9f;
+  --color-success: #2f7a2c;
+  --color-success-soft: #e3f0d8;
+  --color-warning: #8f520a;
+  --color-warning-soft: #fbefd4;
+  --color-warning-border: #e9a53a;
+  --color-error: var(--kid-coral);
+  --color-error-hover: #8a3522;
+  --color-error-soft: var(--kid-coral-soft);
+  --color-on-error: #ffffff;
+  --color-info: #2a5c9e;
+  --color-info-soft: #e1ebf8;
+  --focus-ring: 0 0 0 3px rgb(31 122 128 / 0.35);
+  --color-ring: var(--kid-teal);
+
+  /* Fields: the same 48px target, with the larger kid type on the helper line. */
+  --field-radius: 16px;
+  --field-font-size: 18px;
+  --field-helper-font-size: 14px;
+  --field-helper-line-height: 20px;
+
+  --font-family-base: var(--kid-font-body);
+  --font-size-xs: 13px;
+  --font-size-sm: 15px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 30px;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+
+  --shadow-sm: 0 1px 0 rgb(92 70 45 / 0.07);
+  --shadow-md: 0 14px 24px -16px rgb(92 70 45 / 0.55);
+  --shadow-lg: 0 26px 40px -22px rgb(92 70 45 / 0.6);
+
+  font-family: var(--kid-font-body);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--kid-ink);
+  background-color: var(--kid-paper);
+}
+
+/*
+ * index.css styles a few elements globally and unlayered, which beats every
+ * (layered) Tailwind utility on those elements - a `text-white` link would
+ * stay teal, a `hidden` svg would still show. Inside the kid theme those
+ * properties are handed back to the layered styles: utilities first, then
+ * the base rules below. Class-based legacy rules still win, since these
+ * selectors carry no class specificity.
+ */
+:where(.kid-theme) a {
+  color: revert-layer;
+}
+
+:where(.kid-theme) :is(h1, h2, h3, h4) {
+  line-height: revert-layer;
+}
+
+:where(.kid-theme) :is(img, svg, video) {
+  display: revert-layer;
+  max-width: revert-layer;
+}
+
+/* A thicker, easier-to-spot focus ring for young keyboard users. */
+.kid-ui :focus-visible {
+  outline-width: 3px;
+  outline-offset: 3px;
+}
+
+@layer base {
+  /* The defaults index.css gave these elements, now overridable. */
+  .kid-theme :where(a) {
+    color: var(--kid-teal);
+  }
+
+  .kid-theme :where(h1, h2, h3, h4) {
+    line-height: var(--line-height-tight);
+  }
+
+  .kid-theme :where(img, svg, video) {
+    display: block;
+    max-width: 100%;
+  }
+
+  /*
+   * A light, preflight-style reset for the surfaces built for the kid theme
+   * (`.kid-ui`). Legacy pages rendered inside the shell don't carry the
+   * class, so their spacing is untouched.
+   */
+  .kid-ui :where(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, ul, ol) {
+    margin: 0;
+  }
+
+  .kid-ui :where(h1, h2, h3, h4, h5, h6) {
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: 1.15;
+  }
+
+  .kid-ui :where(ul, ol) {
+    padding: 0;
+    list-style: none;
+  }
+
+  .kid-ui :where(button, input, select, textarea) {
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+  }
+
+  .kid-ui :where(button) {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+
+  .kid-ui :where(fieldset) {
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .kid-ui :where(legend) {
+    padding: 0;
+  }
+
+  .kid-ui :where(a) {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+/*
+ * Calm mode (Settings) - no CSS motion at all. Motion-library animations are
+ * switched off separately through <MotionConfig reducedMotion="always">.
+ */
+.kid-theme[data-calm='true'] *,
+.kid-theme[data-calm='true'] *::before,
+.kid-theme[data-calm='true'] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kid-theme *,
+  .kid-theme *::before,
+  .kid-theme *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

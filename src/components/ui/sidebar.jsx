@@ -157,7 +157,7 @@ export function Sidebar({
       <>
         {openMobile && (
           <div
-            className="fixed inset-0 z-40 bg-black/50 md:hidden"
+            className="fixed inset-0 z-40 bg-[color:var(--color-bg-scrim)] md:hidden"
             onClick={() => setOpenMobile(false)}
             aria-hidden="true"
           />
@@ -610,7 +610,7 @@ export const SidebarMenuSubButton = forwardRef(function SidebarMenuSubButton(
       data-size={size}
       data-active={isActive || undefined}
       className={cn(
-        'text-sidebar-foreground flex h-7 w-full min-w-0 items-center gap-2 overflow-hidden rounded-md px-2',
+        'text-sidebar-foreground flex h-8 w-full min-w-0 items-center gap-2 overflow-hidden rounded-md px-2',
         'cursor-pointer appearance-none border-0 bg-transparent no-underline outline-hidden',
         'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
         'focus-visible:ring-sidebar-ring focus-visible:ring-2',

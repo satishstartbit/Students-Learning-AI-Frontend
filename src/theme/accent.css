@@ -1,0 +1,181 @@
+/* =====================================================================
+   Accent ("Theme") - the 5 selectable brand families: Ocean, Sunset,
+   Forest, Lavender, Bubblegum. Independent of Color (Light/Dark, see
+   variables.css's data-theme) - any family must work in either scheme.
+
+   Ocean is the default (no data-accent attribute required), and reuses
+   the app's existing Ocean/700 brand exactly in light mode. Every
+   base/hover/pressed value (light AND dark, all 5 families) is verified
+   >= 4.5:1 against white (--accent-on) via a real relative-luminance
+   check in a headless browser, not eyeballed - the first pass of dark-
+   mode values failed this check outright (2.5:1-4.2:1 across all 5
+   families) and was replaced with values computed by walking each hue
+   down in HSL lightness until the contrast target was met. soft/
+   soft-hover/border/ring only need ~3:1 non-text contrast (nothing
+   renders text directly on them) and were not part of that fix.
+
+   accent-on is flat white in every family/mode (never redefined) - there
+   is no accent-coloured text token, so content sits on accent-soft with
+   normal text-primary, or on solid accent-base with accent-on.
+
+   Each family's dark-mode `base` is deliberately NOT a pale/light tint
+   of its light-mode base (that reintroduces the exact white-on-pale-mint
+   contrast bug this codebase already had to fix once for the old
+   --color-primary - see activeContext.md). Ocean's dark base is a new,
+   more-saturated mid-tone rather than the pale cyan already shipped as
+   --color-primary's dark value elsewhere - that pale value is reused
+   below as accent-ring instead, where only ~3:1 non-text contrast is
+   needed and the brighter value is the better fit.
+   ===================================================================== */
+
+:root,
+[data-accent='ocean'] {
+  --accent-base: #0b7285;
+  --accent-hover: #095f70;
+  --accent-pressed: #083f4a;
+  --accent-on: #ffffff;
+  --accent-soft: #e3f2f6;
+  --accent-soft-hover: #cfe8ee;
+  --accent-border: #a9d3db;
+  --accent-ring: #0b7285;
+}
+
+[data-accent='sunset'] {
+  --accent-base: #c2410c;
+  --accent-hover: #9a3412;
+  --accent-pressed: #7c2d12;
+  --accent-on: #ffffff;
+  --accent-soft: #fff1e8;
+  --accent-soft-hover: #ffe4cc;
+  --accent-border: #f8c79a;
+  --accent-ring: #c2410c;
+}
+
+[data-accent='forest'] {
+  --accent-base: #047857;
+  --accent-hover: #065f46;
+  --accent-pressed: #064e3b;
+  --accent-on: #ffffff;
+  --accent-soft: #e9f7f1;
+  --accent-soft-hover: #d3efe3;
+  --accent-border: #a7ddc7;
+  --accent-ring: #047857;
+}
+
+[data-accent='lavender'] {
+  --accent-base: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-pressed: #5b21b6;
+  --accent-on: #ffffff;
+  --accent-soft: #f2ecfe;
+  --accent-soft-hover: #e6d9fd;
+  --accent-border: #cdb4fa;
+  --accent-ring: #7c3aed;
+}
+
+[data-accent='bubblegum'] {
+  --accent-base: #be185d;
+  --accent-hover: #9d174d;
+  --accent-pressed: #831843;
+  --accent-on: #ffffff;
+  --accent-soft: #fdeef5;
+  --accent-soft-hover: #fbdcea;
+  --accent-border: #f4b8d4;
+  --accent-ring: #be185d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-accent]),
+  :root:not([data-theme='light'])[data-accent='ocean'] {
+    --accent-base: #0d7f9c;
+    --accent-hover: #09596d;
+    --accent-pressed: #063e4b;
+    --accent-soft: #123138; /* reuses the already-shipped dark primary-soft */
+    --accent-soft-hover: #173e46;
+    --accent-border: #1f5a66;
+    --accent-ring: #5fd6e8; /* reuses the already-shipped dark primary */
+  }
+  :root:not([data-theme='light'])[data-accent='sunset'] {
+    --accent-base: #cb4b0b;
+    --accent-hover: #9b3908;
+    --accent-pressed: #792d06;
+    --accent-soft: #3a1f0f;
+    --accent-soft-hover: #472711;
+    --accent-border: #6b3a1a;
+    --accent-ring: #fdba74;
+  }
+  :root:not([data-theme='light'])[data-accent='forest'] {
+    --accent-base: #13845a;
+    --accent-hover: #0c573c;
+    --accent-pressed: #083826;
+    --accent-soft: #0f2c22;
+    --accent-soft-hover: #14392c;
+    --accent-border: #1e5c46;
+    --accent-ring: #6ee7b7;
+  }
+  :root:not([data-theme='light'])[data-accent='lavender'] {
+    --accent-base: #8347eb;
+    --accent-hover: #6419e6;
+    --accent-pressed: #5616c5;
+    --accent-soft: #241c38;
+    --accent-soft-hover: #2f2447;
+    --accent-border: #4c3a72;
+    --accent-ring: #c4b5fd;
+  }
+  :root:not([data-theme='light'])[data-accent='bubblegum'] {
+    --accent-base: #db1f7d;
+    --accent-hover: #ae1963;
+    --accent-pressed: #8f1452;
+    --accent-soft: #341824;
+    --accent-soft-hover: #42202f;
+    --accent-border: #6b2d4c;
+    --accent-ring: #f9a8d4;
+  }
+}
+
+[data-theme='dark']:not([data-accent]),
+[data-theme='dark'][data-accent='ocean'] {
+  --accent-base: #0d7f9c;
+  --accent-hover: #09596d;
+  --accent-pressed: #063e4b;
+  --accent-soft: #123138;
+  --accent-soft-hover: #173e46;
+  --accent-border: #1f5a66;
+  --accent-ring: #5fd6e8;
+}
+[data-theme='dark'][data-accent='sunset'] {
+  --accent-base: #cb4b0b;
+  --accent-hover: #9b3908;
+  --accent-pressed: #792d06;
+  --accent-soft: #3a1f0f;
+  --accent-soft-hover: #472711;
+  --accent-border: #6b3a1a;
+  --accent-ring: #fdba74;
+}
+[data-theme='dark'][data-accent='forest'] {
+  --accent-base: #13845a;
+  --accent-hover: #0c573c;
+  --accent-pressed: #083826;
+  --accent-soft: #0f2c22;
+  --accent-soft-hover: #14392c;
+  --accent-border: #1e5c46;
+  --accent-ring: #6ee7b7;
+}
+[data-theme='dark'][data-accent='lavender'] {
+  --accent-base: #8347eb;
+  --accent-hover: #6419e6;
+  --accent-pressed: #5616c5;
+  --accent-soft: #241c38;
+  --accent-soft-hover: #2f2447;
+  --accent-border: #4c3a72;
+  --accent-ring: #c4b5fd;
+}
+[data-theme='dark'][data-accent='bubblegum'] {
+  --accent-base: #db1f7d;
+  --accent-hover: #ae1963;
+  --accent-pressed: #8f1452;
+  --accent-soft: #341824;
+  --accent-soft-hover: #42202f;
+  --accent-border: #6b2d4c;
+  --accent-ring: #f9a8d4;
+}

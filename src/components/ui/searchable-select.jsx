@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '../../lib/utils';
+import Label from '../common/Label';
+import FieldHelper from '../common/FieldHelper';
 
 /**
  * A single-select combobox with an in-dropdown search box.
@@ -201,9 +203,7 @@ export function SearchableSelect({
     }
   };
 
-  const describedBy = [hint ? `${controlId}-hint` : null, error ? `${controlId}-error` : null]
-    .filter(Boolean)
-    .join(' ');
+  const helperId = hint || error ? `${controlId}-helper` : undefined;
 
   const menu = open && position && (
     <div
@@ -214,17 +214,17 @@ export function SearchableSelect({
         width: position.width,
         top: position.top,
         bottom: position.bottom,
-        background: 'var(--color-surface)',
-        borderColor: 'var(--color-border)',
-        boxShadow: 'var(--shadow-lg)',
+        background: 'var(--color-bg-surface)',
+        borderColor: 'var(--color-border-default)',
+        boxShadow: 'var(--elevation-3)',
         // Above the modal overlay (800) but below toasts (1000), so the
         // control still works inside a dialog.
-        zIndex: 900,
+        zIndex: 'var(--z-popover)',
       }}
     >
       <div
         className="flex items-center gap-2 border-b px-3 py-2"
-        style={{ borderColor: 'var(--color-border)' }}
+        style={{ borderColor: 'var(--color-border-default)' }}
       >
         <span aria-hidden="true" className="text-xs opacity-60">
           🔍
@@ -288,8 +288,9 @@ export function SearchableSelect({
                 onMouseEnter={() => setActiveIndex(index)}
                 className="flex cursor-pointer flex-col rounded-[var(--radius-sm)] px-3 py-2 text-sm"
                 style={{
-                  background: isSelected || isActive ? 'var(--color-primary-soft)' : 'transparent',
-                  color: isSelected ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                  background:
+                    isSelected || isActive ? 'var(--color-state-selected-bg)' : 'transparent',
+                  color: isSelected ? 'var(--accent-base)' : 'var(--color-text-primary)',
                   fontWeight: isSelected ? 600 : 400,
                 }}
               >
@@ -310,23 +311,17 @@ export function SearchableSelect({
   );
 
   return (
-    <div className={cn('mb-4 flex flex-col gap-1', className)}>
+    <div className={cn('ui-field ui-field--control', disabled && 'ui-field--disabled', className)}>
       {label && (
-        <label
-          htmlFor={controlId}
-          className="text-[13px] font-semibold"
-          style={{ color: 'var(--color-text-primary)' }}
-        >
+        <Label htmlFor={controlId} required={required}>
           {label}
-          {required && (
-            <span aria-hidden="true" style={{ color: 'var(--color-error)' }}>
-              {' '}
-              *
-            </span>
-          )}
-        </label>
+        </Label>
       )}
 
+      {/*
+       * Chrome (height, border, focus ring, disabled) comes from .ui-combobox
+       * in common.css, so this trigger matches the text field beside it.
+       */}
       <button
         ref={triggerRef}
         id={controlId}
@@ -336,24 +331,14 @@ export function SearchableSelect({
         aria-controls={open ? listboxId : undefined}
         aria-haspopup="listbox"
         aria-invalid={Boolean(error)}
-        aria-describedby={describedBy || undefined}
+        aria-describedby={helperId}
         disabled={disabled}
         onClick={() => {
           if (disabled) return;
           if (open) close();
           else setOpen(true);
         }}
-        className={cn(
-          'flex w-full cursor-pointer appearance-none items-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-left text-sm',
-          'border transition-colors outline-none',
-          'focus-visible:ring-2 focus-visible:ring-[color:var(--color-primary)]/35',
-          disabled && 'cursor-not-allowed opacity-60'
-        )}
-        style={{
-          background: disabled ? 'var(--color-surface-alt)' : 'var(--color-surface)',
-          borderColor: error ? 'var(--color-error)' : 'var(--color-border)',
-          color: 'var(--color-text-primary)',
-        }}
+        className={cn('ui-combobox', error && 'ui-combobox--error')}
       >
         <span className="min-w-0 flex-1 truncate">
           {selected ? (
@@ -366,7 +351,7 @@ export function SearchableSelect({
               )}
             </span>
           ) : (
-            <span style={{ color: 'var(--color-text-secondary)' }}>
+            <span style={{ color: 'var(--color-text-tertiary)' }}>
               {disabled && disabledMessage ? disabledMessage : placeholder}
             </span>
           )}
@@ -388,7 +373,7 @@ export function SearchableSelect({
                 onChange?.(null, null);
               }
             }}
-            className="rounded p-0.5 text-xs hover:opacity-70"
+            className="rounded-[var(--radius-sm)] p-0.5 text-xs hover:opacity-70"
             style={{ color: 'var(--color-text-secondary)' }}
           >
             ✕
@@ -400,26 +385,7 @@ export function SearchableSelect({
         </span>
       </button>
 
-      {hint && !error && (
-        <span
-          id={`${controlId}-hint`}
-          className="text-[13px]"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          {hint}
-        </span>
-      )}
-
-      {error && (
-        <span
-          id={`${controlId}-error`}
-          role="alert"
-          className="text-[13px]"
-          style={{ color: 'var(--color-error)' }}
-        >
-          {error}
-        </span>
-      )}
+      <FieldHelper id={helperId} hint={hint} error={error} />
 
       {menu && createPortal(menu, document.body)}
     </div>
