@@ -1,4 +1,11 @@
-import { LuChartLine, LuFileText, LuLayoutDashboard, LuUsers } from 'react-icons/lu';
+import {
+  LuChartLine,
+  LuFileText,
+  LuLayoutDashboard,
+  LuSparkles,
+  LuUser,
+  LuUsers,
+} from 'react-icons/lu';
 import AuthenticatedLayout from './AuthenticatedLayout';
 
 /** Navigation for the teacher area (/teacher/*). */
@@ -10,6 +17,8 @@ const NAV_ITEMS = [
       { to: '/teacher/students', label: 'Students', icon: LuUsers },
       { to: '/teacher/assignments', label: 'Assignments', icon: LuFileText },
       { to: '/teacher/progress', label: 'Progress', icon: LuChartLine },
+      { to: '/teacher/learning-activity', label: 'Learning Activity', icon: LuSparkles },
+      { to: '/teacher/profile', label: 'My Profile', icon: LuUser },
     ],
   },
 ];

@@ -32,10 +32,26 @@ export const PERMISSIONS = Object.freeze({
   SUBSCRIPTION_READ: 'SUBSCRIPTION_READ',
   SUBSCRIPTION_CREATE: 'SUBSCRIPTION_CREATE',
   SUBSCRIPTION_UPDATE: 'SUBSCRIPTION_UPDATE',
+  // Platform-wide billing oversight: every parent's subscription, the payment
+  // ledger, refunds and revenue. Super Admin only - distinct from the three
+  // above, which a parent holds over their OWN subscription.
+  SUBSCRIPTION_MANAGE: 'SUBSCRIPTION_MANAGE',
 
   DASHBOARD_READ: 'DASHBOARD_READ',
   PROGRESS_READ: 'PROGRESS_READ',
   NOTIFICATION_READ: 'NOTIFICATION_READ',
+
+  // AI Learning Assistant. Students use it; teachers and parents only ever
+  // see aggregate activity, never the conversation itself.
+  AI_ASSISTANT_USE: 'AI_ASSISTANT_USE',
+  AI_ACTIVITY_READ: 'AI_ACTIVITY_READ',
+  LEARNING_SUMMARY_READ: 'LEARNING_SUMMARY_READ',
+
+  // Self-service "My Profile" - distinct from USER_UPDATE (editing someone
+  // else), so every authenticated role can hold it without also gaining the
+  // ability to edit other users.
+  PROFILE_READ: 'PROFILE_READ',
+  PROFILE_UPDATE: 'PROFILE_UPDATE',
 
   MASTER_READ: 'MASTER_READ',
   MASTER_CREATE: 'MASTER_CREATE',
@@ -57,6 +73,9 @@ export const ROLE_PERMISSIONS = Object.freeze({
     P.DASHBOARD_READ,
     P.PROGRESS_READ,
     P.NOTIFICATION_READ,
+    P.PROFILE_READ,
+    P.PROFILE_UPDATE,
+    P.AI_ASSISTANT_USE,
   ],
 
   [USER_ROLES.TEACHER]: [
@@ -70,6 +89,9 @@ export const ROLE_PERMISSIONS = Object.freeze({
     P.DASHBOARD_READ,
     P.PROGRESS_READ,
     P.NOTIFICATION_READ,
+    P.PROFILE_READ,
+    P.PROFILE_UPDATE,
+    P.AI_ACTIVITY_READ,
   ],
 
   [USER_ROLES.PARENT]: [
@@ -85,6 +107,9 @@ export const ROLE_PERMISSIONS = Object.freeze({
     P.DASHBOARD_READ,
     P.PROGRESS_READ,
     P.NOTIFICATION_READ,
+    P.PROFILE_READ,
+    P.PROFILE_UPDATE,
+    P.LEARNING_SUMMARY_READ,
   ],
 });
 

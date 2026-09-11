@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
@@ -12,6 +12,7 @@ import {
   PageHeader,
   StatusBadge,
 } from '../../../components/common';
+import { useApi } from '../../../hooks/useApi';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import ChatBubble from '../components/ChatBubble';
 import ChatInput from '../components/ChatInput';
@@ -32,10 +33,20 @@ export default function LearningSessionPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
 
-  const [session, setSession] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
+  /*
+   * The transcript lives on the session object rather than in its own state,
+   * so every mutation below is a plain event-handler update - nothing has to
+   * sync the two from an effect.
+   */
+  const {
+    data: session,
+    error: loadError,
+    isLoading,
+    run: load,
+    setData: setSession,
+  } = useApi(aiAssistantService.getSession, { immediate: true, args: [sessionId] });
+
+  const messages = session?.messages ?? [];
 
   const [sending, setSending] = useState(false);
   const [chatError, setChatError] = useState(null);
@@ -50,27 +61,12 @@ export default function LearningSessionPage() {
 
   const [ending, setEnding] = useState(false);
 
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    setLoadError(null);
-    try {
-      const { data } = await aiAssistantService.getSession(sessionId);
-      setSession(data);
-      setMessages(data?.messages ?? []);
-    } catch (err) {
-      setLoadError(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [sessionId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
   const isActive = session?.status === 'active';
 
-  const appendMessages = (...msgs) => setMessages((prev) => [...prev, ...msgs.filter(Boolean)]);
+  const appendMessages = (...msgs) =>
+    setSession((prev) =>
+      prev ? { ...prev, messages: [...(prev.messages ?? []), ...msgs.filter(Boolean)] } : prev
+    );
 
   const handleSend = async (content) => {
     setSending(true);
@@ -134,7 +130,8 @@ export default function LearningSessionPage() {
     setEnding(true);
     try {
       const { data } = await aiAssistantService.endSession(sessionId);
-      setSession(data);
+      // The end-session response is a summary without the transcript.
+      setSession((prev) => ({ ...data, messages: prev?.messages ?? [] }));
       navigate('/student/assistant');
     } catch (err) {
       setChatError(getErrorMessage(err));
@@ -156,7 +153,7 @@ export default function LearningSessionPage() {
               ? "We couldn't find that learning session, or it isn't yours to view."
               : loadError.message
           }
-          onRetry={notAvailable ? undefined : load}
+          onRetry={notAvailable ? undefined : () => load(sessionId).catch(() => {})}
         />
         <div style={{ textAlign: 'center', marginTop: 'var(--spacing-md)' }}>
           <Link to="/student/assistant/history">Back to History</Link>

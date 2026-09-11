@@ -1,10 +1,9 @@
-import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { LuPanelLeft } from 'react-icons/lu';
 import { Toast } from '../components/common';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
 import { useAuth } from '../hooks/useAuth';
-import { setActiveTimezone, setActiveLocale } from '../utils/locale';
+import { useSyncUserLocale } from '../hooks/useSyncUserLocale';
 import NotificationBell from '../modules/notifications/components/NotificationBell';
 import AppSidebar from './AppSidebar';
 
@@ -26,13 +25,9 @@ export function AuthenticatedLayout({ navItems = [], title, subtitle, brand, chi
 
   // Every date/currency formatted anywhere in the app (utils/date.js,
   // utils/format.js) reads the active timezone/locale rather than the
-  // browser's own - this is the one place that active value is set, from
-  // whichever signed-in user is viewing. Runs for every authenticated role
-  // since this layout wraps all of them.
-  useEffect(() => {
-    setActiveTimezone(user?.timezone);
-    setActiveLocale(user?.locale);
-  }, [user?.timezone, user?.locale]);
+  // browser's own - set here from whichever signed-in user is viewing (and
+  // by KidLayout, the K-5 student shell, which replaces this layout).
+  useSyncUserLocale(user);
 
   return (
     <SidebarProvider>

@@ -6,6 +6,7 @@ import { toast } from '../../../hooks/useToast';
 import { required, email as emailRule } from '../../../utils/validation';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
+import AddressFields from '../../auth/components/AddressFields';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
 import { usePhotoField } from '../../../hooks/usePhotoField';
 import parentService from '../services/parent.service';
@@ -20,6 +21,11 @@ function valuesFromChild(child) {
     lastName: child?.lastName ?? '',
     email: child?.email ?? '',
     phone: child?.phone ?? '',
+    address: child?.address ?? '',
+    city: child?.city ?? '',
+    state: child?.state ?? '',
+    country: child?.country ?? '',
+    postalCode: child?.postalCode ?? '',
     grade: child?.profile?.grade ?? '',
     date_of_birth: child?.profile?.date_of_birth ?? '',
     gender: child?.profile?.gender ?? '',
@@ -68,6 +74,11 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
         lastName: values.lastName || null,
         email: values.email,
         phone: values.phone || null,
+        address: values.address || null,
+        city: values.city || null,
+        state: values.state || null,
+        country: values.country || null,
+        postalCode: values.postalCode || null,
         profile: buildProfilePayload('STUDENT', values),
         photoFile: photo.file,
       });
@@ -116,6 +127,9 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
           <Input label="Last name" {...form.getFieldProps('lastName')} />
           <Input label="Email" type="email" required {...form.getFieldProps('email')} />
           <Input label="Phone" type="tel" {...form.getFieldProps('phone')} />
+
+          <SectionHeader title="Address" as="h3" />
+          <AddressFields values={form.values} getProps={form.getFieldProps} setFieldValue={form.setFieldValue} />
 
           <SectionHeader title="About your child" as="h3" />
           <RoleProfileFields

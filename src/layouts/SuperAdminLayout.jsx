@@ -1,5 +1,18 @@
 import { useEffect } from 'react';
-import { LuDatabase, LuGraduationCap, LuLayoutDashboard, LuLink, LuSchool, LuUsers, LuUsersRound } from 'react-icons/lu';
+import {
+  LuChartLine,
+  LuCreditCard,
+  LuDatabase,
+  LuGraduationCap,
+  LuLayoutDashboard,
+  LuLink,
+  LuPackage,
+  LuReceiptText,
+  LuSchool,
+  LuTicketPercent,
+  LuUsers,
+  LuUsersRound,
+} from 'react-icons/lu';
 import AuthenticatedLayout from './AuthenticatedLayout';
 import '../theme/superAdminTheme.css';
 
@@ -26,6 +39,18 @@ const NAV_ITEMS = [
       },
       { to: '/admin/relationships', label: 'Relationships', icon: LuLink },
       { to: '/admin/masters', label: 'Master Management', icon: LuDatabase },
+    ],
+  },
+  {
+    // Plans and codes are the same Master Management screens, surfaced here
+    // too so the whole billing picture is reachable from one place.
+    group: 'Billing',
+    items: [
+      { to: '/admin/subscriptions', label: 'Subscriptions', icon: LuCreditCard, end: true },
+      { to: '/admin/subscriptions/payments', label: 'Payments & Refunds', icon: LuReceiptText },
+      { to: '/admin/subscriptions/revenue', label: 'Revenue', icon: LuChartLine },
+      { to: '/admin/masters/subscription-plans', label: 'Plans', icon: LuPackage },
+      { to: '/admin/masters/discount-codes', label: 'Discount Codes', icon: LuTicketPercent },
     ],
   },
 ];

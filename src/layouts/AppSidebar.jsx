@@ -26,8 +26,18 @@ import {
 } from '../components/ui/sidebar';
 import { Tooltip } from '../components/ui/tooltip';
 import { useAuth } from '../hooks/useAuth';
-import { ROLE_LABELS } from '../utils/constants';
+import { ROLE_LABELS, USER_ROLES } from '../utils/constants';
 import { formatName, getInitials } from '../utils/format';
+
+/**
+ * Where the "Account" item in the account menu sends each role - only
+ * Teacher and Parent have a My Profile page today. Student and Super Admin
+ * keep the placeholder disabled, out of this feature's scope.
+ */
+const PROFILE_PATH_BY_ROLE = {
+  [USER_ROLES.TEACHER]: '/teacher/profile',
+  [USER_ROLES.PARENT]: '/parent/profile',
+};
 
 /**
  * The application sidebar.
@@ -209,6 +219,12 @@ function UserMenu() {
     navigate('/login', { replace: true });
   };
 
+  const profilePath = PROFILE_PATH_BY_ROLE[role];
+  const handleAccount = () => {
+    setOpen(false);
+    navigate(profilePath);
+  };
+
   /** size-6 so it still fits inside the 32px button on the collapsed rail. */
   const avatar = (
     <span
@@ -266,7 +282,13 @@ function UserMenu() {
           </div>
 
           <div className="py-1">
-            <button type="button" role="menuitem" className={menuItem} disabled>
+            <button
+              type="button"
+              role="menuitem"
+              className={menuItem}
+              onClick={profilePath ? handleAccount : undefined}
+              disabled={!profilePath}
+            >
               <LuUser aria-hidden="true" />
               <span>Account</span>
             </button>

@@ -21,15 +21,28 @@ import EditUserPage from '../modules/superAdmin/pages/EditUserPage';
 import RelationshipsPage from '../modules/superAdmin/pages/RelationshipsPage';
 
 import ParentChildrenPage from '../modules/parent/pages/ParentChildrenPage';
+import ParentProfilePage from '../modules/parent/pages/ParentProfilePage';
 
 import TeacherDashboardPage from '../modules/teacher/pages/TeacherDashboardPage';
 import MyStudentsPage from '../modules/teacher/pages/MyStudentsPage';
 import AssignmentsListPage from '../modules/teacher/pages/AssignmentsListPage';
 import AssignmentFormPage from '../modules/teacher/pages/AssignmentFormPage';
 import AssignmentDetailsPage from '../modules/teacher/pages/AssignmentDetailsPage';
+import TeacherProfilePage from '../modules/teacher/pages/TeacherProfilePage';
 
 import MyAssignmentsPage from '../modules/student/pages/MyAssignmentsPage';
 import StudentAssignmentDetailPage from '../modules/student/pages/AssignmentDetailPage';
+import GradeBandPage from '../modules/student/pages/GradeBandPage';
+import KidHomePage from '../modules/student/pages/kid/KidHomePage';
+import KidAssignmentsPage from '../modules/student/pages/kid/KidAssignmentsPage';
+import KidComingSoonPage from '../modules/student/pages/kid/KidComingSoonPage';
+import KidSettingsPage from '../modules/student/pages/kid/KidSettingsPage';
+
+import AssistantHomePage from '../modules/aiAssistant/pages/AssistantHomePage';
+import LearningSessionPage from '../modules/aiAssistant/pages/LearningSessionPage';
+import LearningHistoryPage from '../modules/aiAssistant/pages/LearningHistoryPage';
+import TeacherLearningActivityPage from '../modules/aiAssistant/pages/TeacherLearningActivityPage';
+import ParentLearningSummaryPage from '../modules/aiAssistant/pages/ParentLearningSummaryPage';
 
 import MasterDashboardPage from '../modules/masterManagement/pages/MasterDashboardPage';
 import MasterListPage from '../modules/masterManagement/pages/MasterListPage';
@@ -56,6 +69,13 @@ import StickyNoteStylesListPage from '../modules/masterManagement/pages/stickyNo
 import StickyNoteStyleFormPage from '../modules/masterManagement/pages/stickyNoteStyles/StickyNoteStyleFormPage';
 import StickersListPage from '../modules/masterManagement/pages/stickers/StickersListPage';
 import StickerFormPage from '../modules/masterManagement/pages/stickers/StickerFormPage';
+
+import AdminSubscriptionsPage from '../modules/subscription/pages/admin/AdminSubscriptionsPage';
+import AdminPaymentsPage from '../modules/subscription/pages/admin/AdminPaymentsPage';
+import AdminRevenuePage from '../modules/subscription/pages/admin/AdminRevenuePage';
+import AdminCouponRedemptionsPage from '../modules/subscription/pages/admin/AdminCouponRedemptionsPage';
+import ParentSubscriptionPage from '../modules/subscription/pages/ParentSubscriptionPage';
+import CheckoutPage from '../modules/subscription/pages/CheckoutPage';
 
 /**
  * The single definition of the app's routes.
@@ -191,6 +211,16 @@ export const SUPER_ADMIN_ROUTES = {
     { path: 'masters/discount-codes', label: 'Discount Codes', permissions: [PERMISSIONS.MASTER_READ], component: DiscountCodesListPage },
     { path: 'masters/discount-codes/create', label: 'Add code', permissions: [PERMISSIONS.MASTER_CREATE], component: DiscountCodeFormPage },
     { path: 'masters/discount-codes/:id/edit', label: 'Edit code', permissions: [PERMISSIONS.MASTER_UPDATE], component: DiscountCodeFormPage },
+    { path: 'masters/discount-codes/:id/redemptions', label: 'Code redemptions', permissions: [PERMISSIONS.SUBSCRIPTION_MANAGE], component: AdminCouponRedemptionsPage },
+
+    /*
+     * Billing oversight. Plans and discount codes are edited in Master
+     * Management above; these are the operational views over what parents
+     * actually bought, paid and were refunded.
+     */
+    { path: 'subscriptions', label: 'Subscriptions', permissions: [PERMISSIONS.SUBSCRIPTION_MANAGE], component: AdminSubscriptionsPage },
+    { path: 'subscriptions/payments', label: 'Payments & Refunds', permissions: [PERMISSIONS.SUBSCRIPTION_MANAGE], component: AdminPaymentsPage },
+    { path: 'subscriptions/revenue', label: 'Revenue', permissions: [PERMISSIONS.SUBSCRIPTION_MANAGE], component: AdminRevenuePage },
 
     { path: 'masters/themes', label: 'Colour Themes', permissions: [PERMISSIONS.MASTER_READ], component: ThemesListPage },
     { path: 'masters/themes/create', label: 'Add theme', permissions: [PERMISSIONS.MASTER_CREATE], component: ThemeFormPage },
@@ -220,8 +250,20 @@ export const STUDENT_ROUTES = {
   layout: StudentLayout,
   requiresAuth: true,
   allowedRoles: [USER_ROLES.STUDENT],
+  /*
+   * K-5 students (Kindergarten-Grade 5) get the "My Learning Space" pages;
+   * everyone else keeps the standard ones. GradeBandPage picks per route -
+   * `junior` for K-5, `standard` (or the placeholder) for Grade 6+. See
+   * layouts/StudentLayout.jsx for how the grade band is decided.
+   */
   routes: [
-    { path: '', label: 'My Day', permissions: [PERMISSIONS.DASHBOARD_READ], element: null },
+    {
+      path: '',
+      label: 'My Day',
+      permissions: [PERMISSIONS.DASHBOARD_READ],
+      component: GradeBandPage,
+      props: { junior: KidHomePage, label: 'My Day' },
+    },
     { path: 'dashboard', label: 'My Day', redirectTo: '/student' },
     { path: 'onboarding', label: 'Onboarding', element: null },
     { path: 'check-in', label: 'Check In', permissions: [PERMISSIONS.CHECKIN_CREATE], element: null },
@@ -229,7 +271,8 @@ export const STUDENT_ROUTES = {
       path: 'assignments',
       label: 'Assignments',
       permissions: [PERMISSIONS.ASSIGNMENT_READ],
-      component: MyAssignmentsPage,
+      component: GradeBandPage,
+      props: { junior: KidAssignmentsPage, standard: MyAssignmentsPage },
     },
     {
       path: 'assignments/:assignmentId',
@@ -237,10 +280,51 @@ export const STUDENT_ROUTES = {
       permissions: [PERMISSIONS.ASSIGNMENT_READ],
       component: StudentAssignmentDetailPage,
     },
+    /*
+     * AI Learning Assistant. `assistant/history` is declared before
+     * `assistant/:sessionId` so the static path is never swallowed by the
+     * param route.
+     */
+    {
+      path: 'assistant',
+      label: 'AI Assistant',
+      permissions: [PERMISSIONS.AI_ASSISTANT_USE],
+      component: AssistantHomePage,
+    },
+    {
+      path: 'assistant/history',
+      label: 'Learning History',
+      permissions: [PERMISSIONS.AI_ASSISTANT_USE],
+      component: LearningHistoryPage,
+    },
+    {
+      path: 'assistant/:sessionId',
+      label: 'Learning Session',
+      permissions: [PERMISSIONS.AI_ASSISTANT_USE],
+      component: LearningSessionPage,
+    },
     { path: 'calendar', label: 'Planner', element: null },
-    { path: 'focus', label: 'Focus', element: null },
+    {
+      path: 'focus',
+      label: 'Focus',
+      component: GradeBandPage,
+      props: { junior: KidComingSoonPage, label: 'Focus', feature: 'focus' },
+    },
     { path: 'toolkit', label: 'Toolkit', element: null },
-    { path: 'rewards', label: 'Rewards', permissions: [PERMISSIONS.REWARD_READ], element: null },
+    {
+      path: 'rewards',
+      label: 'Rewards',
+      permissions: [PERMISSIONS.REWARD_READ],
+      component: GradeBandPage,
+      props: { junior: KidComingSoonPage, label: 'Rewards', feature: 'rewards' },
+    },
+    // K-5 only (calm mode, log out) - Grade 6+ use the account menu instead.
+    {
+      path: 'settings',
+      label: 'Settings',
+      component: GradeBandPage,
+      props: { junior: KidSettingsPage, standardRedirect: '/student' },
+    },
   ],
 };
 
@@ -283,6 +367,18 @@ export const TEACHER_ROUTES = {
       component: AssignmentFormPage,
     },
     { path: 'progress', label: 'Progress', permissions: [PERMISSIONS.PROGRESS_READ], element: null },
+    {
+      path: 'learning-activity',
+      label: 'Learning Activity',
+      permissions: [PERMISSIONS.AI_ACTIVITY_READ],
+      component: TeacherLearningActivityPage,
+    },
+    {
+      path: 'profile',
+      label: 'My Profile',
+      permissions: [PERMISSIONS.PROFILE_READ],
+      component: TeacherProfilePage,
+    },
   ],
 };
 
@@ -306,12 +402,30 @@ export const PARENT_ROUTES = {
       permissions: [PERMISSIONS.USER_READ],
       component: ParentChildrenPage,
     },
+    {
+      path: 'profile',
+      label: 'My Profile',
+      permissions: [PERMISSIONS.PROFILE_READ],
+      component: ParentProfilePage,
+    },
     { path: 'progress', label: 'Progress', permissions: [PERMISSIONS.PROGRESS_READ], element: null },
+    {
+      path: 'learning-summary',
+      label: 'Learning Summary',
+      permissions: [PERMISSIONS.LEARNING_SUMMARY_READ],
+      component: ParentLearningSummaryPage,
+    },
     {
       path: 'subscription',
       label: 'Subscription',
       permissions: [PERMISSIONS.SUBSCRIPTION_READ],
-      element: null,
+      component: ParentSubscriptionPage,
+    },
+    {
+      path: 'subscription/checkout',
+      label: 'Payment',
+      permissions: [PERMISSIONS.SUBSCRIPTION_CREATE],
+      component: CheckoutPage,
     },
     {
       path: 'notifications',

@@ -4,22 +4,72 @@
    Preflight is deliberately NOT imported. Tailwind's base layer resets
    margins, borders, list styles and form controls globally, which would
    restyle all 46 existing common components. Importing only the theme and
-   utility layers gives us Tailwind's classes for the shadcn sidebar while
-   leaving everything else exactly as it was.
+   utility layers gives us Tailwind's classes for shadcn/ui and Magic UI
+   while leaving everything else exactly as it was.
+
+   `npx shadcn init` only recognises a literal `@import "tailwindcss"`, which
+   would pull preflight back in - so components.json points here but the
+   CLI must never be allowed to rewrite this file. Add shadcn tokens by hand.
    ===================================================================== */
 @layer theme, base, components, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
+/* shadcn / Magic UI helpers (animate-in, data-open:, ...). Neither ships a reset. */
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
 /*
- * shadcn's sidebar reads these variables. They are mapped onto the existing
- * theme tokens rather than given their own values, so the sidebar follows the
- * same palette as the rest of the app and stays in step with any change to
- * theme/variables.css - including the dark theme, which those tokens already
- * handle.
+ * `dark:` follows the app's own theme switch - themeSlice writes data-theme
+ * onto <html>, and with no explicit choice the OS preference applies (same
+ * rule as theme/variables.css) - instead of Tailwind's media-only default.
+ * It never fires inside the K-5 kid theme, which is always the light paper
+ * look (see styles/kid-theme.css).
  */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='light']) *):not(:where(.kid-theme, .kid-theme *)) {
+      @slot;
+    }
+  }
+
+  &:where(:root[data-theme='dark'] *):not(:where(.kid-theme, .kid-theme *)) {
+    @slot;
+  }
+}
+
+/*
+ * shadcn's semantic tokens.
+ *
+ * Aliased onto the existing theme tokens rather than given their own values,
+ * so any shadcn or Magic UI component follows the same palette as the rest
+ * of the app and stays in step with theme/variables.css - including its dark
+ * theme. The K-5 kid theme re-points them inside `.kid-theme` only.
+ */
+:root {
+  --background: var(--color-background);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-text-inverse);
+  --secondary: var(--color-surface-alt);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-surface-alt);
+  --muted-foreground: var(--color-text-secondary);
+  --accent: var(--color-surface-alt);
+  --accent-foreground: var(--color-text-primary);
+  --destructive: var(--color-error);
+  --border: var(--color-border);
+  --input: var(--color-border-strong);
+  --ring: var(--color-primary);
+}
+
 @theme inline {
+  /* The app sidebar (components/ui/sidebar.jsx). */
   --color-sidebar: var(--color-surface);
   --color-sidebar-foreground: var(--color-text-primary);
   --color-sidebar-primary: var(--color-primary);
@@ -29,14 +79,68 @@
   --color-sidebar-border: var(--color-border);
   --color-sidebar-ring: var(--color-primary);
 
-  --color-background: var(--color-background);
-  --color-foreground: var(--color-text-primary);
-  --color-muted-foreground: var(--color-text-secondary);
-  --color-border: var(--color-border);
-  --color-accent: var(--color-surface-alt);
-  --color-accent-foreground: var(--color-text-primary);
-  --color-ring: var(--color-primary);
+  /* shadcn semantic colours - bg-primary, text-muted-foreground, ... */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
+
+  /*
+   * K-5 kid theme - bg-kid-paper, text-kid-ink, font-kid-display, ...
+   * The values live in styles/kid-theme.css and only exist inside
+   * `.kid-theme`, so these utilities are inert anywhere else.
+   */
+  --color-kid-paper: var(--kid-paper);
+  --color-kid-paper-deep: var(--kid-paper-deep);
+  --color-kid-sheet: var(--kid-sheet);
+  --color-kid-sidebar: var(--kid-sidebar);
+  --color-kid-edge: var(--kid-edge);
+  --color-kid-ink: var(--kid-ink);
+  --color-kid-ink-soft: var(--kid-ink-soft);
+  --color-kid-teal: var(--kid-teal);
+  --color-kid-teal-deep: var(--kid-teal-deep);
+  --color-kid-sky: var(--kid-sky);
+  --color-kid-navy: var(--kid-navy);
+  --color-kid-blue: var(--kid-blue);
+  --color-kid-pink: var(--kid-pink);
+  --color-kid-yellow: var(--kid-yellow);
+  --color-kid-sun: var(--kid-sun);
+  --color-kid-green: var(--kid-green);
+  --color-kid-green-deep: var(--kid-green-deep);
+  --color-kid-lavender: var(--kid-lavender);
+  --color-kid-purple: var(--kid-purple);
+  --color-kid-mint: var(--kid-mint);
+  --color-kid-orange: var(--kid-orange);
+  --color-kid-coral: var(--kid-coral);
+  --color-kid-coral-soft: var(--kid-coral-soft);
+
+  --font-kid-display: var(--kid-font-display);
+  --font-kid-body: var(--kid-font-body);
+  --font-kid-hand: var(--kid-font-hand);
+
+  /* Soft lift for cut-paper shapes: a hairline edge plus a warm, low shadow. */
+  --shadow-paper: 0 1px 0 rgb(92 70 45 / 0.07), 0 14px 24px -16px rgb(92 70 45 / 0.55);
+  --shadow-paper-lg: 0 2px 0 rgb(92 70 45 / 0.07), 0 26px 40px -22px rgb(92 70 45 / 0.6);
+}
+
+/* Faint paper grain, for the kid theme's craft-paper surfaces. */
+@utility paper-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .28 0 0 0 0 .19 0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }

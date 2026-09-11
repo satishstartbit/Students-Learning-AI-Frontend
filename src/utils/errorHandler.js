@@ -20,6 +20,14 @@ const STATUS_MESSAGES = {
 };
 
 export function parseApiError(error) {
+  // Already normalised: `api.*` (utils/apiClient.js) throws this function's
+  // own output, and getErrorMessage / getFieldErrors / useApi then parse it
+  // again. Re-parsing finds no `response`, so the server's message and field
+  // errors were being replaced by the generic per-status text.
+  if (error && !error.response && 'fieldErrors' in error && 'isValidationError' in error) {
+    return error;
+  }
+
   // Network failure / request never reached the server.
   if (error?.isNetworkError || (!error?.response && error?.request)) {
     return {

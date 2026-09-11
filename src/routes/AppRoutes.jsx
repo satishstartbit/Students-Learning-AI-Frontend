@@ -1,10 +1,11 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import PublicRoutes from './PublicRoutes';
 import ProtectedRoutes from './ProtectedRoutes';
 import RoleRoutes from './RoleRoutes';
+import RoutePlaceholder from './RoutePlaceholder';
 import { PUBLIC_ROUTES, ROLE_ROUTE_GROUPS } from './routeConfig';
 import { useAuth } from '../hooks/useAuth';
-import { EmptyState, PageHeader, RoleGuard } from '../components/common';
+import { EmptyState, RoleGuard } from '../components/common';
 
 /**
  * Builds the router from routeConfig.
@@ -19,22 +20,6 @@ import { EmptyState, PageHeader, RoleGuard } from '../components/common';
  * so no page performs its own authorisation check. The client guards decide
  * what renders; the API re-checks every request independently.
  */
-
-/** Stand-in until a module supplies the real page for a route. */
-function RoutePlaceholder({ label }) {
-  const { pathname } = useLocation();
-
-  return (
-    <>
-      <PageHeader title={label} description={pathname} />
-      <EmptyState
-        icon="🚧"
-        title="Not built yet"
-        description="This route is wired up and guarded. Its page component will be added when this Phase 1 module is implemented."
-      />
-    </>
-  );
-}
 
 /** Sends a signed-in user to their own home, and everyone else to login. */
 function RootRedirect() {

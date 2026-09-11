@@ -20,6 +20,27 @@ export const logoutAll = () => api.post('/auth/logout-all');
 
 export const getMe = () => api.get('/auth/me');
 
+/**
+ * Profile Management self-service update. When a photo is attached the
+ * request must be multipart/form-data - the nested `profile` object travels
+ * as a JSON string field, which the backend parses back into an object (see
+ * middlewares/parseMultipartJson.middleware.js) - same convention as
+ * modules/parent/services/parent.service.js#buildChildBody.
+ */
+function buildProfileBody({ profile, photoFile, ...rest }) {
+  if (!photoFile) return { ...rest, profile };
+
+  const formData = new FormData();
+  Object.entries(rest).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) formData.append(key, value);
+  });
+  formData.append('profile', JSON.stringify(profile ?? {}));
+  formData.append('profileImage', photoFile);
+  return formData;
+}
+
+export const updateMe = (payload) => api.patch('/auth/me', buildProfileBody(payload));
+
 export const verifyEmail = (token) => api.post('/auth/verify-email', { token });
 export const resendVerification = (email) => api.post('/auth/resend-verification', { email });
 
@@ -38,6 +59,7 @@ export default {
   logout,
   logoutAll,
   getMe,
+  updateMe,
   verifyEmail,
   resendVerification,
   forgotPassword,

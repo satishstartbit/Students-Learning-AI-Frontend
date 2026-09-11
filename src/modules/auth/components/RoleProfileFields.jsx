@@ -85,6 +85,30 @@ function MasterSelectField({ masterType, name, label, getProps, hint, required, 
 }
 
 /**
+ * The profile-photo picker, shared by every role. `photo` comes from
+ * `hooks/usePhotoField.js`; the file travels alongside the request
+ * separately from `profile` (see profilePayload.js), so it takes no part in
+ * `getProps`.
+ */
+function ProfilePhotoField({ photo }) {
+  return (
+    <ImageUpload
+      name="profileImage"
+      label="Profile photo"
+      hint="Optional - JPG, PNG, WEBP or HEIC"
+      previews={photo.previewUrl ? [photo.previewUrl] : []}
+      files={photo.file ? [photo.file] : []}
+      error={photo.error}
+      onSelect={(eventOrFiles) => {
+        const file = Array.isArray(eventOrFiles) ? eventOrFiles[0] : eventOrFiles?.target?.files?.[0];
+        if (file) photo.onSelect(file);
+      }}
+      onRemove={photo.onRemove}
+    />
+  );
+}
+
+/**
  * The profile fields that change with the selected role.
  *
  * Shared by public registration and the admin create/edit forms so the three
@@ -123,23 +147,7 @@ export default function RoleProfileFields({
   if (role === 'STUDENT') {
     return (
       <>
-        {photo && (
-          <ImageUpload
-            name="profileImage"
-            label="Profile photo"
-            hint="Optional - JPG, PNG, WEBP or HEIC"
-            previews={photo.previewUrl ? [photo.previewUrl] : []}
-            files={photo.file ? [photo.file] : []}
-            error={photo.error}
-            onSelect={(eventOrFiles) => {
-              const file = Array.isArray(eventOrFiles)
-                ? eventOrFiles[0]
-                : eventOrFiles?.target?.files?.[0];
-              if (file) photo.onSelect(file);
-            }}
-            onRemove={photo.onRemove}
-          />
-        )}
+        {photo && <ProfilePhotoField photo={photo} />}
 
         {includeAdminOnly ? (
           <MasterSelectField
@@ -223,6 +231,8 @@ export default function RoleProfileFields({
   if (role === 'PARENT') {
     return (
       <>
+        {photo && <ProfilePhotoField photo={photo} />}
+
         <Textarea
           label="Family context"
           rows={3}
@@ -243,6 +253,8 @@ export default function RoleProfileFields({
     // these keys and rejects anything else.
     return (
       <>
+        {photo && <ProfilePhotoField photo={photo} />}
+
         <Input label="School" {...getProps('school')} />
 
         {includeAdminOnly ? (

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Alert, Button, Card, ErrorState, Loader, PageHeader } from '../../../components/common';
+import { useApi } from '../../../hooks/useApi';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatRelative } from '../../../utils/date';
 import SubjectTopicPicker from '../components/SubjectTopicPicker';
@@ -16,28 +17,15 @@ import * as aiAssistantService from '../services/aiAssistant.service';
 export default function AssistantHomePage() {
   const navigate = useNavigate();
 
-  const [activeSession, setActiveSession] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    data: activeSession,
+    error,
+    isLoading,
+    run: loadActiveSession,
+  } = useApi(aiAssistantService.getActiveSession, { immediate: true });
+
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState(null);
-
-  const loadActiveSession = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const { data } = await aiAssistantService.getActiveSession();
-      setActiveSession(data ?? null);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadActiveSession();
-  }, []);
 
   const handleStart = async ({ subject, topic }) => {
     setStarting(true);
@@ -66,7 +54,9 @@ export default function AssistantHomePage() {
 
       {isLoading && <Loader message="Checking for a session in progress…" />}
 
-      {!isLoading && error && <ErrorState error={error} onRetry={loadActiveSession} />}
+      {!isLoading && error && (
+        <ErrorState error={error} onRetry={() => loadActiveSession().catch(() => {})} />
+      )}
 
       {!isLoading && !error && (
         <>

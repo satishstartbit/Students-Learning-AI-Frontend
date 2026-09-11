@@ -77,7 +77,16 @@ export default function DiscountCodesListPage() {
       render: (row) => <Badge variant="primary">{row.discountType === 'percentage' ? `${row.discountValue}%` : row.discountValue}</Badge>,
     },
     { key: 'expiresAt', header: 'Expires', render: (row) => (row.expiresAt ? formatDate(row.expiresAt) : 'No expiry') },
-    { key: 'redemptionCount', header: 'Used', render: (row) => `${row.redemptionCount}${row.maxRedemptions ? ` / ${row.maxRedemptions}` : ''}` },
+    {
+      key: 'redemptionCount',
+      header: 'Used',
+      // Links through to which parents actually redeemed the code.
+      render: (row) => (
+        <Link to={`/admin/masters/discount-codes/${row.id}/redemptions`} title="See who used this code">
+          {`${row.redemptionCount}${row.maxRedemptions ? ` / ${row.maxRedemptions}` : ''}`}
+        </Link>
+      ),
+    },
     { key: 'is_active', header: 'Status', render: (row) => <StatusBadge status={row.isActive ? 'active' : 'inactive'} /> },
     {
       key: 'actions',

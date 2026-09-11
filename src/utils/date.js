@@ -55,6 +55,34 @@ export function formatTime(value, { locale, timeZone, ...options } = {}) {
   }).format(d);
 }
 
+/** The parts of `value` as a wall clock in the active (or given) timezone shows them. */
+function zonedParts(value, timeZone) {
+  const d = toDate(value);
+  if (!d) return null;
+  const parts = new Intl.DateTimeFormat(getActiveLocale(), {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: 'numeric',
+    hourCycle: 'h23',
+    numberingSystem: 'latn',
+    timeZone: timeZone ?? getActiveTimezone(),
+  }).formatToParts(d);
+  return Object.fromEntries(parts.map((p) => [p.type, p.value]));
+}
+
+/** Hour of the day (0-23) in the user's timezone - e.g. for "Good morning". */
+export function getHourInTimezone(value = new Date(), { timeZone } = {}) {
+  const parts = zonedParts(value, timeZone);
+  return parts ? Number(parts.hour) % 24 : null;
+}
+
+/** "2026-09-11" for the calendar day `value` falls on in the user's timezone. */
+export function getDateKey(value = new Date(), { timeZone } = {}) {
+  const parts = zonedParts(value, timeZone);
+  return parts ? `${parts.year}-${parts.month}-${parts.day}` : '';
+}
+
 /** Long-form Canadian date: "September 10, 2026". */
 export function formatLongDate(value, options = {}) {
   return formatDate(value, { month: 'long', ...options });
@@ -160,6 +188,8 @@ export default {
   formatDateTime,
   formatTime,
   formatLongDate,
+  getHourInTimezone,
+  getDateKey,
   toDateInputValue,
   toTimeInputValue,
   daysUntil,

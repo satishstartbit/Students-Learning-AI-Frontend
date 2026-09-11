@@ -199,6 +199,13 @@ export const STATUS_TONE = Object.freeze({
   reviewed: 'info',
   returned: 'warning',
   overdue: 'danger',
+
+  // Subscriptions & payments (trialing/active/past_due/cancelled above).
+  expired: 'neutral',
+  succeeded: 'success',
+  failed: 'danger',
+  refunded: 'warning',
+  partially_refunded: 'warning',
 });
 
 export const STORAGE_KEYS = Object.freeze({
