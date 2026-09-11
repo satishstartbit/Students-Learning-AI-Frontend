@@ -44,6 +44,20 @@ export function getStartLabel(status) {
   return "Let's go!";
 }
 
+/**
+ * A rough "how big is this" indicator (1-3 stars) for the My Week cards,
+ * from estimated minutes - there's no stored difficulty/effort field, so
+ * this stands in for one using the one size-ish signal already on every
+ * assignment, rather than inventing a fake field.
+ */
+export function starsForMinutes(minutes) {
+  const n = Number(minutes);
+  if (!Number.isFinite(n) || n <= 0) return 1;
+  if (n <= 15) return 1;
+  if (n <= 25) return 2;
+  return 3;
+}
+
 /** "25 min" - estimated minutes as a short, readable duration. */
 export function formatMinutes(minutes) {
   const n = Number(minutes);

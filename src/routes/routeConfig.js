@@ -33,10 +33,12 @@ import TeacherProfilePage from '../modules/teacher/pages/TeacherProfilePage';
 import MyAssignmentsPage from '../modules/student/pages/MyAssignmentsPage';
 import StudentAssignmentDetailPage from '../modules/student/pages/AssignmentDetailPage';
 import StudentHomePage from '../modules/student/pages/StudentHomePage';
+import StudentPlanPage from '../modules/student/pages/StudentPlanPage';
 import FocusTimerPage from '../modules/student/pages/FocusTimerPage';
 import RewardsPage from '../modules/student/pages/RewardsPage';
 import GradeBandPage from '../modules/student/pages/GradeBandPage';
 import KidHomePage from '../modules/student/pages/kid/KidHomePage';
+import KidMyWeekPage from '../modules/student/pages/kid/KidMyWeekPage';
 import KidAssignmentsPage from '../modules/student/pages/kid/KidAssignmentsPage';
 import KidComingSoonPage from '../modules/student/pages/kid/KidComingSoonPage';
 import KidSettingsPage from '../modules/student/pages/kid/KidSettingsPage';
@@ -306,7 +308,12 @@ export const STUDENT_ROUTES = {
       permissions: [PERMISSIONS.AI_ASSISTANT_USE],
       component: LearningSessionPage,
     },
-    { path: 'calendar', label: 'Planner', element: null },
+    {
+      path: 'calendar',
+      label: 'My Week',
+      component: GradeBandPage,
+      props: { junior: KidMyWeekPage, standard: StudentPlanPage },
+    },
     {
       path: 'focus',
       label: 'Focus',

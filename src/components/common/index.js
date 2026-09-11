@@ -61,6 +61,7 @@ export { default as Table } from './Table';
 export { default as Pagination } from './Pagination';
 export { default as DataTable } from './DataTable';
 export { default as ProgressBar } from './ProgressBar';
+export { default as CircularProgress } from './CircularProgress';
 export { default as ProgressCard } from './ProgressCard';
 export { default as StatCard } from './StatCard';
 export { default as Dropdown } from './Dropdown';

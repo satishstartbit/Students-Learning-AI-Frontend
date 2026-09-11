@@ -92,6 +92,23 @@ export function SparkleIcon(props) {
   );
 }
 
+export function CalendarIcon(props) {
+  return (
+    <Svg {...props}>
+      <rect x="4.5" y="6.5" width="23" height="21" rx="3" fill="#fdfaf3" stroke="#e2d5bd" strokeWidth="1.5" />
+      <path d="M4.5 12.5h23" stroke="#3565b0" strokeWidth="2.4" />
+      <rect x="9" y="3" width="3" height="6" rx="1.5" fill="#3565b0" />
+      <rect x="20" y="3" width="3" height="6" rx="1.5" fill="#3565b0" />
+      <g fill="#f6c445">
+        <rect x="8.5" y="16" width="4" height="4" rx="1.2" />
+        <rect x="14" y="16" width="4" height="4" rx="1.2" />
+        <rect x="19.5" y="16" width="4" height="4" rx="1.2" />
+        <rect x="8.5" y="21.5" width="4" height="4" rx="1.2" />
+      </g>
+    </Svg>
+  );
+}
+
 export function GearIcon(props) {
   return (
     <Svg {...props}>

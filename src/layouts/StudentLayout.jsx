@@ -25,7 +25,7 @@ const NAV_ITEMS = [
       { to: '/student/check-in', label: 'Check In', icon: LuMessageCircle },
       { to: '/student/assignments', label: 'Assignments', icon: LuFileText },
       { to: '/student/assistant', label: 'AI Assistant', icon: LuSparkles },
-      { to: '/student/calendar', label: 'Planner', icon: LuCalendarDays },
+      { to: '/student/calendar', label: 'Plan', icon: LuCalendarDays },
       { to: '/student/focus', label: 'Focus', icon: LuTimer },
       { to: '/student/toolkit', label: 'Toolkit', icon: LuHeartHandshake },
       { to: '/student/rewards', label: 'Rewards', icon: LuTrophy },

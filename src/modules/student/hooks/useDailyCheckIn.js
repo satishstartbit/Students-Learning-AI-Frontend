@@ -26,7 +26,15 @@ export function useDailyCheckIn(userId) {
     [checkIn, key]
   );
 
-  return { mood: checkIn?.mood ?? null, energy: checkIn?.energy ?? null, update };
+  return {
+    mood: checkIn?.mood ?? null,
+    energy: checkIn?.energy ?? null,
+    // How many minutes the student says they have free today - read by the
+    // Grade 6+ Regulation Toolkit's recommendation (see
+    // RegulationToolkitCard). Not asked of K-5 students.
+    availableMinutes: checkIn?.availableMinutes ?? null,
+    update,
+  };
 }
 
 export default useDailyCheckIn;

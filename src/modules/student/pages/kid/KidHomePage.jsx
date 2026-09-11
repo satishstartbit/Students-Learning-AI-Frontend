@@ -4,8 +4,9 @@ import { BlurFade } from '../../../../components/ui/blur-fade';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useMyTasks } from '../../hooks/useMyTasks';
 import { CheckInCard } from '../../components/kid/CheckInCard';
-import { EncouragementNote } from '../../components/kid/EncouragementNote';
+import { FocusTeaserCard } from '../../components/kid/FocusTeaserCard';
 import { HeroScene } from '../../components/kid/HeroScene';
+import { MyProgressCard } from '../../components/kid/MyProgressCard';
 import { FooterScene, WoodenSign, Heart } from '../../components/kid/KidScenery';
 import { KidSkeleton } from '../../components/kid/KidStates';
 import { NextTaskCard } from '../../components/kid/NextTaskCard';
@@ -29,6 +30,10 @@ export default function KidHomePage() {
   const [nextTask, ...laterTasks] = tasks.toDo;
   const otherTasks = laterTasks.slice(0, OTHER_TASKS_SHOWN);
   const moreCount = laterTasks.length - otherTasks.length;
+
+  // "Done today" - handed in or reviewed - out of everything assigned.
+  const doneCount = tasks.sent.length + tasks.done.length;
+  const totalCount = tasks.toDo.length + doneCount;
 
   return (
     <div data-kid-page className="kid-ui min-h-full">
@@ -86,9 +91,15 @@ export default function KidHomePage() {
             <CheckInCard />
           </BlurFade>
           <BlurFade delay={0.3} className="sm:flex-1 lg:flex-none">
-            <EncouragementNote finishedCount={tasks.sent.length + tasks.done.length} />
+            <MyProgressCard done={doneCount} total={totalCount} />
           </BlurFade>
         </div>
+      </div>
+
+      <div className="mx-auto max-w-6xl px-4 sm:px-8">
+        <BlurFade delay={0.35}>
+          <FocusTeaserCard />
+        </BlurFade>
       </div>
 
       <div className="relative isolate mt-4 h-40 overflow-hidden sm:h-48">

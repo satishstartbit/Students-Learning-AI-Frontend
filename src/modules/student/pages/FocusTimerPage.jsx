@@ -1,12 +1,23 @@
-import { useState } from 'react';
-import { Card, Button, Select, Alert, Loader } from '../../../components/common';
+import { useMemo, useState } from 'react';
+import { Card, Button, IconButton, Select, Alert, Loader, CircularProgress } from '../../../components/common';
+import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { useFocusTimer } from '../hooks/useFocusTimer';
+import { useMyTasks } from '../hooks/useMyTasks';
+import { useDailyCheckIn } from '../hooks/useDailyCheckIn';
+import { useAuth } from '../../../hooks/useAuth';
+import RegulationToolkitCard from '../components/RegulationToolkitCard';
 
 const PLANNED_OPTIONS = [
   { value: '10', label: '10 minutes' },
   { value: '15', label: '15 minutes' },
   { value: '25', label: '25 minutes' },
   { value: '45', label: '45 minutes' },
+];
+
+const AUDIO_OPTIONS = [
+  { value: '', label: 'No sound', icon: '🔇' },
+  { value: 'rain', label: 'Rain sounds', icon: '🌧️' },
+  { value: 'music', label: 'Focus music', icon: '🎧' },
 ];
 
 function formatClock(totalSeconds) {
@@ -16,17 +27,29 @@ function formatClock(totalSeconds) {
 }
 
 /**
- * A calm timer to help a student focus on one thing at a time. Grade 6+
- * only - the K-5 equivalent is still "coming soon" (KidComingSoonPage).
- *
- * The clock is a plain, still number rather than an animated ring or
- * confetti - "calm" is the point, distinct from the celebratory tone of
- * Rewards.
+ * "Take a breath, choose what you need, and get to it." - the Regulation
+ * Toolkit and the Focus Timer, side by side. Grade 6+ only; the K-5
+ * equivalent is still "coming soon" (KidComingSoonPage).
  */
 export default function FocusTimerPage() {
+  const { user } = useAuth();
   const timer = useFocusTimer();
+  const tasks = useMyTasks();
+  const checkIn = useDailyCheckIn(user?.id);
+
   const [plannedMinutes, setPlannedMinutes] = useState('25');
+  const [taskId, setTaskId] = useState(null);
+  const [audioIndex, setAudioIndex] = useState(0);
+  const [showSettings, setShowSettings] = useState(false);
   const [justEnded, setJustEnded] = useState(null);
+
+  const taskOptions = useMemo(
+    () =>
+      tasks.toDo
+        .filter((item) => item.assignment?.id)
+        .map((item) => ({ value: item.assignment.id, label: item.assignment.title })),
+    [tasks.toDo]
+  );
 
   if (timer.isLoading) return <Loader message="Loading your focus timer…" />;
 
@@ -35,7 +58,18 @@ export default function FocusTimerPage() {
   const isPaused = session?.status === 'paused';
   const isActive = isRunning || isPaused;
 
-  const handleStart = () => timer.start({ plannedMinutes: Number(plannedMinutes) }).catch(() => {});
+  const plannedSeconds = Number(plannedMinutes) * 60;
+  const ringValue = isActive ? Math.min(timer.elapsedSeconds, plannedSeconds) : 0;
+  const clockLabel = isActive
+    ? formatClock(Math.max(plannedSeconds - timer.elapsedSeconds, 0))
+    : formatClock(plannedSeconds);
+
+  const audioOption = AUDIO_OPTIONS[audioIndex].value;
+
+  const handleStart = () =>
+    timer
+      .start({ plannedMinutes: Number(plannedMinutes), taskId: taskId || undefined, audioOption: audioOption || undefined })
+      .catch(() => {});
 
   const handleComplete = () =>
     timer
@@ -54,7 +88,7 @@ export default function FocusTimerPage() {
       <div className="ui-pageheader">
         <div>
           <h1 className="ui-pageheader__title">Focus</h1>
-          <p className="ui-pageheader__description">Tune out distractions and get in the zone.</p>
+          <p className="ui-pageheader__description">Take a breath, choose what you need, and get to it.</p>
         </div>
       </div>
 
@@ -76,65 +110,111 @@ export default function FocusTimerPage() {
         </Alert>
       )}
 
-      <Card>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--spacing-lg)', padding: 'var(--spacing-lg) 0' }}>
+      {/*
+        auto-fit + a 340px minimum, not a fixed two-column split: once the
+        viewport can't fit both columns at that minimum width (tablet
+        portrait and phone), the timer panel wraps below the toolkit instead
+        of squeezing - no separate breakpoint needed.
+      */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+          gap: 'var(--spacing-lg)',
+          alignItems: 'start',
+        }}
+      >
+        <RegulationToolkitCard checkIn={checkIn} />
+
+        <Card title="Focus Timer" subtitle="Pick a task, or just start the clock.">
+          {!isActive && (
+            <SearchableSelect
+              label="Current task (optional)"
+              placeholder="No task selected"
+              options={taskOptions}
+              value={taskId}
+              onChange={(value) => setTaskId(value)}
+              loading={tasks.isLoading}
+              className="ui-field"
+            />
+          )}
+
           <div
-            aria-live="polite"
             style={{
-              fontSize: 64,
-              fontWeight: 700,
-              fontVariantNumeric: 'tabular-nums',
-              color: 'var(--color-text-primary)',
-              lineHeight: 1,
+              display: 'flex',
+              justifyContent: 'center',
+              padding: 'var(--spacing-lg) 0',
+              background: 'var(--color-surface-alt)',
+              borderRadius: 'var(--radius-lg)',
+              marginBottom: 'var(--spacing-lg)',
             }}
           >
-            {formatClock(timer.elapsedSeconds)}
+            <CircularProgress value={ringValue} max={plannedSeconds || 1} size={180} strokeWidth={12} label="Focus time">
+              <span style={{ fontSize: 32, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{clockLabel}</span>
+            </CircularProgress>
           </div>
 
-          {!isActive && (
+          {/* Tucked behind the settings icon below - the ring is the focal
+              point at rest, matching the reference design. */}
+          {!isActive && showSettings && (
             <Select
               label="Planned length"
               value={plannedMinutes}
               onChange={(e) => setPlannedMinutes(e.target.value)}
               options={PLANNED_OPTIONS}
-              fieldClassName="mb-0"
-              style={{ minWidth: 220 }}
             />
           )}
 
-          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
             {!isActive && (
-              <Button size="lg" loading={timer.isBusy} onClick={handleStart}>
+              <Button loading={timer.isBusy} onClick={handleStart} fullWidth>
                 Start focus
               </Button>
             )}
 
             {isRunning && (
-              <Button size="lg" variant="secondary" loading={timer.isBusy} onClick={() => timer.pause().catch(() => {})}>
+              <Button variant="secondary" loading={timer.isBusy} onClick={() => timer.pause().catch(() => {})} fullWidth>
                 Pause
               </Button>
             )}
 
             {isPaused && (
-              <Button size="lg" loading={timer.isBusy} onClick={() => timer.resume().catch(() => {})}>
+              <Button loading={timer.isBusy} onClick={() => timer.resume().catch(() => {})} fullWidth>
                 Resume
               </Button>
             )}
 
             {isActive && (
-              <Button size="lg" variant="secondary" loading={timer.isBusy} onClick={handleComplete}>
+              <Button variant="secondary" loading={timer.isBusy} onClick={handleComplete} fullWidth>
                 Done
               </Button>
             )}
 
             {isActive && (
-              <Button size="lg" variant="ghost" loading={timer.isBusy} onClick={handleAbandon}>
+              <Button variant="ghost" loading={timer.isBusy} onClick={handleAbandon} fullWidth>
                 End without finishing
               </Button>
             )}
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-xs)' }}>
+              <IconButton
+                label={`Sound: ${AUDIO_OPTIONS[audioIndex].label}`}
+                icon={<span aria-hidden="true">{AUDIO_OPTIONS[audioIndex].icon}</span>}
+                onClick={() => setAudioIndex((i) => (i + 1) % AUDIO_OPTIONS.length)}
+                style={{ width: 44, height: 44 }}
+              />
+              {!isActive && (
+                <IconButton
+                  label="Timer settings"
+                  icon={<span aria-hidden="true">⚙️</span>}
+                  onClick={() => setShowSettings((v) => !v)}
+                  style={{ width: 44, height: 44 }}
+                />
+              )}
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </>
   );
 }
