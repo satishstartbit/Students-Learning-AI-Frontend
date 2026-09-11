@@ -1910,6 +1910,17 @@
 .ui-shell__main {
   flex: 1;
   min-width: 0;
+  /* Establishes a containing block for position:absolute descendants (the
+     eye-icon toggle inside .ui-input-wrap, .ui-sr-only accessibility spans,
+     etc.). Without this, an absolutely-positioned descendant with no other
+     positioned ancestor resolves against the document root instead of this
+     scroll container - its box still occupies real space in the page's
+     layout even though it's invisible, so document.documentElement grows to
+     include it and the whole page gets a second, unwanted scrollbar on top
+     of this element's own. Confirmed via computed layout on a long profile
+     form: <html> reported a scrollHeight far past <body>'s until this was
+     added. */
+  position: relative;
   padding: var(--spacing-xl);
 }
 .ui-shell__public {
