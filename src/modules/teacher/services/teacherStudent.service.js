@@ -27,10 +27,33 @@ export const listLookupGrades = (params = {}) =>
 export const listLookupAcademicYears = (params = {}) =>
   api.get('/teacher/lookups/academic-years', { params: dropEmpty(params) });
 
+/**
+ * Whitelisted master data (subjects, grade_levels, strength_areas,
+ * challenge_areas, interest_categories) for the teacher's own forms -
+ * mirrors modules/parent/services/parent.service.js#listMasterOptions. The
+ * backend rejects any other `type`.
+ */
+export const listMasterOptions = (type, params = {}) =>
+  api.get(`/teacher/lookups/master/${type}`, { params: dropEmpty(params) });
+
+/**
+ * Master options shaped for RoleProfileFields' `lookupFetcher` prop
+ * ({ value, label }[]) - so the teacher's own "Subjects taught" field (on
+ * TeacherProfilePage and the public registration form) uses the same
+ * master-backed multi-select the Super Admin edit form uses, instead of
+ * free text. Audit fix, see activeContext.md.
+ */
+export const masterOptionsFetcher = (type) =>
+  listMasterOptions(type).then((res) =>
+    (res?.data ?? []).map((item) => ({ value: item.name, label: item.name }))
+  );
+
 export default {
   listMyStudents,
   getMyStudent,
   listLookupSubjects,
   listLookupGrades,
   listLookupAcademicYears,
+  listMasterOptions,
+  masterOptionsFetcher,
 };

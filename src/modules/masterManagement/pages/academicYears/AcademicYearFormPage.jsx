@@ -4,7 +4,18 @@ import { PageHeader, Card, Input, DatePicker, Checkbox, Button, Alert, ButtonGro
 import { useForm } from '../../../../hooks/useForm';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
-import { required } from '../../../../utils/validation';
+import { required, isEmpty } from '../../../../utils/validation';
+
+/**
+ * Cross-field rule: values are "YYYY-MM-DD" (see DatePicker), which compares
+ * chronologically as plain strings - no Date parsing needed. Follows the
+ * same `(value, allValues) => error|null` shape as `utils/validation.js`'s
+ * own cross-field rule (`matches`).
+ */
+const endDateAfterStartDate =
+  (message = 'End date must be after the start date') =>
+  (value, allValues = {}) =>
+    isEmpty(value) || isEmpty(allValues.startDate) || value > allValues.startDate ? null : message;
 import academicService from '../../services/academic.service';
 
 export default function AcademicYearFormPage() {
@@ -23,7 +34,7 @@ export default function AcademicYearFormPage() {
     validationSchema: {
       name: [required('Enter a name, e.g. "2026-2027"')],
       startDate: [required('Choose a start date')],
-      endDate: [required('Choose an end date')],
+      endDate: [required('Choose an end date'), endDateAfterStartDate()],
     },
     async onSubmit(values) {
       const payload = {

@@ -5,6 +5,7 @@ import { useApi } from '../../../../hooks/useApi';
 import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { formatDate } from '../../../../utils/date';
+import { formatCurrency } from '../../../../utils/format';
 import { toast } from '../../../../hooks/useToast';
 import billingService from '../../services/billing.service';
 
@@ -74,7 +75,11 @@ export default function DiscountCodesListPage() {
     {
       key: 'discountValue',
       header: 'Discount',
-      render: (row) => <Badge variant="primary">{row.discountType === 'percentage' ? `${row.discountValue}%` : row.discountValue}</Badge>,
+      render: (row) => (
+        <Badge variant="primary">
+          {row.discountType === 'percentage' ? `${row.discountValue}%` : formatCurrency(row.discountValue)}
+        </Badge>
+      ),
     },
     { key: 'expiresAt', header: 'Expires', render: (row) => (row.expiresAt ? formatDate(row.expiresAt) : 'No expiry') },
     {

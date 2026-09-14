@@ -265,6 +265,7 @@ export default function RoleProfileFields({
               label="Subjects taught"
               hint="From the Subjects master"
               getProps={getProps}
+              lookupFetcher={lookupFetcher}
             />
             <MasterMultiSelectField
               masterType="grade_levels"
@@ -272,6 +273,7 @@ export default function RoleProfileFields({
               label="Grade levels taught"
               hint="From the Grade Levels master"
               getProps={getProps}
+              lookupFetcher={lookupFetcher}
             />
           </>
         ) : (

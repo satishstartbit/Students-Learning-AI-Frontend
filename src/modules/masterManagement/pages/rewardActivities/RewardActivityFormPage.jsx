@@ -4,7 +4,7 @@ import { PageHeader, Card, Input, Textarea, Checkbox, Button, Alert, ButtonGroup
 import { useForm } from '../../../../hooks/useForm';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
-import { required, pattern } from '../../../../utils/validation';
+import { required, pattern, min } from '../../../../utils/validation';
 import rewardService from '../../services/reward.service';
 
 const KEY_PATTERN = /^[a-z][a-z0-9_]*$/;
@@ -25,7 +25,11 @@ export default function RewardActivityFormPage() {
     validationSchema: {
       name: [required('Enter an activity name')],
       activityType: isEdit ? [] : [required('Enter a key'), pattern(KEY_PATTERN, 'Lowercase letters, digits and underscores only')],
-      points: [required('Enter a point value')],
+      points: [
+        required('Enter a point value'),
+        pattern(/^\d+$/, 'Enter a whole number'),
+        min(0, 'Points must be 0 or more'),
+      ],
     },
     async onSubmit(values) {
       const payload = {

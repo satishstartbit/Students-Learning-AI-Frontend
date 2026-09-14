@@ -1,7 +1,7 @@
 import { Alert, Button, Input, Modal, SectionHeader } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
-import { required, email as emailRule } from '../../../utils/validation';
+import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
 import { usePhotoField } from '../../../hooks/usePhotoField';
@@ -22,6 +22,7 @@ export default function AddChildModal({ isOpen, onClose, onCreated }) {
     validationSchema: {
       firstName: [required('Enter a first name')],
       email: [required('Enter an email address'), emailRule()],
+      phone: [phoneRule()],
     },
     async onSubmit(values) {
       const { data } = await parentService.addChild({

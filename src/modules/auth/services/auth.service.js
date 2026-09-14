@@ -52,6 +52,26 @@ export const resetPassword = ({ token, password, confirmPassword }) =>
 export const changePassword = ({ currentPassword, newPassword }) =>
   api.post('/auth/change-password', { currentPassword, newPassword });
 
+// --- public, whitelisted lookups for the registration form -----------------
+
+/**
+ * Whitelisted master data (subjects, grade_levels only) for the public
+ * registration form's "About you as a teacher" section - no auth, there's
+ * no session yet at this point in the signup flow. See
+ * services/auth.service.js#PUBLIC_LOOKUP_TYPES on the backend.
+ */
+export const listPublicLookup = (type) => api.get(`/auth/lookups/master/${type}`);
+
+/**
+ * Master options shaped for RoleProfileFields' `lookupFetcher` prop
+ * ({ value, label }[]) - same convention as
+ * modules/parent/services/parent.service.js#masterOptionsFetcher, so the
+ * teacher signup form's "Subjects taught" field uses the same master-backed
+ * multi-select as everywhere else it appears. Audit fix, see activeContext.md.
+ */
+export const masterOptionsFetcher = (type) =>
+  listPublicLookup(type).then((res) => (res?.data ?? []).map((item) => ({ value: item.name, label: item.name })));
+
 export default {
   login,
   adminLogin,
@@ -65,4 +85,6 @@ export default {
   forgotPassword,
   resetPassword,
   changePassword,
+  listPublicLookup,
+  masterOptionsFetcher,
 };

@@ -193,46 +193,6 @@ export default function AssignTeacherModal({ isOpen, child, replacing = null, on
         onChange={setSubject}
       />
 
-      {locked ? (
-        <div className="ui-field">
-          <span className="ui-hint">Grade</span>
-          <div style={{ fontWeight: 500 }}>{grade || '—'}</div>
-        </div>
-      ) : (
-        <>
-          {gradeOverride ? (
-            <SearchableSelect
-              label="Grade"
-              required
-              placeholder="Select a grade"
-              options={grades.data ?? []}
-              loading={grades.isLoading}
-              getOptionValue={(o) => o.name}
-              getOptionLabel={(o) => o.name}
-              value={grade}
-              onChange={setGrade}
-            />
-          ) : (
-            <div className="ui-field">
-              <span className="ui-hint">Grade</span>
-              <div style={{ fontWeight: 500 }}>{childGrade || 'Not set on profile'}</div>
-            </div>
-          )}
-          <Checkbox
-            name="gradeOverride"
-            label="Assign for a different grade level (advanced or remedial placement)"
-            checked={gradeOverride}
-            onChange={(e) => toggleGradeOverride(e.target.checked)}
-          />
-        </>
-      )}
-
-      {offGrade && (
-        <Alert variant="info" className="ui-field">
-          This will be recorded as an off-grade assignment - {formatName(child)}'s profile grade is{' '}
-          {childGrade || 'not set'}. It will be flagged as such wherever the assignment is shown.
-        </Alert>
-      )}
 
       <SearchableSelect
         label="Academic year"

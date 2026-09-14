@@ -165,7 +165,22 @@ export default function RegisterPage() {
             as="h3"
           />
 
-          <RoleProfileFields role={role} getProps={form.getFieldProps} />
+          {/*
+            includeAdminOnly only for Teacher: it makes "Subjects taught" the
+            same master-backed multi-select as everywhere else it appears
+            (was free text - audit fix, see activeContext.md), via the public
+            (unauthenticated) whitelist lookup. Deliberately NOT passed for
+            Parent - includeAdminOnly also reveals an "Onboarding notes"
+            field on that branch, meant for admin-entered internal notes, not
+            something a person should be able to set on their own public
+            signup form.
+          */}
+          <RoleProfileFields
+            role={role}
+            getProps={form.getFieldProps}
+            includeAdminOnly={role === USER_ROLES.TEACHER}
+            lookupFetcher={authService.masterOptionsFetcher}
+          />
 
           {/* Plain text, not links - there's no terms/privacy page in this app yet
               to point to; add real links here once one exists. */}

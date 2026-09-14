@@ -33,7 +33,7 @@ const NAV_ITEMS = [
 
 export function ParentLayout({ children }) {
   return (
-    <AuthenticatedLayout navItems={NAV_ITEMS} title="Family Portal" subtitle="Parent" brand="FP">
+    <AuthenticatedLayout navItems={NAV_ITEMS} title="Portal" subtitle="Parent" brand="FP">
       {children}
     </AuthenticatedLayout>
   );

@@ -4,7 +4,7 @@ import { PageHeader, Card, Input, Textarea, Checkbox, Button, Alert, ButtonGroup
 import { useForm } from '../../../../hooks/useForm';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
-import { required } from '../../../../utils/validation';
+import { required, pattern, min } from '../../../../utils/validation';
 import rewardService from '../../services/reward.service';
 
 export default function StudentRewardFormPage() {
@@ -22,7 +22,11 @@ export default function StudentRewardFormPage() {
     initialValues: { name: '', description: '', pointsRequired: '', rewardType: '', imageUrl: '', displayOrder: 0, isActive: true },
     validationSchema: {
       name: [required('Enter a reward name')],
-      pointsRequired: [required('Enter the points required')],
+      pointsRequired: [
+        required('Enter the points required'),
+        pattern(/^\d+$/, 'Enter a whole number'),
+        min(0, 'Points must be 0 or more'),
+      ],
     },
     async onSubmit(values) {
       const payload = {
@@ -50,7 +54,7 @@ export default function StudentRewardFormPage() {
     form.reset({
       name: existing.name ?? '',
       description: existing.description ?? '',
-      pointsRequired: existing.pointsCost ?? '',
+      pointsRequired: existing.pointsRequired ?? '',
       rewardType: existing.rewardType ?? '',
       imageUrl: existing.imageUrl ?? '',
       displayOrder: existing.displayOrder ?? 0,

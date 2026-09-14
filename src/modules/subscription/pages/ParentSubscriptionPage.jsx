@@ -80,6 +80,11 @@ export default function ParentSubscriptionPage() {
   const plans = useApi(subscriptionService.listPlans);
 
   const [selectedPlan, setSelectedPlan] = useState(null);
+  // Mirrors selectedPlan synchronously (setSelectedPlan itself only takes
+  // effect on the next render) so an in-flight coupon request can tell,
+  // right when its response lands, whether the user has since switched to a
+  // different plan.
+  const selectedPlanRef = useRef(null);
   const [couponCode, setCouponCode] = useState('');
   const [quote, setQuote] = useState(null);
   const [couponError, setCouponError] = useState(null);
@@ -121,6 +126,11 @@ export default function ParentSubscriptionPage() {
         } catch {
           toast.info('Payment received. Your subscription will activate shortly.');
         }
+      } else if (redirectStatus === 'processing') {
+        // Some payment methods settle asynchronously - this is not a
+        // failure, so don't tell the user to retry a charge that may still
+        // succeed.
+        toast.info("Your payment is processing — we'll update your subscription once it's confirmed.");
       } else {
         toast.error('Your payment was not completed. Please try again.');
       }
@@ -134,16 +144,21 @@ export default function ParentSubscriptionPage() {
 
   const applyCoupon = async () => {
     if (!selectedPlan) return;
+    const requestedPlanId = selectedPlan.id;
     setCheckingCoupon(true);
     setCouponError(null);
     try {
       const { data } = await subscriptionService.validateCoupon({
-        planId: selectedPlan.id,
+        planId: requestedPlanId,
         code: couponCode.trim() || null,
       });
+      // The parent may have switched plans while this request was in
+      // flight - a stale quote for the old plan must not be applied now.
+      if (selectedPlanRef.current?.id !== requestedPlanId) return;
       setQuote(data);
       if (couponCode.trim()) toast.success('Discount applied');
     } catch (err) {
+      if (selectedPlanRef.current?.id !== requestedPlanId) return;
       setQuote(null);
       setCouponError(getErrorMessage(err));
     } finally {
@@ -152,6 +167,7 @@ export default function ParentSubscriptionPage() {
   };
 
   const selectPlan = (plan) => {
+    selectedPlanRef.current = plan;
     setSelectedPlan(plan);
     setQuote(null);
     setCouponError(null);

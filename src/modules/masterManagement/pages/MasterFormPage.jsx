@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   PageHeader,
@@ -40,19 +40,26 @@ export default function MasterFormPage() {
     if (isEdit) fetchItem(masterType, id).catch(() => {});
   }, [isEdit, masterType, id, fetchItem]);
 
-  const [extraValues, setExtraValues] = useState({});
+  // Extra fields live directly on the form's own values (keyed by field.key)
+  // so they share the same validation/error machinery as the base fields.
+  const extraSchema = Object.fromEntries(
+    fields
+      .filter((f) => f.required)
+      .map((f) => [f.key, [required(`${f.label ?? f.key} is required`)]])
+  );
 
   const form = useForm({
     initialValues: { name: '', code: '', description: '', icon: '', displayOrder: 0, isActive: true },
-    validationSchema: { name: [required('Enter a name')] },
+    validationSchema: { name: [required('Enter a name')], ...extraSchema },
     async onSubmit(values) {
+      const extra = Object.fromEntries(fields.map((f) => [f.key, values[f.key]]));
       const payload = {
         name: values.name,
         code: values.code || null,
         description: values.description || null,
         icon: values.icon || null,
         displayOrder: Number(values.displayOrder) || 0,
-        extra: extraValues,
+        extra,
       };
       if (!isEdit) payload.isActive = values.isActive;
 
@@ -76,8 +83,8 @@ export default function MasterFormPage() {
       icon: existing.icon ?? '',
       displayOrder: existing.displayOrder ?? 0,
       isActive: existing.isActive ?? true,
+      ...(existing.extra ?? {}),
     });
-    setExtraValues(existing.extra ?? {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existing]);
 
@@ -122,8 +129,11 @@ export default function MasterFormPage() {
               <SectionHeader title="Additional details" as="h3" />
               <DynamicExtraFields
                 fields={fields}
-                values={extraValues}
-                onChange={(key, value) => setExtraValues((prev) => ({ ...prev, [key]: value }))}
+                values={form.values}
+                errors={Object.fromEntries(
+                  fields.map((f) => [f.key, form.touched[f.key] ? form.errors[f.key] : null])
+                )}
+                onChange={(key, value) => form.setFieldValue(key, value)}
               />
             </>
           )}

@@ -178,6 +178,7 @@ export default function ParentChildrenPage() {
       <AddChildModal isOpen={addModal.isOpen} onClose={addModal.close} onCreated={load} />
 
       <EditChildModal
+        key={`${editModal.payload ?? 'new'}-${editModal.isOpen}`}
         isOpen={editModal.isOpen}
         childId={editModal.payload}
         onClose={editModal.close}

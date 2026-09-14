@@ -70,7 +70,7 @@ export default function StudentRewardsListPage() {
   const columns = [
     { key: 'name', header: 'Reward', sortable: true, render: (row) => <strong>{row.name}</strong> },
     { key: 'rewardType', header: 'Type', render: (row) => row.rewardType ?? '—' },
-    { key: 'pointsCost', header: 'Points required', sortable: false, render: (row) => <Badge variant="primary">{row.pointsCost} pts</Badge> },
+    { key: 'pointsRequired', header: 'Points required', sortable: false, render: (row) => <Badge variant="primary">{row.pointsRequired} pts</Badge> },
     { key: 'is_active', header: 'Status', render: (row) => <StatusBadge status={row.isActive ? 'active' : 'inactive'} /> },
     {
       key: 'actions',

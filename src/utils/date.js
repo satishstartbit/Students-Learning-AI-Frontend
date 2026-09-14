@@ -63,7 +63,8 @@ function zonedParts(value, timeZone) {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-    hour: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
     hourCycle: 'h23',
     numberingSystem: 'latn',
     timeZone: timeZone ?? getActiveTimezone(),
@@ -106,20 +107,26 @@ export function formatLongDate(value, options = {}) {
   return formatDate(value, { month: 'long', ...options });
 }
 
-/** YYYY-MM-DD in local time - the format DATE columns expect. */
-export function toDateInputValue(value) {
-  const d = toDate(value);
-  if (!d) return '';
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+/**
+ * YYYY-MM-DD in the active (or given) user timezone - the format
+ * `<input type="date">` and DATE columns expect.
+ *
+ * Reads the wall-clock date via `zonedParts` rather than `Date#getFullYear`
+ * etc., which read the *browser's* local timezone - since Canada is
+ * entirely UTC-negative, that rolls a UTC-midnight value back a day (see
+ * `formatDateKey` above for the same class of bug on calendar-day keys).
+ */
+export function toDateInputValue(value, { timeZone } = {}) {
+  const parts = zonedParts(value, timeZone);
+  if (!parts) return '';
+  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
-/** HH:MM in local time. */
-export function toTimeInputValue(value) {
-  const d = toDate(value);
-  if (!d) return '';
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+/** HH:MM in the active (or given) user timezone. */
+export function toTimeInputValue(value, { timeZone } = {}) {
+  const parts = zonedParts(value, timeZone);
+  if (!parts) return '';
+  return `${parts.hour}:${parts.minute}`;
 }
 
 export const startOfDay = (value = new Date()) => {

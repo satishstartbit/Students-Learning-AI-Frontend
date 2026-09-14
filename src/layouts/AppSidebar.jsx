@@ -144,10 +144,12 @@ function NavCollapsible({ entry, isPathActive }) {
         >
           {Icon && <Icon aria-hidden="true" />}
           <span className="truncate">{entry.label}</span>
-          <LuChevronRight
-            aria-hidden="true"
-            className={`ml-auto shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
-          />
+          {!collapsed && (
+            <LuChevronRight
+              aria-hidden="true"
+              className={`ml-auto shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+            />
+          )}
         </SidebarMenuButton>
       </Tooltip>
 
@@ -236,6 +238,10 @@ function UserMenu() {
     </span>
   );
 
+  const { state, isMobile } = useSidebar();
+  const collapsed = state === 'collapsed' && !isMobile;
+
+
   const menuItem =
     'flex w-full cursor-pointer appearance-none items-center gap-2 rounded-[var(--radius-sm)] border-0 bg-transparent px-2 py-1.5 text-left text-sm hover:bg-[color:var(--color-bg-surface-sunken)] disabled:cursor-not-allowed disabled:opacity-50';
 
@@ -253,7 +259,9 @@ function UserMenu() {
           <span className="truncate text-sm font-semibold">{name}</span>
           <span className="truncate text-xs opacity-70">{user?.email ?? ROLE_LABELS[role]}</span>
         </span>
-        <LuChevronsUpDown aria-hidden="true" className="ml-auto shrink-0 opacity-70" />
+        {!collapsed && (
+          <LuChevronsUpDown aria-hidden="true" className="ml-auto shrink-0 opacity-70" />
+        )}
       </SidebarMenuButton>
 
       {open && (
@@ -339,7 +347,6 @@ export default function AppSidebar({ subtitle, navItems = [] }) {
               {subtitle && (
                 <span className="truncate text-xs opacity-70">{subtitle}</span>
               )}
-              <LuChevronsUpDown aria-hidden="true" className="ml-auto shrink-0 opacity-70" />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -348,7 +355,7 @@ export default function AppSidebar({ subtitle, navItems = [] }) {
       <SidebarContent>
         {sections.map((section, index) => (
           <SidebarGroup key={section.group ?? index}>
-            {section.group && <SidebarGroupLabel>{section.group}</SidebarGroupLabel>}
+            {/* {section.group && <SidebarGroupLabel>{section.group}</SidebarGroupLabel>} */}
             <SidebarGroupContent>
               <SidebarMenu>
                 {section.items.map((entry) => (

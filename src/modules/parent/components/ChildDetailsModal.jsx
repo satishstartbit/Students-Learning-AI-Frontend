@@ -62,18 +62,18 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
 
   const columns = [
     { key: 'subject', header: 'Subject', render: (r) => r.subject ?? '—' },
-    {
-      key: 'grade',
-      header: 'Grade',
-      render: (r) => (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          {r.grade ?? '—'}
-          {r.grade && childGrade && r.grade !== childGrade && (
-            <Badge variant="warning">Off-grade</Badge>
-          )}
-        </span>
-      ),
-    },
+    // {
+    //   key: 'grade',
+    //   header: 'Grade',
+    //   render: (r) => (
+    //     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+    //       {r.grade ?? '—'}
+    //       {r.grade && childGrade && r.grade !== childGrade && (
+    //         <Badge variant="warning">Off-grade</Badge>
+    //       )}
+    //     </span>
+    //   ),
+    // },
     { key: 'academicYear', header: 'Academic year', render: (r) => r.academicYear?.name ?? '—' },
     { key: 'teacher', header: 'Teacher', render: (r) => formatName(r.owner) },
     {

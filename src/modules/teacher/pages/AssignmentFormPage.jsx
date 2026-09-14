@@ -113,7 +113,13 @@ export default function AssignmentFormPage() {
     [academicYears.data]
   );
 
-  const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  const setField = (key) => (e) => {
+    const value = e.target.value;
+    setForm((f) => ({ ...f, [key]: value }));
+    if (key === 'subject' || key === 'grade') {
+      setStudentIds((ids) => (ids.length ? [] : ids));
+    }
+  };
 
   const isArchived = isEdit && detail.data?.status === ASSIGNMENT_CRUD_STATUS.ARCHIVED;
 

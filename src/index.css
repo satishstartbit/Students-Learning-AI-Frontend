@@ -50,8 +50,16 @@ h4 {
   line-height: var(--line-height-tight);
 }
 
-a {
-  color: var(--accent-base);
+/*
+ * Layered so component-level Tailwind utilities (e.g. the sidebar's
+ * text-sidebar-foreground / text-sidebar-accent-foreground classes) can
+ * still override this default - an unlayered rule here would otherwise
+ * beat any class in Tailwind's `utilities` layer regardless of specificity.
+ */
+@layer base {
+  a {
+    color: var(--accent-base);
+  }
 }
 
 /* Visible focus for keyboard users everywhere. */

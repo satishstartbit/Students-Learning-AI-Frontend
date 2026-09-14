@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   PageHeader,
   Card,
@@ -13,6 +13,7 @@ import {
 import { useApi } from '../../../../hooks/useApi';
 import { formatCurrency } from '../../../../utils/format';
 import { getErrorMessage } from '../../../../utils/errorHandler';
+import { DEFAULT_CURRENCY } from '../../../../utils/locale';
 import subscriptionService from '../../services/subscription.service';
 
 const STATUS_LABELS = {
@@ -44,9 +45,41 @@ export default function AdminRevenuePage() {
   }, [load]);
 
   const totals = data?.totals;
-  const byPlan = data?.byPlan ?? [];
+  const byPlan = useMemo(() => data?.byPlan ?? [], [data]);
   const byStatus = data?.byStatus ?? {};
-  const currency = byPlan[0]?.currency ?? 'CAD';
+
+  // Plan currency is free text elsewhere in the app, so don't assume every
+  // plan shares one - only label the aggregate totals with a single currency
+  // when that's actually true across every row.
+  const distinctCurrencies = useMemo(
+    () => [...new Set(byPlan.map((row) => row.currency).filter(Boolean))],
+    [byPlan]
+  );
+  const singleCurrency = distinctCurrencies.length <= 1;
+  const currency = distinctCurrencies[0] ?? DEFAULT_CURRENCY;
+
+  // Recomputed straight from byPlan (rather than trusting the backend's
+  // single `totals` object) so a mixed-currency dataset is never summed
+  // together under one label - each currency gets its own totals.
+  const totalsByCurrency = useMemo(() => {
+    const map = new Map();
+    for (const row of byPlan) {
+      const cur = row.currency ?? DEFAULT_CURRENCY;
+      const entry = map.get(cur) ?? {
+        currency: cur,
+        netRevenue: 0,
+        grossRevenue: 0,
+        refunded: 0,
+        activeSubscribers: 0,
+      };
+      entry.netRevenue += row.netRevenue ?? 0;
+      entry.grossRevenue += row.grossRevenue ?? 0;
+      entry.refunded += row.refunded ?? 0;
+      entry.activeSubscribers += row.activeSubscribers ?? 0;
+      map.set(cur, entry);
+    }
+    return [...map.values()];
+  }, [byPlan]);
 
   const columns = [
     { key: 'planName', header: 'Plan', render: (row) => <strong>{row.planName}</strong> },
@@ -117,37 +150,82 @@ export default function AdminRevenuePage() {
         <Loader message="Loading revenue…" />
       ) : (
         <>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: 'var(--spacing-md)',
-              marginBottom: 'var(--spacing-lg)',
-            }}
-          >
-            <StatCard
-              label="Net revenue"
-              value={formatCurrency(totals?.netRevenue ?? 0, currency)}
-              hint="After refunds"
-              icon="💰"
-            />
-            <StatCard
-              label="Gross revenue"
-              value={formatCurrency(totals?.grossRevenue ?? 0, currency)}
-              icon="📈"
-            />
-            <StatCard
-              label="Refunded"
-              value={formatCurrency(totals?.refunded ?? 0, currency)}
-              icon="↩️"
-            />
-            <StatCard
-              label="Active subscribers"
-              value={totals?.activeSubscribers ?? 0}
-              hint="Trialing, active or past due"
-              icon="👨‍👩‍👧"
-            />
-          </div>
+          {!singleCurrency && (
+            <Alert variant="info" className="ui-field">
+              Plans use more than one currency ({distinctCurrencies.join(', ')}) - totals are
+              broken out per currency below rather than summed together.
+            </Alert>
+          )}
+
+          {singleCurrency ? (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: 'var(--spacing-md)',
+                marginBottom: 'var(--spacing-lg)',
+              }}
+            >
+              <StatCard
+                label="Net revenue"
+                value={formatCurrency(totals?.netRevenue ?? 0, currency)}
+                hint="After refunds"
+                icon="💰"
+              />
+              <StatCard
+                label="Gross revenue"
+                value={formatCurrency(totals?.grossRevenue ?? 0, currency)}
+                icon="📈"
+              />
+              <StatCard
+                label="Refunded"
+                value={formatCurrency(totals?.refunded ?? 0, currency)}
+                icon="↩️"
+              />
+              <StatCard
+                label="Active subscribers"
+                value={totals?.activeSubscribers ?? 0}
+                hint="Trialing, active or past due"
+                icon="👨‍👩‍👧"
+              />
+            </div>
+          ) : (
+            totalsByCurrency.map((t) => (
+              <div key={t.currency} style={{ marginBottom: 'var(--spacing-lg)' }}>
+                <SectionHeader title={`Totals (${t.currency})`} as="h4" />
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 'var(--spacing-md)',
+                  }}
+                >
+                  <StatCard
+                    label="Net revenue"
+                    value={formatCurrency(t.netRevenue, t.currency)}
+                    hint="After refunds"
+                    icon="💰"
+                  />
+                  <StatCard
+                    label="Gross revenue"
+                    value={formatCurrency(t.grossRevenue, t.currency)}
+                    icon="📈"
+                  />
+                  <StatCard
+                    label="Refunded"
+                    value={formatCurrency(t.refunded, t.currency)}
+                    icon="↩️"
+                  />
+                  <StatCard
+                    label="Active subscribers"
+                    value={t.activeSubscribers}
+                    hint="Trialing, active or past due"
+                    icon="👨‍👩‍👧"
+                  />
+                </div>
+              </div>
+            ))
+          )}
 
           <Card className="ui-field">
             <SectionHeader title="By plan" as="h3" />

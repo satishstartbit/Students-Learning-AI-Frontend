@@ -12,6 +12,7 @@ import AddressFields from '../../auth/components/AddressFields';
 import ChangePasswordForm from '../../auth/components/ChangePasswordForm';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
+import teacherStudentService from '../services/teacherStudent.service';
 
 function valuesFromMe(me) {
   const teacherData = me?.profile?.profile_data ?? {};
@@ -26,7 +27,13 @@ function valuesFromMe(me) {
     country: me?.country ?? '',
     postalCode: me?.postalCode ?? '',
     school: teacherData.school ?? '',
-    subjects: teacherData.subjects ?? '',
+    // profile_data.subjects is stored as an array (see buildProfilePayload) -
+    // the master multi-select below needs an array, not the '' a plain text
+    // field used to default to.
+    subjects: teacherData.subjects ?? [],
+    // Not previously shown on this page at all (only Super Admin could set
+    // it) - included now that includeAdminOnly renders the field below.
+    gradeLevels: teacherData.gradeLevels ?? [],
     yearsExperience: teacherData.yearsExperience ?? '',
     bio: teacherData.bio ?? '',
   };
@@ -110,7 +117,18 @@ export default function TeacherProfilePage() {
               />
 
               <SectionHeader title="Teacher profile" as="h3" />
-              <RoleProfileFields role="TEACHER" getProps={form.getFieldProps} photo={photo} />
+              {/* includeAdminOnly + lookupFetcher: "Subjects taught" is a
+                  master-backed multi-select here too now, matching the Super
+                  Admin edit form - was free text (audit fix, see
+                  activeContext.md). "Grade levels taught" comes along with
+                  the same flag - it was already missing on this page. */}
+              <RoleProfileFields
+                role="TEACHER"
+                getProps={form.getFieldProps}
+                photo={photo}
+                includeAdminOnly
+                lookupFetcher={teacherStudentService.masterOptionsFetcher}
+              />
 
               <Button type="submit" loading={form.isSubmitting}>
                 Save changes

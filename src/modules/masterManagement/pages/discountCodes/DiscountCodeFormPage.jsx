@@ -4,13 +4,21 @@ import { PageHeader, Card, Input, Textarea, Select, MultiSelect, DatePicker, Che
 import { useForm } from '../../../../hooks/useForm';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
-import { required } from '../../../../utils/validation';
+import { required, max } from '../../../../utils/validation';
 import billingService from '../../services/billing.service';
 
 const DISCOUNT_TYPE_OPTIONS = [
   { value: 'percentage', label: 'Percentage' },
   { value: 'fixed_amount', label: 'Fixed amount' },
 ];
+
+/**
+ * Only percentage discounts have an upper bound - fixed_amount stays
+ * unbounded. Reads the sibling `discountType` from `allValues`, the same
+ * cross-field shape `utils/validation.js`'s own `matches` rule uses.
+ */
+const percentageMax = (message = 'Percentage discounts cannot exceed 100') => (value, allValues = {}) =>
+  allValues.discountType === 'percentage' ? max(100, message)(value) : null;
 
 export default function DiscountCodeFormPage() {
   const { id } = useParams();
@@ -35,7 +43,7 @@ export default function DiscountCodeFormPage() {
     validationSchema: {
       code: isEdit ? [] : [required('Enter a discount code')],
       name: [required('Enter a name')],
-      discountValue: [required('Enter the discount value')],
+      discountValue: [required('Enter the discount value'), percentageMax()],
     },
     async onSubmit(values) {
       const payload = {

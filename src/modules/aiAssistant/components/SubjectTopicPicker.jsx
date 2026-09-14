@@ -40,11 +40,18 @@ export function SubjectTopicPicker({ onStart, starting = false }) {
         </Alert>
       )}
 
+      {!loadingSubjects && !loadError && options.length === 0 && (
+        <Alert variant="info" className="ui-field">
+          No subjects are assigned to you yet - once a teacher is assigned for a subject, it'll show up here.
+        </Alert>
+      )}
+
       <Select
         label="What would you like to learn today?"
         placeholder="Choose a subject"
         options={options}
         loading={loadingSubjects}
+        disabled={!loadingSubjects && options.length === 0}
         value={subject}
         onChange={(e) => setSubject(e.target.value)}
         required

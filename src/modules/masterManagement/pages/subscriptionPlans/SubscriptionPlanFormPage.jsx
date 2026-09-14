@@ -5,6 +5,7 @@ import { useForm } from '../../../../hooks/useForm';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
 import { required } from '../../../../utils/validation';
+import { DEFAULT_CURRENCY } from '../../../../utils/locale';
 import billingService from '../../services/billing.service';
 
 const PLAN_TYPE_OPTIONS = [
@@ -15,6 +16,17 @@ const BILLING_CYCLE_OPTIONS = [
   { value: 'monthly', label: 'Monthly' },
   { value: 'yearly', label: 'Yearly' },
 ];
+/**
+ * Currencies this app actually formats/charges - `formatCurrency`
+ * (utils/format.js) and the Stripe checkout flow only ever exercise the
+ * Canadian-localization default plus USD; keep this list in sync with
+ * whatever the payment/formatting layer is verified against instead of
+ * accepting arbitrary free text.
+ */
+const CURRENCY_OPTIONS = Array.from(new Set([DEFAULT_CURRENCY, 'USD'])).map((code) => ({
+  value: code,
+  label: code,
+}));
 
 /** Simple key/value editor for the plan's `features` JSON. */
 function FeaturesEditor({ features, onChange }) {
@@ -61,7 +73,7 @@ export default function SubscriptionPlanFormPage() {
 
   const form = useForm({
     initialValues: {
-      name: '', planType: 'individual', billingCycle: 'monthly', price: '', currency: 'CAD',
+      name: '', planType: 'individual', billingCycle: 'monthly', price: '', currency: DEFAULT_CURRENCY,
       trialDays: '', maxStudents: '', maxParents: '', description: '', displayOrder: 0, isActive: true,
     },
     validationSchema: {
@@ -74,7 +86,7 @@ export default function SubscriptionPlanFormPage() {
         planType: values.planType,
         billingCycle: values.billingCycle,
         price: Number(values.price) || 0,
-        currency: values.currency || 'CAD',
+        currency: values.currency || DEFAULT_CURRENCY,
         trialDays: values.trialDays === '' ? undefined : Number(values.trialDays),
         maxStudents: values.maxStudents === '' ? undefined : Number(values.maxStudents),
         maxParents: values.maxParents === '' ? undefined : Number(values.maxParents),
@@ -101,7 +113,7 @@ export default function SubscriptionPlanFormPage() {
       planType: existing.planType ?? 'individual',
       billingCycle: existing.billingCycle ?? 'monthly',
       price: existing.price ?? '',
-      currency: existing.currency ?? 'CAD',
+      currency: existing.currency ?? DEFAULT_CURRENCY,
       trialDays: existing.trialDays ?? '',
       maxStudents: existing.maxStudents ?? '',
       maxParents: existing.maxParents ?? '',
@@ -134,7 +146,7 @@ export default function SubscriptionPlanFormPage() {
           <Select label="Plan type" options={PLAN_TYPE_OPTIONS} required {...form.getFieldProps('planType')} />
           <Select label="Billing cycle" options={BILLING_CYCLE_OPTIONS} required {...form.getFieldProps('billingCycle')} />
           <Input label="Price" type="number" required {...form.getFieldProps('price')} />
-          <Input label="Currency" hint="3-letter code, e.g. CAD" {...form.getFieldProps('currency')} />
+          <Select label="Currency" options={CURRENCY_OPTIONS} required {...form.getFieldProps('currency')} />
           <Input label="Trial days" type="number" {...form.getFieldProps('trialDays')} />
           <Input label="Number of students" type="number" {...form.getFieldProps('maxStudents')} />
           <Input label="Number of parents" type="number" {...form.getFieldProps('maxParents')} />

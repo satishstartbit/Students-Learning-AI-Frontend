@@ -3,7 +3,7 @@ import { Alert, Button, Input, Loader, Modal, SectionHeader } from '../../../com
 import { useApi } from '../../../hooks/useApi';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
-import { required, email as emailRule } from '../../../utils/validation';
+import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import AddressFields from '../../auth/components/AddressFields';
@@ -67,6 +67,7 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
     validationSchema: {
       firstName: [required('Enter a first name')],
       email: [required('Enter an email address'), emailRule()],
+      phone: [phoneRule()],
     },
     async onSubmit(values) {
       await parentService.updateChild(childId, {
@@ -106,7 +107,11 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
           <Button variant="secondary" onClick={onClose} disabled={form.isSubmitting}>
             Cancel
           </Button>
-          <Button onClick={form.handleSubmit} loading={form.isSubmitting} disabled={!child}>
+          <Button
+            onClick={form.handleSubmit}
+            loading={form.isSubmitting}
+            disabled={!child || child.id !== childId}
+          >
             Save changes
           </Button>
         </>
