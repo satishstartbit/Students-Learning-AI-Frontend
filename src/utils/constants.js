@@ -211,6 +211,13 @@ export const STATUS_TONE = Object.freeze({
   partially_refunded: 'warning',
 });
 
+/**
+ * Fired on `window` by utils/apiClient.js whenever the API refuses a request
+ * with SUBSCRIPTION_REQUIRED, so the parent/student layout can re-check access
+ * (e.g. a subscription that ended mid-session) and redirect or lock.
+ */
+export const SUBSCRIPTION_REQUIRED_EVENT = 'eflp:subscription-required';
+
 export const STORAGE_KEYS = Object.freeze({
   ACCESS_TOKEN: 'eflp.accessToken',
   REFRESH_TOKEN: 'eflp.refreshToken',

@@ -1,42 +1,43 @@
 import { useId, useRef, useState } from 'react';
 import { Confetti } from '../../../../components/ui/confetti';
 import { cn } from '../../../../lib/utils';
-import { useAuth } from '../../../../hooks/useAuth';
-import { useDailyCheckIn } from '../../hooks/useDailyCheckIn';
+import { getErrorMessage } from '../../../../utils/errorHandler';
+import { useTodayCheckIn } from '../../../checkIn/hooks/useTodayCheckIn';
+import { ENERGY_LEVELS, MOODS, findMood } from '../../../checkIn/moods';
 import { useMotionAllowed } from '../../hooks/useKidPreferences';
+import { KidButton } from './KidButton';
 import { MoodFace } from './MoodFace';
-import { ENERGY_LEVELS, MOODS, findMood } from './moods';
 import { PaperCard, Tape } from './PaperKit';
 
 const CONFETTI_COLOURS = ['#f6c445', '#f4b6c1', '#1f7a80', '#7b68d6', '#95c07b'];
 
 /**
- * "Today's check-in": how are you feeling, and how much energy do you have?
+ * "Today's check-in" for K-5: how are you feeling, and how much energy do
+ * you have? Saved to the real /check-ins API through TodayCheckInProvider,
+ * so the Home page, the Check In page and the work-screen gate agree.
  *
  * Both pickers are real radio groups (visually hidden native inputs), so
- * arrow keys, screen readers and switch access all work without custom
- * keyboard code. Picking a feeling for the first time today gets a small
- * burst of Magic UI confetti - never in calm mode or with reduced motion.
+ * arrow keys, screen readers and switch access work without custom keyboard
+ * code. The first check-in of the day gets a small burst of confetti - never
+ * in calm mode or with reduced motion.
  */
-export function CheckInCard() {
-  const { user } = useAuth();
-  const { mood, energy, update } = useDailyCheckIn(user?.id);
-  const [changingMood, setChangingMood] = useState(false);
+export function CheckInCard({ onSaved }) {
+  const { checkIn, isLoading, save } = useTodayCheckIn();
+  const [editing, setEditing] = useState(false);
   const motionAllowed = useMotionAllowed();
   const confettiRef = useRef(null);
   const uid = useId();
 
-  const current = findMood(mood);
-  // Compact summary once a mood is picked - the full picker only reopens on
-  // request (the pencil button), rather than always taking the big card.
-  const compact = current && !changingMood;
+  const current = findMood(checkIn?.mood);
 
-  const pickMood = (value) => {
-    const isFirstAnswer = !mood;
-    update({ mood: value });
-    setChangingMood(false);
+  if (isLoading) {
+    return <PaperCard tone="sheet" aria-busy="true" className="h-64 animate-pulse" />;
+  }
 
-    if (isFirstAnswer && motionAllowed) {
+  const handleSave = async (values) => {
+    const result = await save(values);
+    setEditing(false);
+    if (result.created && motionAllowed) {
       confettiRef.current?.fire({
         particleCount: 70,
         spread: 80,
@@ -47,119 +48,193 @@ export function CheckInCard() {
         disableForReducedMotion: true,
       });
     }
+    onSaved?.(result);
   };
 
-  if (compact) {
+  // Outside the compact/expanded switch: saving swaps the card for its compact
+  // summary before the confetti fires, so the canvas must survive that swap.
+  const confetti = (
+    <Confetti
+      ref={confettiRef}
+      manualstart
+      globalOptions={{ resize: true, useWorker: false }}
+      className="pointer-events-none absolute inset-0 z-20 size-full"
+    />
+  );
+
+  if (current && !editing) {
     return (
-      <PaperCard as="section" aria-labelledby={`${uid}-title`} tone="sheet" className="px-5 py-5">
-        <div className="flex items-center gap-3">
-          <MoodFace mood={current.value} className="size-11 shrink-0" />
-          <div className="min-w-0 flex-1">
-            <p id={`${uid}-title`} className="font-kid-body text-sm text-kid-ink-soft">
-              Check-in
-            </p>
-            <p aria-live="polite" className="font-kid-display text-lg font-semibold text-kid-ink">
-              {current.feeling}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setChangingMood(true)}
-            aria-label="Change how you're feeling"
-            className="grid size-11 shrink-0 place-items-center rounded-full text-lg hover:bg-kid-paper-deep/70"
-          >
-            <span aria-hidden="true">✏️</span>
-          </button>
-        </div>
-      </PaperCard>
+      <div className="relative">
+        {confetti}
+        <CompactCheckIn uid={uid} mood={current} onChange={() => setEditing(true)} />
+      </div>
     );
   }
 
   return (
-    <PaperCard as="section" aria-labelledby={`${uid}-title`} tone="green" className="px-4 pb-5 pt-7">
-      <Tape tone="yellow" className="-top-3 right-8 rotate-6" />
-      <Confetti
-        ref={confettiRef}
-        manualstart
-        globalOptions={{ resize: true, useWorker: false }}
-        className="pointer-events-none absolute inset-0 z-20 size-full"
-      />
+    <div className="relative">
+      {confetti}
+      <PaperCard as="section" aria-labelledby={`${uid}-title`} tone="green" className="px-4 pb-5 pt-7">
+        <Tape tone="yellow" className="-top-3 right-8 rotate-6" />
 
-      <h2 id={`${uid}-title`} className="text-center font-kid-hand text-[1.85rem] leading-none text-kid-ink">
-        Today&apos;s check-in
-      </h2>
+        <h2 id={`${uid}-title`} className="text-center font-kid-hand text-[1.85rem] leading-none text-kid-ink">
+          Today&apos;s check-in
+        </h2>
 
-      <div className="mt-4 rounded-[1.5rem] bg-kid-sheet/90 px-2 pb-4 pt-4">
-        {/* This whole big card only renders while showMoodPicker is true (see
-            the `compact` early return above), so the picker always shows here -
-            no need to branch on it again. */}
-        <fieldset>
-          <legend className="w-full text-center font-kid-display text-xl font-medium text-kid-ink">
-            How are you feeling?
-          </legend>
-          {/* One row of five, even in the narrow side column. */}
-          <div className="mt-3 grid grid-cols-5 gap-0.5">
-            {MOODS.map((m) => (
-              <label
-                key={m.value}
-                className="group relative isolate flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-2xl px-0.5 py-1.5"
-              >
-                <input
-                  type="radio"
-                  name={`${uid}-mood`}
-                  value={m.value}
-                  checked={mood === m.value}
-                  onChange={() => pickMood(m.value)}
-                  className="peer sr-only"
-                />
-                <MoodFace
-                  mood={m.value}
-                  className="size-10 transition-transform duration-150 group-hover:scale-110 peer-checked:scale-110"
-                />
-                <span className="font-kid-display text-[0.8rem] text-kid-ink-soft peer-checked:font-semibold peer-checked:text-kid-ink">
-                  {m.label}
-                </span>
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 rounded-2xl peer-checked:bg-kid-green/60 peer-checked:ring-[3px] peer-checked:ring-kid-green-deep peer-focus-visible:outline-[3px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-kid-teal peer-focus-visible:outline-solid -z-10"
-                />
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <CheckInPickers
+          key={checkIn?.updatedAt ?? 'new'}
+          uid={uid}
+          initial={checkIn}
+          onSave={handleSave}
+          onCancel={checkIn ? () => setEditing(false) : undefined}
+        />
+      </PaperCard>
+    </div>
+  );
+}
 
-        <fieldset className="mt-4">
-          <legend className="sr-only">Energy level</legend>
-          <div className="flex justify-center">
-            {ENERGY_LEVELS.map((level) => (
-              <label key={level} className="relative grid size-11 cursor-pointer place-items-center">
-                <input
-                  type="radio"
-                  name={`${uid}-energy`}
-                  value={level}
-                  checked={energy === level}
-                  onChange={() => update({ energy: level })}
-                  className="peer sr-only"
-                  aria-label={`${level} out of ${ENERGY_LEVELS.length}`}
-                />
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    'size-8 rounded-full border-[3px] transition-colors duration-150 peer-focus-visible:outline-[3px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-kid-teal peer-focus-visible:outline-solid',
-                    energy && level <= energy
-                      ? 'border-kid-green-deep bg-kid-green-deep'
-                      : 'border-kid-green-deep/60 bg-kid-sheet'
-                  )}
-                />
-              </label>
-            ))}
-          </div>
-          <p aria-hidden="true" className="mt-0.5 text-center font-kid-display text-base text-kid-ink-soft">
-            Energy level
+function CompactCheckIn({ uid, mood, onChange }) {
+  return (
+    <PaperCard as="section" aria-labelledby={`${uid}-title`} tone="sheet" className="px-5 py-5">
+      <div className="flex items-center gap-3">
+        <MoodFace mood={mood.value} className="size-11 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p id={`${uid}-title`} className="font-kid-body text-sm text-kid-ink-soft">
+            Check-in
           </p>
-        </fieldset>
+          <p aria-live="polite" className="font-kid-display text-lg font-semibold text-kid-ink">
+            {mood.kidFeeling}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onChange}
+          aria-label="Change how you're feeling"
+          className="grid size-11 shrink-0 place-items-center rounded-full text-lg hover:bg-kid-paper-deep/70"
+        >
+          <span aria-hidden="true">✏️</span>
+        </button>
       </div>
     </PaperCard>
+  );
+}
+
+function CheckInPickers({ uid, initial, onSave, onCancel }) {
+  const [mood, setMood] = useState(initial?.mood ?? null);
+  const [energy, setEnergy] = useState(initial?.energy ?? null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const inFlight = useRef(false);
+
+  const ready = Boolean(mood && energy);
+
+  const submit = async () => {
+    if (!ready || inFlight.current) return;
+    inFlight.current = true;
+    setBusy(true);
+    setError(null);
+    try {
+      await onSave({ mood, energy });
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-[1.5rem] bg-kid-sheet/90 px-2 pb-4 pt-4">
+      <fieldset>
+        <legend className="w-full text-center font-kid-display text-xl font-medium text-kid-ink">
+          How are you feeling?
+        </legend>
+        <div className="mt-3 grid grid-cols-3 gap-1">
+          {MOODS.map((m) => (
+            <label
+              key={m.value}
+              className="group relative isolate flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-2xl px-0.5 py-1.5"
+            >
+              <input
+                type="radio"
+                name={`${uid}-mood`}
+                value={m.value}
+                checked={mood === m.value}
+                onChange={() => setMood(m.value)}
+                className="peer sr-only"
+              />
+              <MoodFace
+                mood={m.value}
+                className="size-10 transition-transform duration-150 group-hover:scale-110 peer-checked:scale-110"
+              />
+              <span className="font-kid-display text-[0.8rem] text-kid-ink-soft peer-checked:font-semibold peer-checked:text-kid-ink">
+                {m.kidLabel}
+              </span>
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 -z-10 rounded-2xl peer-checked:bg-kid-green/60 peer-checked:ring-[3px] peer-checked:ring-kid-green-deep peer-focus-visible:outline-[3px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-kid-teal peer-focus-visible:outline-solid"
+              />
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset className="mt-4">
+        <legend className="sr-only">Energy level</legend>
+        <div className="flex justify-center">
+          {ENERGY_LEVELS.map((level) => (
+            <label key={level} className="relative grid size-11 cursor-pointer place-items-center">
+              <input
+                type="radio"
+                name={`${uid}-energy`}
+                value={level}
+                checked={energy === level}
+                onChange={() => setEnergy(level)}
+                className="peer sr-only"
+                aria-label={`${level} out of ${ENERGY_LEVELS.length}`}
+              />
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'size-8 rounded-full border-[3px] transition-colors duration-150 peer-focus-visible:outline-[3px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-kid-teal peer-focus-visible:outline-solid',
+                  energy && level <= energy
+                    ? 'border-kid-green-deep bg-kid-green-deep'
+                    : 'border-kid-green-deep/60 bg-kid-sheet'
+                )}
+              />
+            </label>
+          ))}
+        </div>
+        <p aria-hidden="true" className="mt-0.5 text-center font-kid-display text-base text-kid-ink-soft">
+          Energy level
+        </p>
+      </fieldset>
+
+      {error && (
+        <p role="alert" className="mx-2 mt-3 rounded-2xl bg-kid-coral-soft px-3 py-2 text-center font-kid-body text-kid-coral">
+          {error}
+        </p>
+      )}
+
+      <div className="mt-4 flex flex-col items-center gap-2 px-2">
+        <KidButton size="md" className="w-full" onClick={submit} disabled={!ready || busy}>
+          {busy ? 'Saving…' : 'Done!'}
+        </KidButton>
+        {!ready && (
+          <p className="text-center font-kid-body text-sm text-kid-ink-soft">Pick a feeling and your energy.</p>
+        )}
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={busy}
+            className="min-h-11 rounded-full px-4 font-kid-display text-base text-kid-ink-soft underline decoration-dotted hover:text-kid-ink"
+          >
+            Keep my old answer
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 

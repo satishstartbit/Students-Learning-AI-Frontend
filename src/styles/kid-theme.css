@@ -145,18 +145,17 @@
   --focus-ring: 0 0 0 3px rgb(31 122 128 / 0.35);
 
   /* --- Mood check-in (MoodFace.jsx/CheckInCard.jsx) -------------------
-   * The face illustration is one shared design across all 5 moods (only
+   * The face illustration is one shared design across all 6 moods (only
    * the eyes/mouth linework differs, in --mood-face-ink) - there is no
-   * per-mood bg/fg/border palette to extract, so this tokenizes exactly
-   * what was hardcoded rather than inventing per-mood colours that don't
-   * exist in the product today. */
+   * per-mood bg/fg/border palette, so these are the drawing's own colours. */
   --mood-face-bg: #f8cd45;
   --mood-face-border: #e7ad22;
   --mood-face-cheek: #f59f8f;
   --mood-face-ink: #3b2a14;
-  --mood-great-mouth: #7a3a1a;
-  --mood-great-tongue: #ee8c8c;
-  --mood-sad-tear: #7fb6e0;
+  --mood-face-eye: #ffffff;
+  --mood-mouth: #7a3a1a;
+  --mood-tongue: #ee8c8c;
+  --mood-drop: #7fb6e0;
 
   /* Fields: the same 48px target, with the larger kid type on the helper line. */
   --field-radius: 16px;

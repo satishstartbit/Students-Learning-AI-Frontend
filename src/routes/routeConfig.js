@@ -22,6 +22,12 @@ import RelationshipsPage from '../modules/superAdmin/pages/RelationshipsPage';
 
 import ParentChildrenPage from '../modules/parent/pages/ParentChildrenPage';
 import ParentProfilePage from '../modules/parent/pages/ParentProfilePage';
+import ParentProgressPage from '../modules/parent/pages/ParentProgressPage';
+
+import StudentOnboardingPage from '../modules/onboarding/pages/StudentOnboardingPage';
+import ParentOnboardingPage from '../modules/onboarding/pages/ParentOnboardingPage';
+import CheckInPage from '../modules/checkIn/pages/CheckInPage';
+import RequireCheckIn from '../modules/checkIn/components/RequireCheckIn';
 
 import TeacherDashboardPage from '../modules/teacher/pages/TeacherDashboardPage';
 import MyStudentsPage from '../modules/teacher/pages/MyStudentsPage';
@@ -29,6 +35,7 @@ import AssignmentsListPage from '../modules/teacher/pages/AssignmentsListPage';
 import AssignmentFormPage from '../modules/teacher/pages/AssignmentFormPage';
 import AssignmentDetailsPage from '../modules/teacher/pages/AssignmentDetailsPage';
 import TeacherProfilePage from '../modules/teacher/pages/TeacherProfilePage';
+import TeacherProgressPage from '../modules/teacher/pages/TeacherProgressPage';
 
 import MyAssignmentsPage from '../modules/student/pages/MyAssignmentsPage';
 import StudentAssignmentDetailPage from '../modules/student/pages/AssignmentDetailPage';
@@ -36,6 +43,7 @@ import StudentHomePage from '../modules/student/pages/StudentHomePage';
 import StudentPlanPage from '../modules/student/pages/StudentPlanPage';
 import FocusTimerPage from '../modules/student/pages/FocusTimerPage';
 import RewardsPage from '../modules/student/pages/RewardsPage';
+import StudentSettingsPage from '../modules/student/pages/StudentSettingsPage';
 import GradeBandPage from '../modules/student/pages/GradeBandPage';
 import KidHomePage from '../modules/student/pages/kid/KidHomePage';
 import KidMyWeekPage from '../modules/student/pages/kid/KidMyWeekPage';
@@ -43,6 +51,8 @@ import KidFocusPage from '../modules/student/pages/kid/KidFocusPage';
 import KidAssignmentsPage from '../modules/student/pages/kid/KidAssignmentsPage';
 import KidComingSoonPage from '../modules/student/pages/kid/KidComingSoonPage';
 import KidSettingsPage from '../modules/student/pages/kid/KidSettingsPage';
+import KidCheckInPage from '../modules/student/pages/kid/KidCheckInPage';
+import KidOnboardingPage from '../modules/student/pages/kid/KidOnboardingPage';
 
 import AssistantHomePage from '../modules/aiAssistant/pages/AssistantHomePage';
 import LearningSessionPage from '../modules/aiAssistant/pages/LearningSessionPage';
@@ -92,6 +102,9 @@ import CheckoutPage from '../modules/subscription/pages/CheckoutPage';
  *
  * `element` is filled in per route as each Phase 1 module is built; until then
  * AppRoutes renders a placeholder so the guards are still exercisable.
+ *
+ * `guards` wraps a route's page in extra route-level checks, outermost first -
+ * e.g. RequireCheckIn on every student screen where work starts.
  */
 
 export const PUBLIC_ROUTES = {
@@ -261,6 +274,10 @@ export const STUDENT_ROUTES = {
    * everyone else keeps the standard ones. GradeBandPage picks per route -
    * `junior` for K-5, `standard` (or the placeholder) for Grade 6+. See
    * layouts/StudentLayout.jsx for how the grade band is decided.
+   *
+   * Every screen where work starts carries `guards: [RequireCheckIn]` - no
+   * work before today's check-in. Home, Check In, Rewards, Settings and
+   * Onboarding stay open. (Onboarding itself is gated area-wide in the layout.)
    */
   routes: [
     {
@@ -271,20 +288,33 @@ export const STUDENT_ROUTES = {
       props: { junior: KidHomePage, standard: StudentHomePage },
     },
     { path: 'dashboard', label: 'My Day', redirectTo: '/student' },
-    { path: 'onboarding', label: 'Onboarding', element: null },
-    { path: 'check-in', label: 'Check In', permissions: [PERMISSIONS.CHECKIN_CREATE], element: null },
+    {
+      path: 'onboarding',
+      label: 'Onboarding',
+      component: GradeBandPage,
+      props: { junior: KidOnboardingPage, standard: StudentOnboardingPage },
+    },
+    {
+      path: 'check-in',
+      label: 'Check In',
+      permissions: [PERMISSIONS.CHECKIN_CREATE],
+      component: GradeBandPage,
+      props: { junior: KidCheckInPage, standard: CheckInPage },
+    },
     {
       path: 'assignments',
       label: 'Assignments',
       permissions: [PERMISSIONS.ASSIGNMENT_READ],
       component: GradeBandPage,
       props: { junior: KidAssignmentsPage, standard: MyAssignmentsPage },
+      guards: [RequireCheckIn],
     },
     {
       path: 'assignments/:assignmentId',
       label: 'Assignment',
       permissions: [PERMISSIONS.ASSIGNMENT_READ],
       component: StudentAssignmentDetailPage,
+      guards: [RequireCheckIn],
     },
     /*
      * AI Learning Assistant. `assistant/history` is declared before
@@ -296,24 +326,28 @@ export const STUDENT_ROUTES = {
       label: 'AI Assistant',
       permissions: [PERMISSIONS.AI_ASSISTANT_USE],
       component: AssistantHomePage,
+      guards: [RequireCheckIn],
     },
     {
       path: 'assistant/history',
       label: 'Learning History',
       permissions: [PERMISSIONS.AI_ASSISTANT_USE],
       component: LearningHistoryPage,
+      guards: [RequireCheckIn],
     },
     {
       path: 'assistant/:sessionId',
       label: 'Learning Session',
       permissions: [PERMISSIONS.AI_ASSISTANT_USE],
       component: LearningSessionPage,
+      guards: [RequireCheckIn],
     },
     {
       path: 'calendar',
       label: 'My Week',
       component: GradeBandPage,
       props: { junior: KidMyWeekPage, standard: StudentPlanPage },
+      guards: [RequireCheckIn],
     },
     {
       path: 'focus',
@@ -321,6 +355,7 @@ export const STUDENT_ROUTES = {
       permissions: [PERMISSIONS.FOCUS_READ],
       component: GradeBandPage,
       props: { junior: KidFocusPage, standard: FocusTimerPage },
+      guards: [RequireCheckIn],
     },
     {
       path: 'rewards',
@@ -329,12 +364,12 @@ export const STUDENT_ROUTES = {
       component: GradeBandPage,
       props: { junior: KidComingSoonPage, standard: RewardsPage, feature: 'rewards' },
     },
-    // K-5 only (calm mode, log out) - Grade 6+ use the account menu instead.
+    // K-5: calm mode + log out; Grade 6+: learning profile (from the account menu).
     {
       path: 'settings',
       label: 'Settings',
       component: GradeBandPage,
-      props: { junior: KidSettingsPage, standardRedirect: '/student' },
+      props: { junior: KidSettingsPage, standard: StudentSettingsPage },
     },
   ],
 };
@@ -377,7 +412,12 @@ export const TEACHER_ROUTES = {
       permissions: [PERMISSIONS.ASSIGNMENT_UPDATE],
       component: AssignmentFormPage,
     },
-    { path: 'progress', label: 'Progress', permissions: [PERMISSIONS.PROGRESS_READ], element: null },
+    {
+      path: 'progress',
+      label: 'Progress',
+      permissions: [PERMISSIONS.PROGRESS_READ],
+      component: TeacherProgressPage,
+    },
     {
       path: 'learning-activity',
       label: 'Learning Activity',
@@ -406,7 +446,7 @@ export const PARENT_ROUTES = {
       element: null,
     },
     { path: 'dashboard', label: 'Overview', redirectTo: '/parent' },
-    { path: 'onboarding', label: 'Onboarding', element: null },
+    { path: 'onboarding', label: 'Onboarding', component: ParentOnboardingPage },
     {
       path: 'children',
       label: 'My Children',
@@ -419,7 +459,12 @@ export const PARENT_ROUTES = {
       permissions: [PERMISSIONS.PROFILE_READ],
       component: ParentProfilePage,
     },
-    { path: 'progress', label: 'Progress', permissions: [PERMISSIONS.PROGRESS_READ], element: null },
+    {
+      path: 'progress',
+      label: 'Progress',
+      permissions: [PERMISSIONS.PROGRESS_READ],
+      component: ParentProgressPage,
+    },
     {
       path: 'learning-summary',
       label: 'Learning Summary',

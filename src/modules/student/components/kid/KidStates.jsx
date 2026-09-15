@@ -18,7 +18,7 @@ export function KidOops({ message = "We couldn't load this right now.", onRetry,
         className
       )}
     >
-      <MoodFace mood="worried" className="size-14" />
+      <MoodFace mood="tense" className="size-14" />
       <p className="mt-1 font-kid-display text-2xl font-semibold text-kid-ink">Oops!</p>
       <p className="text-lg text-kid-ink-soft">{message}</p>
       {onRetry && (

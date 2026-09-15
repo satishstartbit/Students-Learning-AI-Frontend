@@ -38,11 +38,14 @@ function renderRouteElement(route) {
   if (route.redirectTo) return <Navigate to={route.redirectTo} replace />;
 
   const Component = route.component;
-  const page = Component ? (
+  const content = Component ? (
     <Component {...(route.props ?? {})} />
   ) : (
     route.element ?? <RoutePlaceholder label={route.label} />
   );
+
+  // Route-level guards (e.g. RequireCheckIn), outermost first.
+  const page = (route.guards ?? []).reduceRight((child, Guard) => <Guard>{child}</Guard>, content);
 
   // A route may narrow access further than its area's role gate.
   if (route.permissions?.length) {

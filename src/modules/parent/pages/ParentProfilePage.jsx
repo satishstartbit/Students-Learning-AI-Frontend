@@ -12,6 +12,8 @@ import AddressFields from '../../auth/components/AddressFields';
 import ChangePasswordForm from '../../auth/components/ChangePasswordForm';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
+import ParentFamilyForm from '../../onboarding/components/ParentFamilyForm';
+import onboardingService from '../../onboarding/services/onboarding.service';
 
 function valuesFromMe(me) {
   return {
@@ -24,8 +26,6 @@ function valuesFromMe(me) {
     state: me?.state ?? '',
     country: me?.country ?? '',
     postalCode: me?.postalCode ?? '',
-    family_context: me?.profile?.family_context ?? '',
-    child_context: me?.profile?.child_context ?? '',
   };
 }
 
@@ -42,6 +42,7 @@ export default function ParentProfilePage() {
   // envelope, so the actual record is `me.user`.
   const { data: me, isLoading, error, run } = useApi(authService.getMe);
   const record = me?.user ?? null;
+  const familyContext = useApi(onboardingService.getMyOnboarding, { immediate: true });
 
   const { user, setUser } = useAuth();
   const photo = usePhotoField(record?.profile?.profileImageUrl ?? null);
@@ -113,13 +114,30 @@ export default function ParentProfilePage() {
                 setFieldValue={form.setFieldValue}
               />
 
-              <SectionHeader title="About your family" as="h3" />
-              <RoleProfileFields role="PARENT" getProps={form.getFieldProps} photo={photo} />
+              <SectionHeader title="Profile photo" as="h3" />
+              <RoleProfileFields role="PARENT" getProps={form.getFieldProps} photo={photo} showFamilyContext={false} />
 
               <Button type="submit" loading={form.isSubmitting}>
                 Save changes
               </Button>
             </form>
+          </Card>
+
+          <Card className="ui-field">
+            <SectionHeader title="About your family" as="h3" />
+            <p className="ui-hint" style={{ marginTop: 0 }}>
+              The answers from when you first signed in - change them any time.
+            </p>
+            {familyContext.data ? (
+              <ParentFamilyForm
+                key={familyContext.data.completedAt ?? 'new'}
+                answers={familyContext.data.answers}
+                submitLabel="Save family details"
+                onSaved={() => toast.success('Family details saved')}
+              />
+            ) : (
+              <Loader message="Loading…" />
+            )}
           </Card>
 
           <Card>

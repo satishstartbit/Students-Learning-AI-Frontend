@@ -31,11 +31,12 @@ import { ROLE_LABELS, USER_ROLES } from '../utils/constants';
 import { formatName, getInitials } from '../utils/format';
 
 /**
- * Where the "Account" item in the account menu sends each role - only
- * Teacher and Parent have a My Profile page today. Student and Super Admin
- * keep the placeholder disabled, out of this feature's scope.
+ * Where the "Account" item in the account menu sends each role. Students
+ * (Grade 6+ - K-5 has its own shell) land on Settings, where their onboarding
+ * answers are edited. Super Admin keeps the placeholder disabled.
  */
 const PROFILE_PATH_BY_ROLE = {
+  [USER_ROLES.STUDENT]: '/student/settings',
   [USER_ROLES.TEACHER]: '/teacher/profile',
   [USER_ROLES.PARENT]: '/parent/profile',
 };

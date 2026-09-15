@@ -1,6 +1,6 @@
 import { useId } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LuLogOut } from 'react-icons/lu';
+import { Link, useNavigate } from 'react-router-dom';
+import { LuLogOut, LuPencil } from 'react-icons/lu';
 import { cn } from '../../../../lib/utils';
 import { useAuth } from '../../../../hooks/useAuth';
 import { formatName } from '../../../../utils/format';
@@ -15,12 +15,13 @@ import { KidToggle } from '../../components/kid/KidToggle';
 const SECTION = 'rounded-[1.75rem] bg-kid-sheet p-5 shadow-paper sm:p-7';
 
 /**
- * K-5 Settings: who's signed in, Calm mode, and a big Log out button -
- * classroom devices are shared, so signing out has to be easy to find.
+ * K-5 Settings: who's signed in, their "about me" answers, Calm mode, and a
+ * big Log out button - classroom devices are shared, so signing out has to be
+ * easy to find (this page stays reachable even before onboarding is done).
  */
 export default function KidSettingsPage() {
   const { user, signOut } = useAuth();
-  const { profile, grade } = useStudentExperience();
+  const { profile, grade, onboarded } = useStudentExperience();
   const { calm, setCalm } = useKidPreferences();
   const navigate = useNavigate();
   const uid = useId();
@@ -40,6 +41,21 @@ export default function KidSettingsPage() {
           <p className="truncate font-kid-display text-2xl font-semibold text-kid-ink">{formatName(user)}</p>
           {grade && <p className="text-lg text-kid-ink-soft">{grade}</p>}
         </div>
+      </section>
+
+      <section className={cn(SECTION, 'flex flex-wrap items-center justify-between gap-5')}>
+        <div className="min-w-0">
+          <h2 className="font-kid-display text-2xl font-semibold text-kid-ink">About me</h2>
+          <p className="mt-1 text-lg text-kid-ink-soft">
+            {onboarded ? 'What you like, what helps you focus, and more.' : "You haven't answered your questions yet."}
+          </p>
+        </div>
+        <KidButton asChild variant="soft" size="md">
+          <Link to="/student/onboarding">
+            <LuPencil className="size-5" aria-hidden="true" />
+            {onboarded ? 'Change my answers' : 'Answer questions'}
+          </Link>
+        </KidButton>
       </section>
 
       <section className={cn(SECTION, 'flex items-center justify-between gap-5')}>

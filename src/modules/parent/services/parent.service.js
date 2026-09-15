@@ -53,6 +53,12 @@ export const updateChild = (id, payload) => api.patch(`/parent/children/${id}`, 
 export const setChildPassword = (id, { password, confirmPassword }) =>
   api.patch(`/parent/children/${id}/password`, { password, confirmPassword });
 
+/** Progress page: one summary per child (today's check-in + task counts). */
+export const getProgress = () => api.get('/parent/progress');
+
+/** One child's full progress: tasks, today's check-in, recent check-ins. */
+export const getChildProgress = (id) => api.get(`/parent/children/${id}/progress`);
+
 /** Detaches by default; pass permanent: true to delete the account outright. */
 export const removeChild = (id, { permanent = false } = {}) =>
   api.delete(`/parent/children/${id}`, { params: { permanent } });
@@ -106,6 +112,8 @@ export default {
   addChild,
   updateChild,
   setChildPassword,
+  getProgress,
+  getChildProgress,
   removeChild,
   assignTeachers,
   updateTeacherAssignment,

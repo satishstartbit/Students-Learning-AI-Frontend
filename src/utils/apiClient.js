@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { getAccessToken, getRefreshToken, setTokens, clearAuthStorage } from './storage';
 import { parseApiError } from './errorHandler';
+import { SUBSCRIPTION_REQUIRED_EVENT } from './constants';
 
 /**
  * The single HTTP entry point for the app.
@@ -95,7 +96,11 @@ async function request(config) {
   try {
     return unwrap(await apiClient.request(config));
   } catch (error) {
-    throw parseApiError(error);
+    const parsed = parseApiError(error);
+    if (parsed.status === 403 && parsed.errors.some((e) => e?.code === 'SUBSCRIPTION_REQUIRED')) {
+      window.dispatchEvent(new CustomEvent(SUBSCRIPTION_REQUIRED_EVENT));
+    }
+    throw parsed;
   }
 }
 

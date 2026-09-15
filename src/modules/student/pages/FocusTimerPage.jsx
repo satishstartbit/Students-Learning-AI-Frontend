@@ -3,8 +3,7 @@ import { Card, Button, IconButton, Select, Alert, Loader, CircularProgress } fro
 import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { useFocusTimer, formatClock } from '../hooks/useFocusTimer';
 import { useMyTasks } from '../hooks/useMyTasks';
-import { useDailyCheckIn } from '../hooks/useDailyCheckIn';
-import { useAuth } from '../../../hooks/useAuth';
+import { useTodayCheckIn } from '../../checkIn/hooks/useTodayCheckIn';
 import RegulationToolkitCard from '../components/RegulationToolkitCard';
 
 // Mirrors StudentCheckInCard's "minutes free" options plus a classic 25 -
@@ -25,19 +24,18 @@ const AUDIO_OPTIONS = [
 
 /**
  * "Take a breath, choose what you need, and get to it." - the Regulation
- * Toolkit and the Focus Timer, side by side. Grade 6+ only; the K-5
- * equivalent is still "coming soon" (KidComingSoonPage).
+ * Toolkit and the Focus Timer, side by side. Grade 6+; the K-5 equivalent is
+ * KidFocusPage. Only reachable after today's check-in (RequireCheckIn).
  */
 export default function FocusTimerPage() {
-  const { user } = useAuth();
   const timer = useFocusTimer();
   const tasks = useMyTasks();
-  const checkIn = useDailyCheckIn(user?.id);
+  const { checkIn } = useTodayCheckIn();
 
   // Pre-fill from today's check-in ("30 minutes free") so the ring already
   // shows the length the student told the check-in about, not a fixed guess.
   const [plannedMinutes, setPlannedMinutes] = useState(() =>
-    checkIn.availableMinutes ? String(checkIn.availableMinutes) : '25'
+    checkIn?.availableMinutes ? String(checkIn.availableMinutes) : '25'
   );
   const [taskId, setTaskId] = useState(null);
   const [audioIndex, setAudioIndex] = useState(0);
@@ -125,7 +123,7 @@ export default function FocusTimerPage() {
           alignItems: 'start',
         }}
       >
-        <RegulationToolkitCard checkIn={checkIn} />
+        <RegulationToolkitCard />
 
         <Card title="Focus Timer" subtitle="Pick a task, or just start the clock.">
           {!isActive && (
@@ -145,7 +143,7 @@ export default function FocusTimerPage() {
               display: 'flex',
               justifyContent: 'center',
               padding: 'var(--spacing-lg) 0',
-              background: 'var(--color-surface-alt)',
+              background: 'var(--color-bg-surface-sunken)',
               borderRadius: 'var(--radius-lg)',
               marginBottom: 'var(--spacing-lg)',
             }}

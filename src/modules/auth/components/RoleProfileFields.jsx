@@ -136,6 +136,9 @@ function ProfilePhotoField({ photo }) {
  *                  The file travels alongside the request separately from
  *                  `profile` (see profilePayload.js), so it is not part of
  *                  `getProps`.
+ * @param showFamilyContext  PARENT only - false where the family context is
+ *                  edited by its own form instead (Parent My Profile's
+ *                  onboarding card), so two forms never overwrite each other.
  */
 export default function RoleProfileFields({
   role,
@@ -143,6 +146,7 @@ export default function RoleProfileFields({
   includeAdminOnly = false,
   lookupFetcher,
   photo,
+  showFamilyContext = true,
 }) {
   if (role === 'STUDENT') {
     return (
@@ -233,13 +237,17 @@ export default function RoleProfileFields({
       <>
         {photo && <ProfilePhotoField photo={photo} />}
 
-        <Textarea
-          label="Family context"
-          rows={3}
-          hint="Anything about your family setup that helps us support your child"
-          {...getProps('family_context')}
-        />
-        <Textarea label="About your child" rows={3} {...getProps('child_context')} />
+        {showFamilyContext && (
+          <>
+            <Textarea
+              label="Family context"
+              rows={3}
+              hint="Anything about your family setup that helps us support your child"
+              {...getProps('family_context')}
+            />
+            <Textarea label="About your child" rows={3} {...getProps('child_context')} />
+          </>
+        )}
 
         {includeAdminOnly && (
           <Textarea label="Onboarding notes" rows={2} {...getProps('onboarding_notes')} />

@@ -5,9 +5,8 @@ import { BlurFade } from '../../../../components/ui/blur-fade';
 import { Confetti } from '../../../../components/ui/confetti';
 import { cn } from '../../../../lib/utils';
 import { useApi } from '../../../../hooks/useApi';
-import { useAuth } from '../../../../hooks/useAuth';
+import { useTodayCheckIn } from '../../../checkIn/hooks/useTodayCheckIn';
 import regulationToolkitService from '../../services/regulationToolkit.service';
-import { useDailyCheckIn } from '../../hooks/useDailyCheckIn';
 import { useFocusTimer, formatClock } from '../../hooks/useFocusTimer';
 import { useMotionAllowed } from '../../hooks/useKidPreferences';
 import { useMyTasks } from '../../hooks/useMyTasks';
@@ -18,9 +17,9 @@ import { PaperCard } from '../../components/kid/PaperKit';
 
 const CONFETTI_COLOURS = ['#f6c445', '#f4b6c1', '#1f7a80', '#7b68d6', '#95c07b'];
 
-// A calm 25 minutes, always - no dropdown, one clear default. K-5 doesn't
-// get a "minutes free" check-in question (see useDailyCheckIn), and picking
-// a number isn't the point of this page - starting is.
+// A calm 25 minutes, always - no dropdown, one clear default. K-5 isn't
+// asked "how much time do you have" at check-in, and picking a number isn't
+// the point of this page - starting is.
 const PLANNED_MINUTES = 25;
 
 /**
@@ -43,8 +42,13 @@ const KID_TILES = [
   },
 ];
 
-function firstToolForTile(categories, tile) {
-  const wanted = tile.sourceCategories ?? [tile.key];
+const tileCategories = (tile) => tile.sourceCategories ?? [tile.key];
+
+/** The tile's best-matched suggested tool if there is one, otherwise its first tool. */
+function toolForTile(categories, tile, suggestions) {
+  const wanted = tileCategories(tile);
+  const suggested = suggestions.find((t) => wanted.includes(t.category));
+  if (suggested) return suggested;
   const tools = categories.filter((c) => wanted.includes(c.category)).flatMap((c) => c.tools);
   return tools[0] ?? null;
 }
@@ -92,10 +96,9 @@ function ToolTile({ tile, tool, expanded, suggested, onToggle }) {
  * young student needs: pick a tool or just start the clock.
  */
 export default function KidFocusPage() {
-  const { user } = useAuth();
   const timer = useFocusTimer();
   const tasks = useMyTasks();
-  const checkIn = useDailyCheckIn(user?.id);
+  const { checkIn } = useTodayCheckIn();
   const motionAllowed = useMotionAllowed();
   const confettiRef = useRef(null);
 
@@ -104,25 +107,30 @@ export default function KidFocusPage() {
     { immediate: true }
   );
   const recommendation = useApi(regulationToolkitService.getRecommendation);
+  const { run: runRecommendation } = recommendation;
 
   const [expandedKey, setExpandedKey] = useState(null);
   const [justEnded, setJustEnded] = useState(null);
 
-  // A quiet "try this" nudge from the same mood the student already gave on
-  // the Home page check-in - no banner text here, just a badge on the tile.
+  // A quiet "try this" nudge from today's check-in (read server-side) - no
+  // banner text here, just a badge on the matching tiles.
   useEffect(() => {
-    if (!checkIn.mood) return;
-    recommendation.run({ mood: checkIn.mood }).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkIn.mood]);
+    if (checkIn) runRecommendation().catch(() => {});
+  }, [checkIn, runRecommendation]);
 
   const nextTask = !tasks.isLoading && !tasks.error ? tasks.toDo[0] ?? null : null;
 
+  const suggestions = useMemo(() => recommendation.data?.suggestions ?? [], [recommendation.data]);
+  const suggestedCategories = recommendation.data?.categories ?? [];
+
   const tiles = useMemo(
-    () => KID_TILES.map((tile) => ({ tile, tool: categories ? firstToolForTile(categories, tile) : null })),
-    [categories]
+    () =>
+      KID_TILES.map((tile) => ({
+        tile,
+        tool: categories ? toolForTile(categories, tile, suggestions) : null,
+      })),
+    [categories, suggestions]
   );
-  const suggestedCategory = recommendation.data?.category;
   const expandedTool = tiles.find(({ tile }) => tile.key === expandedKey)?.tool ?? null;
 
   if (timer.isLoading) {
@@ -291,7 +299,7 @@ export default function KidFocusPage() {
                       tile={tile}
                       tool={tool}
                       expanded={expandedKey === tile.key}
-                      suggested={suggestedCategory === tile.key}
+                      suggested={tileCategories(tile).some((c) => suggestedCategories.includes(c))}
                       onToggle={() => setExpandedKey((k) => (k === tile.key ? null : tile.key))}
                     />
                   </BlurFade>

@@ -1,43 +1,60 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
-import { PageHeader, Card, Button, Alert, SectionHeader } from '../../../components/common';
+import { PageHeader, Card, Button, Alert, SectionHeader, Loader, Radio } from '../../../components/common';
+import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
 import { formatCurrency } from '../../../utils/format';
 import { getErrorMessage } from '../../../utils/errorHandler';
-import { getActiveLocale } from '../../../utils/locale';
+import { useSubscriptionAccess } from '../hooks/useSubscriptionAccess';
 import subscriptionService from '../services/subscription.service';
-
-const PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
-
-// Created once per page load - Stripe warns against re-creating it per render.
-const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : null;
+import {
+  STRIPE_LOAD_FAILED_MESSAGE,
+  describeCard,
+  elementsOptions,
+  formatCardExpiry,
+  paymentsConfigured,
+  useStripeInstance,
+} from '../stripe';
 
 /** Where Stripe sends the browser back after a 3-D Secure / bank redirect. */
 const RETURN_PATH = '/parent/subscription';
 
-function PaymentForm({ checkout }) {
+function PaymentForm({ checkout, savedCard }) {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
+  const { refresh: refreshAccess } = useSubscriptionAccess();
 
+  // Default to the card already on file; "new" shows the card form.
+  const [method, setMethod] = useState(savedCard ? 'saved' : 'new');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const inFlight = useRef(false);
+
+  const useSaved = Boolean(savedCard) && method === 'saved';
 
   const submit = async (event) => {
     event.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || (!useSaved && !elements) || inFlight.current) return;
 
+    inFlight.current = true;
     setSubmitting(true);
     setError(null);
 
-    const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      // Only leave the page when the card genuinely needs it (3-D Secure etc.).
-      redirect: 'if_required',
-      confirmParams: { return_url: `${window.location.origin}${RETURN_PATH}` },
-    });
+    const returnUrl = `${window.location.origin}${RETURN_PATH}`;
+    // Only leave the page when the card genuinely needs it (3-D Secure etc.).
+    const { error: stripeError, paymentIntent } = useSaved
+      ? await stripe.confirmPayment({
+          clientSecret: checkout.clientSecret,
+          redirect: 'if_required',
+          confirmParams: { payment_method: savedCard.paymentMethodId, return_url: returnUrl },
+        })
+      : await stripe.confirmPayment({
+          elements,
+          redirect: 'if_required',
+          confirmParams: { return_url: returnUrl },
+        });
 
     if (stripeError) {
       // Card-level problems (declined, wrong CVC) carry a message meant for
@@ -47,6 +64,7 @@ function PaymentForm({ checkout }) {
           ? stripeError.message
           : 'We could not process your payment. Please try again.'
       );
+      inFlight.current = false;
       setSubmitting(false);
       return;
     }
@@ -59,13 +77,14 @@ function PaymentForm({ checkout }) {
         // `processing`: the webhook will activate it once the bank settles.
         toast.info('Payment is processing. Your subscription will activate shortly.');
       }
+      // Unlock the rest of the parent area before leaving this page.
+      await refreshAccess();
       navigate(RETURN_PATH, { replace: true });
     } catch (err) {
       // The charge went through; only the instant activation failed. The
       // webhook still activates it, so this is not a lost payment.
-      setError(
-        `${getErrorMessage(err)} Your payment was received — your subscription will appear shortly.`
-      );
+      setError(`${getErrorMessage(err)} Your payment was received — your subscription will appear shortly.`);
+      inFlight.current = false;
       setSubmitting(false);
     }
   };
@@ -78,7 +97,31 @@ function PaymentForm({ checkout }) {
         </Alert>
       )}
 
-      <div className="ui-field">
+      {savedCard && (
+        <Radio
+          name="payment-method"
+          label="Pay with"
+          value={method}
+          onChange={(e) => setMethod(e.target.value)}
+          disabled={submitting}
+          options={[
+            {
+              value: 'saved',
+              label: describeCard(savedCard),
+              description: formatCardExpiry(savedCard) ? `Expires ${formatCardExpiry(savedCard)}` : undefined,
+            },
+            {
+              value: 'new',
+              label: 'A different card',
+              description: 'It replaces your saved card for future renewals.',
+            },
+          ]}
+        />
+      )}
+
+      {/* Kept mounted (just hidden) so switching back and forth doesn't lose what was typed.
+          Inline display, since .ui-field's own display would beat the hidden attribute. */}
+      <div className="ui-field" style={useSaved ? { display: 'none' } : undefined}>
         <PaymentElement options={{ layout: 'tabs' }} />
       </div>
 
@@ -105,8 +148,13 @@ function PaymentForm({ checkout }) {
 export default function CheckoutPage() {
   const { state } = useLocation();
   const checkout = state?.checkout;
+  const paymentMethod = useApi(subscriptionService.getPaymentMethod, { immediate: Boolean(checkout?.clientSecret) });
+  const { stripe, failed: stripeFailed } = useStripeInstance(Boolean(checkout?.clientSecret));
 
   if (!checkout?.clientSecret) return <Navigate to={RETURN_PATH} replace />;
+
+  // Prefer the fresh read; fall back to what the subscription page had.
+  const savedCard = paymentMethod.data ? paymentMethod.data.card : (state?.savedCard ?? null);
 
   return (
     <>
@@ -126,23 +174,20 @@ export default function CheckoutPage() {
       >
         <Card>
           <SectionHeader title="Card details" as="h3" />
-          {stripePromise ? (
-            <Elements
-              stripe={stripePromise}
-              options={{
-                clientSecret: checkout.clientSecret,
-                locale: getActiveLocale().split('-')[0] === 'fr' ? 'fr-CA' : 'en',
-                appearance: { theme: 'stripe' },
-              }}
-            >
-              <PaymentForm checkout={checkout} />
-            </Elements>
-          ) : (
+          {!paymentsConfigured ? (
             <Alert variant="warning">
               Online payments are not configured yet (VITE_STRIPE_PUBLISHABLE_KEY is missing). Please
               contact support to complete your subscription.
             </Alert>
-          )} 
+          ) : stripeFailed ? (
+            <Alert variant="error">{STRIPE_LOAD_FAILED_MESSAGE}</Alert>
+          ) : !stripe || (paymentMethod.isLoading && !paymentMethod.data) ? (
+            <Loader message="Loading payment options…" />
+          ) : (
+            <Elements stripe={stripe} options={elementsOptions(checkout.clientSecret)}>
+              <PaymentForm checkout={checkout} savedCard={savedCard} />
+            </Elements>
+          )}
         </Card>
 
         <Card>
@@ -185,8 +230,9 @@ export default function CheckoutPage() {
 
           <p className="ui-hint" style={{ marginTop: 'var(--spacing-md)' }}>
             Your subscription renews automatically each{' '}
-            {checkout.plan?.billingCycle === 'yearly' ? 'year' : 'month'} until you cancel. You can
-            cancel any time and keep access until the end of the period you have paid for.
+            {checkout.plan?.billingCycle === 'yearly' ? 'year' : 'month'} with the card you pay with. You
+            can turn off auto-renewal or cancel any time on the Subscription page and keep access until the
+            end of the period you have paid for.
           </p>
         </Card>
       </div>

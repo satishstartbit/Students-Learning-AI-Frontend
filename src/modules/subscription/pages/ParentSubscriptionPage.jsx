@@ -15,6 +15,7 @@ import {
   ConfirmationModal,
   Textarea,
   EmptyState,
+  Checkbox,
   Toast,
 } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
@@ -22,7 +23,10 @@ import { toast } from '../../../hooks/useToast';
 import { formatDate } from '../../../utils/date';
 import { formatCurrency } from '../../../utils/format';
 import { getErrorMessage } from '../../../utils/errorHandler';
+import PaymentMethodCard from '../components/PaymentMethodCard';
+import { useSubscriptionAccess } from '../hooks/useSubscriptionAccess';
 import subscriptionService from '../services/subscription.service';
+import { describeCard } from '../stripe';
 
 /** One selectable plan. */
 function PlanCard({ plan, selected, onSelect }) {
@@ -65,19 +69,37 @@ function PlanCard({ plan, selected, onSelect }) {
   );
 }
 
+/** Why the family is locked out, in words - shown above everything when there's no access. */
+function lockMessage(access, latest) {
+  if (!access || access.hasAccess) return null;
+  const planName = latest?.plan?.name ? `${latest.plan.name} ` : '';
+  const ended = latest?.currentPeriodEnd ? ` on ${formatDate(latest.currentPeriodEnd)}` : '';
+  if (access.reason === 'cancelled') {
+    return `Your ${planName}subscription was cancelled. Choose a plan to restore access for you and your children.`;
+  }
+  if (access.reason === 'expired') {
+    return `Your ${planName}subscription ended${ended}. Choose a plan to restore access for you and your children.`;
+  }
+  return 'Choose a plan to unlock the platform for you and your children. Until then, other pages stay locked.';
+}
+
 /**
  * /parent/subscription
  *
- * Shows the parent's current subscription when they have one, and the plan
- * picker when they don't. Card details are never entered here - choosing a
- * plan hands off to the Stripe-hosted card form on the checkout step.
+ * The parent's subscription hub, and where the paywall sends them: current
+ * status (or why they're locked out), auto-renewal, the saved card, the plan
+ * picker when nothing is in force, and billing history. Card details are
+ * never entered on this page itself - they go into Stripe Elements, either on
+ * the checkout step or in the card dialog.
  */
 export default function ParentSubscriptionPage() {
   const navigate = useNavigate();
+  const { refresh: refreshAccess } = useSubscriptionAccess();
 
-  const subscription = useApi(subscriptionService.getMySubscription);
+  const overview = useApi(subscriptionService.getMySubscription);
   const payments = useApi(subscriptionService.listMyPayments);
   const plans = useApi(subscriptionService.listPlans);
+  const paymentMethod = useApi(subscriptionService.getPaymentMethod);
 
   const [selectedPlan, setSelectedPlan] = useState(null);
   // Mirrors selectedPlan synchronously (setSelectedPlan itself only takes
@@ -95,23 +117,36 @@ export default function ParentSubscriptionPage() {
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
 
+  const [autoRenewOffOpen, setAutoRenewOffOpen] = useState(false);
+  const [togglingAutoRenew, setTogglingAutoRenew] = useState(false);
+
   const load = useCallback(() => {
-    subscription.run().catch(() => {});
+    overview.run().catch(() => {});
     payments.run().catch(() => {});
     plans.run().catch(() => {});
+    paymentMethod.run().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Coming back from a 3-D Secure / bank redirect: Stripe appends the
-  // PaymentIntent to the URL. Confirm it once (the server re-reads it from
-  // Stripe), then strip the params so a refresh doesn't repeat it.
+  /** After anything that changes the subscription or card: re-read it all, and the layout's access. */
+  const reload = useCallback(async () => {
+    await Promise.all([overview.run(), payments.run(), paymentMethod.run()].map((p) => p.catch(() => {})));
+    await refreshAccess();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshAccess]);
+
+  // Coming back from a Stripe redirect (3-D Secure / bank authentication):
+  // a checkout appends payment_intent, the card dialog appends setup_intent.
+  // Confirm once (the server re-reads the intent from Stripe), then strip the
+  // params so a refresh doesn't repeat it.
   const [searchParams, setSearchParams] = useSearchParams();
   const returnedIntent = searchParams.get('payment_intent');
+  const returnedSetup = searchParams.get('setup_intent');
   const redirectStatus = searchParams.get('redirect_status');
   const handledReturn = useRef(false);
 
   useEffect(() => {
-    if (!returnedIntent) {
+    if (!returnedIntent && !returnedSetup) {
       load();
       return;
     }
@@ -119,7 +154,18 @@ export default function ParentSubscriptionPage() {
     handledReturn.current = true;
 
     const finish = async () => {
-      if (redirectStatus === 'succeeded') {
+      if (returnedSetup) {
+        if (redirectStatus === 'succeeded') {
+          try {
+            await subscriptionService.confirmSetupIntent(returnedSetup);
+            toast.success('Card saved');
+          } catch (err) {
+            toast.error(getErrorMessage(err));
+          }
+        } else {
+          toast.error('Your card was not saved. Please try again.');
+        }
+      } else if (redirectStatus === 'succeeded') {
         try {
           await subscriptionService.confirmCheckout(returnedIntent);
           toast.success('Payment received — your subscription is active');
@@ -135,11 +181,16 @@ export default function ParentSubscriptionPage() {
         toast.error('Your payment was not completed. Please try again.');
       }
       setSearchParams({}, { replace: true });
+      load();
+      await refreshAccess();
     };
     finish();
-  }, [returnedIntent, redirectStatus, load, setSearchParams]);
+  }, [returnedIntent, returnedSetup, redirectStatus, load, setSearchParams, refreshAccess]);
 
-  const current = subscription.data?.subscription ?? null;
+  const current = overview.data?.subscription ?? null;
+  const latest = overview.data?.latestSubscription ?? null;
+  const access = overview.data?.access ?? null;
+  const card = paymentMethod.data?.card ?? null;
   const hasSubscription = Boolean(current);
 
   const applyCoupon = async () => {
@@ -182,8 +233,9 @@ export default function ParentSubscriptionPage() {
         code: couponCode.trim() || null,
       });
       // The client secret is handed to Stripe Elements on the next screen; it
-      // is single-use and scoped to this one payment.
-      navigate('/parent/subscription/checkout', { state: { checkout: data } });
+      // is single-use and scoped to this one payment. The saved card (if any)
+      // travels too, so checkout can offer to pay with it.
+      navigate('/parent/subscription/checkout', { state: { checkout: data, savedCard: card } });
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -197,11 +249,25 @@ export default function ParentSubscriptionPage() {
       await subscriptionService.cancelMySubscription(cancelReason.trim() || null);
       toast.success('Your subscription will end when the current period finishes');
       setCancelOpen(false);
-      load();
+      await reload();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const changeAutoRenew = async (enabled) => {
+    setTogglingAutoRenew(true);
+    try {
+      await subscriptionService.setAutoRenew(enabled);
+      toast.success(enabled ? 'Auto-renewal is on' : 'Auto-renewal is off');
+      setAutoRenewOffOpen(false);
+      await reload();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setTogglingAutoRenew(false);
     }
   };
 
@@ -235,9 +301,23 @@ export default function ParentSubscriptionPage() {
     },
   ];
 
-  if (subscription.isLoading && !subscription.data && plans.isLoading) {
+  if (overview.isLoading && !overview.data && plans.isLoading) {
     return <Loader message="Loading your subscription…" />;
   }
+
+  const periodEnd = current?.currentPeriodEnd ? formatDate(current.currentPeriodEnd) : 'the end of the current period';
+  let autoRenewDescription = '';
+  if (current?.cancelledAt) {
+    autoRenewDescription = `Cancelled on ${formatDate(current.cancelledAt)} - access ends ${periodEnd}. You can subscribe again once it ends.`;
+  } else if (current?.autoRenew) {
+    autoRenewDescription = card
+      ? `Renews on ${periodEnd}, charging ${describeCard(card)}.`
+      : `Renews on ${periodEnd} - add a card below, or the renewal payment will fail.`;
+  } else if (current) {
+    autoRenewDescription = `Off - access ends ${periodEnd}. Turn it back on any time before then to keep your subscription.`;
+  }
+
+  const allPayments = payments.data ?? [];
 
   return (
     <>
@@ -245,69 +325,80 @@ export default function ParentSubscriptionPage() {
         title="Subscription"
         description={
           hasSubscription
-            ? 'Your current plan, billing history and renewal date.'
+            ? 'Your plan, auto-renewal, payment method and billing history.'
             : 'Choose a plan to get started.'
         }
       />
 
-      {subscription.error && <Alert variant="error">{getErrorMessage(subscription.error)}</Alert>}
+      {overview.error && <Alert variant="error">{getErrorMessage(overview.error)}</Alert>}
 
-      {hasSubscription ? (
-        <>
-          <Card className="ui-field">
-            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: '1.2rem' }}>{current.plan?.name}</div>
-                <div className="ui-hint">
-                  {formatCurrency(current.plan?.price, current.plan?.currency)} /{' '}
-                  {current.plan?.billingCycle === 'yearly' ? 'year' : 'month'}
-                </div>
-                <div style={{ marginTop: 'var(--spacing-sm)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <StatusBadge status={current.status} />
-                  {current.cancelAtPeriodEnd && <Badge variant="warning">Ends at period</Badge>}
-                  {current.discountCode && <Badge variant="primary">{current.discountCode.code}</Badge>}
-                </div>
+      {lockMessage(access, latest) && (
+        <Alert variant="warning" className="ui-field">
+          {lockMessage(access, latest)}
+        </Alert>
+      )}
+
+      {hasSubscription && (
+        <Card className="ui-field">
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '1.2rem' }}>{current.plan?.name}</div>
+              <div className="ui-hint">
+                {formatCurrency(current.plan?.price, current.plan?.currency)} /{' '}
+                {current.plan?.billingCycle === 'yearly' ? 'year' : 'month'}
               </div>
-
-              <div style={{ textAlign: 'right' }}>
-                <div className="ui-hint">
-                  {current.cancelAtPeriodEnd ? 'Access ends' : 'Renews on'}
-                </div>
-                <div style={{ fontWeight: 600 }}>
-                  {current.currentPeriodEnd ? formatDate(current.currentPeriodEnd) : '—'}
-                </div>
+              <div style={{ marginTop: 'var(--spacing-sm)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <StatusBadge status={current.status} />
+                {current.cancelledAt ? (
+                  <Badge variant="warning">Cancelled</Badge>
+                ) : (
+                  !current.autoRenew && <Badge variant="warning">Ends at period end</Badge>
+                )}
+                {current.discountCode && <Badge variant="primary">{current.discountCode.code}</Badge>}
               </div>
             </div>
 
-            {current.status === 'past_due' && (
-              <Alert variant="warning" className="ui-field">
-                We could not charge your saved card. We will try again over the next few days —
-                update your card to avoid losing access.
-              </Alert>
-            )}
+            <div style={{ textAlign: 'right' }}>
+              <div className="ui-hint">{current.autoRenew ? 'Renews on' : 'Access ends'}</div>
+              <div style={{ fontWeight: 600 }}>{current.currentPeriodEnd ? formatDate(current.currentPeriodEnd) : '—'}</div>
+            </div>
+          </div>
 
-            {!current.cancelAtPeriodEnd && (
-              <div style={{ marginTop: 'var(--spacing-lg)' }}>
-                <Button variant="secondary" onClick={() => setCancelOpen(true)}>
-                  Cancel subscription
-                </Button>
-              </div>
-            )}
-          </Card>
+          {current.status === 'past_due' && (
+            <Alert variant="warning" className="ui-field">
+              We could not charge your saved card. We will try again over the next few days — update your
+              card below to avoid losing access.
+            </Alert>
+          )}
 
-          <Card>
-            <SectionHeader title="Billing history" as="h3" />
-            <Table
-              columns={paymentColumns}
-              data={payments.data ?? []}
-              rowKey="id"
-              emptyContent="No payments yet."
-              caption="Billing history"
+          <div style={{ marginTop: 'var(--spacing-lg)' }}>
+            <Checkbox
+              name="autoRenew"
+              label="Auto-renewal"
+              description={autoRenewDescription}
+              checked={current.autoRenew}
+              disabled={Boolean(current.cancelledAt) || togglingAutoRenew}
+              onChange={(event) => (event.target.checked ? changeAutoRenew(true) : setAutoRenewOffOpen(true))}
             />
-          </Card>
-        </>
-      ) : (
+          </div>
+
+          {!current.cancelledAt && (
+            <div style={{ marginTop: 'var(--spacing-md)' }}>
+              <Button variant="secondary" onClick={() => setCancelOpen(true)}>
+                Cancel subscription
+              </Button>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {hasSubscription && (
+        <PaymentMethodCard card={card} autoRenewing={Boolean(current.autoRenew)} onChanged={reload} className="ui-field" />
+      )}
+
+      {!hasSubscription && (
         <>
+          <SectionHeader title="Choose a plan" as="h2" />
           {(plans.data ?? []).length === 0 ? (
             <EmptyState
               icon="💳"
@@ -334,7 +425,7 @@ export default function ParentSubscriptionPage() {
           )}
 
           {selectedPlan && (
-            <Card style={{ marginTop: 'var(--spacing-lg)' }}>
+            <Card style={{ marginTop: 'var(--spacing-lg)' }} className="ui-field">
               <SectionHeader title={`Checkout — ${selectedPlan.name}`} as="h3" />
 
               {/* Label outside the row and tops aligned, so the button lines up
@@ -406,7 +497,25 @@ export default function ParentSubscriptionPage() {
               </div>
             </Card>
           )}
+
+          {/* Plans first when there's nothing in force - the card can also be added at checkout. */}
+          <div style={{ marginTop: 'var(--spacing-lg)' }}>
+            <PaymentMethodCard card={card} autoRenewing={false} onChanged={reload} className="ui-field" />
+          </div>
         </>
+      )}
+
+      {(hasSubscription || allPayments.length > 0) && (
+        <Card>
+          <SectionHeader title="Billing history" as="h3" />
+          <Table
+            columns={paymentColumns}
+            data={allPayments}
+            rowKey="id"
+            emptyContent="No payments yet."
+            caption="Billing history"
+          />
+        </Card>
       )}
 
       <ConfirmationModal
@@ -418,9 +527,7 @@ export default function ParentSubscriptionPage() {
         title="Cancel your subscription?"
         confirmLabel="Cancel subscription"
         cancelLabel="Keep it"
-        message={`You will keep access until ${
-          current?.currentPeriodEnd ? formatDate(current.currentPeriodEnd) : 'the end of the current period'
-        }, and you will not be charged again.`}
+        message={`You will keep access until ${periodEnd}, and you will not be charged again. Unlike turning off auto-renewal, a cancellation can't be undone - you can subscribe again once it ends.`}
       >
         <Textarea
           label="Reason (optional)"
@@ -430,6 +537,17 @@ export default function ParentSubscriptionPage() {
           onChange={(e) => setCancelReason(e.target.value)}
         />
       </ConfirmationModal>
+
+      <ConfirmationModal
+        isOpen={autoRenewOffOpen}
+        onClose={() => setAutoRenewOffOpen(false)}
+        onConfirm={() => changeAutoRenew(false)}
+        loading={togglingAutoRenew}
+        title="Turn off auto-renewal?"
+        confirmLabel="Turn off"
+        cancelLabel="Keep it on"
+        message={`Your subscription will end on ${periodEnd} and you won't be charged again. You and your children keep access until then, and you can turn auto-renewal back on any time before that date.`}
+      />
 
       <Toast />
     </>

@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, Button, Alert, Loader } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
+import { useTodayCheckIn } from '../../checkIn/hooks/useTodayCheckIn';
+import { findMood } from '../../checkIn/moods';
 import regulationToolkitService from '../services/regulationToolkit.service';
 
 /**
  * "Tools to help you feel calmer and readier to focus" - a category picker
  * (Breathing/Grounding/Movement/Sound/Mindfulness) plus a detail card for
- * whichever tool is selected, with an opening suggestion pulled from the
- * student's own check-in.
+ * whichever tool is selected.
  *
- * The recommendation reads mood/availableMinutes from `checkIn` (today's
- * check-in, already known client-side via useDailyCheckIn) rather than a
- * persisted server-side check-in row - there is no check-in backend yet,
- * see services/regulationToolkit.service.js on the backend for why the
- * recommendation endpoint takes them as query params instead.
+ * Reacts to today's check-in: the backend maps the student's stored mood to
+ * tool categories (services/regulationToolkit.service.js#MOOD_CATEGORIES),
+ * those tiles are marked "Suggested" and the top suggestion opens first.
+ * Every tile stays selectable, and the student can skip straight to work.
  */
 
 // "Calming Sounds" and "Music" (the seeded categories) both read as "Sound"
@@ -26,40 +27,47 @@ const CATEGORY_TILES = [
   { key: 'Mindfulness', label: 'Mindfulness', icon: '🧘' },
 ];
 
+const tileCategories = (tile) => tile.sourceCategories ?? [tile.key];
+
 function toolsForTile(categories, tile) {
-  const wanted = tile.sourceCategories ?? [tile.key];
+  const wanted = tileCategories(tile);
   return categories.filter((c) => wanted.includes(c.category)).flatMap((c) => c.tools);
 }
 
-export function RegulationToolkitCard({ checkIn }) {
+export function RegulationToolkitCard() {
+  const { checkIn } = useTodayCheckIn();
   const { data: categories, isLoading, error } = useApi(regulationToolkitService.listCategories, { immediate: true });
   const recommendation = useApi(regulationToolkitService.getRecommendation);
+  const { run: runRecommendation } = recommendation;
 
-  const [activeTile, setActiveTile] = useState('Breathing');
-  const [toolIndex, setToolIndex] = useState(0);
+  // null = "follow the suggestion"; set once the student picks for themselves.
+  const [pickedTile, setPickedTile] = useState(null);
+  const [toolIndex, setToolIndex] = useState(null);
 
-  // Ask for a suggestion once the check-in mood is known, and land on it.
   useEffect(() => {
-    if (!checkIn?.mood) return;
-    recommendation
-      .run({ mood: checkIn.mood, availableMinutes: checkIn.availableMinutes })
-      .then((res) => {
-        const tool = res?.data?.tool;
-        if (!tool) return;
-        const tile = CATEGORY_TILES.find((t) => (t.sourceCategories ?? [t.key]).includes(tool.category));
-        if (tile) setActiveTile(tile.key);
-      })
-      .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkIn?.mood]);
+    if (checkIn) runRecommendation().catch(() => {});
+  }, [checkIn, runRecommendation]);
+
+  const suggestedCategories = recommendation.data?.categories ?? [];
+  const suggestedTool = recommendation.data?.tool ?? null;
+  const suggestedTile = suggestedTool
+    ? CATEGORY_TILES.find((t) => tileCategories(t).includes(suggestedTool.category))
+    : null;
+
+  const activeTile = pickedTile ?? suggestedTile?.key ?? 'Breathing';
 
   const tileTools = useMemo(() => {
     const tile = CATEGORY_TILES.find((t) => t.key === activeTile);
     return tile && categories ? toolsForTile(categories, tile) : [];
   }, [categories, activeTile]);
 
-  const selectedTool = tileTools[toolIndex] ?? tileTools[0] ?? null;
-  const suggestedTool = recommendation.data?.tool;
+  const defaultIndex = Math.max(
+    0,
+    tileTools.findIndex((t) => t.id === suggestedTool?.id)
+  );
+  const selectedTool = tileTools[toolIndex ?? defaultIndex] ?? tileTools[0] ?? null;
+
+  const mood = findMood(checkIn?.mood);
 
   return (
     <Card
@@ -73,9 +81,9 @@ export function RegulationToolkitCard({ checkIn }) {
         </Alert>
       )}
 
-      {suggestedTool && (
+      {suggestedTool && mood && (
         <Alert variant="info" className="ui-field">
-          You checked in feeling {checkIn.mood}
+          You checked in feeling {mood.label.toLowerCase()}
           {checkIn.availableMinutes ? ` with ${checkIn.availableMinutes} minutes free` : ''} —{' '}
           <strong>{suggestedTool.name}</strong> is a good place to start.
         </Alert>
@@ -97,29 +105,51 @@ export function RegulationToolkitCard({ checkIn }) {
           >
             {CATEGORY_TILES.map((tile) => {
               const active = tile.key === activeTile;
+              const suggested = tileCategories(tile).some((c) => suggestedCategories.includes(c));
               return (
                 <button
                   key={tile.key}
                   type="button"
                   role="tab"
                   aria-selected={active}
+                  aria-describedby={suggested ? 'toolkit-suggested-hint' : undefined}
                   onClick={() => {
-                    setActiveTile(tile.key);
+                    setPickedTile(tile.key);
                     setToolIndex(0);
                   }}
                   style={{
+                    position: 'relative',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: 6,
                     padding: 'var(--spacing-md) var(--spacing-sm)',
                     borderRadius: 'var(--radius-md)',
-                    border: `1px solid ${active ? 'var(--accent-base, var(--color-primary))' : 'var(--color-border)'}`,
-                    background: active ? 'var(--accent-soft, var(--color-primary-soft))' : 'var(--color-surface)',
+                    border: `1px solid ${active ? 'var(--accent-base)' : 'var(--color-border-default)'}`,
+                    background: active ? 'var(--accent-soft)' : 'var(--color-bg-surface)',
                     cursor: 'pointer',
                     minHeight: 48,
                   }}
                 >
+                  {suggested && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: -9,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        whiteSpace: 'nowrap',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: '1px 8px',
+                        borderRadius: 999,
+                        background: 'var(--accent-base)',
+                        color: 'var(--accent-on)',
+                      }}
+                    >
+                      Suggested
+                    </span>
+                  )}
                   <span aria-hidden="true" style={{ fontSize: 22 }}>
                     {tile.icon}
                   </span>
@@ -127,7 +157,7 @@ export function RegulationToolkitCard({ checkIn }) {
                     style={{
                       fontSize: 'var(--font-size-sm)',
                       fontWeight: 600,
-                      color: active ? 'var(--accent-base, var(--color-primary))' : 'var(--color-text-primary)',
+                      color: active ? 'var(--accent-base)' : 'var(--color-text-primary)',
                     }}
                   >
                     {tile.label}
@@ -136,6 +166,11 @@ export function RegulationToolkitCard({ checkIn }) {
               );
             })}
           </div>
+          {suggestedCategories.length > 0 && (
+            <p id="toolkit-suggested-hint" className="ui-hint" style={{ marginTop: 'calc(var(--spacing-md) * -1)' }}>
+              Suggested from today&apos;s check-in - pick any tool you like.
+            </p>
+          )}
 
           {selectedTool ? (
             <div
@@ -144,9 +179,9 @@ export function RegulationToolkitCard({ checkIn }) {
                 flexWrap: 'wrap',
                 gap: 'var(--spacing-lg)',
                 padding: 'var(--spacing-lg)',
-                border: '1px solid var(--color-border)',
+                border: '1px solid var(--color-border-default)',
                 borderRadius: 'var(--radius-lg)',
-                background: 'var(--color-surface)',
+                background: 'var(--color-bg-surface)',
               }}
             >
               <div style={{ flex: '1 1 240px', minWidth: 0 }}>
@@ -167,8 +202,9 @@ export function RegulationToolkitCard({ checkIn }) {
                 {tileTools.length > 1 && (
                   <div style={{ marginTop: 'var(--spacing-md)' }}>
                     <Button
-                      variant="link"
-                      onClick={() => setToolIndex((i) => (i + 1) % tileTools.length)}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setToolIndex(((toolIndex ?? defaultIndex) + 1) % tileTools.length)}
                     >
                       Try a different {activeTile.toLowerCase()} exercise ›
                     </Button>
@@ -183,7 +219,7 @@ export function RegulationToolkitCard({ checkIn }) {
                   minHeight: 120,
                   borderRadius: 'var(--radius-md)',
                   border: '1px dashed var(--color-border-strong)',
-                  background: 'var(--color-surface-alt)',
+                  background: 'var(--color-bg-surface-sunken)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -197,6 +233,10 @@ export function RegulationToolkitCard({ checkIn }) {
           ) : (
             <p className="ui-hint">No tools in this category yet.</p>
           )}
+
+          <p style={{ margin: 'var(--spacing-md) 0 0' }}>
+            <Link to="/student/assignments">Skip - go straight to my work →</Link>
+          </p>
         </>
       )}
     </Card>

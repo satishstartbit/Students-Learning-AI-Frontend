@@ -33,9 +33,28 @@ export const startCheckout = ({ planId, code }) =>
 export const confirmCheckout = (paymentIntentId) =>
   api.post('/subscriptions/checkout/confirm', { paymentIntentId });
 
+/** { subscription (in force or null), latestSubscription, access: { hasAccess, reason } } */
 export const getMySubscription = () => api.get('/subscriptions/me');
 export const listMyPayments = () => api.get('/subscriptions/me/payments');
 export const cancelMySubscription = (reason) => api.post('/subscriptions/me/cancel', { reason });
+export const setAutoRenew = (enabled) => api.patch('/subscriptions/me/auto-renew', { enabled });
+
+/** Parent or student: { role, hasAccess, reason } - drives the redirect / lock screens. */
+export const getAccess = () => api.get('/subscriptions/access');
+
+// --- saved card (card numbers only ever go browser -> Stripe) ----------------
+
+/** { card: { paymentMethodId, brand, last4, expMonth, expYear } | null } */
+export const getPaymentMethod = () => api.get('/subscriptions/me/payment-method');
+
+/** A SetupIntent client secret for Stripe Elements. */
+export const createSetupIntent = () => api.post('/subscriptions/me/payment-method/setup-intent');
+
+/** The server re-reads the SetupIntent from Stripe before saving anything. */
+export const confirmSetupIntent = (setupIntentId) =>
+  api.post('/subscriptions/me/payment-method/confirm', { setupIntentId });
+
+export const removePaymentMethod = () => api.delete('/subscriptions/me/payment-method');
 
 // --- super admin ------------------------------------------------------------
 
@@ -67,6 +86,12 @@ export default {
   getMySubscription,
   listMyPayments,
   cancelMySubscription,
+  setAutoRenew,
+  getAccess,
+  getPaymentMethod,
+  createSetupIntent,
+  confirmSetupIntent,
+  removePaymentMethod,
   adminListSubscriptions,
   adminGetSubscription,
   adminCancelSubscription,
