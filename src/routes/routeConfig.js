@@ -39,6 +39,7 @@ import RewardsPage from '../modules/student/pages/RewardsPage';
 import GradeBandPage from '../modules/student/pages/GradeBandPage';
 import KidHomePage from '../modules/student/pages/kid/KidHomePage';
 import KidMyWeekPage from '../modules/student/pages/kid/KidMyWeekPage';
+import KidFocusPage from '../modules/student/pages/kid/KidFocusPage';
 import KidAssignmentsPage from '../modules/student/pages/kid/KidAssignmentsPage';
 import KidComingSoonPage from '../modules/student/pages/kid/KidComingSoonPage';
 import KidSettingsPage from '../modules/student/pages/kid/KidSettingsPage';
@@ -319,9 +320,8 @@ export const STUDENT_ROUTES = {
       label: 'Focus',
       permissions: [PERMISSIONS.FOCUS_READ],
       component: GradeBandPage,
-      props: { junior: KidComingSoonPage, standard: FocusTimerPage, feature: 'focus' },
+      props: { junior: KidFocusPage, standard: FocusTimerPage },
     },
-    { path: 'toolkit', label: 'Toolkit', element: null },
     {
       path: 'rewards',
       label: 'Rewards',

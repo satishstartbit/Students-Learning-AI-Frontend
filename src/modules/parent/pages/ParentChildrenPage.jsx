@@ -21,9 +21,10 @@ import parentService from '../services/parent.service';
 import AddChildModal from '../components/AddChildModal';
 import EditChildModal from '../components/EditChildModal';
 import ChildDetailsModal from '../components/ChildDetailsModal';
+import SetChildPasswordModal from '../components/SetChildPasswordModal';
 
 /** One child, as a "clean and friendly" card - the ticket's primary layout. */
-function ChildCard({ child, onView, onEdit, onRemove }) {
+function ChildCard({ child, onView, onEdit, onSetPassword, onRemove }) {
   const subjects = useMemo(
     () => [...new Set((child.teachers ?? []).map((t) => t.subject).filter(Boolean))],
     [child.teachers]
@@ -90,12 +91,15 @@ function ChildCard({ child, onView, onEdit, onRemove }) {
         </div>
       </div>
 
-      <ButtonGroup style={{ marginTop: 'var(--spacing-lg)' }}>
+      <ButtonGroup style={{ marginTop: 'var(--spacing-lg)', flexWrap: 'wrap' }}>
         <Button size="sm" onClick={() => onView(child)}>
           View Details
         </Button>
         <Button size="sm" variant="secondary" onClick={() => onEdit(child)}>
           Edit
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => onSetPassword(child)}>
+          Set password
         </Button>
         <Button size="sm" variant="secondary" onClick={() => onRemove(child)}>
           Remove
@@ -113,6 +117,7 @@ export default function ParentChildrenPage() {
   const addModal = useModal();
   const editModal = useModal();
   const detailsModal = useModal();
+  const passwordModal = useModal();
   const removeModal = useModal();
 
   const load = useCallback(() => runChildren({ limit: 100 }), [runChildren]);
@@ -169,6 +174,7 @@ export default function ParentChildrenPage() {
               child={child}
               onView={(c) => detailsModal.open(c.id)}
               onEdit={(c) => editModal.open(c.id)}
+              onSetPassword={(c) => passwordModal.open(c)}
               onRemove={(c) => removeModal.open(c)}
             />
           ))}
@@ -190,6 +196,14 @@ export default function ParentChildrenPage() {
         childId={detailsModal.payload}
         onClose={detailsModal.close}
         onChanged={load}
+      />
+
+      <SetChildPasswordModal
+        key={passwordModal.payload?.id}
+        isOpen={passwordModal.isOpen}
+        child={passwordModal.payload}
+        onClose={passwordModal.close}
+        onUpdated={load}
       />
 
       <ConfirmationModal

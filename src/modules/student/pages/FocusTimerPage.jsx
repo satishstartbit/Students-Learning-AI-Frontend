@@ -1,17 +1,20 @@
 import { useMemo, useState } from 'react';
 import { Card, Button, IconButton, Select, Alert, Loader, CircularProgress } from '../../../components/common';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
-import { useFocusTimer } from '../hooks/useFocusTimer';
+import { useFocusTimer, formatClock } from '../hooks/useFocusTimer';
 import { useMyTasks } from '../hooks/useMyTasks';
 import { useDailyCheckIn } from '../hooks/useDailyCheckIn';
 import { useAuth } from '../../../hooks/useAuth';
 import RegulationToolkitCard from '../components/RegulationToolkitCard';
 
+// Mirrors StudentCheckInCard's "minutes free" options plus a classic 25 -
+// so a length the student already told the check-in about is always pickable.
 const PLANNED_OPTIONS = [
-  { value: '10', label: '10 minutes' },
   { value: '15', label: '15 minutes' },
   { value: '25', label: '25 minutes' },
+  { value: '30', label: '30 minutes' },
   { value: '45', label: '45 minutes' },
+  { value: '60', label: '60 minutes' },
 ];
 
 const AUDIO_OPTIONS = [
@@ -19,12 +22,6 @@ const AUDIO_OPTIONS = [
   { value: 'rain', label: 'Rain sounds', icon: '🌧️' },
   { value: 'music', label: 'Focus music', icon: '🎧' },
 ];
-
-function formatClock(totalSeconds) {
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
 
 /**
  * "Take a breath, choose what you need, and get to it." - the Regulation
@@ -37,7 +34,11 @@ export default function FocusTimerPage() {
   const tasks = useMyTasks();
   const checkIn = useDailyCheckIn(user?.id);
 
-  const [plannedMinutes, setPlannedMinutes] = useState('25');
+  // Pre-fill from today's check-in ("30 minutes free") so the ring already
+  // shows the length the student told the check-in about, not a fixed guess.
+  const [plannedMinutes, setPlannedMinutes] = useState(() =>
+    checkIn.availableMinutes ? String(checkIn.availableMinutes) : '25'
+  );
   const [taskId, setTaskId] = useState(null);
   const [audioIndex, setAudioIndex] = useState(0);
   const [showSettings, setShowSettings] = useState(false);

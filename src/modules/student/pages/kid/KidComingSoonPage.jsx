@@ -1,16 +1,10 @@
 import { Link } from 'react-router-dom';
 import { LuArrowLeft } from 'react-icons/lu';
 import { KidButton } from '../../components/kid/KidButton';
-import { LeafIcon, StarIcon } from '../../components/kid/KidIcons';
+import { StarIcon } from '../../components/kid/KidIcons';
 import { PaperCard, Tape } from '../../components/kid/PaperKit';
 
 const FEATURES = {
-  focus: {
-    icon: LeafIcon,
-    title: 'Focus',
-    tone: 'green',
-    text: 'A calm timer to help you focus on one thing at a time is on its way.',
-  },
   rewards: {
     icon: StarIcon,
     title: 'Rewards',

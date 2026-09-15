@@ -75,7 +75,9 @@ export function RegulationToolkitCard({ checkIn }) {
 
       {suggestedTool && (
         <Alert variant="info" className="ui-field">
-          You checked in feeling {checkIn.mood} — <strong>{suggestedTool.name}</strong> is a good place to start.
+          You checked in feeling {checkIn.mood}
+          {checkIn.availableMinutes ? ` with ${checkIn.availableMinutes} minutes free` : ''} —{' '}
+          <strong>{suggestedTool.name}</strong> is a good place to start.
         </Alert>
       )}
 

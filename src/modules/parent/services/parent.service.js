@@ -43,6 +43,16 @@ export const addChild = (payload) => api.post('/parent/children', buildChildBody
 
 export const updateChild = (id, payload) => api.patch(`/parent/children/${id}`, buildChildBody(payload));
 
+/**
+ * Sets a new password directly for a child's account - a deliberate
+ * exception to how every other password change in this app works (current-
+ * password confirmation, or an emailed reset link); see
+ * services/parent.service.js#setChildPassword on the backend for why.
+ * Signs the child out of every session immediately.
+ */
+export const setChildPassword = (id, { password, confirmPassword }) =>
+  api.patch(`/parent/children/${id}/password`, { password, confirmPassword });
+
 /** Detaches by default; pass permanent: true to delete the account outright. */
 export const removeChild = (id, { permanent = false } = {}) =>
   api.delete(`/parent/children/${id}`, { params: { permanent } });
@@ -95,6 +105,7 @@ export default {
   getChild,
   addChild,
   updateChild,
+  setChildPassword,
   removeChild,
   assignTeachers,
   updateTeacherAssignment,

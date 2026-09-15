@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import {
   LuCalendarDays,
   LuFileText,
-  LuHeartHandshake,
   LuMessageCircle,
   LuSparkles,
   LuSun,
@@ -27,7 +26,6 @@ const NAV_ITEMS = [
       { to: '/student/assistant', label: 'AI Assistant', icon: LuSparkles },
       { to: '/student/calendar', label: 'Plan', icon: LuCalendarDays },
       { to: '/student/focus', label: 'Focus', icon: LuTimer },
-      { to: '/student/toolkit', label: 'Toolkit', icon: LuHeartHandshake },
       { to: '/student/rewards', label: 'Rewards', icon: LuTrophy },
     ],
   },

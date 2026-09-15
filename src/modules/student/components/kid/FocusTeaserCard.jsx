@@ -3,8 +3,8 @@ import { LeafIcon } from './KidIcons';
 import { PaperCard } from './PaperKit';
 
 /**
- * "Focus time" - a full-width teaser on the Home page linking to /student/focus
- * (still KidComingSoonPage - see routeConfig.js), from the mockup.
+ * "Focus time" - a full-width teaser on the Home page linking to
+ * /student/focus (KidFocusPage), from the mockup.
  */
 export function FocusTeaserCard() {
   return (

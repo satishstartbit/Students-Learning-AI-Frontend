@@ -10,6 +10,13 @@ import { getErrorMessage } from '../../../utils/errorHandler';
  * session's real elapsed minutes - see services/focus.service.js on the
  * backend. `elapsedSeconds` here is therefore a display estimate only.
  */
+/** "5:09" - remaining/elapsed seconds as a clock face, shared by every Focus UI. */
+export function formatClock(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 export function useFocusTimer() {
   const [session, setSession] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);

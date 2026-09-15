@@ -25,6 +25,10 @@ export function useForm({ initialValues = {}, validationSchema = {}, onSubmit } 
     schemaRef.current = validationSchema;
   });
 
+  // `isSubmitting` only disables the button after a re-render, so two submits
+  // in the same tick would both get through - this ref closes that window.
+  const inFlightRef = useRef(false);
+
   const setFieldValue = useCallback((name, value) => {
     setValues((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => (prev[name] ? { ...prev, [name]: null } : prev));
@@ -76,21 +80,27 @@ export function useForm({ initialValues = {}, validationSchema = {}, onSubmit } 
   const handleSubmit = useCallback(
     async (event) => {
       event?.preventDefault?.();
+      if (inFlightRef.current) return undefined;
       setSubmitError(null);
 
       setTouched(Object.fromEntries(Object.keys(schemaRef.current).map((k) => [k, true])));
       if (!validate()) return undefined;
 
+      inFlightRef.current = true;
       setIsSubmitting(true);
       try {
         return await onSubmit?.(values);
       } catch (error) {
         // Push server-side field errors back onto the matching inputs.
+        // Not rethrown: handleSubmit is passed straight to onClick/onSubmit,
+        // where a rejection has no catcher and only surfaces as an unhandled
+        // promise rejection - the error is already shown through the form.
         const fieldErrors = getFieldErrors(error);
         if (Object.keys(fieldErrors).length) setErrors((prev) => ({ ...prev, ...fieldErrors }));
         else setSubmitError(error?.message ?? 'Something went wrong');
-        throw error;
+        return undefined;
       } finally {
+        inFlightRef.current = false;
         setIsSubmitting(false);
       }
     },
