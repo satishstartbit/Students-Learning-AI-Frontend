@@ -1,59 +1,48 @@
 import { useId } from 'react';
+import { motion } from 'motion/react';
 import { cn } from '../../../../lib/utils';
 
 /**
- * Hand-built SVG scenery for the K-5 theme - the cut-paper landscape, sun,
- * signposts and doodles from the mockup. All decorative (aria-hidden), with
- * no raster assets to fetch. Ids are prefixed with useId so two copies on
- * one page can't collide.
+ * Hand-built SVG scenery for the K-5 theme - the flat illustrated
+ * countryside, sun, signposts and doodles from the mockup. All decorative
+ * (aria-hidden), with no raster assets to fetch. Ids are prefixed with
+ * useId so two copies on one page can't collide.
  */
 
-/** A deterministic torn-paper edge along y, as a closed path filled below the tear. */
-function tornEdge(width, y, height, step = 22) {
-  const points = [];
-  for (let x = 0, i = 0; x <= width + step; x += step, i += 1) {
-    // Pseudo-random but stable: the same tear on every render.
-    const jitter = ((i * 37) % 9) - 4;
-    points.push(`${x} ${y + jitter}`);
-  }
-  return `M0 ${height} L${points.join(' L')} L${width + step} ${height} Z`;
-}
-
-/** Soft ambient shadow under each paper layer. */
-function PaperShadow({ id, dy = -2, blur = 3, opacity = 0.2 }) {
+/** Soft ambient shadow under each shape. */
+function PaperShadow({ id, dy = -2, blur = 3, opacity = 0.14 }) {
   return (
     <filter id={id} x="-5%" y="-20%" width="110%" height="140%">
-      <feDropShadow dx="0" dy={dy} stdDeviation={blur} floodColor="#4a3a20" floodOpacity={opacity} />
+      <feDropShadow dx="0" dy={dy} stdDeviation={blur} floodColor="#1f2937" floodOpacity={opacity} />
     </filter>
   );
 }
 
-function Grain({ id }) {
+/** A cloud that drifts slowly side to side - stops in calm mode / reduced motion (MotionConfig, KidLayout). */
+function Cloud({ x, y, scale = 1, shadow, drift = 18, duration = 9 }) {
   return (
-    <filter id={id}>
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" />
-      <feColorMatrix values="0 0 0 0 .36  0 0 0 0 .3  0 0 0 0 .2  0 0 0 .09 0" />
-    </filter>
-  );
-}
-
-function Cloud({ x, y, scale = 1, shadow }) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${scale})`} filter={`url(#${shadow})`} fill="#fdfdf8">
-      <circle cx="0" cy="0" r="26" />
-      <circle cx="38" cy="-14" r="36" />
-      <circle cx="80" cy="-2" r="26" />
-      <rect x="-22" y="-4" width="126" height="30" rx="15" />
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      <motion.g
+        filter={`url(#${shadow})`}
+        fill="#ffffff"
+        initial={{ x: 0 }}
+        animate={{ x: [0, drift, 0] }}
+        transition={{ duration, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        <circle cx="0" cy="0" r="26" />
+        <circle cx="38" cy="-14" r="36" />
+        <circle cx="80" cy="-2" r="26" />
+        <rect x="-22" y="-4" width="126" height="30" rx="15" />
+      </motion.g>
     </g>
   );
 }
 
-/** The hero backdrop: sky, clouds, layered hills, a big tree and pines, torn into the page. */
+/** The hero backdrop: sky, drifting clouds, layered hills, a big tree and pines. */
 export function Landscape({ className }) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const sky = `${uid}-sky`;
   const shadow = `${uid}-shadow`;
-  const grain = `${uid}-grain`;
 
   return (
     <svg
@@ -65,18 +54,17 @@ export function Landscape({ className }) {
     >
       <defs>
         <linearGradient id={sky} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#cde1f1" />
-          <stop offset="0.7" stopColor="#e5eee3" />
+          <stop offset="0" stopColor="#cfe6f8" />
+          <stop offset="0.7" stopColor="#e8f1e6" />
         </linearGradient>
         <PaperShadow id={shadow} />
-        <Grain id={grain} />
       </defs>
 
       <rect width="1440" height="360" fill={`url(#${sky})`} />
 
-      <Cloud x={330} y={62} scale={0.9} shadow={shadow} />
-      <Cloud x={1250} y={48} scale={0.75} shadow={shadow} />
-      <Cloud x={690} y={30} scale={0.55} shadow={shadow} />
+      <Cloud x={330} y={62} scale={0.9} shadow={shadow} drift={22} duration={10} />
+      <Cloud x={1250} y={48} scale={0.75} shadow={shadow} drift={-16} duration={8} />
+      <Cloud x={690} y={30} scale={0.55} shadow={shadow} drift={14} duration={11} />
 
       {/* far hills */}
       <path
@@ -130,11 +118,6 @@ export function Landscape({ className }) {
         <path d="M84 360 C96 300 126 262 176 248 C156 292 128 330 112 360Z" fill="#5d9c4c" />
         <path d="M0 360 C0 318 10 286 34 262 C38 300 30 334 22 360Z" fill="#7dbb66" />
       </g>
-
-      <rect width="1440" height="360" filter={`url(#${grain})`} />
-
-      {/* the torn edge where the scene meets the page */}
-      <path d={tornEdge(1440, 342, 360)} style={{ fill: 'var(--kid-paper)' }} filter={`url(#${shadow})`} />
     </svg>
   );
 }
@@ -145,8 +128,6 @@ const FOOTER_SKYLINE = 'M0 70 C220 30 420 60 640 58 S1060 20 1440 56 V200 H0Z';
 export function FooterScene({ className }) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const shadow = `${uid}-shadow`;
-  const grain = `${uid}-grain`;
-  const land = `${uid}-land`;
 
   return (
     <svg
@@ -157,11 +138,7 @@ export function FooterScene({ className }) {
       className={className}
     >
       <defs>
-        <PaperShadow id={shadow} dy={-2} blur={3} opacity={0.18} />
-        <Grain id={grain} />
-        <clipPath id={land}>
-          <path d={FOOTER_SKYLINE} />
-        </clipPath>
+        <PaperShadow id={shadow} dy={-2} blur={3} opacity={0.12} />
       </defs>
 
       <path d={FOOTER_SKYLINE} fill="#b8d49b" filter={`url(#${shadow})`} />
@@ -191,17 +168,23 @@ export function FooterScene({ className }) {
         <circle cx="330" cy="168" r="10" fill="#e98b8b" />
         <circle cx="352" cy="176" r="8" fill="#f6c445" />
       </g>
-
-      {/* Grain clipped to the land - over the transparent sky it would tint the page into a visible band. */}
-      <rect width="1440" height="200" clipPath={`url(#${land})`} filter={`url(#${grain})`} />
     </svg>
   );
 }
 
+/** A slow, gentle glow pulse on the rays - stops in calm mode / reduced motion (MotionConfig, KidLayout). */
 export function Sun({ className }) {
   return (
     <svg aria-hidden="true" focusable="false" viewBox="0 0 100 100" className={className}>
-      <g stroke="#f0a52e" strokeWidth="6" strokeLinecap="round">
+      <motion.g
+        stroke="#f0a52e"
+        strokeWidth="6"
+        strokeLinecap="round"
+        style={{ originX: '50px', originY: '50px' }}
+        initial={{ scale: 1, opacity: 0.9 }}
+        animate={{ scale: [1, 1.08, 1], opacity: [0.9, 1, 0.9] }}
+        transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
+      >
         {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => (
           <line
             key={angle}
@@ -212,7 +195,7 @@ export function Sun({ className }) {
             transform={`rotate(${angle} 50 50)`}
           />
         ))}
-      </g>
+      </motion.g>
       <circle cx="50" cy="50" r="21" fill="#f6c445" />
       <circle cx="44" cy="44" r="7" fill="#fbdc7a" />
     </svg>

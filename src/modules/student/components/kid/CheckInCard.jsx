@@ -1,10 +1,14 @@
 import { useId, useRef, useState } from 'react';
+import { LuArrowRight, LuSmilePlus } from 'react-icons/lu';
 import { Confetti } from '../../../../components/ui/confetti';
 import { cn } from '../../../../lib/utils';
 import { getErrorMessage } from '../../../../utils/errorHandler';
+import { useAuth } from '../../../../hooks/useAuth';
+import { useModal } from '../../../../hooks/useModal';
 import { useTodayCheckIn } from '../../../checkIn/hooks/useTodayCheckIn';
 import { ENERGY_LEVELS, MOODS, findMood } from '../../../checkIn/moods';
 import { useMotionAllowed } from '../../hooks/useKidPreferences';
+import { CheckInModal } from './CheckInModal';
 import { KidButton } from './KidButton';
 import { MoodFace } from './MoodFace';
 import { PaperCard, Tape } from './PaperKit';
@@ -16,17 +20,25 @@ const CONFETTI_COLOURS = ['#f6c445', '#f4b6c1', '#1f7a80', '#7b68d6', '#95c07b']
  * you have? Saved to the real /check-ins API through TodayCheckInProvider,
  * so the Home page, the Check In page and the work-screen gate agree.
  *
+ * `variant="modal"` (the Home page) shows a compact trigger card that opens
+ * <CheckInModal>, the "Let's check in!" dialog from the student mockup.
+ * `variant="inline"` (the default, the /student/check-in gate page) shows
+ * the picker directly on the page - there's no dialog to open when the
+ * whole page already is the check-in.
+ *
  * Both pickers are real radio groups (visually hidden native inputs), so
  * arrow keys, screen readers and switch access work without custom keyboard
  * code. The first check-in of the day gets a small burst of confetti - never
  * in calm mode or with reduced motion.
  */
-export function CheckInCard({ onSaved }) {
+export function CheckInCard({ onSaved, variant = 'inline' }) {
   const { checkIn, isLoading, save } = useTodayCheckIn();
+  const { user } = useAuth();
   const [editing, setEditing] = useState(false);
   const motionAllowed = useMotionAllowed();
   const confettiRef = useRef(null);
   const uid = useId();
+  const modal = useModal();
 
   const current = findMood(checkIn?.mood);
 
@@ -34,9 +46,7 @@ export function CheckInCard({ onSaved }) {
     return <PaperCard tone="sheet" aria-busy="true" className="h-64 animate-pulse" />;
   }
 
-  const handleSave = async (values) => {
-    const result = await save(values);
-    setEditing(false);
+  const fireConfetti = (result) => {
     if (result.created && motionAllowed) {
       confettiRef.current?.fire({
         particleCount: 70,
@@ -48,8 +58,39 @@ export function CheckInCard({ onSaved }) {
         disableForReducedMotion: true,
       });
     }
+  };
+
+  const handleInlineSave = async (values) => {
+    const result = await save(values);
+    setEditing(false);
+    fireConfetti(result);
     onSaved?.(result);
   };
+
+  const handleModalSave = async (values) => {
+    const result = await save(values);
+    onSaved?.(result);
+    return result;
+  };
+
+  if (variant === 'modal') {
+    return (
+      <>
+        {current ? (
+          <CompactCheckIn mood={current} onChange={modal.open} />
+        ) : (
+          <CheckInInvite onOpen={modal.open} />
+        )}
+        <CheckInModal
+          isOpen={modal.isOpen}
+          onClose={modal.close}
+          initial={checkIn}
+          onSave={handleModalSave}
+          firstName={user?.firstName}
+        />
+      </>
+    );
+  }
 
   // Outside the compact/expanded switch: saving swaps the card for its compact
   // summary before the confetti fires, so the canvas must survive that swap.
@@ -66,7 +107,7 @@ export function CheckInCard({ onSaved }) {
     return (
       <div className="relative">
         {confetti}
-        <CompactCheckIn uid={uid} mood={current} onChange={() => setEditing(true)} />
+        <CompactCheckIn mood={current} onChange={() => setEditing(true)} />
       </div>
     );
   }
@@ -85,7 +126,7 @@ export function CheckInCard({ onSaved }) {
           key={checkIn?.updatedAt ?? 'new'}
           uid={uid}
           initial={checkIn}
-          onSave={handleSave}
+          onSave={handleInlineSave}
           onCancel={checkIn ? () => setEditing(false) : undefined}
         />
       </PaperCard>
@@ -93,28 +134,47 @@ export function CheckInCard({ onSaved }) {
   );
 }
 
-function CompactCheckIn({ uid, mood, onChange }) {
+function CheckInInvite({ onOpen }) {
   return (
-    <PaperCard as="section" aria-labelledby={`${uid}-title`} tone="sheet" className="px-5 py-5">
-      <div className="flex items-center gap-3">
-        <MoodFace mood={mood.value} className="size-11 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <p id={`${uid}-title`} className="font-kid-body text-sm text-kid-ink-soft">
-            Check-in
-          </p>
-          <p aria-live="polite" className="font-kid-display text-lg font-semibold text-kid-ink">
-            {mood.kidFeeling}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onChange}
-          aria-label="Change how you're feeling"
-          className="grid size-11 shrink-0 place-items-center rounded-full text-lg hover:bg-kid-paper-deep/70"
-        >
-          <span aria-hidden="true">✏️</span>
-        </button>
+    <PaperCard
+      as="button"
+      type="button"
+      onClick={onOpen}
+      tone="sheet"
+      className="flex w-full items-center gap-3 px-5 py-5 text-left"
+    >
+      <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-full bg-kid-yellow">
+        <LuSmilePlus className="size-6 text-[#6b4f05]" strokeWidth={2.2} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-kid-body text-sm text-kid-ink-soft">Check-in</p>
+        <p className="font-kid-display text-lg font-semibold text-kid-ink">Let&apos;s check in!</p>
       </div>
+      <LuArrowRight className="size-5 shrink-0 text-kid-ink-soft" aria-hidden="true" />
+    </PaperCard>
+  );
+}
+
+function CompactCheckIn({ mood, onChange }) {
+  return (
+    <PaperCard
+      as="button"
+      type="button"
+      onClick={onChange}
+      aria-label={`Change how you're feeling. Currently: ${mood.kidFeeling}.`}
+      tone="sheet"
+      className="flex w-full items-center gap-3 px-5 py-5 text-left"
+    >
+      <MoodFace mood={mood.value} className="size-11 shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="font-kid-body text-sm text-kid-ink-soft">Check-in</p>
+        <p aria-live="polite" className="font-kid-display text-lg font-semibold text-kid-ink">
+          {mood.kidFeeling}
+        </p>
+      </div>
+      <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-full text-lg">
+        ✏️
+      </span>
     </PaperCard>
   );
 }

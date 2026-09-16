@@ -157,7 +157,11 @@
   --mood-tongue: #ee8c8c;
   --mood-drop: #7fb6e0;
 
-  /* Fields: the same 48px target, with the larger kid type on the helper line. */
+  /* Fields: the full 48px touch target (the site-wide default is now the
+     denser 40px "medium" control - theme/variables.css - but a young
+     child's finger still needs the bigger target), with the larger kid
+     type on the helper line. */
+  --field-height: var(--size-touch-target);
   --field-radius: 16px;
   --field-font-size: 18px;
   --field-helper-font-size: 14px;

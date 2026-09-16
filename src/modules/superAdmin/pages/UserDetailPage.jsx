@@ -179,31 +179,7 @@ export default function UserDetailPage() {
         </div>
       </Card>
 
-      {user.profile && (
-        <Card title={`${ROLE_LABELS[user.role]} profile`} className="ui-field">
-          <div style={GRID}>
-            {Object.entries(user.profile)
-              .filter(([key]) => !key.endsWith('_at'))
-              .map(([key, value]) => (
-                <Field key={key} label={titleCase(key)}>
-                  {typeof value === 'object' && value !== null ? (
-                    <pre
-                      style={{
-                        margin: 0,
-                        whiteSpace: 'pre-wrap',
-                        fontSize: 'var(--font-size-sm)',
-                      }}
-                    >
-                      {JSON.stringify(value, null, 2)}
-                    </pre>
-                  ) : (
-                    (value ?? '—')
-                  )}
-                </Field>
-              ))}
-          </div>
-        </Card>
-      )}
+
 
       {/*
         A parent's children are managed here rather than on the relationships
@@ -213,29 +189,6 @@ export default function UserDetailPage() {
         <ParentChildrenPanel parentId={user.id} parentName={formatName(user)} />
       )}
 
-      <Card title="Relationships" className="ui-field">
-        {user.relationships.length === 0 ? (
-          <EmptyState
-            icon="🔗"
-            title="No relationships"
-            description="This user is not linked to anyone yet."
-            action={
-              <Button as={Link} to="/admin/relationships" variant="secondary">
-                Manage relationships
-              </Button>
-            }
-          />
-        ) : (
-          <ul style={{ margin: 0, paddingLeft: 'var(--spacing-lg)' }}>
-            {user.relationships.map((rel) => (
-              <li key={rel.id} style={{ marginBottom: 'var(--spacing-sm)' }}>
-                <Badge variant="info">{titleCase(rel.relationshipType)}</Badge>{' '}
-                {formatName(rel.owner)} → {formatName(rel.related)}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
 
       {/* --- Suspend ------------------------------------------------------ */}
       <ConfirmationModal

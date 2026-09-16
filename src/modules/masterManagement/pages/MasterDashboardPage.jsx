@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LuEye, LuPlus } from 'react-icons/lu';
+import { LuEye, LuFilterX, LuPlus } from 'react-icons/lu';
 import {
   PageHeader,
   Card,
   SectionHeader,
   Badge,
   Table,
+  FilterBar,
   SearchInput,
   Select,
   IconButton,
@@ -182,24 +183,35 @@ export default function MasterDashboardPage() {
         <StatCard label="Active records" value={totals.active} loading={isLoading} />
       </div>
 
-      <Card flat className="ui-field">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--spacing-md)' }}>
-          <SearchInput
-            label="Search"
-            placeholder="Master name or description"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onClear={() => setSearch('')}
+      <FilterBar>
+        <SearchInput
+          fieldClassName="ui-filterbar__search ui-field--compact"
+          placeholder="Master name or description"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onClear={() => setSearch('')}
+        />
+        <Select
+          fieldClassName="ui-field--compact"
+          label="Category"
+          options={categoryOptions}
+          placeholder="All categories"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        />
+        <Tooltip label="Clear filters" side="top">
+          <IconButton
+            icon={<LuFilterX aria-hidden="true" />}
+            label="Clear filters"
+            size="sm"
+            onClick={() => {
+              setSearch('');
+              setCategory('');
+            }}
+            disabled={!hasFilters}
           />
-          <Select
-            label="Category"
-            options={categoryOptions}
-            placeholder="All categories"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          />
-        </div>
-      </Card>
+        </Tooltip>
+      </FilterBar>
 
       {error ? (
         <ErrorState error={error} onRetry={run} />

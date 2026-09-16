@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { LuFilterX } from 'react-icons/lu';
 import {
   PageHeader,
   Card,
   StatCard,
   Table,
   Input,
+  IconButton,
+  FilterBar,
   Badge,
   Alert,
   Loader,
   SectionHeader,
 } from '../../../../components/common';
+import { Tooltip } from '../../../../components/ui/tooltip';
 import { useApi } from '../../../../hooks/useApi';
 import { formatCurrency } from '../../../../utils/format';
 import { getErrorMessage } from '../../../../utils/errorHandler';
@@ -127,24 +131,22 @@ export default function AdminRevenuePage() {
 
       {error && <Alert variant="error">{getErrorMessage(error)}</Alert>}
 
-      <Card flat className="ui-field">
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: 'var(--spacing-md)',
-          }}
-        >
-          <Input
-            label="From"
-            type="date"
-            hint="Leave both blank for all time"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
+      <FilterBar>
+        <Input fieldClassName="ui-field--compact-labeled" label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+        <Input fieldClassName="ui-field--compact-labeled" label="To" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+        <Tooltip label="Clear filters" side="top">
+          <IconButton
+            icon={<LuFilterX aria-hidden="true" />}
+            label="Clear filters"
+            size="sm"
+            onClick={() => {
+              setFrom('');
+              setTo('');
+            }}
+            disabled={!from && !to}
           />
-          <Input label="To" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        </div>
-      </Card>
+        </Tooltip>
+      </FilterBar>
 
       {isLoading && !data ? (
         <Loader message="Loading revenue…" />

@@ -48,6 +48,7 @@ import GradeBandPage from '../modules/student/pages/GradeBandPage';
 import KidHomePage from '../modules/student/pages/kid/KidHomePage';
 import KidMyWeekPage from '../modules/student/pages/kid/KidMyWeekPage';
 import KidFocusPage from '../modules/student/pages/kid/KidFocusPage';
+import KidFocusActivityPage from '../modules/student/pages/kid/KidFocusActivityPage';
 import KidAssignmentsPage from '../modules/student/pages/kid/KidAssignmentsPage';
 import KidComingSoonPage from '../modules/student/pages/kid/KidComingSoonPage';
 import KidSettingsPage from '../modules/student/pages/kid/KidSettingsPage';
@@ -377,6 +378,17 @@ export const STUDENT_ROUTES = {
       permissions: [PERMISSIONS.FOCUS_READ],
       component: GradeBandPage,
       props: { junior: KidFocusPage, standard: FocusTimerPage },
+      guards: [RequireCheckIn],
+    },
+    {
+      // K-5 only - the Breathe/Wiggle/Listen tiles on KidFocusPage each open
+      // here. Grade 6+ has no matching screen (their Regulation Toolkit
+      // shows tool detail inline), so send them back to Focus instead.
+      path: 'focus/:activityKey',
+      label: 'Focus Activity',
+      permissions: [PERMISSIONS.FOCUS_READ],
+      component: GradeBandPage,
+      props: { junior: KidFocusActivityPage, standardRedirect: '/student/focus' },
       guards: [RequireCheckIn],
     },
     {

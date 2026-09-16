@@ -6,6 +6,7 @@ import { useWeekPlan, startOfWeek } from '../../hooks/useWeekPlan';
 import { CalendarIcon } from '../../components/kid/KidIcons';
 import { KidPageHeader } from '../../components/kid/KidPageHeader';
 import { KidSkeleton, KidOops } from '../../components/kid/KidStates';
+import { StarRating } from '../../components/kid/PaperKit';
 import { getSubjectStyle } from '../../components/kid/subjectStyle';
 import { starsForMinutes } from '../../components/kid/kidFormat';
 
@@ -15,30 +16,26 @@ const WEEKDAY_COUNT = 5;
 function DayTaskCard({ task }) {
   const assignment = task.assignment ?? {};
   const { icon: Icon, tile, ink } = getSubjectStyle(assignment.subject);
-  const stars = starsForMinutes(assignment.estimatedMinutes);
 
   return (
     <Link
       to={`/student/assignments/${assignment.id}`}
       className="flex flex-col items-center gap-2 rounded-[1.5rem] bg-kid-sheet p-4 text-center no-underline shadow-paper transition-transform duration-200 hover:-translate-y-0.5"
     >
-      <span className={cn('grid size-12 place-items-center rounded-2xl', tile, ink)} aria-hidden="true">
+      <span className={cn('grid size-12 place-items-center rounded-full', tile, ink)} aria-hidden="true">
         <Icon className="size-7" />
       </span>
       <span className="font-kid-display text-base font-medium leading-snug text-kid-ink">
         {assignment.title}
       </span>
-      <span aria-label={`${stars} out of 3`} className="text-lg leading-none text-kid-sun">
-        {'★'.repeat(stars)}
-        <span className="text-kid-paper-deep">{'★'.repeat(3 - stars)}</span>
-      </span>
+      <StarRating stars={starsForMinutes(assignment.estimatedMinutes)} />
     </Link>
   );
 }
 
 function DayOffCard() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-[1.5rem] border-2 border-dashed border-kid-edge bg-kid-sheet/60 p-4 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-[1.5rem] bg-kid-sheet/60 p-4 text-center">
       <span aria-hidden="true" className="text-2xl text-kid-ink-soft">
         ♡
       </span>

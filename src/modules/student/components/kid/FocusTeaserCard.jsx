@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { LeafIcon } from './KidIcons';
+import { LuHeadphones } from 'react-icons/lu';
 import { PaperCard } from './PaperKit';
 
 /**
@@ -15,7 +15,7 @@ export function FocusTeaserCard() {
       className="flex flex-col items-center gap-3 px-6 py-7 text-center"
     >
       <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-full bg-kid-sky">
-        <LeafIcon className="size-6" />
+        <LuHeadphones className="size-6 text-kid-navy" strokeWidth={2.2} />
       </span>
       <h2 id="kid-focus-title" className="font-kid-display text-lg font-semibold text-kid-ink">
         Focus time
@@ -24,9 +24,9 @@ export function FocusTeaserCard() {
 
       <Link
         to="/student/focus"
-        className="mt-1 inline-flex min-h-12 w-full max-w-md items-center justify-center gap-2 rounded-full bg-kid-teal px-6 font-kid-display text-lg font-semibold text-white no-underline hover:bg-kid-teal-deep"
+        className="mt-1 inline-flex min-h-12 w-full max-w-md items-center justify-center gap-2 rounded-full bg-kid-teal px-6 font-kid-display text-lg font-semibold text-white no-underline transition-transform duration-150 hover:-translate-y-0.5 hover:bg-kid-teal-deep"
       >
-        <span aria-hidden="true">🎧</span>
+        <LuHeadphones className="size-5" aria-hidden="true" />
         Start focus
       </Link>
     </PaperCard>

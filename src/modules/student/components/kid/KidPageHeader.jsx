@@ -4,7 +4,7 @@ export function KidPageHeader({ icon: Icon, title, subtitle, children }) {
     <header className="flex flex-wrap items-center justify-between gap-5 rounded-[1.75rem] bg-kid-sheet p-5 shadow-paper sm:p-7">
       <div className="flex min-w-0 items-center gap-4">
         {Icon && (
-          <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-kid-paper-deep">
+          <span className="grid size-16 shrink-0 place-items-center rounded-full bg-kid-paper-deep">
             <Icon className="size-10" />
           </span>
         )}

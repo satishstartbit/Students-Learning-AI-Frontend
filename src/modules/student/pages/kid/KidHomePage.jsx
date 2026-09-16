@@ -88,7 +88,7 @@ export default function KidHomePage() {
 
         <div className="flex flex-col gap-8 sm:flex-row lg:flex-col">
           <BlurFade delay={0.2} className="sm:flex-1 lg:flex-none">
-            <CheckInCard />
+            <CheckInCard variant="modal" />
           </BlurFade>
           <BlurFade delay={0.3} className="sm:flex-1 lg:flex-none">
             <MyProgressCard done={doneCount} total={totalCount} />
@@ -102,10 +102,10 @@ export default function KidHomePage() {
         </BlurFade>
       </div>
 
-      <div className="relative isolate mt-4 h-40 overflow-hidden sm:h-48">
+      <div className="relative isolate mx-4 mb-4 mt-2 h-40 overflow-hidden rounded-[2rem] shadow-paper sm:mx-8 sm:h-48">
         <FooterScene className="absolute inset-0 -z-10 size-full" />
         <WoodenSign
-          className="absolute bottom-0 right-6 hidden -rotate-3 sm:flex lg:right-16"
+          className="absolute bottom-0 right-6 hidden sm:flex lg:right-16"
           boardClassName="w-44 text-lg uppercase tracking-wide"
         >
           A brighter you, a brighter tomorrow <Heart className="inline size-4 align-[-2px]" />

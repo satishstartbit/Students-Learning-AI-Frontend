@@ -46,6 +46,7 @@ export { default as ConfirmationModal } from './ConfirmationModal';
 export { default as Modal } from './Modal';
 export { default as Drawer } from './Drawer';
 export { default as Card } from './Card';
+export { default as FilterBar } from './FilterBar';
 export { default as PageHeader } from './PageHeader';
 export { default as SectionHeader } from './SectionHeader';
 export { default as Tabs } from './Tabs';

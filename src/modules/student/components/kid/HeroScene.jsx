@@ -27,7 +27,10 @@ export function HeroScene({ firstName }) {
   const text = firstName ? `${greeting}, ${firstName}!` : `${greeting}!`;
 
   return (
-    <section aria-labelledby="kid-greeting" className="relative isolate overflow-hidden">
+    <section
+      aria-labelledby="kid-greeting"
+      className="relative isolate mx-4 mt-4 overflow-hidden rounded-[2rem] shadow-paper sm:mx-8"
+    >
       <Landscape className="absolute inset-0 -z-10 size-full" />
 
       <div className="mx-auto flex min-h-[15rem] max-w-6xl flex-col px-5 pb-16 pt-8 sm:min-h-[17rem] sm:px-8 lg:min-h-[19.5rem] lg:pt-10">

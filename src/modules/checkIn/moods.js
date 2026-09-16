@@ -6,12 +6,12 @@
  * wording; `kidLabel`/`kidFeeling` say the same thing for a K-5 reader.
  */
 export const MOODS = [
-  { value: 'ready_to_focus', label: 'Ready to focus', emoji: '🙂', kidLabel: 'Ready!', kidFeeling: 'Ready to go!' },
   { value: 'calm', label: 'Calm', emoji: '😌', kidLabel: 'Calm', kidFeeling: 'Feeling calm' },
+  { value: 'tense', label: 'Tense', emoji: '😬', kidLabel: 'Worried', kidFeeling: 'Feeling worried' },
   { value: 'tired', label: 'Tired', emoji: '😴', kidLabel: 'Sleepy', kidFeeling: 'Feeling sleepy' },
   { value: 'distracted', label: 'Distracted', emoji: '😵‍💫', kidLabel: 'Wiggly', kidFeeling: 'Feeling wiggly' },
-  { value: 'tense', label: 'Tense', emoji: '😬', kidLabel: 'Worried', kidFeeling: 'Feeling worried' },
   { value: 'overwhelmed', label: 'Overwhelmed', emoji: '😩', kidLabel: 'Too much', kidFeeling: 'It all feels like too much' },
+  { value: 'ready_to_focus', label: 'Ready to focus', emoji: '🙂', kidLabel: 'Ready!', kidFeeling: 'Ready to go!' },
 ];
 
 /** Energy is 1-5, shown as dots. */

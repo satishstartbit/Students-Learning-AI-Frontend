@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LuPencil, LuToggleLeft, LuToggleRight, LuTrash2 } from 'react-icons/lu';
-import { PageHeader, Button, IconButton, Card, DataTable, SearchInput, Select, StatusBadge, ConfirmationModal, Toast } from '../../../../components/common';
+import { LuFilterX, LuPencil, LuToggleLeft, LuToggleRight, LuTrash2 } from 'react-icons/lu';
+import { PageHeader, Button, IconButton, FilterBar, DataTable, SearchInput, Select, StatusBadge, ConfirmationModal, Toast } from '../../../../components/common';
 import { Tooltip } from '../../../../components/ui/tooltip';
 import { useApi } from '../../../../hooks/useApi';
 import { usePagination } from '../../../../hooks/usePagination';
@@ -102,6 +102,11 @@ export default function SchoolsListPage() {
   ];
 
   const hasFilters = Boolean(search || status);
+  const clearFilters = () => {
+    setSearch('');
+    setStatus('');
+    goToPage(1);
+  };
 
   return (
     <>
@@ -112,12 +117,13 @@ export default function SchoolsListPage() {
         actions={<Button as={Link} to="/admin/masters/schools/create">Add school</Button>}
       />
 
-      <Card flat className="ui-field">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--spacing-md)' }}>
-          <SearchInput label="Search" placeholder="Name, code or city" value={search} onChange={(e) => resetTo(setSearch)(e.target.value)} onClear={() => resetTo(setSearch)('')} />
-          <Select label="Status" options={STATUS_OPTIONS} placeholder="All statuses" value={status} onChange={(e) => resetTo(setStatus)(e.target.value)} />
-        </div>
-      </Card>
+      <FilterBar>
+        <SearchInput fieldClassName="ui-filterbar__search ui-field--compact" placeholder="Name, code or city" value={search} onChange={(e) => resetTo(setSearch)(e.target.value)} onClear={() => resetTo(setSearch)('')} />
+        <Select fieldClassName="ui-field--compact" label="Status" options={STATUS_OPTIONS} placeholder="All statuses" value={status} onChange={(e) => resetTo(setStatus)(e.target.value)} />
+        <Tooltip label="Clear filters" side="top">
+          <IconButton icon={<LuFilterX aria-hidden="true" />} label="Clear filters" size="sm" onClick={clearFilters} disabled={!hasFilters} />
+        </Tooltip>
+      </FilterBar>
 
       <DataTable
         columns={columns}

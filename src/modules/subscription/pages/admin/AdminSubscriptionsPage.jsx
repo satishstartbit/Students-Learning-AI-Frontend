@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LuBan } from 'react-icons/lu';
+import { LuBan, LuFilterX } from 'react-icons/lu';
 import {
   PageHeader,
   Button,
   IconButton,
-  Card,
+  FilterBar,
   DataTable,
   SearchInput,
   Select,
@@ -181,6 +181,14 @@ export default function AdminSubscriptionsPage() {
   ];
 
   const hasFilters = Boolean(search || status || planId || from || to);
+  const clearFilters = () => {
+    setSearch('');
+    setStatus('');
+    setPlanId('');
+    setFrom('');
+    setTo('');
+    goToPage(1);
+  };
 
   return (
     <>
@@ -200,44 +208,48 @@ export default function AdminSubscriptionsPage() {
         }
       />
 
-      <Card flat className="ui-field">
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-            gap: 'var(--spacing-md)',
-          }}
-        >
-          <SearchInput
-            label="Search parent"
-            placeholder="Name or email"
-            value={search}
-            onChange={(e) => resetTo(setSearch)(e.target.value)}
-            onClear={() => resetTo(setSearch)('')}
+      <FilterBar>
+        <SearchInput
+          fieldClassName="ui-filterbar__search ui-field--compact"
+          placeholder="Name or email"
+          value={search}
+          onChange={(e) => resetTo(setSearch)(e.target.value)}
+          onClear={() => resetTo(setSearch)('')}
+        />
+        <Select
+          fieldClassName="ui-field--compact"
+          label="Status"
+          options={STATUS_OPTIONS}
+          placeholder="All statuses"
+          value={status}
+          onChange={(e) => resetTo(setStatus)(e.target.value)}
+        />
+        <Select
+          fieldClassName="ui-field--compact"
+          label="Plan"
+          options={planOptions}
+          placeholder="All plans"
+          value={planId}
+          onChange={(e) => resetTo(setPlanId)(e.target.value)}
+        />
+        <Input
+          fieldClassName="ui-field--compact-labeled"
+          label="From"
+          type="date"
+          value={from}
+          onChange={(e) => resetTo(setFrom)(e.target.value)}
+        />
+        <Input fieldClassName="ui-field--compact-labeled" label="To" type="date" value={to} onChange={(e) => resetTo(setTo)(e.target.value)} />
+        <Tooltip label="Clear filters" side="top">
+          <IconButton
+            icon={<LuFilterX aria-hidden="true" />}
+            label="Clear filters"
+            size="sm"
+            onClick={clearFilters}
+            disabled={!hasFilters}
           />
-          <Select
-            label="Status"
-            options={STATUS_OPTIONS}
-            placeholder="All statuses"
-            value={status}
-            onChange={(e) => resetTo(setStatus)(e.target.value)}
-          />
-          <Select
-            label="Plan"
-            options={planOptions}
-            placeholder="All plans"
-            value={planId}
-            onChange={(e) => resetTo(setPlanId)(e.target.value)}
-          />
-          <Input
-            label="From"
-            type="date"
-            value={from}
-            onChange={(e) => resetTo(setFrom)(e.target.value)}
-          />
-          <Input label="To" type="date" value={to} onChange={(e) => resetTo(setTo)(e.target.value)} />
-        </div>
-      </Card>
+        </Tooltip>
+      </FilterBar>
 
       <DataTable
         columns={columns}

@@ -1,92 +1,114 @@
 /* =====================================================================
    Super Admin theme - scoped to `.admin-theme`, a class layouts/
    SuperAdminLayout.jsx puts on <body> for as long as it is mounted (see
-   that file for why it's a body class rather than a wrapping element).
+   that file for why it is a body class rather than a wrapping element).
    Nothing here is imported by, or affects, the Teacher/Student/Parent
-   layouts - they never add this class.
+   layouts - they never add this class, and every rule below is written
+   `.admin-theme <selector>` so it cannot match outside it.
 
-   Super Admin used to pin the entire color-token set to its light-mode
-   values here. That pin is gone: Super Admin now shares the same
-   variables.css/accent.css cascade as every other portal, so Color
-   (Light/Dark) and Theme (accent family) both work here exactly as they
-   do everywhere else - text and surface tokens always flip together, so
-   the light-on-forced-white-background bug the pin used to guard against
-   (text following a dark-mode preference while background stayed pinned
-   white) can no longer happen structurally, not just by convention.
+   This is also the ONLY file allowed to carry Super-Admin-only styling.
+   Shared components (Button, Card, Tabs, Badge, DataTable, FilterBar, the
+   shadcn sidebar primitives, ...) are never edited to add Super Admin
+   colours - the default appearance every other role sees must stay
+   byte-for-byte the same. Instead, every rule here targets the class the
+   shared component already renders (`.ui-btn`, `.ui-card`, ...) prefixed
+   with `.admin-theme`, exactly the "wrap the layout root and scope
+   overrides to descendants" pattern - `.admin-theme` on <body> already IS
+   that root class, so it is reused rather than adding a second wrapper
+   that would do the same job twice.
 
-   What's left is only the sidebar's permanently black/white chrome - a
-   deliberate brand choice, independent of Color mode - styled directly
-   by data-slot/data-sidebar attribute, NOT by overriding
-   `--color-sidebar`/`--color-sidebar-accent`/etc. Those look like the
-   right lever (styles/tailwind.css maps them onto the tokens above:
-   `--color-sidebar: var(--color-bg-surface)`, and so on) but Tailwind
-   v4's `@theme inline` resolves that mapping at build time - the
-   compiled `.bg-sidebar` utility is literally `background-color:
-   var(--color-bg-surface)`, never mentioning `--color-sidebar` at all.
-   Overriding `--color-sidebar` is therefore inert; it has to be the
-   actual sidebar elements that get a background/color, with a plain
-   (unlayered) rule so it outranks the `@layer utilities`-wrapped
-   Tailwind classes without needing `!important`. `components/ui/
-   sidebar.jsx` and layouts/AppSidebar.jsx are the source of the
-   data-slot values used below - not modified by this file, only
-   targeted by it.
-
-   CSS set on <body> reaches everything, including content rendered
-   through createPortal (Modal, Drawer, MultiSelect, SearchableSelect all
-   portal to document.body, a sibling of the app root under the same
-   <body>) - so dialogs and dropdowns opened from an admin page pick up
-   the sidebar-adjacent rules too where relevant. No touching the shared
-   component files either way, and no risk of leaking into another
-   role's layout, which never adds this class.
+   Brand tokens (prefixed sa-) are their own namespace, never redefining
+   the shared color and accent tokens from theme/variables.css and
+   theme/accent.css - those stay exactly as every other role sees them
+   (including the Super Admin Color/Theme switcher, still fully working
+   here; see the sidebar section below for the one deliberate exception).
    ===================================================================== */
 
+.admin-theme {
+  --sa-sidebar: #111827;
+  --sa-sidebar-active: #1f2937;
+  --sa-sidebar-border: rgba(255, 255, 255, 0.08);
+  --sa-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --sa-sidebar-idle-fg: #94a3b8; /* slate-400 */
+  --sa-accent: #0d9488;
+  --sa-accent-dark: #0f766e;
+  --sa-accent-tint: #ccfbf1;
+  --sa-bg: #f8fafc;
+  --sa-card: #ffffff;
+  --sa-border: #e2e8f0;
+  --sa-text: #0f172a;
+  --sa-muted: #64748b;
+  --sa-neutral-bg: #f1f5f9; /* slate-100, replaces the warm tan/beige neutral badge */
+  --sa-neutral-fg: #475569; /* slate-600 */
+  --sa-shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.06);
+}
+
 /* --------------------------------------------------------------------
-   Sidebar: black background, white text/icons (see rationale above for
-   why this targets elements directly instead of the sidebar-* tokens).
+   Sidebar: dark navy background, teal accent for the active item (see
+   the file-level comment for why this targets elements directly instead
+   of the sidebar-* tokens - Tailwind v4 `@theme inline` resolves
+   `bg-sidebar`/`text-sidebar-foreground`/etc. onto --color-bg-surface at
+   build time, so overriding the --color-sidebar-* variables is inert;
+   it has to be the actual sidebar elements that get a background/color,
+   with a plain (unlayered) rule so it outranks the `@layer utilities`-
+   wrapped Tailwind classes without needing `!important`).
+   `components/ui/sidebar.jsx` and layouts/AppSidebar.jsx are the source
+   of the data-slot/data-active values used below - not modified by this
+   file, only targeted by it.
    -------------------------------------------------------------------- */
 
 .admin-theme [data-slot='sidebar'] {
-  background-color: #000000;
+  background-color: var(--sa-sidebar);
   color: #ffffff;
-  border-color: #2a2a2a;
+  border-color: var(--sa-sidebar-border);
 }
 
-/* Icons use `currentColor` by default (react-icons SVGs), so they follow
-   the `color: #fff` above automatically - no separate icon rule needed. */
+/* Icons use `currentColor` by default (the react-icons Lucide set is
+   already single-tone), so they follow the text colour below
+   automatically - no separate icon rule needed. */
 
 .admin-theme [data-slot='sidebar-group-label'] {
   /* Overrides `text-muted-foreground`, which resolves to the same
      secondary-text tone used everywhere else in the app. */
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--sa-sidebar-idle-fg);
 }
 
 .admin-theme [data-slot='sidebar-menu-sub'] {
-  border-color: #2a2a2a;
+  border-color: var(--sa-sidebar-border);
 }
 
+/* Idle state: muted slate, not full white - only hover/active read as
+   lit up, per the Super Admin nav spec. */
 .admin-theme [data-slot='sidebar-menu-button'],
 .admin-theme [data-slot='sidebar-menu-sub-button'],
 .admin-theme [data-slot='sidebar-menu-action'],
 .admin-theme [data-slot='sidebar-group-action'] {
-  color: #ffffff;
+  color: var(--sa-sidebar-idle-fg);
 }
 
-/* Hover, active and selected menu items share one accent fill (the
-   button already bolds the active item's label on top of this, per
-   MENU_BUTTON_BASE in components/ui/sidebar.jsx), giving clear feedback
-   without breaking the black-and-white palette. */
 .admin-theme [data-slot='sidebar-menu-button']:hover,
 .admin-theme [data-slot='sidebar-menu-sub-button']:hover,
 .admin-theme [data-slot='sidebar-menu-action']:hover,
-.admin-theme [data-slot='sidebar-group-action']:hover,
-.admin-theme [data-slot='sidebar-menu-button'][data-active='true'],
-.admin-theme [data-slot='sidebar-menu-sub-button'][data-active='true'] {
-  background-color: #1a1a1a;
+.admin-theme [data-slot='sidebar-group-action']:hover {
+  background-color: var(--sa-sidebar-hover);
   color: #ffffff;
 }
 
-/* Keyboard-focus ring: white reads clearly on black, where the default
-   accent ring would not. Tailwind's `ring` utilities read `--tw-ring-color`
+/* Active item: solid fill plus a teal left border - the button already
+   bolds the label of the active item on top of this (per
+   MENU_BUTTON_BASE in components/ui/sidebar.jsx). `padding-left` is
+   trimmed by the border width so the label does not shift right when an
+   item becomes active. */
+.admin-theme [data-slot='sidebar-menu-button'][data-active='true'],
+.admin-theme [data-slot='sidebar-menu-sub-button'][data-active='true'] {
+  background-color: var(--sa-sidebar-active);
+  color: #ffffff;
+  border-left: 3px solid var(--sa-accent);
+  padding-left: 5px;
+}
+
+/* Keyboard-focus ring: white reads clearly on navy, where the default
+   accent ring would not. Tailwind ring utilities read `--tw-ring-color`
    at the point the box-shadow is drawn (an internal implementation
    variable, not a theme-mapped one, so - unlike --color-sidebar-ring -
    overriding it here does take effect). */
@@ -96,13 +118,112 @@
 }
 
 /* The brand mark and the account avatar are inverted (white chip, black
-   glyph) so they read as deliberate accents against the black sidebar. */
+   glyph) so they read as deliberate accents against the dark sidebar. */
 .admin-theme [data-slot='sidebar-header'] .bg-sidebar-primary {
   background-color: #ffffff;
   color: #000000;
 }
 
 .admin-theme [data-slot='sidebar-footer'] .bg-sidebar-accent {
-  background-color: #1a1a1a;
+  background-color: var(--sa-sidebar-active);
   color: #ffffff;
+}
+
+/* --------------------------------------------------------------------
+   Page canvas background - same `@theme inline` reasoning as the sidebar
+   above: SidebarInset (components/ui/sidebar.jsx, shared by every role)
+   renders a `bg-background` utility that resolves to --color-bg-canvas at
+   build time, so it has to be targeted by its data-slot directly.
+   -------------------------------------------------------------------- */
+.admin-theme [data-slot='sidebar-inset'] {
+  background-color: var(--sa-bg);
+}
+
+/* --------------------------------------------------------------------
+   Cards / panels - the Filters bar and the table container read as the
+   same raised-surface family as <Card>.
+   -------------------------------------------------------------------- */
+.admin-theme .ui-card,
+.admin-theme .ui-filterbar,
+.admin-theme .ui-table-wrap {
+  background: var(--sa-card);
+  border-color: var(--sa-border);
+  border-radius: var(--radius-md); /* 12px, same as Tailwind rounded-xl */
+  box-shadow: var(--sa-shadow-sm);
+}
+
+/* --------------------------------------------------------------------
+   Buttons - teal primary, and a denser medium footprint across every
+   variant (Primary/Secondary/Ghost/Danger all share the base .ui-btn
+   rule when no size prop is passed, which is the 48px design-system
+   default - too tall for a dense admin screen). Sm/Lg buttons keep their
+   own explicit sizing, so they are excluded here.
+   -------------------------------------------------------------------- */
+.admin-theme .ui-btn:not(.ui-btn--sm):not(.ui-btn--lg) {
+  min-height: 40px;
+  min-width: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+.admin-theme .ui-btn--primary {
+  background: var(--sa-accent);
+  color: #ffffff;
+}
+.admin-theme .ui-btn--primary:hover:not(:disabled, [aria-disabled='true']) {
+  background: var(--sa-accent-dark);
+}
+
+/* --------------------------------------------------------------------
+   Tabs (All Assignments / By Teacher / By Student, ...).
+   -------------------------------------------------------------------- */
+.admin-theme .ui-tabs__tab {
+  color: var(--sa-muted);
+}
+.admin-theme .ui-tabs__tab:hover:not(:disabled) {
+  color: var(--sa-text);
+}
+.admin-theme .ui-tabs__tab[aria-selected='true'] {
+  color: var(--sa-accent-dark);
+  border-bottom-color: var(--sa-accent);
+}
+
+/* --------------------------------------------------------------------
+   Table header row.
+   -------------------------------------------------------------------- */
+.admin-theme .ui-table thead th {
+  background: var(--sa-bg);
+  color: var(--sa-muted);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+/* --------------------------------------------------------------------
+   Links - overrides the global `a { color: var(--accent-base) }` (an
+   unlayered rule beats it the same way the sidebar rules above beat the
+   Tailwind utilities layer). Table links (teacher/student names) also
+   pick up the semibold weight the spec calls for.
+   -------------------------------------------------------------------- */
+.admin-theme a {
+  color: var(--sa-accent-dark);
+}
+.admin-theme .ui-table a {
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------
+   Badges - "info" is only ever used for the Grade badge in this module;
+   "neutral" (Subject/Academic Year) drops the warm tan/beige default for
+   a cool slate, matching the rest of this theme.
+   -------------------------------------------------------------------- */
+.admin-theme .ui-badge--info {
+  background: var(--sa-accent-tint);
+  color: var(--sa-accent-dark);
+  border-color: transparent;
+}
+.admin-theme .ui-badge--neutral {
+  background: var(--sa-neutral-bg);
+  color: var(--sa-neutral-fg);
+  border-color: transparent;
 }

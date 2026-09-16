@@ -3,11 +3,10 @@ import { LuArrowRight, LuClock } from 'react-icons/lu';
 import { ASSIGNMENT_RECIPIENT_STATUS as STATUS } from '../../../../utils/constants';
 import { KidButton } from './KidButton';
 import { StarIcon } from './KidIcons';
-import { Doodle } from './KidScenery';
 import { KidOops, KidSkeleton } from './KidStates';
-import { formatMinutes, getStartLabel } from './kidFormat';
+import { formatMinutes, getStartLabel, starsForMinutes } from './kidFormat';
 import { getSubjectStyle } from './subjectStyle';
-import { DueChip, PaperCard, SubjectTile, TapeLabel } from './PaperKit';
+import { DueChip, PaperCard, StarRating, SubjectTile, TapeLabel } from './PaperKit';
 
 /**
  * The one thing to do next, as big as the page allows - the heart of the
@@ -15,26 +14,10 @@ import { DueChip, PaperCard, SubjectTile, TapeLabel } from './PaperKit';
  */
 export function NextTaskCard({ task, isLoading, error, onRetry }) {
   return (
-    <PaperCard
-      as="section"
-      aria-labelledby="kid-next-task"
-      tone="sheet"
-      backing="yellow"
-      className="px-5 pb-7 pt-12 sm:px-9 sm:pb-9 sm:pt-14"
-    >
-      <TapeLabel as="h2" id="kid-next-task" className="absolute -top-4 left-7 -rotate-2 sm:left-12">
+    <PaperCard as="section" aria-labelledby="kid-next-task" tone="sheet" className="px-5 pb-7 pt-11 sm:px-9 sm:pb-9 sm:pt-12">
+      <TapeLabel as="h2" tone="yellow" id="kid-next-task" className="absolute -top-4 left-7 sm:left-9">
         Your next task
       </TapeLabel>
-      {/* push pin + stitched border, from the mockup */}
-      <span
-        aria-hidden="true"
-        className="absolute left-4 top-4 size-4 rounded-full bg-[radial-gradient(circle_at_35%_35%,#f7f7f7,#8d8d8d)] shadow-[0_2px_2px_rgb(0_0_0/0.25)]"
-      />
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-3 rounded-[1.4rem] border-2 border-dashed border-kid-edge"
-      />
-      <Doodle className="absolute right-7 top-5 hidden w-12 sm:block" />
 
       <NextTaskBody task={task} isLoading={isLoading} error={error} onRetry={onRetry} />
     </PaperCard>
@@ -104,11 +87,14 @@ function NextTaskBody({ task, isLoading, error, onRetry }) {
               </li>
             )}
             <li>
+              <StarRating stars={starsForMinutes(assignment.estimatedMinutes)} />
+            </li>
+            <li>
               <DueChip dueDate={assignment.dueDate} status={task.status} />
             </li>
           </ul>
 
-          <KidButton asChild>
+          <KidButton asChild className="transition-transform duration-150 hover:scale-[1.03]">
             <Link to={`/student/assignments/${assignment.id}`}>
               {getStartLabel(task.status)}
               <LuArrowRight className="size-6" aria-hidden="true" />

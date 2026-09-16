@@ -39,6 +39,7 @@ export default function TopicsListPage() {
       createTo={subjectId ? `/admin/masters/topics/create?subjectId=${subjectId}` : '/admin/masters/topics/create'}
       filters={
         <Select
+          fieldClassName="ui-field--compact"
           label="Subject"
           placeholder="All subjects"
           options={subjectOptions}

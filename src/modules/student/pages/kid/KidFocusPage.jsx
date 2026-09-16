@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { LuHeadphones, LuMusic2, LuWind, LuZap } from 'react-icons/lu';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { LuHeadphones } from 'react-icons/lu';
 import { AnimatedCircularProgressBar } from '../../../../components/ui/animated-circular-progress-bar';
 import { BlurFade } from '../../../../components/ui/blur-fade';
 import { Confetti } from '../../../../components/ui/confetti';
@@ -10,10 +11,10 @@ import regulationToolkitService from '../../services/regulationToolkit.service';
 import { useFocusTimer, formatClock } from '../../hooks/useFocusTimer';
 import { useMotionAllowed } from '../../hooks/useKidPreferences';
 import { useMyTasks } from '../../hooks/useMyTasks';
-import { formatMinutes } from '../../components/kid/kidFormat';
 import { KidButton } from '../../components/kid/KidButton';
-import { KidOops, KidSkeleton } from '../../components/kid/KidStates';
+import { KidSkeleton } from '../../components/kid/KidStates';
 import { PaperCard } from '../../components/kid/PaperKit';
+import { FOCUS_ACTIVITIES, activitySeconds } from '../../components/kid/focusActivities';
 
 const CONFETTI_COLOURS = ['#f6c445', '#f4b6c1', '#1f7a80', '#7b68d6', '#95c07b'];
 
@@ -22,52 +23,15 @@ const CONFETTI_COLOURS = ['#f6c445', '#f4b6c1', '#1f7a80', '#7b68d6', '#95c07b']
 // the point of this page - starting is.
 const PLANNED_MINUTES = 25;
 
-/**
- * The three regulation categories simplified to what a young student reads
- * in one glance. Each pools the same admin-managed tools the Grade 6+
- * Regulation Toolkit uses (services/regulationToolkit.service.js on the
- * backend) - "Calming Sounds" and "Music" both read as "Listen" here, same
- * as they read as one "Sound" tab there.
- */
-const KID_TILES = [
-  { key: 'Breathing', label: 'Breathe', blurb: 'In and out, nice and slow', tone: 'sky', icon: LuWind },
-  { key: 'Movement', label: 'Wiggle', blurb: 'Shake the fidgets out', tone: 'green', icon: LuZap },
-  {
-    key: 'Sound',
-    label: 'Listen',
-    blurb: 'Quiet sounds to help you settle',
-    tone: 'pink',
-    icon: LuMusic2,
-    sourceCategories: ['Calming Sounds', 'Music'],
-  },
-];
-
-const tileCategories = (tile) => tile.sourceCategories ?? [tile.key];
-
-/** The tile's best-matched suggested tool if there is one, otherwise its first tool. */
-function toolForTile(categories, tile, suggestions) {
-  const wanted = tileCategories(tile);
-  const suggested = suggestions.find((t) => wanted.includes(t.category));
-  if (suggested) return suggested;
-  const tools = categories.filter((c) => wanted.includes(c.category)).flatMap((c) => c.tools);
-  return tools[0] ?? null;
-}
-
-function ToolTile({ tile, tool, expanded, suggested, onToggle }) {
+function ToolTile({ tile, suggested }) {
   const Icon = tile.icon;
 
   return (
     <PaperCard
-      as="button"
-      type="button"
+      as={Link}
+      to={`/student/focus/${tile.key}`}
       tone={tile.tone}
-      onClick={onToggle}
-      aria-expanded={expanded}
-      aria-controls="kid-focus-tool-detail"
-      className={cn(
-        'relative flex flex-col items-center gap-1.5 px-4 py-5 text-center transition-transform duration-150',
-        expanded ? 'ring-[3px] ring-kid-ink/25' : 'hover:-translate-y-0.5'
-      )}
+      className="relative flex flex-col items-center gap-1.5 px-4 py-5 text-center no-underline transition-transform duration-150 hover:-translate-y-0.5"
     >
       {suggested && (
         <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-kid-yellow px-3 py-0.5 font-kid-display text-xs font-semibold text-[#6b4f05] shadow-paper">
@@ -79,11 +43,9 @@ function ToolTile({ tile, tool, expanded, suggested, onToggle }) {
       </span>
       <span className="font-kid-display text-xl font-semibold text-kid-ink">{tile.label}</span>
       <span className="font-kid-body text-sm text-kid-ink-soft">{tile.blurb}</span>
-      {tool?.durationMinutes ? (
-        <span className="mt-1 rounded-full bg-white/70 px-3 py-0.5 font-kid-display text-sm font-medium text-kid-ink">
-          {formatMinutes(tool.durationMinutes)}
-        </span>
-      ) : null}
+      <span className="mt-1 rounded-full bg-white/70 px-3 py-0.5 font-kid-display text-sm font-medium text-kid-ink">
+        {formatClock(activitySeconds(tile))}
+      </span>
     </PaperCard>
   );
 }
@@ -102,36 +64,20 @@ export default function KidFocusPage() {
   const motionAllowed = useMotionAllowed();
   const confettiRef = useRef(null);
 
-  const { data: categories, isLoading: toolsLoading, error: toolsError, run: reloadTools } = useApi(
-    regulationToolkitService.listCategories,
-    { immediate: true }
-  );
   const recommendation = useApi(regulationToolkitService.getRecommendation);
   const { run: runRecommendation } = recommendation;
 
-  const [expandedKey, setExpandedKey] = useState(null);
   const [justEnded, setJustEnded] = useState(null);
 
   // A quiet "try this" nudge from today's check-in (read server-side) - no
-  // banner text here, just a badge on the matching tiles.
+  // banner text here, just a badge on the matching tile.
   useEffect(() => {
     if (checkIn) runRecommendation().catch(() => {});
   }, [checkIn, runRecommendation]);
 
   const nextTask = !tasks.isLoading && !tasks.error ? tasks.toDo[0] ?? null : null;
 
-  const suggestions = useMemo(() => recommendation.data?.suggestions ?? [], [recommendation.data]);
   const suggestedCategories = recommendation.data?.categories ?? [];
-
-  const tiles = useMemo(
-    () =>
-      KID_TILES.map((tile) => ({
-        tile,
-        tool: categories ? toolForTile(categories, tile, suggestions) : null,
-      })),
-    [categories, suggestions]
-  );
-  const expandedTool = tiles.find(({ tile }) => tile.key === expandedKey)?.tool ?? null;
 
   if (timer.isLoading) {
     return (
@@ -285,36 +231,13 @@ export default function KidFocusPage() {
 
         <h2 className="mt-8 text-center font-kid-hand text-[1.75rem] text-kid-ink">Need a minute first?</h2>
 
-        {toolsError ? (
-          <div className="mt-4">
-            <KidOops message="We couldn't load the calming tools." onRetry={reloadTools} />
-          </div>
-        ) : (
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            {toolsLoading
-              ? [0, 1, 2].map((i) => <KidSkeleton key={i} className="h-40" />)
-              : tiles.map(({ tile, tool }, i) => (
-                  <BlurFade key={tile.key} delay={0.05 * i}>
-                    <ToolTile
-                      tile={tile}
-                      tool={tool}
-                      expanded={expandedKey === tile.key}
-                      suggested={tileCategories(tile).some((c) => suggestedCategories.includes(c))}
-                      onToggle={() => setExpandedKey((k) => (k === tile.key ? null : tile.key))}
-                    />
-                  </BlurFade>
-                ))}
-          </div>
-        )}
-
-        {expandedTool && (
-          <BlurFade>
-            <PaperCard id="kid-focus-tool-detail" tone="sheet" className="mt-4 px-6 py-5">
-              <h3 className="font-kid-display text-xl font-semibold text-kid-ink">{expandedTool.name}</h3>
-              <p className="mt-1 text-lg text-kid-ink-soft">{expandedTool.instructions || expandedTool.description}</p>
-            </PaperCard>
-          </BlurFade>
-        )}
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          {FOCUS_ACTIVITIES.map((tile, i) => (
+            <BlurFade key={tile.key} delay={0.05 * i}>
+              <ToolTile tile={tile} suggested={tile.categories.some((c) => suggestedCategories.includes(c))} />
+            </BlurFade>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -97,7 +97,7 @@ function KidOnboardingFlow({ onboarding, onSaved }) {
 
   if (stepIndex === -1) {
     return (
-      <PaperCard tone="sheet" backing="yellow" className="flex flex-col items-center gap-4 px-6 py-10 text-center sm:px-12">
+      <PaperCard tone="sheet" className="flex flex-col items-center gap-4 px-6 py-10 text-center sm:px-12">
         <StarIcon className="size-20" />
         <h1 className="font-kid-display text-3xl font-semibold text-kid-ink sm:text-4xl">
           {onboarding.completed ? 'Change your answers' : `Hi ${user?.firstName ?? 'there'}!`}

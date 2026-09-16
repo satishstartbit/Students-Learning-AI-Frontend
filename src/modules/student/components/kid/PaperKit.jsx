@@ -1,13 +1,13 @@
-import { LuCheck } from 'react-icons/lu';
+import { LuCheck, LuStar } from 'react-icons/lu';
 import { cn } from '../../../../lib/utils';
 import { ASSIGNMENT_RECIPIENT_STATUS as STATUS } from '../../../../utils/constants';
 import { getSubjectStyle } from './subjectStyle';
 import { STATUS_WORDS, getDueInfo } from './kidFormat';
 
 /**
- * The cut-paper building blocks of the K-5 theme: paper cards, washi tape,
- * subject tiles, status circles and due-date chips. Tailwind only, on the
- * kid tokens from styles/kid-theme.css.
+ * The flat, soft-illustration building blocks of the K-5 theme: cards,
+ * pill badges, subject tiles, status circles and due-date chips. Tailwind
+ * only, on the kid tokens from styles/kid-theme.css.
  */
 
 const PAPER_TONES = {
@@ -19,82 +19,47 @@ const PAPER_TONES = {
   lavender: 'bg-kid-lavender',
 };
 
-/**
- * A sheet of paper. `backing` slips a second, slightly skewed sheet of that
- * tone underneath (the stacked look of the "next task" card); `className`
- * styles the top sheet, `wrapperClassName` places the whole stack.
- */
-export function PaperCard({
-  as: Component = 'div',
-  tone = 'sheet',
-  backing,
-  className,
-  wrapperClassName,
-  children,
-  ...props
-}) {
-  const sheet = (
-    <Component
-      className={cn(
-        'relative rounded-[1.75rem] shadow-paper',
-        PAPER_TONES[tone],
-        !backing && wrapperClassName,
-        className
-      )}
-      {...props}
-    >
+/** A plain, softly-shadowed rounded card - the base surface for every K-5 panel. */
+export function PaperCard({ as: Component = 'div', tone = 'sheet', className, children, ...props }) {
+  return (
+    <Component className={cn('relative rounded-[1.75rem] shadow-paper', PAPER_TONES[tone], className)} {...props}>
       {children}
     </Component>
-  );
-
-  if (!backing) return sheet;
-
-  return (
-    <div className={cn('relative isolate', wrapperClassName)}>
-      <span
-        aria-hidden="true"
-        className={cn(
-          'absolute inset-0 translate-x-1.5 translate-y-2.5 -rotate-[1.4deg] rounded-[1.75rem] shadow-paper',
-          PAPER_TONES[backing]
-        )}
-      />
-      {sheet}
-    </div>
   );
 }
 
 const TAPE_TONES = {
-  pink: 'bg-kid-pink/90',
-  yellow: 'bg-[#f1d97a]/85',
-  lavender: 'bg-[#c9bdf0]/85',
-  green: 'bg-[#b9d7a0]/85',
+  pink: 'bg-kid-pink text-[#8f2f45]',
+  yellow: 'bg-kid-yellow text-[#6b4f05]',
+  lavender: 'bg-kid-lavender text-kid-purple',
+  green: 'bg-kid-green text-kid-green-deep',
 };
 
-/** Torn short ends, like tape pulled off a roll. */
-const TAPE_CLIP =
-  'polygon(2% 0, 98% 0, 100% 18%, 97% 36%, 100% 54%, 97% 72%, 100% 90%, 98% 100%, 2% 100%, 0 82%, 3% 64%, 0 46%, 3% 28%, 0 10%)';
-
-/** A decorative strip of washi tape. Position it with `className`. */
-export function Tape({ tone = 'yellow', className }) {
+/** A small floating pill badge - e.g. "Your next task" above a card. */
+export function Tape({ tone = 'yellow', className, children }) {
   return (
     <span
-      aria-hidden="true"
-      className={cn('pointer-events-none absolute block h-7 w-24', TAPE_TONES[tone], className)}
-      style={{ clipPath: TAPE_CLIP }}
-    />
+      aria-hidden={children ? undefined : 'true'}
+      className={cn(
+        'inline-flex items-center rounded-full px-4 py-1 font-kid-display text-sm font-semibold shadow-paper',
+        TAPE_TONES[tone],
+        className
+      )}
+    >
+      {children}
+    </span>
   );
 }
 
-/** A handwritten label on a strip of tape - "Your next task". */
+/** A rounded pill label floating above a card - "Your next task". */
 export function TapeLabel({ as: Component = 'span', tone = 'pink', className, children, ...props }) {
   return (
     <Component
       className={cn(
-        'inline-block px-6 py-1.5 font-kid-hand text-[1.6rem] leading-tight text-kid-ink',
+        'inline-flex items-center rounded-full px-4 py-1.5 font-kid-display text-base font-semibold leading-tight shadow-paper',
         TAPE_TONES[tone],
         className
       )}
-      style={{ clipPath: TAPE_CLIP }}
       {...props}
     >
       {children}
@@ -103,9 +68,9 @@ export function TapeLabel({ as: Component = 'span', tone = 'pink', className, ch
 }
 
 const TILE_SIZES = {
-  sm: 'size-14 rounded-2xl [&_svg]:size-7',
-  md: 'size-16 rounded-2xl [&_svg]:size-8',
-  xl: 'size-24 rounded-[1.75rem] sm:size-28 [&_svg]:size-12 sm:[&_svg]:size-14',
+  sm: 'size-12 rounded-full [&_svg]:size-6',
+  md: 'size-14 rounded-full [&_svg]:size-7',
+  xl: 'size-20 rounded-full sm:size-24 [&_svg]:size-10 sm:[&_svg]:size-11',
 };
 
 /** The subject's picture on a coloured paper square. Decorative - the subject name is printed nearby. */
@@ -132,7 +97,7 @@ export function StatusCircle({ status, className }) {
   const label = STATUS_WORDS[status] ?? '';
 
   const look = {
-    [STATUS.ASSIGNED]: 'border-[#b9ab93] bg-kid-sheet',
+    [STATUS.ASSIGNED]: 'border-[#d7dbe0] bg-kid-sheet',
     [STATUS.IN_PROGRESS]: 'border-kid-teal bg-[conic-gradient(var(--kid-teal)_0_50%,transparent_50%_100%)]',
     [STATUS.RETURNED]: 'border-kid-coral bg-kid-coral-soft text-kid-coral',
     [STATUS.SUBMITTED]: 'border-kid-teal bg-kid-teal text-white',
@@ -171,6 +136,26 @@ export function DueChip({ dueDate, status, className }) {
       )}
     >
       {due.label}
+    </span>
+  );
+}
+
+const STAR_SIZES = {
+  sm: '[&_svg]:size-3.5',
+  md: '[&_svg]:size-4.5',
+};
+
+/** 1-3 gold stars, from kidFormat.js#starsForMinutes - "how big is this task", in a picture a five-year-old reads. */
+export function StarRating({ stars, max = 3, size = 'md', className }) {
+  return (
+    <span aria-label={`${stars} out of ${max}`} className={cn('inline-flex items-center gap-0.5', STAR_SIZES[size], className)}>
+      {Array.from({ length: max }, (_, i) => (
+        <LuStar
+          key={i}
+          strokeWidth={0}
+          className={i < stars ? 'fill-kid-sun text-kid-sun' : 'fill-kid-paper-deep text-kid-paper-deep'}
+        />
+      ))}
     </span>
   );
 }

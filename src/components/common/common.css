@@ -223,6 +223,134 @@
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * Compact filter toolbar for a listing page - a single flex row that wraps
+ * onto a second line only when the screen is too narrow, rather than the
+ * old equal-width CSS grid of full-height fields (each with a label stacked
+ * above it) that used to occupy a whole card of vertical space on its own.
+ * A thinner, lighter-weight container than <Card> on purpose - a filter row
+ * is a toolbar, not a form.
+ */
+.ui-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-lg);
+}
+/* Combined with .ui-field--compact (higher specificity so it always wins
+   the shared flex/width properties, regardless of CSS source order). */
+.ui-filterbar__search.ui-field--compact {
+  flex: 2 1 220px;
+  min-width: 200px;
+  max-width: 360px;
+}
+@media (max-width: 640px) {
+  .ui-filterbar {
+    padding: var(--spacing-sm);
+  }
+  .ui-filterbar__search,
+  .ui-filterbar > .ui-field--compact {
+    flex-basis: 100%;
+    max-width: none;
+  }
+}
+
+/*
+ * Shrinks any field (Input/Select's `fieldClassName`, SearchableSelect's or
+ * MultiSelect's `className`) to toolbar density: the label is kept for
+ * screen readers only - the placeholder carries the visible meaning - the
+ * helper line is dropped (a filter never validates), and the control itself
+ * shrinks from the 48px form height to a dense 32px row.
+ */
+.ui-field--compact {
+  flex: 1 1 150px;
+  min-width: 130px;
+  max-width: 220px;
+  margin-bottom: 0;
+  gap: 0;
+}
+.ui-field--compact > .ui-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.ui-field--compact > .ui-helper {
+  display: none;
+}
+.ui-field--compact .ui-input,
+.ui-field--compact .ui-select,
+.ui-field--compact .ui-combobox,
+.ui-field--compact .ui-multiselect__control {
+  height: var(--control-height-sm);
+  min-height: var(--control-height-sm);
+  font-size: var(--font-size-sm);
+  padding: 0 var(--spacing-sm);
+}
+.ui-field--compact .ui-input-wrap .ui-input {
+  padding-left: 34px;
+  padding-right: 34px;
+}
+.ui-field--compact .ui-input-affix {
+  min-width: 24px;
+  min-height: 24px;
+}
+.ui-field--compact .ui-input-affix--start {
+  left: 8px;
+}
+.ui-field--compact .ui-input-affix--end {
+  right: 4px;
+}
+
+/*
+ * Same toolbar density as .ui-field--compact, but for a field whose label
+ * genuinely needs to stay visible in a toolbar - a bare date field shows
+ * nothing but the browser's own mm/dd/yyyy placeholder, so "From"/"To"
+ * would otherwise be lost. The label sits beside the control instead of
+ * above it, so it costs no extra vertical space.
+ */
+.ui-field--compact-labeled {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex: 0 1 170px;
+  min-width: 150px;
+  margin-bottom: 0;
+}
+.ui-field--compact-labeled > .ui-label {
+  font-size: var(--field-helper-font-size);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex: none;
+}
+.ui-field--compact-labeled > .ui-helper {
+  display: none;
+}
+.ui-field--compact-labeled .ui-input {
+  height: var(--control-height-sm);
+  min-height: var(--control-height-sm);
+  font-size: var(--font-size-sm);
+  padding: 0 var(--spacing-sm);
+  min-width: 0;
+}
+@media (max-width: 640px) {
+  .ui-filterbar > .ui-field--compact-labeled {
+    flex-basis: 100%;
+  }
+}
+
 .ui-input-wrap {
   position: relative;
   display: flex;

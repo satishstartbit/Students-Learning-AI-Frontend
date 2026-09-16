@@ -205,10 +205,14 @@
   --btn-radius-lg: 12px;
 
   /* --- Field ------------------------------------------------------- */
-  /* Text Field: 48px at rest, the same touch target as an Md button. The
-     helper line under a field is always rendered, so its line box counts
-     towards the height every form row reserves. */
-  --field-height: var(--size-touch-target);
+  /* Text Field: 40px at rest (the medium control height) - the desktop admin
+     surfaces (Super Admin/Teacher/Parent) read as a dense SaaS app, not a
+     touch-first one. The K-5 kid theme pins this back to the full 48px
+     touch target (styles/kid-theme.css) since its controls are sized for a
+     young child's finger, not a mouse. The helper line under a field is
+     always rendered, so its line box counts towards the height every form
+     row reserves. */
+  --field-height: var(--control-height-md);
   --field-min-height-multiline: 120px;
   --field-padding-x: 16px;
   --field-padding-y-multiline: 12px;

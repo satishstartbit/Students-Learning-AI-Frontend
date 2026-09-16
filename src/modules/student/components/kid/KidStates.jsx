@@ -36,7 +36,7 @@ export function KidEmpty({ icon: Icon, title, children, className }) {
   return (
     <div
       className={cn(
-        'flex flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-kid-edge px-6 py-10 text-center',
+        'flex flex-col items-center gap-2 rounded-3xl bg-kid-paper-deep/40 px-6 py-10 text-center',
         className
       )}
     >

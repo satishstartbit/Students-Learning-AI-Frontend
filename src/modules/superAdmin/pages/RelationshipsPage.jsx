@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LuUnlink, LuUserPlus } from 'react-icons/lu';
+import { LuFilterX, LuUnlink, LuUserPlus } from 'react-icons/lu';
 import {
   PageHeader,
   Card,
@@ -10,7 +10,7 @@ import {
   DataTable,
   ConfirmationModal,
   Alert,
-  SectionHeader,
+  FilterBar,
   Badge,
   Tabs,
   Select,
@@ -181,15 +181,15 @@ export default function RelationshipsPage() {
   const { run: runAcademicYears } = academicYears;
 
   useEffect(() => {
-    runSubjects('subjects', MASTER_QUERY).catch(() => {});
+    runSubjects('subjects', MASTER_QUERY).catch(() => { });
   }, [runSubjects]);
 
   useEffect(() => {
-    runGrades('grade_levels', MASTER_QUERY).catch(() => {});
+    runGrades('grade_levels', MASTER_QUERY).catch(() => { });
   }, [runGrades]);
 
   useEffect(() => {
-    runAcademicYears({ status: 'active', sortBy: 'display_order', sortOrder: 'asc', limit: 100 }).catch(() => {});
+    runAcademicYears({ status: 'active', sortBy: 'display_order', sortOrder: 'asc', limit: 100 }).catch(() => { });
   }, [runAcademicYears]);
 
   const subjectOptions = useMemo(
@@ -233,11 +233,11 @@ export default function RelationshipsPage() {
   const { run: runFilterStudents } = filterStudents;
 
   useEffect(() => {
-    runFilterTeachers({ role: 'TEACHER', status: 'active', search: debouncedFilterTeacherSearch, limit: 50 }).catch(() => {});
+    runFilterTeachers({ role: 'TEACHER', status: 'active', search: debouncedFilterTeacherSearch, limit: 50 }).catch(() => { });
   }, [runFilterTeachers, debouncedFilterTeacherSearch]);
 
   useEffect(() => {
-    runFilterStudents({ role: 'STUDENT', status: 'active', search: debouncedFilterStudentSearch, limit: 50 }).catch(() => {});
+    runFilterStudents({ role: 'STUDENT', status: 'active', search: debouncedFilterStudentSearch, limit: 50 }).catch(() => { });
   }, [runFilterStudents, debouncedFilterStudentSearch]);
 
   const filterTeacherOptions = useMemo(
@@ -310,7 +310,7 @@ export default function RelationshipsPage() {
   );
 
   useEffect(() => {
-    refreshCurrentView().catch(() => {});
+    refreshCurrentView().catch(() => { });
   }, [refreshCurrentView]);
 
   useEffect(() => {
@@ -381,20 +381,20 @@ export default function RelationshipsPage() {
       className: 'hidden lg:table-cell',
       render: (row) => (row.academicYear?.name ? <Badge variant="neutral">{row.academicYear.name}</Badge> : '—'),
     },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (row) => (
-        <Select
-          value={row.status}
-          onChange={(e) => handleStatusChange(row.id, e.target.value)}
-          options={STATUS_OPTIONS}
-          disabled={savingId === row.id}
-          fieldClassName="mb-0"
-          className="!w-auto"
-        />
-      ),
-    },
+    // {
+    //   key: 'status',
+    //   header: 'Status',
+    //   render: (row) => (
+    //     <Select
+    //       value={row.status}
+    //       onChange={(e) => handleStatusChange(row.id, e.target.value)}
+    //       options={STATUS_OPTIONS}
+    //       disabled={savingId === row.id}
+    //       fieldClassName="mb-0"
+    //       className="!w-auto"
+    //     />
+    //   ),
+    // },
     {
       key: 'createdAt',
       header: 'Assigned Date',
@@ -438,130 +438,117 @@ export default function RelationshipsPage() {
         </Alert>
       )}
 
-      <Tabs items={VIEW_TABS} activeKey={view} onChange={setView} className="ui-field" />
 
-      <SectionHeader
-        title="Filters"
-        description="Narrow the list below by teacher, student, subject, grade, academic year or status."
-        actions={
-          hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              Clear filters
+      <FilterBar>
+        <SearchInput
+          fieldClassName="ui-filterbar__search ui-field--compact"
+          placeholder="Search by name or email"
+          value={search}
+          onChange={(e) => withFilterReset(setSearch)(e.target.value)}
+          onClear={() => withFilterReset(setSearch)('')}
+        />
+
+        <SearchableSelect
+          className="ui-field--compact"
+          label="Teacher"
+          options={filterTeacherOptions}
+          value={filterTeacherId}
+          onChange={withFilterReset(setFilterTeacherId)}
+          loading={filterTeachers.isLoading}
+          placeholder="Any teacher"
+          searchPlaceholder="Search teachers…"
+          onSearchChange={setFilterTeacherSearch}
+          filterLocally={false}
+        />
+
+        <SearchableSelect
+          className="ui-field--compact"
+          label="Student"
+          options={filterStudentOptions}
+          value={filterStudentId}
+          onChange={withFilterReset(setFilterStudentId)}
+          loading={filterStudents.isLoading}
+          placeholder="Any student"
+          searchPlaceholder="Search students…"
+          onSearchChange={setFilterStudentSearch}
+          filterLocally={false}
+        />
+
+        <SearchableSelect
+          className="ui-field--compact"
+          label="Subject"
+          options={subjectOptions}
+          value={filterSubject}
+          onChange={withFilterReset(setFilterSubject)}
+          loading={subjects.isLoading}
+          placeholder="Any subject"
+          searchPlaceholder="Search subjects…"
+        />
+
+        <SearchableSelect
+          className="ui-field--compact"
+          label="Grade"
+          options={gradeOptions}
+          value={filterGrade}
+          onChange={withFilterReset(setFilterGrade)}
+          loading={grades.isLoading}
+          placeholder="Any grade"
+          searchPlaceholder="Search grades…"
+        />
+
+        <SearchableSelect
+          className="ui-field--compact"
+          label="Academic Year"
+          options={academicYearOptions}
+          value={filterAcademicYearId}
+          onChange={withFilterReset(setFilterAcademicYearId)}
+          loading={academicYears.isLoading}
+          placeholder="Any academic year"
+          searchPlaceholder="Search academic years…"
+        />
+
+        <Select
+          fieldClassName="ui-field--compact"
+          label="Status"
+          value={filterStatus}
+          onChange={(e) => withFilterReset(setFilterStatus)(e.target.value)}
+          options={STATUS_FILTER_OPTIONS}
+        />
+
+        <Tooltip label="Clear filters" side="top">
+          <IconButton
+            icon={<LuFilterX aria-hidden="true" />}
+            label="Clear filters"
+            size="sm"
+            onClick={clearFilters}
+            disabled={!hasActiveFilters}
+          />
+        </Tooltip>
+      </FilterBar>
+
+      <DataTable
+        columns={columns}
+        data={list.data ?? []}
+        isLoading={list.isLoading}
+        error={list.error}
+        onRetry={loadList}
+        pagination={pagination}
+        onPageChange={goToPage}
+        emptyTitle={hasActiveFilters ? 'No assignments match these filters' : 'No assignments yet'}
+        emptyDescription={
+          hasActiveFilters
+            ? 'Try adjusting the filters above, or assign a teacher and student.'
+            : 'Assign a teacher and student to get started.'
+        }
+        emptyAction={
+          !hasActiveFilters && (
+            <Button startIcon={<LuUserPlus aria-hidden="true" />} onClick={() => assignModal.open()}>
+              Assign Teachers & Students
             </Button>
           )
         }
+        caption="Teacher and student assignments"
       />
-
-      <Card className="ui-field">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <SearchInput
-            placeholder="Search by name or email"
-            value={search}
-            onChange={(e) => withFilterReset(setSearch)(e.target.value)}
-            onClear={() => withFilterReset(setSearch)('')}
-          />
-
-          <SearchableSelect
-            label="Teacher"
-            options={filterTeacherOptions}
-            value={filterTeacherId}
-            onChange={withFilterReset(setFilterTeacherId)}
-            loading={filterTeachers.isLoading}
-            placeholder="Any teacher"
-            searchPlaceholder="Search teachers…"
-            onSearchChange={setFilterTeacherSearch}
-            filterLocally={false}
-          />
-
-          <SearchableSelect
-            label="Student"
-            options={filterStudentOptions}
-            value={filterStudentId}
-            onChange={withFilterReset(setFilterStudentId)}
-            loading={filterStudents.isLoading}
-            placeholder="Any student"
-            searchPlaceholder="Search students…"
-            onSearchChange={setFilterStudentSearch}
-            filterLocally={false}
-          />
-
-          <SearchableSelect
-            label="Subject"
-            options={subjectOptions}
-            value={filterSubject}
-            onChange={withFilterReset(setFilterSubject)}
-            loading={subjects.isLoading}
-            placeholder="Any subject"
-            searchPlaceholder="Search subjects…"
-          />
-
-          <SearchableSelect
-            label="Grade"
-            options={gradeOptions}
-            value={filterGrade}
-            onChange={withFilterReset(setFilterGrade)}
-            loading={grades.isLoading}
-            placeholder="Any grade"
-            searchPlaceholder="Search grades…"
-          />
-
-          <SearchableSelect
-            label="Academic Year"
-            options={academicYearOptions}
-            value={filterAcademicYearId}
-            onChange={withFilterReset(setFilterAcademicYearId)}
-            loading={academicYears.isLoading}
-            placeholder="Any academic year"
-            searchPlaceholder="Search academic years…"
-          />
-
-          <Select
-            label="Status"
-            value={filterStatus}
-            onChange={(e) => withFilterReset(setFilterStatus)(e.target.value)}
-            options={STATUS_FILTER_OPTIONS}
-          />
-        </div>
-      </Card>
-
-      {view === 'all' ? (
-        <DataTable
-          columns={columns}
-          data={list.data ?? []}
-          isLoading={list.isLoading}
-          error={list.error}
-          onRetry={loadList}
-          pagination={pagination}
-          onPageChange={goToPage}
-          emptyTitle={hasActiveFilters ? 'No assignments match these filters' : 'No assignments yet'}
-          emptyDescription={
-            hasActiveFilters
-              ? 'Try adjusting the filters above, or assign a teacher and student.'
-              : 'Assign a teacher and student to get started.'
-          }
-          emptyAction={
-            !hasActiveFilters && (
-              <Button startIcon={<LuUserPlus aria-hidden="true" />} onClick={() => assignModal.open()}>
-                Assign Teachers & Students
-              </Button>
-            )
-          }
-          caption="Teacher and student assignments"
-        />
-      ) : grouped.error ? (
-        <ErrorState error={grouped.error} onRetry={loadGrouped} />
-      ) : grouped.isLoading && !grouped.data ? (
-        <Loader message="Loading assignments…" />
-      ) : (
-        <GroupedAssignments
-          groups={grouped.data?.groups ?? []}
-          otherKey={view === 'byStudent' ? 'owner' : 'related'}
-          savingId={savingId}
-          onStatusChange={handleStatusChange}
-          onUnassign={removeModal.open}
-          onOpenAssign={() => assignModal.open()}
-        />
-      )}
 
       <AssignRelationshipsModal
         isOpen={assignModal.isOpen}

@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom';
 import { LuClock } from 'react-icons/lu';
 import { cn } from '../../../../lib/utils';
-import { formatMinutes } from './kidFormat';
-import { DueChip, StatusCircle, SubjectTile } from './PaperKit';
+import { formatMinutes, starsForMinutes } from './kidFormat';
+import { DueChip, StarRating, StatusCircle, SubjectTile } from './PaperKit';
 
 /**
- * One assignment as a small paper card: subject picture, title, time and
- * due date, and a status circle. The whole card is the link, so it's one
- * big tap target; its accessible name reads the title, time, due date and
- * status in order.
+ * One assignment as a small flat card: subject picture and status circle up
+ * top, title, then time/stars/due below. The whole card is the link, so
+ * it's one big tap target; its accessible name reads the title, time, due
+ * date and status in order.
  */
 export function TaskCard({ task, className }) {
   const assignment = task.assignment ?? {};
@@ -18,11 +18,14 @@ export function TaskCard({ task, className }) {
     <Link
       to={`/student/assignments/${assignment.id}`}
       className={cn(
-        'group flex min-h-24 items-center gap-4 rounded-3xl bg-kid-sheet p-4 no-underline shadow-paper transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-paper-lg',
+        'group flex min-h-24 flex-col gap-3 rounded-3xl bg-kid-sheet p-4 no-underline shadow-paper transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-paper-lg',
         className
       )}
     >
-      <SubjectTile subject={assignment.subject} size="sm" />
+      <span className="flex items-start justify-between">
+        <SubjectTile subject={assignment.subject} size="sm" />
+        <StatusCircle status={task.status} />
+      </span>
 
       <span className="min-w-0 flex-1">
         <span className="line-clamp-2 block font-kid-display text-lg font-medium leading-snug text-kid-ink">
@@ -35,11 +38,10 @@ export function TaskCard({ task, className }) {
               {minutes}
             </span>
           )}
+          <StarRating stars={starsForMinutes(assignment.estimatedMinutes)} size="sm" />
           <DueChip dueDate={assignment.dueDate} status={task.status} />
         </span>
       </span>
-
-      <StatusCircle status={task.status} />
     </Link>
   );
 }

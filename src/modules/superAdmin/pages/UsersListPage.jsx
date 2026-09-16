@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LuEye } from 'react-icons/lu';
+import { LuEye, LuFilterX } from 'react-icons/lu';
 import {
   PageHeader,
   Button,
   IconButton,
-  Card,
+  FilterBar,
   DataTable,
   SearchInput,
   Select,
@@ -186,6 +186,13 @@ export default function UsersListPage({ fixedRole = null }) {
 
   // Distinguishes "nothing here yet" from "nothing matched your filters".
   const hasFilters = Boolean(search || status || emailVerified || (!fixedRole && role));
+  const clearFilters = () => {
+    setSearch('');
+    setRole('');
+    setStatus('');
+    setEmailVerified('');
+    goToPage(1);
+  };
 
   const heading = fixedRole
     ? { title: `${ROLE_LABELS[fixedRole]}s`, description: DESCRIPTIONS[fixedRole] }
@@ -208,47 +215,51 @@ export default function UsersListPage({ fixedRole = null }) {
         }
       />
 
-      <Card flat className="ui-field">
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: 'var(--spacing-md)',
-          }}
-        >
-          <SearchInput
-            label="Search"
-            placeholder="Name or email"
-            value={search}
-            onChange={(e) => resetTo(setSearch)(e.target.value)}
-            onClear={() => resetTo(setSearch)('')}
-          />
-          {/* Hidden when the route already fixes the role. */}
-          {!fixedRole && (
-            <Select
-              label="Role"
-              options={ROLE_OPTIONS}
-              placeholder="All roles"
-              value={role}
-              onChange={(e) => resetTo(setRole)(e.target.value)}
-            />
-          )}
+      <FilterBar>
+        <SearchInput
+          fieldClassName="ui-filterbar__search ui-field--compact"
+          placeholder="Name or email"
+          value={search}
+          onChange={(e) => resetTo(setSearch)(e.target.value)}
+          onClear={() => resetTo(setSearch)('')}
+        />
+        {/* Hidden when the route already fixes the role. */}
+        {!fixedRole && (
           <Select
-            label="Status"
-            options={STATUS_OPTIONS}
-            placeholder="All statuses"
-            value={status}
-            onChange={(e) => resetTo(setStatus)(e.target.value)}
+            fieldClassName="ui-field--compact"
+            label="Role"
+            options={ROLE_OPTIONS}
+            placeholder="All roles"
+            value={role}
+            onChange={(e) => resetTo(setRole)(e.target.value)}
           />
-          <Select
-            label="Email verification"
-            options={VERIFIED_OPTIONS}
-            placeholder="Any"
-            value={emailVerified}
-            onChange={(e) => resetTo(setEmailVerified)(e.target.value)}
+        )}
+        <Select
+          fieldClassName="ui-field--compact"
+          label="Status"
+          options={STATUS_OPTIONS}
+          placeholder="All statuses"
+          value={status}
+          onChange={(e) => resetTo(setStatus)(e.target.value)}
+        />
+        <Select
+          fieldClassName="ui-field--compact"
+          label="Email verification"
+          options={VERIFIED_OPTIONS}
+          placeholder="Any"
+          value={emailVerified}
+          onChange={(e) => resetTo(setEmailVerified)(e.target.value)}
+        />
+        <Tooltip label="Clear filters" side="top">
+          <IconButton
+            icon={<LuFilterX aria-hidden="true" />}
+            label="Clear filters"
+            size="sm"
+            onClick={clearFilters}
+            disabled={!hasFilters}
           />
-        </div>
-      </Card>
+        </Tooltip>
+      </FilterBar>
 
       <DataTable
         columns={columns}

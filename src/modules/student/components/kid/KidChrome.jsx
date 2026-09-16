@@ -69,7 +69,7 @@ function ProfileTile() {
 
 export function KidSidebar() {
   return (
-    <aside className="kid-ui paper-grain relative hidden w-64 shrink-0 flex-col border-r-2 border-kid-edge bg-kid-sidebar px-4 pb-4 pt-6 lg:flex">
+    <aside className="kid-ui relative hidden w-64 shrink-0 flex-col border-r border-kid-edge bg-kid-sidebar px-4 pb-4 pt-6 lg:flex">
       <div className="px-1">
         <Brand />
       </div>
@@ -86,7 +86,7 @@ export function KidSidebar() {
 
       <div className="mt-auto flex flex-col gap-3">
         <SidebarLink item={KID_SETTINGS_ITEM} />
-        <hr className="m-0 h-0 border-0 border-t-2 border-dashed border-kid-edge" />
+        <hr className="m-0 h-0 border-0 border-t border-kid-edge" />
         <ProfileTile />
       </div>
     </aside>

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LuPencil, LuToggleLeft, LuToggleRight, LuTrash2 } from 'react-icons/lu';
+import { LuFilterX, LuPencil, LuToggleLeft, LuToggleRight, LuTrash2 } from 'react-icons/lu';
 import {
   PageHeader,
   Button,
   IconButton,
-  Card,
+  FilterBar,
   DataTable,
   SearchInput,
   Select,
@@ -158,6 +158,11 @@ export default function CurriculumMasterList({
   ];
 
   const hasFilters = Boolean(search || status);
+  const clearFilters = () => {
+    setSearch('');
+    setStatus('');
+    goToPage(1);
+  };
 
   return (
     <>
@@ -174,25 +179,33 @@ export default function CurriculumMasterList({
 
       {headerNote}
 
-      <Card flat className="ui-field">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--spacing-md)' }}>
-          <SearchInput
-            label="Search"
-            placeholder="Name"
-            value={search}
-            onChange={(e) => resetTo(setSearch)(e.target.value)}
-            onClear={() => resetTo(setSearch)('')}
+      <FilterBar>
+        <SearchInput
+          fieldClassName="ui-filterbar__search ui-field--compact"
+          placeholder="Name"
+          value={search}
+          onChange={(e) => resetTo(setSearch)(e.target.value)}
+          onClear={() => resetTo(setSearch)('')}
+        />
+        <Select
+          fieldClassName="ui-field--compact"
+          label="Status"
+          options={STATUS_OPTIONS}
+          placeholder="All statuses"
+          value={status}
+          onChange={(e) => resetTo(setStatus)(e.target.value)}
+        />
+        {filters}
+        <Tooltip label="Clear filters" side="top">
+          <IconButton
+            icon={<LuFilterX aria-hidden="true" />}
+            label="Clear filters"
+            size="sm"
+            onClick={clearFilters}
+            disabled={!hasFilters}
           />
-          <Select
-            label="Status"
-            options={STATUS_OPTIONS}
-            placeholder="All statuses"
-            value={status}
-            onChange={(e) => resetTo(setStatus)(e.target.value)}
-          />
-          {filters}
-        </div>
-      </Card>
+        </Tooltip>
+      </FilterBar>
 
       <DataTable
         columns={allColumns}

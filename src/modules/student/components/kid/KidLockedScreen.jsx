@@ -5,7 +5,7 @@ import { useAuth } from '../../../../hooks/useAuth';
 import { useSubscriptionAccess } from '../../../subscription/hooks/useSubscriptionAccess';
 import { KidButton } from './KidButton';
 import { StarIcon } from './KidIcons';
-import { PaperCard, Tape } from './PaperKit';
+import { PaperCard } from './PaperKit';
 
 /**
  * The K-5 version of the "locked until your family subscribes" screen - gentle
@@ -27,7 +27,6 @@ export function KidLockedScreen() {
   return (
     <div data-kid-page className="kid-ui mx-auto max-w-xl px-4 py-10 sm:px-8">
       <PaperCard tone="sky" className="flex flex-col items-center gap-4 px-6 py-10 text-center sm:px-10">
-        <Tape tone="yellow" className="-top-3 left-1/2 -translate-x-1/2 -rotate-2" />
         <StarIcon className="size-20" />
         <h1 className="font-kid-display text-3xl font-semibold text-kid-ink sm:text-4xl">
           My Learning Space is resting

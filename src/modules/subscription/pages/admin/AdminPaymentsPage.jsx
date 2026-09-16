@@ -5,14 +5,14 @@ import {
   LuDownload,
   LuEllipsis,
   LuEye,
-  LuRotateCcw,
+  LuFilterX,
   LuUndo2,
   LuWallet,
 } from 'react-icons/lu';
 import {
   PageHeader,
   Button,
-  Card,
+  FilterBar,
   DataTable,
   Select,
   SearchInput,
@@ -28,6 +28,7 @@ import {
   Alert,
   Toast,
 } from '../../../../components/common';
+import { Tooltip } from '../../../../components/ui/tooltip';
 import { useApi } from '../../../../hooks/useApi';
 import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
@@ -348,55 +349,46 @@ export default function AdminPaymentsPage() {
         />
       </div>
 
-      <Card flat className="ui-field">
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-md)', alignItems: 'flex-end' }}>
-          <div style={{ flex: '1 1 220px', minWidth: 220 }}>
-            <SearchInput
-              value={search}
-              onChange={(e) => resetTo(setSearch)(e.target.value)}
-              onClear={() => resetTo(setSearch)('')}
-              placeholder="Search parent, email, transaction ID…"
-              aria-label="Search payments"
-            />
-          </div>
-          <div
-            style={{
-              flex: '2 1 480px',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-              gap: 'var(--spacing-md)',
-            }}
-          >
-            <Select
-              label="Status"
-              options={STATUS_OPTIONS}
-              placeholder="All statuses"
-              value={status}
-              onChange={(e) => resetTo(setStatus)(e.target.value)}
-            />
-            <Select
-              label="Type"
-              options={TYPE_OPTIONS}
-              placeholder="All types"
-              value={transactionType}
-              onChange={(e) => resetTo(setTransactionType)(e.target.value)}
-            />
-            <Input label="From" type="date" value={from} onChange={(e) => resetTo(setFrom)(e.target.value)} />
-            <Input label="To" type="date" value={to} onChange={(e) => resetTo(setTo)(e.target.value)} />
-          </div>
+      <FilterBar>
+        <SearchInput
+          fieldClassName="ui-filterbar__search ui-field--compact"
+          value={search}
+          onChange={(e) => resetTo(setSearch)(e.target.value)}
+          onClear={() => resetTo(setSearch)('')}
+          placeholder="Search parent, email, transaction ID…"
+          aria-label="Search payments"
+        />
+        <Select
+          fieldClassName="ui-field--compact"
+          label="Status"
+          options={STATUS_OPTIONS}
+          placeholder="All statuses"
+          value={status}
+          onChange={(e) => resetTo(setStatus)(e.target.value)}
+        />
+        <Select
+          fieldClassName="ui-field--compact"
+          label="Type"
+          options={TYPE_OPTIONS}
+          placeholder="All types"
+          value={transactionType}
+          onChange={(e) => resetTo(setTransactionType)(e.target.value)}
+        />
+        <Input fieldClassName="ui-field--compact-labeled" label="From" type="date" value={from} onChange={(e) => resetTo(setFrom)(e.target.value)} />
+        <Input fieldClassName="ui-field--compact-labeled" label="To" type="date" value={to} onChange={(e) => resetTo(setTo)(e.target.value)} />
 
-          <Button
-            variant="secondary"
+        <Tooltip label="Clear filters" side="top">
+          <IconButton
+            icon={<LuFilterX aria-hidden="true" />}
+            label="Clear filters"
+            size="sm"
             onClick={resetFilters}
             disabled={!hasFilters}
-            startIcon={<LuRotateCcw aria-hidden="true" />}
-          >
-            Reset
-          </Button>
-        </div>
-      </Card>
+          />
+        </Tooltip>
+      </FilterBar>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--spacing-sm)' }}>
+      {/* <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--spacing-sm)' }}>
         <div style={{ width: 140 }}>
           <Select
             label="Rows per page"
@@ -406,7 +398,7 @@ export default function AdminPaymentsPage() {
             reserveHelper={false}
           />
         </div>
-      </div>
+      </div> */}
 
       <DataTable
         columns={columns}
