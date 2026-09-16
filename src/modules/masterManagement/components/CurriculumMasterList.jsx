@@ -38,6 +38,9 @@ const STATUS_OPTIONS = [
  * @param filters     extra filter controls rendered beside search/status
  * @param rowActions  (row) => extra buttons before Edit
  * @param createTo    where "Add" goes (defaults to `${basePath}/create`)
+ * @param allowDelete false hides the Delete action entirely - for a master
+ *                    (e.g. Question Types) whose rows map 1:1 to hardcoded
+ *                    application code and has no delete route to call.
  */
 export default function CurriculumMasterList({
   title,
@@ -51,6 +54,7 @@ export default function CurriculumMasterList({
   rowActions,
   createTo,
   headerNote = null,
+  allowDelete = true,
 }) {
   const navigate = useNavigate();
   const pagination = usePagination();
@@ -144,14 +148,16 @@ export default function CurriculumMasterList({
               />
             </Tooltip>
           )}
-          <Tooltip label="Delete" side="top">
-            <IconButton
-              icon={<LuTrash2 aria-hidden="true" />}
-              label="Delete"
-              size="sm"
-              onClick={() => setConfirm({ type: 'delete', item: row })}
-            />
-          </Tooltip>
+          {allowDelete && (
+            <Tooltip label="Delete" side="top">
+              <IconButton
+                icon={<LuTrash2 aria-hidden="true" />}
+                label="Delete"
+                size="sm"
+                onClick={() => setConfirm({ type: 'delete', item: row })}
+              />
+            </Tooltip>
+          )}
         </div>
       ),
     },

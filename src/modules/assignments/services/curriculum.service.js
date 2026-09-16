@@ -13,5 +13,7 @@ export const listSubjects = (grade) => api.get('/curriculum/subjects', gradePara
 export const listTopics = (subjectId, grade) => api.get(`/curriculum/subjects/${subjectId}/topics`, gradeParams(grade));
 /** [{ id, name, description, url }] */
 export const listAudioTracks = () => api.get('/curriculum/audio-tracks');
+/** [{ id, code, name, description }] - `code` is one of QuestionBuilder's 4 hardcoded answer types; name/description are admin-editable labels for it. */
+export const listQuestionTypes = (grade) => api.get('/curriculum/question-types', gradeParams(grade));
 
-export default { listTaskTypes, listSubjects, listTopics, listAudioTracks };
+export default { listTaskTypes, listSubjects, listTopics, listAudioTracks, listQuestionTypes };

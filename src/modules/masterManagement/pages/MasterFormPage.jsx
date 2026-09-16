@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   PageHeader,
@@ -18,6 +18,7 @@ import { toast } from '../../../hooks/useToast';
 import { required } from '../../../utils/validation';
 import masterGenericService from '../services/masterGeneric.service';
 import DynamicExtraFields from '../components/DynamicExtraFields';
+import IconField from '../components/IconField';
 
 /**
  * Generic master create/edit form - one screen shared by every simple lookup
@@ -40,6 +41,11 @@ export default function MasterFormPage() {
     if (isEdit) fetchItem(masterType, id).catch(() => {});
   }, [isEdit, masterType, id, fetchItem]);
 
+  // The icon upload picker's own state (mode/file/removed) lives outside
+  // useForm, same as ThemeFormPage's colour `config` - it isn't a plain
+  // scalar field, it travels as multipart when there's a file to send.
+  const [iconState, setIconState] = useState({ mode: 'text', file: null, removed: false });
+
   // Extra fields live directly on the form's own values (keyed by field.key)
   // so they share the same validation/error machinery as the base fields.
   const extraSchema = Object.fromEntries(
@@ -57,11 +63,17 @@ export default function MasterFormPage() {
         name: values.name,
         code: values.code || null,
         description: values.description || null,
-        icon: values.icon || null,
         displayOrder: Number(values.displayOrder) || 0,
         extra,
       };
       if (!isEdit) payload.isActive = values.isActive;
+
+      // icon/iconFile/removeIcon are mutually exclusive - only send whichever
+      // one the icon picker actually changed, so an untouched uploaded icon
+      // is never wiped out just by opening the "Upload image" tab.
+      if (iconState.file) payload.iconFile = iconState.file;
+      else if (iconState.removed) payload.removeIcon = true;
+      else if (iconState.mode === 'text') payload.icon = values.icon || '';
 
       const { data } = isEdit
         ? await masterGenericService.updateItem(masterType, id, payload)
@@ -112,7 +124,13 @@ export default function MasterFormPage() {
           <Input label="Name" required {...form.getFieldProps('name')} />
           <Input label="Code" {...form.getFieldProps('code')} />
           <Textarea label="Description" {...form.getFieldProps('description')} />
-          <Input label="Icon" hint="An emoji or icon key" {...form.getFieldProps('icon')} />
+          <IconField
+            key={existing?.id ?? 'new'}
+            textValue={form.values.icon}
+            onTextChange={(value) => form.setFieldValue('icon', value)}
+            iconUrl={existing?.iconUrl ?? null}
+            onStateChange={setIconState}
+          />
           <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />
 
           {!isEdit && (

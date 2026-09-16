@@ -9,6 +9,8 @@ import { createContext, useContext } from 'react';
  *   checkIn    { id, date, mood, energy, availableMinutes, ... } or null
  *   save       (values) => Promise<{ checkIn, created, pointsAwarded }>
  *   refresh    re-fetch from the server
+ *   moods      active Emotional States: [{ code, name, icon, iconUrl, backgroundColor }]
+ *   moodsLoading  true only while moods have never loaded yet
  */
 export const TodayCheckInContext = createContext(null);
 

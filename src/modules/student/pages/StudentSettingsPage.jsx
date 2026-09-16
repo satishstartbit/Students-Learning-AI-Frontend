@@ -11,8 +11,8 @@ import { useStudentExperience } from '../hooks/useStudentExperience';
  */
 export default function StudentSettingsPage() {
   const { profile, grade } = useStudentExperience();
-  const { checkIn } = useTodayCheckIn();
-  const mood = findMood(checkIn?.mood);
+  const { checkIn, moods } = useTodayCheckIn();
+  const mood = findMood(moods, checkIn?.mood);
 
   return (
     <>
@@ -44,7 +44,12 @@ export default function StudentSettingsPage() {
       >
         {checkIn ? (
           <p style={{ margin: 0 }}>
-            <span aria-hidden="true">{mood?.emoji}</span> {mood?.label} · Energy {checkIn.energy}/5
+            {mood?.iconUrl ? (
+              <img src={mood.iconUrl} alt="" aria-hidden="true" style={{ width: 16, height: 16, borderRadius: '50%', verticalAlign: 'text-bottom' }} />
+            ) : (
+              <span aria-hidden="true">{mood?.icon || '🙂'}</span>
+            )}{' '}
+            {mood?.name} · Energy {checkIn.energy}/5
             {checkIn.availableMinutes != null ? ` · ${checkIn.availableMinutes} min` : ''}
           </p>
         ) : (

@@ -104,10 +104,12 @@ export default function TeacherProfilePage() {
             )}
 
             <form onSubmit={form.handleSubmit} noValidate>
-              <Input label="First name" required {...form.getFieldProps('firstName')} />
-              <Input label="Last name" {...form.getFieldProps('lastName')} />
-              <Input label="Email" type="email" required {...form.getFieldProps('email')} />
-              <Input label="Phone" type="tel" {...form.getFieldProps('phone')} />
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input label="First name" required {...form.getFieldProps('firstName')} />
+                <Input label="Last name" {...form.getFieldProps('lastName')} />
+                <Input label="Email" type="email" required {...form.getFieldProps('email')} />
+                <Input label="Phone" type="tel" {...form.getFieldProps('phone')} />
+              </div>
 
               <SectionHeader title="Address" as="h3" />
               <AddressFields

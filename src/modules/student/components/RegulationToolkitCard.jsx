@@ -35,7 +35,7 @@ function toolsForTile(categories, tile) {
 }
 
 export function RegulationToolkitCard() {
-  const { checkIn } = useTodayCheckIn();
+  const { checkIn, moods } = useTodayCheckIn();
   const { data: categories, isLoading, error } = useApi(regulationToolkitService.listCategories, { immediate: true });
   const recommendation = useApi(regulationToolkitService.getRecommendation);
   const { run: runRecommendation } = recommendation;
@@ -67,7 +67,7 @@ export function RegulationToolkitCard() {
   );
   const selectedTool = tileTools[toolIndex ?? defaultIndex] ?? tileTools[0] ?? null;
 
-  const mood = findMood(checkIn?.mood);
+  const mood = findMood(moods, checkIn?.mood);
 
   return (
     <Card
@@ -83,7 +83,7 @@ export function RegulationToolkitCard() {
 
       {suggestedTool && mood && (
         <Alert variant="info" className="ui-field">
-          You checked in feeling {mood.label.toLowerCase()}
+          You checked in feeling {mood.name.toLowerCase()}
           {checkIn.availableMinutes ? ` with ${checkIn.availableMinutes} minutes free` : ''} —{' '}
           <strong>{suggestedTool.name}</strong> is a good place to start.
         </Alert>

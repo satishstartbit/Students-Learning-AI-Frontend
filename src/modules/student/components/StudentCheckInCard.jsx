@@ -3,7 +3,7 @@ import { Alert, Badge, Button, Card, Loader } from '../../../components/common';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { useTodayCheckIn } from '../../checkIn/hooks/useTodayCheckIn';
-import { ENERGY_LEVELS, MINUTES_OPTIONS, MOODS, findMood } from '../../checkIn/moods';
+import { ENERGY_LEVELS, MINUTES_OPTIONS, findMood } from '../../checkIn/moods';
 
 /**
  * Today's check-in for Grade 6+ - how they feel, their energy, and how much
@@ -21,7 +21,7 @@ const FIELDSET = { border: 0, padding: 0, margin: '0 0 var(--spacing-lg)' };
 const LEGEND = { marginBottom: 'var(--spacing-sm)' };
 const ROW = { display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-sm)' };
 
-function CheckInForm({ initial, submitLabel, onSubmit, onCancel }) {
+function CheckInForm({ moods, initial, submitLabel, onSubmit, onCancel }) {
   const [mood, setMood] = useState(initial?.mood ?? null);
   const [energy, setEnergy] = useState(initial?.energy ?? null);
   const [minutes, setMinutes] = useState(initial?.availableMinutes ?? null);
@@ -63,18 +63,29 @@ function CheckInForm({ initial, submitLabel, onSubmit, onCancel }) {
           How are you feeling?
         </legend>
         <div style={ROW}>
-          {MOODS.map((m) => (
-            <button
-              key={m.value}
-              type="button"
-              onClick={() => setMood(m.value)}
-              className="ui-btn ui-btn--sm"
-              aria-pressed={mood === m.value}
-              style={chipStyle(mood === m.value)}
-            >
-              <span aria-hidden="true">{m.emoji}</span> {m.label}
-            </button>
-          ))}
+          {moods.map((m) => {
+            const selected = mood === m.code;
+            const style = selected
+              ? chipStyle(true)
+              : { ...chipStyle(false), ...(m.backgroundColor ? { background: m.backgroundColor } : null) };
+            return (
+              <button
+                key={m.code}
+                type="button"
+                onClick={() => setMood(m.code)}
+                className="ui-btn ui-btn--sm"
+                aria-pressed={selected}
+                style={style}
+              >
+                {m.iconUrl ? (
+                  <img src={m.iconUrl} alt="" aria-hidden="true" style={{ width: 16, height: 16, borderRadius: '50%', verticalAlign: 'text-bottom' }} />
+                ) : (
+                  <span aria-hidden="true">{m.icon || '🙂'}</span>
+                )}{' '}
+                {m.name}
+              </button>
+            );
+          })}
         </div>
       </fieldset>
 
@@ -143,13 +154,18 @@ function CheckInForm({ initial, submitLabel, onSubmit, onCancel }) {
   );
 }
 
-function CheckInSummary({ checkIn, onChange }) {
-  const mood = findMood(checkIn.mood);
+function CheckInSummary({ moods, checkIn, onChange }) {
+  const mood = findMood(moods, checkIn.mood);
   return (
     <>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
         <Badge variant="primary">
-          <span aria-hidden="true">{mood?.emoji}</span> {mood?.label ?? checkIn.mood}
+          {mood?.iconUrl ? (
+            <img src={mood.iconUrl} alt="" aria-hidden="true" style={{ width: 16, height: 16, borderRadius: '50%', verticalAlign: 'text-bottom' }} />
+          ) : (
+            <span aria-hidden="true">{mood?.icon || '🙂'}</span>
+          )}{' '}
+          {mood?.name ?? checkIn.mood}
         </Badge>
         <span className="ui-hint">Energy {checkIn.energy}/{ENERGY_LEVELS.length}</span>
         {checkIn.availableMinutes != null && <span className="ui-hint">· {checkIn.availableMinutes} min</span>}
@@ -162,10 +178,10 @@ function CheckInSummary({ checkIn, onChange }) {
 }
 
 export function StudentCheckInCard({ title = "Today's check-in", onSaved }) {
-  const { checkIn, isLoading, save } = useTodayCheckIn();
+  const { checkIn, isLoading, save, moods, moodsLoading } = useTodayCheckIn();
   const [editing, setEditing] = useState(false);
 
-  if (isLoading) {
+  if (isLoading || moodsLoading) {
     return (
       <Card title={title}>
         <Loader message="Loading your check-in…" />
@@ -185,10 +201,11 @@ export function StudentCheckInCard({ title = "Today's check-in", onSaved }) {
   return (
     <Card title={title} subtitle={checkIn ? "You've checked in today." : 'Takes a few seconds, once a day.'}>
       {checkIn && !editing ? (
-        <CheckInSummary checkIn={checkIn} onChange={() => setEditing(true)} />
+        <CheckInSummary moods={moods} checkIn={checkIn} onChange={() => setEditing(true)} />
       ) : (
         <CheckInForm
           key={checkIn?.updatedAt ?? 'new'}
+          moods={moods}
           initial={checkIn}
           submitLabel={checkIn ? 'Update check-in' : 'Check in'}
           onSubmit={handleSubmit}

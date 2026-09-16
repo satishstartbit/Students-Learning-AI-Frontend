@@ -17,7 +17,7 @@ import { describeNextPath, safeNextPath } from '../nextPath';
 export default function CheckInPage() {
   const [params] = useSearchParams();
   const next = safeNextPath(params.get('next'));
-  const { checkedIn, checkIn } = useTodayCheckIn();
+  const { checkedIn, checkIn, moods } = useTodayCheckIn();
 
   const recommendation = useApi(regulationToolkitService.getRecommendation);
   const { run } = recommendation;
@@ -26,7 +26,7 @@ export default function CheckInPage() {
     if (checkedIn) run().catch(() => {});
   }, [checkedIn, checkIn?.updatedAt, run]);
 
-  const mood = findMood(checkIn?.mood);
+  const mood = findMood(moods, checkIn?.mood);
   const tool = recommendation.data?.tool ?? null;
 
   return (
@@ -53,7 +53,7 @@ export default function CheckInPage() {
         <StudentCheckInCard />
 
         {checkedIn && (
-          <Card title="You're checked in" subtitle={mood ? `Feeling ${mood.label.toLowerCase()} today.` : undefined}>
+          <Card title="You're checked in" subtitle={mood ? `Feeling ${mood.name.toLowerCase()} today.` : undefined}>
             {tool ? (
               <p style={{ marginTop: 0 }}>
                 Suggested for how you feel: <strong>{tool.name}</strong>

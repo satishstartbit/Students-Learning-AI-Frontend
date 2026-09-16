@@ -43,6 +43,21 @@ export default function DynamicExtraFields({ fields = [], values = {}, errors = 
           );
         }
 
+        if (field.type === 'color') {
+          return (
+            <Input
+              key={field.key}
+              name={field.key}
+              label={label}
+              type="color"
+              required={field.required}
+              value={value || '#000000'}
+              onChange={(e) => onChange(field.key, e.target.value)}
+              error={error}
+            />
+          );
+        }
+
         if (field.type === 'integer' || field.type === 'decimal') {
           return (
             <Input

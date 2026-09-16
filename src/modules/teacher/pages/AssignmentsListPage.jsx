@@ -1,20 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { LuFilterX } from 'react-icons/lu';
 import {
   PageHeader,
-  Card,
+  FilterBar,
   SearchInput,
+  IconButton,
   DataTable,
   StatusBadge,
   Button,
   ConfirmationModal,
   ProgressBar,
-  SectionHeader,
   Select,
   DatePicker,
   Toast,
 } from '../../../components/common';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
+import { Tooltip } from '../../../components/ui/tooltip';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -261,53 +263,64 @@ export default function AssignmentsListPage() {
         }
       />
 
-      <SectionHeader
-        title="Filters"
-        actions={
-          hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              Clear filters
-            </Button>
-          )
-        }
-      />
+      <FilterBar>
+        <SearchInput
+          fieldClassName="ui-filterbar__search ui-field--compact"
+          placeholder="Search by title"
+          value={search}
+          onChange={(e) => withFilterReset(setSearch)(e.target.value)}
+          onClear={() => withFilterReset(setSearch)('')}
+        />
+        <SearchableSelect
+          className="ui-field--compact"
+          label="Subject"
+          options={subjectOptions}
+          value={subject}
+          onChange={withFilterReset(setSubject)}
+          loading={subjects.isLoading}
+          placeholder="Any subject"
+          searchPlaceholder="Search subjects…"
+        />
+        <SearchableSelect
+          className="ui-field--compact"
+          label="Grade"
+          options={gradeOptions}
+          value={grade}
+          onChange={withFilterReset(setGrade)}
+          loading={grades.isLoading}
+          placeholder="Any grade"
+          searchPlaceholder="Search grades…"
+        />
+        <Select
+          fieldClassName="ui-field--compact"
+          label="Status"
+          value={status}
+          onChange={(e) => withFilterReset(setStatus)(e.target.value)}
+          options={STATUS_FILTER_OPTIONS}
+        />
+        <DatePicker
+          fieldClassName="ui-field--compact-labeled"
+          label="Due after"
+          value={dueAfter}
+          onChange={(e) => withFilterReset(setDueAfter)(e.target.value)}
+        />
+        <DatePicker
+          fieldClassName="ui-field--compact-labeled"
+          label="Due before"
+          value={dueBefore}
+          onChange={(e) => withFilterReset(setDueBefore)(e.target.value)}
+        />
 
-      <Card className="ui-field">
-        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
-          <SearchInput
-            placeholder="Search by title"
-            value={search}
-            onChange={(e) => withFilterReset(setSearch)(e.target.value)}
-            onClear={() => withFilterReset(setSearch)('')}
+        <Tooltip label="Clear filters" side="top">
+          <IconButton
+            icon={<LuFilterX aria-hidden="true" />}
+            label="Clear filters"
+            size="sm"
+            onClick={clearFilters}
+            disabled={!hasActiveFilters}
           />
-          <SearchableSelect
-            label="Subject"
-            options={subjectOptions}
-            value={subject}
-            onChange={withFilterReset(setSubject)}
-            loading={subjects.isLoading}
-            placeholder="Any subject"
-            searchPlaceholder="Search subjects…"
-          />
-          <SearchableSelect
-            label="Grade"
-            options={gradeOptions}
-            value={grade}
-            onChange={withFilterReset(setGrade)}
-            loading={grades.isLoading}
-            placeholder="Any grade"
-            searchPlaceholder="Search grades…"
-          />
-          <Select
-            label="Status"
-            value={status}
-            onChange={(e) => withFilterReset(setStatus)(e.target.value)}
-            options={STATUS_FILTER_OPTIONS}
-          />
-          <DatePicker label="Due after" value={dueAfter} onChange={(e) => withFilterReset(setDueAfter)(e.target.value)} />
-          <DatePicker label="Due before" value={dueBefore} onChange={(e) => withFilterReset(setDueBefore)(e.target.value)} />
-        </div>
-      </Card>
+        </Tooltip>
+      </FilterBar>
 
       <DataTable
         columns={columns}

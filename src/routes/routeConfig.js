@@ -70,6 +70,8 @@ import SchoolsListPage from '../modules/masterManagement/pages/schools/SchoolsLi
 import SchoolFormPage from '../modules/masterManagement/pages/schools/SchoolFormPage';
 import TaskTypesListPage from '../modules/masterManagement/pages/curriculum/TaskTypesListPage';
 import TaskTypeFormPage from '../modules/masterManagement/pages/curriculum/TaskTypeFormPage';
+import QuestionTypesListPage from '../modules/masterManagement/pages/curriculum/QuestionTypesListPage';
+import QuestionTypeFormPage from '../modules/masterManagement/pages/curriculum/QuestionTypeFormPage';
 import CurriculumSubjectsListPage from '../modules/masterManagement/pages/curriculum/CurriculumSubjectsListPage';
 import CurriculumSubjectFormPage from '../modules/masterManagement/pages/curriculum/CurriculumSubjectFormPage';
 import TopicsListPage from '../modules/masterManagement/pages/curriculum/TopicsListPage';
@@ -279,6 +281,9 @@ export const SUPER_ADMIN_ROUTES = {
     { path: 'masters/audio-tracks', label: 'Background Audio', permissions: [PERMISSIONS.MASTER_READ], component: AudioTracksListPage },
     { path: 'masters/audio-tracks/create', label: 'Add sound', permissions: [PERMISSIONS.MASTER_CREATE], component: AudioTrackFormPage },
     { path: 'masters/audio-tracks/:id/edit', label: 'Edit sound', permissions: [PERMISSIONS.MASTER_UPDATE], component: AudioTrackFormPage },
+    { path: 'masters/question-types', label: 'Question Types', permissions: [PERMISSIONS.MASTER_READ], component: QuestionTypesListPage },
+    { path: 'masters/question-types/create', label: 'Add question type', permissions: [PERMISSIONS.MASTER_CREATE], component: QuestionTypeFormPage },
+    { path: 'masters/question-types/:id/edit', label: 'Edit question type', permissions: [PERMISSIONS.MASTER_UPDATE], component: QuestionTypeFormPage },
 
     // Generic master engine catch-all - must stay after every dedicated path above.
     { path: 'masters/:masterType', label: 'Master data', permissions: [PERMISSIONS.MASTER_READ], component: MasterListPage },

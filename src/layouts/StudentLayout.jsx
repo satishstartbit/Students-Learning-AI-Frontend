@@ -116,6 +116,7 @@ export function StudentLayout({ children }) {
       {content}
     </AuthenticatedLayout>
   );
+  
 
   return (
     <StudentExperienceContext.Provider value={experience}>

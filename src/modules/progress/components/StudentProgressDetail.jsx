@@ -1,7 +1,7 @@
 import { Badge, DataTable, SectionHeader } from '../../../components/common';
 import { formatDateKey, formatTime } from '../../../utils/date';
 import { formatName } from '../../../utils/format';
-import { ENERGY_LEVELS, findMood } from '../../checkIn/moods';
+import { ENERGY_LEVELS, describeMood } from '../../checkIn/moods';
 import { TASK_STAGES } from '../stages';
 import CheckInBadge from './CheckInBadge';
 import TaskCounts from './TaskCounts';
@@ -66,10 +66,10 @@ export function StudentProgressDetail({ progress, showTeacher = false }) {
       key: 'mood',
       header: 'Feeling',
       render: (row) => {
-        const mood = findMood(row.mood);
+        const mood = describeMood(row.mood);
         return (
           <>
-            <span aria-hidden="true">{mood?.emoji}</span> {mood?.label ?? row.mood}
+            <span aria-hidden="true">{mood.emoji}</span> {mood.name}
           </>
         );
       },

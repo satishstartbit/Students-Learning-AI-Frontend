@@ -1,12 +1,34 @@
 import { useCallback, useMemo } from 'react';
 import { useApi } from '../../../hooks/useApi';
 import checkInService from '../services/checkIn.service';
+import onboardingService from '../../onboarding/services/onboarding.service';
 import { TodayCheckInContext } from '../hooks/useTodayCheckIn';
 
-/** Loads today's check-in once and shares it - see hooks/useTodayCheckIn.js. */
+/**
+ * Loads today's check-in once and shares it - see hooks/useTodayCheckIn.js.
+ *
+ * Also loads the active Emotional States (Master Management, admin-editable -
+ * icon, uploaded icon image, background colour) once here rather than in
+ * every screen that renders the mood picker, the same "one shared fetch" as
+ * today's check-in itself.
+ */
 export function TodayCheckInProvider({ children }) {
   const today = useApi(checkInService.getToday, { immediate: true });
   const { run, setData } = today;
+
+  const moodsApi = useApi(onboardingService.listLookup, { immediate: true, args: ['emotional_states'] });
+
+  const moods = useMemo(
+    () =>
+      (moodsApi.data ?? []).map((item) => ({
+        code: item.code,
+        name: item.name,
+        icon: item.icon ?? null,
+        iconUrl: item.iconUrl ?? null,
+        backgroundColor: item.extra?.background_color ?? null,
+      })),
+    [moodsApi.data]
+  );
 
   const save = useCallback(
     async (values) => {
@@ -29,8 +51,10 @@ export function TodayCheckInProvider({ children }) {
       error: today.data ? null : today.error,
       save,
       refresh,
+      moods,
+      moodsLoading: moodsApi.isLoading && !moodsApi.data,
     }),
-    [today.data, today.isLoading, today.error, save, refresh]
+    [today.data, today.isLoading, today.error, save, refresh, moods, moodsApi.isLoading, moodsApi.data]
   );
 
   return <TodayCheckInContext.Provider value={value}>{children}</TodayCheckInContext.Provider>;

@@ -15,6 +15,7 @@ import { IMAGE_MIME_TYPES } from '../../utils/file';
 export function ImageUpload({
   name = 'image',
   label,
+  dropzoneLabel,
   hint,
   error,
   previews = [],
@@ -79,7 +80,7 @@ export function ImageUpload({
           🖼
         </span>
         <span className="ui-dropzone__title">
-          Add {multiple ? 'photos' : 'a photo'} of the assignment
+          {dropzoneLabel ?? `Add ${multiple ? 'photos' : 'a photo'} of the assignment`}
         </span>
         <span className="ui-hint">JPG, PNG, WEBP or HEIC</span>
 

@@ -42,16 +42,37 @@ function QuestionsPreview({ questions }) {
             <strong>
               {index + 1}. {q.prompt}
             </strong>
-            {q.answerType === 'mcq' ? (
+            {q.required === false && <span className="ui-hint"> (optional)</span>}
+            {q.points > 1 && <span className="ui-hint"> · {q.points} pts</span>}
+
+            {q.answerType === 'passage_mcq' && q.passage && (
+              <p className="ui-hint" style={{ margin: '4px 0', whiteSpace: 'pre-wrap' }}>
+                {q.passage}
+              </p>
+            )}
+
+            {(q.answerType === 'mcq' || q.answerType === 'passage_mcq') && (
               <ul style={{ margin: '4px 0 0', paddingLeft: 'var(--spacing-lg)' }}>
                 {q.options.map((o) => (
                   <li key={o.id} style={o.id === q.correctOptionId ? { fontWeight: 600, color: 'var(--color-success-fg)' } : undefined}>
-                    {o.text}
+                    {o.image ? <QuestionPicture image={o.image} size="xs" /> : o.text}
                     {o.id === q.correctOptionId && ' ✓ correct'}
                   </li>
                 ))}
               </ul>
-            ) : (
+            )}
+
+            {q.answerType === 'matching' && (
+              <ul style={{ margin: '4px 0 0', paddingLeft: 'var(--spacing-lg)' }}>
+                {q.pairs.map((pair) => (
+                  <li key={pair.id}>
+                    {pair.left.text ?? 'Picture'} → {pair.right.text ?? 'picture'}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {q.answerType === 'free_text' && (
               <div className="ui-hint">Written answer{q.expectedAnswer ? ` - expecting: ${q.expectedAnswer}` : ''}</div>
             )}
           </div>

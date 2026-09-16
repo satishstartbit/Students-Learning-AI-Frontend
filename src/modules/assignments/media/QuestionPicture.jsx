@@ -3,7 +3,7 @@
  * image (uploaded photo, GIF or sticker). `size` sets the box: 'sm' for
  * lists, 'md' for the builder, 'lg' for a student answering.
  */
-const BOX = { sm: 72, md: 160, lg: 220 };
+const BOX = { xs: 56, sm: 72, md: 160, lg: 220 };
 
 export default function QuestionPicture({ image, size = 'md', className = '' }) {
   if (!image) return null;

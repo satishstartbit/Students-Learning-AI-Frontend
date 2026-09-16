@@ -4,9 +4,11 @@ import { LuArrowRight, LuCheck, LuCloudRain, LuMoon, LuShuffle, LuTarget, LuWave
 import { Confetti } from '../../../../components/ui/confetti';
 import { cn } from '../../../../lib/utils';
 import { getErrorMessage } from '../../../../utils/errorHandler';
-import { ENERGY_LEVELS, MOODS, findMood } from '../../../checkIn/moods';
+import { ENERGY_LEVELS, findMood, usesLegacyArt } from '../../../checkIn/moods';
 import { useMotionAllowed } from '../../hooks/useKidPreferences';
+import { AdminMoodTile } from './AdminMoodTile';
 import { KidButton } from './KidButton';
+import { kidCopyFor } from './kidMoodCopy';
 
 const CONFETTI_COLOURS = ['#f6c445', '#f4b6c1', '#1f7a80', '#7b68d6', '#95c07b'];
 
@@ -32,7 +34,7 @@ const ENERGY_WORDS = { 1: 'a little', 2: 'a little', 3: 'some', 4: 'lots of', 5:
  * matching the student mockup: a mood + energy picker, then a "Great job!"
  * thank-you screen. Opened from CheckInCard's compact trigger card.
  */
-export function CheckInModal({ isOpen, onClose, initial, onSave, firstName }) {
+export function CheckInModal({ isOpen, onClose, initial, onSave, firstName, moods = [] }) {
   const [step, setStep] = useState('ask');
   const [mood, setMood] = useState(initial?.mood ?? null);
   const [energy, setEnergy] = useState(initial?.energy ?? null);
@@ -113,7 +115,7 @@ export function CheckInModal({ isOpen, onClose, initial, onSave, firstName }) {
   const container = document.querySelector('.kid-theme') ?? document.body;
 
   const ready = Boolean(mood && energy);
-  const currentMood = findMood(mood);
+  const currentMood = findMood(moods, mood);
 
   const submit = async () => {
     if (!ready || inFlight.current) return;
@@ -187,32 +189,39 @@ export function CheckInModal({ isOpen, onClose, initial, onSave, firstName }) {
               <fieldset>
                 <legend className="sr-only">How are you feeling?</legend>
                 <div className="grid grid-cols-3 gap-2.5">
-                  {MOODS.map((m) => {
-                    const tile = MOOD_TILE[m.value];
-                    const Icon = tile.icon;
-                    const checked = mood === m.value;
+                  {moods.map((m) => {
+                    const tile = usesLegacyArt(m) ? MOOD_TILE[m.code] : null;
+                    const Icon = tile?.icon;
+                    const checked = mood === m.code;
                     return (
                       <label
-                        key={m.value}
+                        key={m.code}
                         className="group relative isolate flex cursor-pointer flex-col items-center gap-1.5 rounded-2xl p-1.5"
                       >
                         <input
                           type="radio"
                           name={`${uid}-mood`}
-                          value={m.value}
+                          value={m.code}
                           checked={checked}
-                          onChange={() => setMood(m.value)}
+                          onChange={() => setMood(m.code)}
                           className="peer sr-only"
                         />
-                        <span
-                          aria-hidden="true"
-                          className={cn(
-                            'grid size-12 place-items-center rounded-full ring-[3px] ring-transparent transition-transform duration-150 group-hover:scale-105 peer-checked:scale-105 peer-checked:ring-kid-teal peer-focus-visible:outline-[3px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-kid-teal peer-focus-visible:outline-solid',
-                            tile.tone
-                          )}
-                        >
-                          <Icon className={cn('size-6', tile.ink)} strokeWidth={2.2} />
-                        </span>
+                        {tile ? (
+                          <span
+                            aria-hidden="true"
+                            className={cn(
+                              'grid size-12 place-items-center rounded-full ring-[3px] ring-transparent transition-transform duration-150 group-hover:scale-105 peer-checked:scale-105 peer-checked:ring-kid-teal peer-focus-visible:outline-[3px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-kid-teal peer-focus-visible:outline-solid',
+                              tile.tone
+                            )}
+                          >
+                            <Icon className={cn('size-6', tile.ink)} strokeWidth={2.2} />
+                          </span>
+                        ) : (
+                          <AdminMoodTile
+                            mood={m}
+                            className="size-12 ring-[3px] ring-transparent transition-transform duration-150 group-hover:scale-105 peer-checked:scale-105 peer-checked:ring-kid-teal peer-focus-visible:outline-[3px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-kid-teal peer-focus-visible:outline-solid"
+                          />
+                        )}
                         {checked && (
                           <span
                             aria-hidden="true"
@@ -222,7 +231,7 @@ export function CheckInModal({ isOpen, onClose, initial, onSave, firstName }) {
                           </span>
                         )}
                         <span className="font-kid-display text-[0.8rem] text-kid-ink-soft peer-checked:font-semibold peer-checked:text-kid-ink">
-                          {m.kidLabel}
+                          {kidCopyFor(m).kidLabel}
                         </span>
                       </label>
                     );
@@ -295,7 +304,7 @@ export function CheckInModal({ isOpen, onClose, initial, onSave, firstName }) {
                   Thanks{firstName ? `, ${firstName}` : ''}!
                 </h3>
                 <p className="mt-1 font-kid-body text-base text-kid-ink-soft">
-                  You are feeling {(currentMood?.label ?? '').toLowerCase()} and you have{' '}
+                  You are feeling {(currentMood?.name ?? '').toLowerCase()} and you have{' '}
                   {ENERGY_WORDS[energy] ?? 'some'} energy. Let&apos;s have a great day!
                 </p>
               </div>
@@ -303,7 +312,7 @@ export function CheckInModal({ isOpen, onClose, initial, onSave, firstName }) {
               <div className="flex flex-col gap-2 rounded-2xl bg-kid-paper px-4 py-3">
                 <div className="flex items-center justify-between font-kid-body text-base">
                   <span className="text-kid-ink-soft">Feeling</span>
-                  <span className="font-semibold text-kid-ink">{currentMood?.label}</span>
+                  <span className="font-semibold text-kid-ink">{currentMood?.name}</span>
                 </div>
                 <div className="h-px bg-kid-edge" />
                 <div className="flex items-center justify-between font-kid-body text-base">

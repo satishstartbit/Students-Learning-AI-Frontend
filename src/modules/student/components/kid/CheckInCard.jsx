@@ -6,10 +6,12 @@ import { getErrorMessage } from '../../../../utils/errorHandler';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useModal } from '../../../../hooks/useModal';
 import { useTodayCheckIn } from '../../../checkIn/hooks/useTodayCheckIn';
-import { ENERGY_LEVELS, MOODS, findMood } from '../../../checkIn/moods';
+import { ENERGY_LEVELS, findMood, usesLegacyArt } from '../../../checkIn/moods';
 import { useMotionAllowed } from '../../hooks/useKidPreferences';
+import { AdminMoodTile } from './AdminMoodTile';
 import { CheckInModal } from './CheckInModal';
 import { KidButton } from './KidButton';
+import { kidCopyFor } from './kidMoodCopy';
 import { MoodFace } from './MoodFace';
 import { PaperCard, Tape } from './PaperKit';
 
@@ -32,7 +34,7 @@ const CONFETTI_COLOURS = ['#f6c445', '#f4b6c1', '#1f7a80', '#7b68d6', '#95c07b']
  * in calm mode or with reduced motion.
  */
 export function CheckInCard({ onSaved, variant = 'inline' }) {
-  const { checkIn, isLoading, save } = useTodayCheckIn();
+  const { checkIn, isLoading, save, moods, moodsLoading } = useTodayCheckIn();
   const { user } = useAuth();
   const [editing, setEditing] = useState(false);
   const motionAllowed = useMotionAllowed();
@@ -40,9 +42,9 @@ export function CheckInCard({ onSaved, variant = 'inline' }) {
   const uid = useId();
   const modal = useModal();
 
-  const current = findMood(checkIn?.mood);
+  const current = findMood(moods, checkIn?.mood);
 
-  if (isLoading) {
+  if (isLoading || moodsLoading) {
     return <PaperCard tone="sheet" aria-busy="true" className="h-64 animate-pulse" />;
   }
 
@@ -87,6 +89,7 @@ export function CheckInCard({ onSaved, variant = 'inline' }) {
           initial={checkIn}
           onSave={handleModalSave}
           firstName={user?.firstName}
+          moods={moods}
         />
       </>
     );
@@ -125,6 +128,7 @@ export function CheckInCard({ onSaved, variant = 'inline' }) {
         <CheckInPickers
           key={checkIn?.updatedAt ?? 'new'}
           uid={uid}
+          moods={moods}
           initial={checkIn}
           onSave={handleInlineSave}
           onCancel={checkIn ? () => setEditing(false) : undefined}
@@ -156,20 +160,25 @@ function CheckInInvite({ onOpen }) {
 }
 
 function CompactCheckIn({ mood, onChange }) {
+  const { kidFeeling } = kidCopyFor(mood);
   return (
     <PaperCard
       as="button"
       type="button"
       onClick={onChange}
-      aria-label={`Change how you're feeling. Currently: ${mood.kidFeeling}.`}
+      aria-label={`Change how you're feeling. Currently: ${kidFeeling}.`}
       tone="sheet"
       className="flex w-full items-center gap-3 px-5 py-5 text-left"
     >
-      <MoodFace mood={mood.value} className="size-11 shrink-0" />
+      {usesLegacyArt(mood) ? (
+        <MoodFace mood={mood.code} className="size-11 shrink-0" />
+      ) : (
+        <AdminMoodTile mood={mood} className="size-11 shrink-0" />
+      )}
       <div className="min-w-0 flex-1">
         <p className="font-kid-body text-sm text-kid-ink-soft">Check-in</p>
         <p aria-live="polite" className="font-kid-display text-lg font-semibold text-kid-ink">
-          {mood.kidFeeling}
+          {kidFeeling}
         </p>
       </div>
       <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-full text-lg">
@@ -179,7 +188,7 @@ function CompactCheckIn({ mood, onChange }) {
   );
 }
 
-function CheckInPickers({ uid, initial, onSave, onCancel }) {
+function CheckInPickers({ uid, moods, initial, onSave, onCancel }) {
   const [mood, setMood] = useState(initial?.mood ?? null);
   const [energy, setEnergy] = useState(initial?.energy ?? null);
   const [busy, setBusy] = useState(false);
@@ -210,25 +219,32 @@ function CheckInPickers({ uid, initial, onSave, onCancel }) {
           How are you feeling?
         </legend>
         <div className="mt-3 grid grid-cols-3 gap-1">
-          {MOODS.map((m) => (
+          {moods.map((m) => (
             <label
-              key={m.value}
+              key={m.code}
               className="group relative isolate flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-2xl px-0.5 py-1.5"
             >
               <input
                 type="radio"
                 name={`${uid}-mood`}
-                value={m.value}
-                checked={mood === m.value}
-                onChange={() => setMood(m.value)}
+                value={m.code}
+                checked={mood === m.code}
+                onChange={() => setMood(m.code)}
                 className="peer sr-only"
               />
-              <MoodFace
-                mood={m.value}
-                className="size-10 transition-transform duration-150 group-hover:scale-110 peer-checked:scale-110"
-              />
+              {usesLegacyArt(m) ? (
+                <MoodFace
+                  mood={m.code}
+                  className="size-10 transition-transform duration-150 group-hover:scale-110 peer-checked:scale-110"
+                />
+              ) : (
+                <AdminMoodTile
+                  mood={m}
+                  className="size-10 transition-transform duration-150 group-hover:scale-110 peer-checked:scale-110"
+                />
+              )}
               <span className="font-kid-display text-[0.8rem] text-kid-ink-soft peer-checked:font-semibold peer-checked:text-kid-ink">
-                {m.kidLabel}
+                {kidCopyFor(m).kidLabel}
               </span>
               <span
                 aria-hidden="true"

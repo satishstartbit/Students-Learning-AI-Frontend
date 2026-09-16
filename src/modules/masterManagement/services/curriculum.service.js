@@ -30,9 +30,12 @@ export const audioTrackService = {
   /** Multipart, field "file". Returns { id, url, originalFilename, mimeType, fileSize } to save as the track's fileId. */
   upload: (formData, options = {}) => api.upload('/admin/master/audio-tracks/upload', formData, options),
 };
+// Its 4 rows map 1:1 to a hardcoded builder UI (assignmentQuestion.service.js#ANSWER_TYPES) - deactivate-only,
+// no delete route exists server-side, so `remove` is deliberately not exposed here.
+export const questionTypeService = Object.fromEntries(Object.entries(crud('question-types')).filter(([key]) => key !== 'remove'));
 
 /** Grade Levels (generic master) - the scale grade ranges are measured on. */
 export const listGradeLevels = () =>
   api.get('/admin/master/grade_levels/items', { params: { status: 'active', limit: 100, sortBy: 'display_order', sortOrder: 'asc' } });
 
-export default { taskTypeService, curriculumSubjectService, topicService, audioTrackService, listGradeLevels };
+export default { taskTypeService, curriculumSubjectService, topicService, audioTrackService, questionTypeService, listGradeLevels };

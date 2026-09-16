@@ -17,11 +17,29 @@ export function listItems(masterType, params = {}) {
 
 export const getItem = (masterType, id) => api.get(`/admin/master/${masterType}/items/${id}`);
 
+/**
+ * When `iconFile` is present the request must be multipart/form-data - the
+ * nested `extra` object travels as a JSON string field, which the backend
+ * parses back into an object (middlewares/parseMultipartJson.middleware.js) -
+ * same convention as auth.service.js#buildProfileBody.
+ */
+function buildItemBody({ iconFile, ...rest }) {
+  if (!iconFile) return rest;
+
+  const formData = new FormData();
+  Object.entries(rest).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    formData.append(key, key === 'extra' ? JSON.stringify(value) : value);
+  });
+  formData.append('icon', iconFile);
+  return formData;
+}
+
 export const createItem = (masterType, payload) =>
-  api.post(`/admin/master/${masterType}/items`, payload);
+  api.post(`/admin/master/${masterType}/items`, buildItemBody(payload));
 
 export const updateItem = (masterType, id, payload) =>
-  api.patch(`/admin/master/${masterType}/items/${id}`, payload);
+  api.patch(`/admin/master/${masterType}/items/${id}`, buildItemBody(payload));
 
 export const activateItem = (masterType, id) =>
   api.post(`/admin/master/${masterType}/items/${id}/activate`);

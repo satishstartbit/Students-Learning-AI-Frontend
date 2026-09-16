@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { LuFilterX } from 'react-icons/lu';
 import {
   PageHeader,
-  Card,
+  FilterBar,
   SearchInput,
+  IconButton,
   DataTable,
   Avatar,
   Badge,
   StatusBadge,
-  SectionHeader,
-  Button,
   Toast,
 } from '../../../components/common';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
+import { Tooltip } from '../../../components/ui/tooltip';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -143,47 +144,47 @@ export default function MyStudentsPage() {
     <>
       <PageHeader title="My Students" description="Students you teach, across every subject and grade." />
 
-      <SectionHeader
-        title="Filters"
-        actions={
-          hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              Clear filters
-            </Button>
-          )
-        }
-      />
+      <FilterBar>
+        <SearchInput
+          fieldClassName="ui-filterbar__search ui-field--compact"
+          placeholder="Search by name or email"
+          value={search}
+          onChange={(e) => withFilterReset(setSearch)(e.target.value)}
+          onClear={() => withFilterReset(setSearch)('')}
+        />
 
-      <Card className="ui-field">
-        <div className="grid gap-4 md:grid-cols-3">
-          <SearchInput
-            placeholder="Search by name or email"
-            value={search}
-            onChange={(e) => withFilterReset(setSearch)(e.target.value)}
-            onClear={() => withFilterReset(setSearch)('')}
-          />
+        <SearchableSelect
+          className="ui-field--compact"
+          label="Subject"
+          options={subjectOptions}
+          value={subject}
+          onChange={withFilterReset(setSubject)}
+          loading={subjects.isLoading}
+          placeholder="Any subject"
+          searchPlaceholder="Search subjects…"
+        />
 
-          <SearchableSelect
-            label="Subject"
-            options={subjectOptions}
-            value={subject}
-            onChange={withFilterReset(setSubject)}
-            loading={subjects.isLoading}
-            placeholder="Any subject"
-            searchPlaceholder="Search subjects…"
-          />
+        <SearchableSelect
+          className="ui-field--compact"
+          label="Grade"
+          options={gradeOptions}
+          value={grade}
+          onChange={withFilterReset(setGrade)}
+          loading={grades.isLoading}
+          placeholder="Any grade"
+          searchPlaceholder="Search grades…"
+        />
 
-          <SearchableSelect
-            label="Grade"
-            options={gradeOptions}
-            value={grade}
-            onChange={withFilterReset(setGrade)}
-            loading={grades.isLoading}
-            placeholder="Any grade"
-            searchPlaceholder="Search grades…"
+        <Tooltip label="Clear filters" side="top">
+          <IconButton
+            icon={<LuFilterX aria-hidden="true" />}
+            label="Clear filters"
+            size="sm"
+            onClick={clearFilters}
+            disabled={!hasActiveFilters}
           />
-        </div>
-      </Card>
+        </Tooltip>
+      </FilterBar>
 
       <DataTable
         columns={columns}

@@ -29,16 +29,28 @@ import QuestionAnswer from '../../assignments/components/QuestionAnswer';
 
 const ACTIVE_STATUSES = [ASSIGNMENT_RECIPIENT_STATUS.ASSIGNED, ASSIGNMENT_RECIPIENT_STATUS.IN_PROGRESS, ASSIGNMENT_RECIPIENT_STATUS.RETURNED];
 
-const isAnswered = (question, answer) =>
-  question.answerType === 'mcq' ? Boolean(answer?.selectedOptionId) : Boolean(answer?.textAnswer?.trim());
+const MCQ_LIKE = ['mcq', 'passage_mcq'];
 
-/** "You got 4 of 5 right!" plus how many written answers the teacher still has to check. */
+const isAnswered = (question, answer) => {
+  if (MCQ_LIKE.includes(question.answerType)) return Boolean(answer?.selectedOptionId);
+  if (question.answerType === 'matching') return Boolean(answer?.matchedPairs?.length);
+  return Boolean(answer?.textAnswer?.trim());
+};
+
+/** "You got 4 of 5 right!" plus how many are partly right or still waiting on the teacher. */
 function QuizResult({ quiz }) {
   if (!quiz || quiz.correct === null) return null;
-  const allRight = quiz.correct === quiz.totalQuestions;
+  // A skippable question left unanswered isn't counted here at all - it neither helped nor hurt the score.
+  const gradedCount = quiz.correct + quiz.incorrect + (quiz.partiallyCorrect ?? 0) + quiz.pendingReview;
+  const allRight = gradedCount > 0 && quiz.correct === gradedCount;
   return (
     <div role="status" style={{ fontSize: '1.4rem', fontWeight: 700, margin: 'var(--spacing-sm) 0' }}>
-      {allRight ? '🎉 ' : '⭐ '}You got {quiz.correct} of {quiz.totalQuestions} right{allRight ? '!' : '.'}
+      {allRight ? '🎉 ' : '⭐ '}You got {quiz.correct} of {gradedCount} right{allRight ? '!' : '.'}
+      {quiz.partiallyCorrect > 0 && (
+        <div className="ui-hint" style={{ fontSize: '1rem', fontWeight: 400 }}>
+          {quiz.partiallyCorrect} {quiz.partiallyCorrect === 1 ? 'question was' : 'questions were'} partly right.
+        </div>
+      )}
       {quiz.pendingReview > 0 && (
         <div className="ui-hint" style={{ fontSize: '1rem', fontWeight: 400 }}>
           Your teacher will check {quiz.pendingReview} written {quiz.pendingReview === 1 ? 'answer' : 'answers'}.
@@ -70,7 +82,12 @@ function StudentWork({ item, assignmentId, reload }) {
 
   const [content, setContent] = useState(item.submission?.content ?? '');
   const [answers, setAnswers] = useState(() =>
-    Object.fromEntries((item.submission?.answers ?? []).map((ans) => [ans.questionId, { selectedOptionId: ans.selectedOptionId, textAnswer: ans.textAnswer ?? '' }]))
+    Object.fromEntries(
+      (item.submission?.answers ?? []).map((ans) => [
+        ans.questionId,
+        { selectedOptionId: ans.selectedOptionId, textAnswer: ans.textAnswer ?? '', matchedPairs: ans.matchedPairs ?? [] },
+      ])
+    )
   );
   const [missing, setMissing] = useState([]);
   const [starting, setStarting] = useState(false);
@@ -87,11 +104,11 @@ function StudentWork({ item, assignmentId, reload }) {
   });
 
   const answersPayload = () =>
-    questions.map((q) =>
-      q.answerType === 'mcq'
-        ? { questionId: q.id, selectedOptionId: answers[q.id]?.selectedOptionId ?? null }
-        : { questionId: q.id, textAnswer: answers[q.id]?.textAnswer ?? '' }
-    );
+    questions.map((q) => {
+      if (MCQ_LIKE.includes(q.answerType)) return { questionId: q.id, selectedOptionId: answers[q.id]?.selectedOptionId ?? null };
+      if (q.answerType === 'matching') return { questionId: q.id, matchedPairs: answers[q.id]?.matchedPairs ?? [] };
+      return { questionId: q.id, textAnswer: answers[q.id]?.textAnswer ?? '' };
+    });
 
   const workPayload = () => ({ content, ...(questions.length ? { answers: answersPayload() } : {}) });
 
@@ -133,7 +150,7 @@ function StudentWork({ item, assignmentId, reload }) {
   };
 
   const openSubmit = () => {
-    const notAnswered = questions.filter((q) => !isAnswered(q, answers[q.id])).map((q) => q.id);
+    const notAnswered = questions.filter((q) => q.required !== false && !isAnswered(q, answers[q.id])).map((q) => q.id);
     setMissing(notAnswered);
     if (notAnswered.length) {
       toast.error(notAnswered.length === 1 ? 'Answer the last question before submitting' : `Answer all the questions first (${notAnswered.length} left)`);
@@ -164,7 +181,7 @@ function StudentWork({ item, assignmentId, reload }) {
   const resultFor = (questionId) => {
     if (!handedIn) return undefined;
     const ans = (item.submission?.answers ?? []).find((x) => x.questionId === questionId);
-    return { isCorrect: ans?.isCorrect ?? null };
+    return { isCorrect: ans?.isCorrect ?? null, partialScore: ans?.partialScore ?? null };
   };
 
   const questionList = (readOnly) => (
