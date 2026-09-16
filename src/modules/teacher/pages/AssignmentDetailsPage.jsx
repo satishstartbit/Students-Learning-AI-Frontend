@@ -6,6 +6,7 @@ import {
   SectionHeader,
   Button,
   Badge,
+  AudioPlayer,
   StatusBadge,
   ProgressBar,
   Table,
@@ -28,6 +29,37 @@ import { ASSIGNMENT_CRUD_STATUS } from '../../../utils/constants';
 import { DOCUMENT_MIME_TYPES, IMAGE_MIME_TYPES } from '../../../utils/file';
 import assignmentService from '../../assignments/services/assignment.service';
 import ReviewSubmissionModal from '../../assignments/components/ReviewSubmissionModal';
+import QuestionPicture from '../../assignments/media/QuestionPicture';
+
+/** The task's questions as the teacher set them, correct answers marked. */
+function QuestionsPreview({ questions }) {
+  return (
+    <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 'var(--spacing-md)' }}>
+      {questions.map((q, index) => (
+        <li key={q.id} style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          {q.image && <QuestionPicture image={q.image} size="sm" />}
+          <div style={{ flex: '1 1 14rem', minWidth: 0 }}>
+            <strong>
+              {index + 1}. {q.prompt}
+            </strong>
+            {q.answerType === 'mcq' ? (
+              <ul style={{ margin: '4px 0 0', paddingLeft: 'var(--spacing-lg)' }}>
+                {q.options.map((o) => (
+                  <li key={o.id} style={o.id === q.correctOptionId ? { fontWeight: 600, color: 'var(--color-success-fg)' } : undefined}>
+                    {o.text}
+                    {o.id === q.correctOptionId && ' ✓ correct'}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="ui-hint">Written answer{q.expectedAnswer ? ` - expecting: ${q.expectedAnswer}` : ''}</div>
+            )}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 export default function AssignmentDetailsPage() {
   const { id } = useParams();
@@ -143,6 +175,26 @@ export default function AssignmentDetailsPage() {
       header: 'Submitted',
       render: (r) => (r.submission?.submittedAt ? formatDateTime(r.submission.submittedAt) : '—'),
     },
+    ...(assignment.questions?.length
+      ? [
+          {
+            key: 'quiz',
+            header: 'Quiz',
+            render: (r) => {
+              const quiz = r.submission?.quiz;
+              if (!quiz || r.submission.status === 'draft') return quiz ? `${quiz.answered}/${quiz.totalQuestions} answered` : '—';
+              return (
+                <div>
+                  <div>
+                    {quiz.correct}/{quiz.totalQuestions} correct
+                  </div>
+                  {quiz.pendingReview > 0 && <Badge variant="warning">{quiz.pendingReview} to mark</Badge>}
+                </div>
+              );
+            },
+          },
+        ]
+      : []),
     {
       key: 'review',
       header: 'Score / Feedback',
@@ -222,6 +274,14 @@ export default function AssignmentDetailsPage() {
             <div>{assignment.academicYear?.name || '—'}</div>
           </div>
           <div>
+            <span className="ui-hint">Task type</span>
+            <div>{assignment.taskType?.name || '—'}</div>
+          </div>
+          <div>
+            <span className="ui-hint">Topic</span>
+            <div>{assignment.topic?.name || '—'}</div>
+          </div>
+          <div>
             <span className="ui-hint">Start date</span>
             <div>{assignment.startDate ? formatDate(assignment.startDate) : '—'}</div>
           </div>
@@ -257,6 +317,22 @@ export default function AssignmentDetailsPage() {
         </p>
         <ProgressBar value={completed} max={total || 1} showValue label={`${completed}/${total} students completed`} />
       </Card>
+
+      {assignment.questions?.length > 0 && (
+        <Card
+          title={`Questions (${assignment.questions.length})`}
+          subtitle="Multiple choice is marked automatically when a student submits; you mark written answers when reviewing."
+          className="ui-field"
+        >
+          <QuestionsPreview questions={assignment.questions} />
+        </Card>
+      )}
+
+      {assignment.backgroundAudio && (
+        <Card title="Background audio" subtitle="Plays automatically when a student opens this task." className="ui-field">
+          <AudioPlayer src={assignment.backgroundAudio.url} title={assignment.backgroundAudio.name} />
+        </Card>
+      )}
 
       <Card title="Resources" subtitle="Files attached to this assignment for students to use." className="ui-field">
         {assignment.files?.length > 0 ? (
@@ -315,6 +391,7 @@ export default function AssignmentDetailsPage() {
       <ReviewSubmissionModal
         isOpen={reviewModal.isOpen}
         recipient={reviewModal.payload}
+        questions={assignment.questions ?? []}
         onClose={reviewModal.close}
         onReviewed={handleReviewed}
       />

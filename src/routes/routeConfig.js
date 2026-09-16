@@ -67,6 +67,14 @@ import AcademicYearsListPage from '../modules/masterManagement/pages/academicYea
 import AcademicYearFormPage from '../modules/masterManagement/pages/academicYears/AcademicYearFormPage';
 import SchoolsListPage from '../modules/masterManagement/pages/schools/SchoolsListPage';
 import SchoolFormPage from '../modules/masterManagement/pages/schools/SchoolFormPage';
+import TaskTypesListPage from '../modules/masterManagement/pages/curriculum/TaskTypesListPage';
+import TaskTypeFormPage from '../modules/masterManagement/pages/curriculum/TaskTypeFormPage';
+import CurriculumSubjectsListPage from '../modules/masterManagement/pages/curriculum/CurriculumSubjectsListPage';
+import CurriculumSubjectFormPage from '../modules/masterManagement/pages/curriculum/CurriculumSubjectFormPage';
+import TopicsListPage from '../modules/masterManagement/pages/curriculum/TopicsListPage';
+import TopicFormPage from '../modules/masterManagement/pages/curriculum/TopicFormPage';
+import AudioTracksListPage from '../modules/masterManagement/pages/curriculum/AudioTracksListPage';
+import AudioTrackFormPage from '../modules/masterManagement/pages/curriculum/AudioTrackFormPage';
 import RegulationActivitiesListPage from '../modules/masterManagement/pages/regulationActivities/RegulationActivitiesListPage';
 import RegulationActivityFormPage from '../modules/masterManagement/pages/regulationActivities/RegulationActivityFormPage';
 import RewardActivitiesListPage from '../modules/masterManagement/pages/rewardActivities/RewardActivitiesListPage';
@@ -256,6 +264,20 @@ export const SUPER_ADMIN_ROUTES = {
     { path: 'masters/stickers', label: 'Stickers', permissions: [PERMISSIONS.MASTER_READ], component: StickersListPage },
     { path: 'masters/stickers/create', label: 'Add sticker', permissions: [PERMISSIONS.MASTER_CREATE], component: StickerFormPage },
     { path: 'masters/stickers/:id/edit', label: 'Edit sticker', permissions: [PERMISSIONS.MASTER_UPDATE], component: StickerFormPage },
+
+    // Curriculum & Task Setup. `curriculum-subjects`, not `subjects` - that path is the generic Subjects master.
+    { path: 'masters/task-types', label: 'Task Types', permissions: [PERMISSIONS.MASTER_READ], component: TaskTypesListPage },
+    { path: 'masters/task-types/create', label: 'Add task type', permissions: [PERMISSIONS.MASTER_CREATE], component: TaskTypeFormPage },
+    { path: 'masters/task-types/:id/edit', label: 'Edit task type', permissions: [PERMISSIONS.MASTER_UPDATE], component: TaskTypeFormPage },
+    { path: 'masters/curriculum-subjects', label: 'Curriculum Subjects', permissions: [PERMISSIONS.MASTER_READ], component: CurriculumSubjectsListPage },
+    { path: 'masters/curriculum-subjects/create', label: 'Add subject', permissions: [PERMISSIONS.MASTER_CREATE], component: CurriculumSubjectFormPage },
+    { path: 'masters/curriculum-subjects/:id/edit', label: 'Edit subject', permissions: [PERMISSIONS.MASTER_UPDATE], component: CurriculumSubjectFormPage },
+    { path: 'masters/topics', label: 'Topics', permissions: [PERMISSIONS.MASTER_READ], component: TopicsListPage },
+    { path: 'masters/topics/create', label: 'Add topic', permissions: [PERMISSIONS.MASTER_CREATE], component: TopicFormPage },
+    { path: 'masters/topics/:id/edit', label: 'Edit topic', permissions: [PERMISSIONS.MASTER_UPDATE], component: TopicFormPage },
+    { path: 'masters/audio-tracks', label: 'Background Audio', permissions: [PERMISSIONS.MASTER_READ], component: AudioTracksListPage },
+    { path: 'masters/audio-tracks/create', label: 'Add sound', permissions: [PERMISSIONS.MASTER_CREATE], component: AudioTrackFormPage },
+    { path: 'masters/audio-tracks/:id/edit', label: 'Edit sound', permissions: [PERMISSIONS.MASTER_UPDATE], component: AudioTrackFormPage },
 
     // Generic master engine catch-all - must stay after every dedicated path above.
     { path: 'masters/:masterType', label: 'Master data', permissions: [PERMISSIONS.MASTER_READ], component: MasterListPage },

@@ -6,6 +6,11 @@ import { formatFileSize } from './format';
  */
 export const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 export const DOCUMENT_MIME_TYPES = ['application/pdf'];
+/** Background audio for tasks - mirrors AUDIO_MIME_TYPES in the backend upload middleware. */
+export const AUDIO_MIME_TYPES = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/mp4', 'audio/x-m4a'];
+/** File-chooser `accept` for audio: types plus extensions, since some systems report m4a/wav oddly. */
+export const AUDIO_ACCEPT = [...AUDIO_MIME_TYPES, '.mp3', '.wav', '.ogg', '.m4a'].join(',');
+export const IMAGE_ACCEPT = [...IMAGE_MIME_TYPES, '.jpg', '.jpeg', '.png', '.webp', '.heic'].join(',');
 
 export const DEFAULT_MAX_FILE_SIZE = Number(
   import.meta.env.VITE_MAX_FILE_SIZE_BYTES || 10 * 1024 * 1024

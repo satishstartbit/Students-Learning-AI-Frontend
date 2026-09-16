@@ -4,7 +4,7 @@ import FieldHelper from './FieldHelper';
 
 /**
  * Single-choice select.
- * @param options - [{ value, label, disabled }] or plain strings
+ * @param options - [{ value, label, disabled, title }] or plain strings (title = hover tooltip)
  */
 export const Select = forwardRef(function Select(
   {
@@ -72,7 +72,7 @@ export const Select = forwardRef(function Select(
         </option>
 
         {normalised.map((option) => (
-          <option key={option.value} value={option.value} disabled={option.disabled}>
+          <option key={option.value} value={option.value} disabled={option.disabled} title={option.title}>
             {option.label}
           </option>
         ))}

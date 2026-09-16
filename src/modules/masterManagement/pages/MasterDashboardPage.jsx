@@ -1,22 +1,55 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader, Card, DataTable, SearchInput, Select, Button, StatCard } from '../../../components/common';
+import {
+  PageHeader,
+  Card,
+  SectionHeader,
+  Badge,
+  Table,
+  SearchInput,
+  Select,
+  Button,
+  StatCard,
+  Loader,
+  ErrorState,
+  EmptyState,
+} from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useDebounce } from '../../../hooks/useDebounce';
-import { usePagination } from '../../../hooks/usePagination';
 import { formatDateTime } from '../../../utils/date';
 import dashboardService from '../services/dashboard.service';
 
 const CATEGORY_ALL = '';
 
 /**
- * Master Management dashboard - every master (generic and dedicated) as one
- * list of cards, with total/active/inactive record counts and a link into
- * that master's own list/edit screens.
+ * Fixed display order for known categories, so a whole group - e.g. every
+ * Curriculum & Task Setup master - always renders together in one place
+ * instead of scattering across an alphabetically-sorted, paginated list (the
+ * previous flat table could split a group across pages once there were
+ * enough masters). A category not listed here (a future addition) falls back
+ * after these, alphabetically.
+ */
+const CATEGORY_ORDER = [
+  'Academic',
+  'Curriculum & Task Setup',
+  'Assignment',
+  'Teacher',
+  'Student',
+  'Check-In',
+  'Regulation Toolkit',
+  'Rewards',
+  'Personalization',
+  'Subscriptions',
+  'General',
+];
+
+/**
+ * Master Management dashboard - every master (generic and dedicated),
+ * grouped by category, with total/active/inactive record counts and a link
+ * into that master's own list/edit screens.
  */
 export default function MasterDashboardPage() {
   const navigate = useNavigate();
-  const pagination = usePagination();
 
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
@@ -43,24 +76,35 @@ export default function MasterDashboardPage() {
     }
     if (category !== CATEGORY_ALL) rows = rows.filter((m) => m.category === category);
 
-    const sorted = [...rows].sort((a, b) => {
-      const dir = sort.order === 'desc' ? -1 : 1;
-      const av = a[sort.by] ?? '';
-      const bv = b[sort.by] ?? '';
-      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
-      return String(av).localeCompare(String(bv)) * dir;
+    return rows;
+  }, [masters, debouncedSearch, category]);
+
+  /** Filtered masters, grouped by category and ordered per CATEGORY_ORDER; each group sorted independently. */
+  const groups = useMemo(() => {
+    const byCategory = new Map();
+    filtered.forEach((m) => {
+      if (!byCategory.has(m.category)) byCategory.set(m.category, []);
+      byCategory.get(m.category).push(m);
     });
 
-    return sorted;
-  }, [masters, debouncedSearch, category, sort]);
+    const orderIndex = (cat) => {
+      const i = CATEGORY_ORDER.indexOf(cat);
+      return i === -1 ? CATEGORY_ORDER.length : i;
+    };
 
-  const { page, limit, goToPage, setTotal } = pagination;
-
-  useEffect(() => {
-    setTotal(filtered.length);
-  }, [filtered.length, setTotal]);
-
-  const pageRows = filtered.slice((page - 1) * limit, (page - 1) * limit + limit);
+    return [...byCategory.entries()]
+      .sort(([a], [b]) => orderIndex(a) - orderIndex(b) || a.localeCompare(b))
+      .map(([cat, rows]) => {
+        const sorted = [...rows].sort((a, b) => {
+          const dir = sort.order === 'desc' ? -1 : 1;
+          const av = a[sort.by] ?? '';
+          const bv = b[sort.by] ?? '';
+          if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+          return String(av).localeCompare(String(bv)) * dir;
+        });
+        return { category: cat, rows: sorted };
+      });
+  }, [filtered, sort]);
 
   const totals = useMemo(
     () =>
@@ -75,6 +119,7 @@ export default function MasterDashboardPage() {
     [masters]
   );
 
+  // No 'category' column - the section heading above each group's table already says it.
   const columns = [
     {
       key: 'label',
@@ -87,7 +132,6 @@ export default function MasterDashboardPage() {
         </div>
       ),
     },
-    { key: 'category', header: 'Category' },
     { key: 'totalRecords', header: 'Total', sortable: true },
     { key: 'activeRecords', header: 'Active', sortable: true },
     { key: 'inactiveRecords', header: 'Inactive', sortable: true },
@@ -114,19 +158,23 @@ export default function MasterDashboardPage() {
     },
   ];
 
-  const resetTo = (setter) => (value) => {
-    setter(value);
-    goToPage(1);
-  };
+  const hasFilters = Boolean(search || category);
 
   return (
     <>
       <PageHeader
         title="Master Management"
-        description="Reusable reference data used throughout the platform. Deactivate a value instead of deleting it if it is still in use."
+        description="Reusable reference data used throughout the platform, grouped by area. Deactivate a value instead of deleting it if it is still in use."
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: 'var(--spacing-md)',
+          marginBottom: 'var(--spacing-lg)',
+        }}
+      >
         <StatCard label="Masters" value={totals.masters} loading={isLoading} />
         <StatCard label="Total records" value={totals.records} loading={isLoading} />
         <StatCard label="Active records" value={totals.active} loading={isLoading} />
@@ -138,35 +186,44 @@ export default function MasterDashboardPage() {
             label="Search"
             placeholder="Master name or description"
             value={search}
-            onChange={(e) => resetTo(setSearch)(e.target.value)}
-            onClear={() => resetTo(setSearch)('')}
+            onChange={(e) => setSearch(e.target.value)}
+            onClear={() => setSearch('')}
           />
           <Select
             label="Category"
             options={categoryOptions}
             placeholder="All categories"
             value={category}
-            onChange={(e) => resetTo(setCategory)(e.target.value)}
+            onChange={(e) => setCategory(e.target.value)}
           />
         </div>
       </Card>
 
-      <DataTable
-        columns={columns}
-        data={pageRows}
-        rowKey="code"
-        isLoading={isLoading}
-        error={error}
-        onRetry={run}
-        sortBy={sort.by}
-        sortOrder={sort.order}
-        onSort={(by, order) => setSort({ by, order })}
-        pagination={pagination}
-        onPageChange={goToPage}
-        emptyTitle="No masters match those filters"
-        emptyDescription="Try clearing the search or category filter."
-        caption="Master data"
-      />
+      {error ? (
+        <ErrorState error={error} onRetry={run} />
+      ) : isLoading && !masters ? (
+        <Loader message="Loading master data…" />
+      ) : groups.length === 0 ? (
+        <EmptyState
+          title="No masters match those filters"
+          description={hasFilters ? 'Try clearing the search or category filter.' : undefined}
+        />
+      ) : (
+        groups.map(({ category: cat, rows }) => (
+          <Card key={cat} flat className="ui-field" aria-busy={isLoading || undefined}>
+            <SectionHeader title={cat} actions={<Badge variant="neutral">{rows.length}</Badge>} />
+            <Table
+              columns={columns}
+              data={rows}
+              rowKey="code"
+              sortBy={sort.by}
+              sortOrder={sort.order}
+              onSort={(by, order) => setSort({ by, order })}
+              caption={`${cat} master data`}
+            />
+          </Card>
+        ))
+      )}
     </>
   );
 }

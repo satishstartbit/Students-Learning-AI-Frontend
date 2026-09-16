@@ -42,6 +42,18 @@ export const deleteAssignment = (id) => api.delete(`/assignments/${id}`);
 export const addAssignmentFiles = (id, formData, options = {}) =>
   api.upload(`/assignments/${id}/files`, formData, options);
 
+/**
+ * Teacher: a question picture (kind 'image') or background audio (kind
+ * 'audio'), uploaded while building a task. Returns { id, url, originalFilename,
+ * mimeType, fileSize }; send the id back as a question's image.fileId or
+ * backgroundAudio.fileId when saving.
+ */
+export const uploadTaskMedia = (file, kind, options = {}) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api.upload('/assignments/media', formData, { ...options, params: { kind } });
+};
+
 /** Teacher only, resource files only. */
 export const removeAssignmentFile = (id, fileId) => api.delete(`/assignments/${id}/files/${fileId}`);
 
@@ -64,6 +76,7 @@ export default {
   archiveAssignment,
   deleteAssignment,
   addAssignmentFiles,
+  uploadTaskMedia,
   removeAssignmentFile,
   startAssignment,
   saveAssignmentProgress,

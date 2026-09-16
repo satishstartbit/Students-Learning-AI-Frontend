@@ -1,11 +1,16 @@
 import { useEffect } from 'react';
 import {
+  LuBookOpen,
   LuChartLine,
+  LuClipboardList,
   LuCreditCard,
   LuDatabase,
   LuGraduationCap,
+  LuLayers,
   LuLayoutDashboard,
   LuLink,
+  LuListOrdered,
+  LuMusic,
   LuPackage,
   LuReceiptText,
   LuSchool,
@@ -39,6 +44,18 @@ const NAV_ITEMS = [
       },
       { to: '/admin/relationships', label: 'Relationships', icon: LuLink },
       { to: '/admin/masters', label: 'Master Management', icon: LuDatabase },
+    ],
+  },
+  {
+    // What teachers pick from when creating a task. Grade Levels is the
+    // existing generic master every grade range is measured against.
+    group: 'Curriculum & Task Setup',
+    items: [
+      { to: '/admin/masters/task-types', label: 'Task Types', icon: LuClipboardList },
+      { to: '/admin/masters/curriculum-subjects', label: 'Subjects', icon: LuBookOpen },
+      { to: '/admin/masters/topics', label: 'Topics', icon: LuLayers },
+      { to: '/admin/masters/grade_levels', label: 'Grade Levels', icon: LuListOrdered },
+      { to: '/admin/masters/audio-tracks', label: 'Background Audio', icon: LuMusic },
     ],
   },
   {

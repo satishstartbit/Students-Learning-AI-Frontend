@@ -1,37 +1,105 @@
-import { useEffect, useState } from 'react';
-import { Modal, Button, Textarea, Input, Alert } from '../../../components/common';
+import { useMemo, useState } from 'react';
+import { Modal, Button, Textarea, Input, Alert, Badge } from '../../../components/common';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatFileSize } from '../../../utils/format';
 import assignmentService from '../services/assignment.service';
+import QuestionPicture from '../media/QuestionPicture';
 
-/**
- * Teacher-side review dialog for one recipient's submission.
- *
- * Only ever opened for a `submitted` recipient (the caller gates the trigger
- * button), so there is no need to re-check the submission's status here.
- */
-export function ReviewSubmissionModal({ isOpen, recipient, onClose, onReviewed }) {
+/** Per-question answer review: multiple choice already marked, written answers marked here. */
+function AnswersReview({ questions, answersByQuestion, grades, setGrade, disabled }) {
+  return (
+    <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 'var(--spacing-md)' }}>
+      {questions.map((q, index) => {
+        const answer = answersByQuestion.get(q.id);
+        const chosen = q.options.find((o) => o.id === answer?.selectedOptionId);
+        const correctOption = q.options.find((o) => o.id === q.correctOptionId);
+        const grade = grades[q.id];
+
+        return (
+          <li
+            key={q.id}
+            style={{
+              display: 'flex',
+              gap: 'var(--spacing-md)',
+              alignItems: 'flex-start',
+              flexWrap: 'wrap',
+              paddingBottom: 'var(--spacing-md)',
+              borderBottom: '1px solid var(--color-border-default)',
+            }}
+          >
+            {q.image && <QuestionPicture image={q.image} size="sm" />}
+            <div style={{ flex: '1 1 14rem', minWidth: 0 }}>
+              <strong>
+                {index + 1}. {q.prompt}
+              </strong>
+
+              {q.answerType === 'mcq' ? (
+                <div style={{ marginTop: 4 }}>
+                  <span>{chosen ? chosen.text : <em>Not answered</em>}</span>{' '}
+                  {answer?.isCorrect === true && <Badge variant="success">Correct</Badge>}
+                  {answer?.isCorrect === false && <Badge variant="danger">Incorrect</Badge>}
+                  {answer?.isCorrect === false && correctOption && <div className="ui-hint">Correct answer: {correctOption.text}</div>}
+                </div>
+              ) : (
+                <div style={{ marginTop: 4 }}>
+                  <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{answer?.textAnswer || <em>Not answered</em>}</p>
+                  {q.expectedAnswer && <div className="ui-hint">You expected: {q.expectedAnswer}</div>}
+                  {answer?.textAnswer && (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 6 }} role="group" aria-label={`Mark question ${index + 1}`}>
+                      <Button type="button" size="sm" variant={grade === true ? 'primary' : 'secondary'} aria-pressed={grade === true} disabled={disabled} onClick={() => setGrade(q.id, true)}>
+                        Correct
+                      </Button>
+                      <Button type="button" size="sm" variant={grade === false ? 'primary' : 'secondary'} aria-pressed={grade === false} disabled={disabled} onClick={() => setGrade(q.id, false)}>
+                        Incorrect
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function ReviewDialog({ recipient, questions, onClose, onReviewed }) {
+  const submission = recipient.submission;
+  const answersByQuestion = useMemo(() => new Map((submission?.answers ?? []).map((a) => [a.questionId, a])), [submission]);
+
+  // Written answers the teacher has marked (or marked earlier, before a return).
+  const [grades, setGrades] = useState(() =>
+    Object.fromEntries(
+      questions
+        .filter((q) => q.answerType === 'free_text' && typeof answersByQuestion.get(q.id)?.isCorrect === 'boolean')
+        .map((q) => [q.id, answersByQuestion.get(q.id).isCorrect])
+    )
+  );
+
+  /** Percent of all questions right: auto-marked multiple choice plus the written answers marked correct here. */
+  const quizPercent = useMemo(() => {
+    if (!questions.length) return null;
+    const correct = questions.filter((q) =>
+      q.answerType === 'mcq' ? answersByQuestion.get(q.id)?.isCorrect === true : grades[q.id] === true
+    ).length;
+    return Math.round((correct / questions.length) * 100);
+  }, [questions, answersByQuestion, grades]);
+
   const [decision, setDecision] = useState('completed');
-  const [score, setScore] = useState('');
-  const [feedback, setFeedback] = useState('');
+  const [score, setScore] = useState(() => {
+    if (submission?.score != null) return String(submission.score);
+    return quizPercent !== null ? String(quizPercent) : '';
+  });
+  const [feedback, setFeedback] = useState(submission?.feedback ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      setDecision('completed');
-      setScore(recipient?.submission?.score != null ? String(recipient.submission.score) : '');
-      setFeedback(recipient?.submission?.feedback ?? '');
-      setError(null);
-    }
-  }, [isOpen, recipient]);
-
-  const submission = recipient?.submission;
+  const unmarked = questions.filter((q) => q.answerType === 'free_text' && answersByQuestion.get(q.id)?.textAnswer && grades[q.id] === undefined).length;
 
   const handleSubmit = async () => {
     if (!submission) return;
-
     setBusy(true);
     setError(null);
     try {
@@ -39,10 +107,9 @@ export function ReviewSubmissionModal({ isOpen, recipient, onClose, onReviewed }
         decision,
         score: score !== '' ? Number(score) : undefined,
         feedback: feedback.trim() || undefined,
+        answerGrades: Object.entries(grades).map(([questionId, isCorrect]) => ({ questionId, isCorrect })),
       });
-      toast.success(
-        decision === 'completed' ? 'Submission marked complete' : 'Submission returned to the student'
-      );
+      toast.success(decision === 'completed' ? 'Submission marked complete' : 'Submission returned to the student');
       onReviewed?.();
       onClose?.();
     } catch (err) {
@@ -54,9 +121,9 @@ export function ReviewSubmissionModal({ isOpen, recipient, onClose, onReviewed }
 
   return (
     <Modal
-      isOpen={isOpen}
+      isOpen
       onClose={onClose}
-      title={recipient ? `Review submission - ${recipient.student?.firstName ?? 'Student'}` : 'Review submission'}
+      title={`Review submission - ${recipient.student?.firstName ?? 'Student'}`}
       size="lg"
       closeOnOverlayClick={!busy}
       closeOnEscape={!busy}
@@ -79,10 +146,33 @@ export function ReviewSubmissionModal({ isOpen, recipient, onClose, onReviewed }
 
       {submission && (
         <>
-          <div className="ui-field">
-            <p className="ui-statcard__label">Student&apos;s answer</p>
-            <p style={{ whiteSpace: 'pre-wrap' }}>{submission.content || 'No written answer submitted.'}</p>
-          </div>
+          {questions.length > 0 && (
+            <div className="ui-field">
+              <p className="ui-statcard__label">
+                Quiz answers
+                {submission.quiz && ` - ${submission.quiz.correct}/${submission.quiz.totalQuestions} marked correct automatically`}
+              </p>
+              <AnswersReview
+                questions={questions}
+                answersByQuestion={answersByQuestion}
+                grades={grades}
+                setGrade={(questionId, value) => setGrades((g) => ({ ...g, [questionId]: value }))}
+                disabled={busy}
+              />
+              {unmarked > 0 && (
+                <p className="ui-hint" style={{ marginBottom: 0 }}>
+                  {unmarked} written {unmarked === 1 ? 'answer is' : 'answers are'} not marked yet.
+                </p>
+              )}
+            </div>
+          )}
+
+          {(submission.content || questions.length === 0) && (
+            <div className="ui-field">
+              <p className="ui-statcard__label">Student&apos;s answer</p>
+              <p style={{ whiteSpace: 'pre-wrap' }}>{submission.content || 'No written answer submitted.'}</p>
+            </div>
+          )}
 
           {submission.attachments?.length > 0 && (
             <div className="ui-field">
@@ -104,33 +194,23 @@ export function ReviewSubmissionModal({ isOpen, recipient, onClose, onReviewed }
             <div>
               <p className="ui-statcard__label">Decision</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={decision === 'completed' ? 'primary' : 'secondary'}
-                  onClick={() => setDecision('completed')}
-                >
+                <Button type="button" size="sm" variant={decision === 'completed' ? 'primary' : 'secondary'} onClick={() => setDecision('completed')}>
                   Complete
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={decision === 'returned' ? 'primary' : 'secondary'}
-                  onClick={() => setDecision('returned')}
-                >
+                <Button type="button" size="sm" variant={decision === 'returned' ? 'primary' : 'secondary'} onClick={() => setDecision('returned')}>
                   Return for revision
                 </Button>
               </div>
             </div>
 
-            <Input
-              label="Score (0-100)"
-              type="number"
-              min="0"
-              max="100"
-              value={score}
-              onChange={(e) => setScore(e.target.value)}
-            />
+            <div>
+              <Input label="Score (0-100)" type="number" min="0" max="100" value={score} onChange={(e) => setScore(e.target.value)} reserveHelper={false} />
+              {quizPercent !== null && String(quizPercent) !== score && (
+                <Button type="button" size="sm" variant="ghost" onClick={() => setScore(String(quizPercent))}>
+                  Use quiz score ({quizPercent})
+                </Button>
+              )}
+            </div>
           </div>
 
           <Textarea
@@ -144,6 +224,17 @@ export function ReviewSubmissionModal({ isOpen, recipient, onClose, onReviewed }
       )}
     </Modal>
   );
+}
+
+/**
+ * Teacher-side review dialog for one recipient's submission. Only opened for
+ * a `submitted` recipient (the caller gates the trigger button). The dialog
+ * body mounts fresh for each opening, so its fields always start from that
+ * submission.
+ */
+export function ReviewSubmissionModal({ isOpen, recipient, questions = [], onClose, onReviewed }) {
+  if (!isOpen || !recipient) return null;
+  return <ReviewDialog key={recipient.id} recipient={recipient} questions={questions} onClose={onClose} onReviewed={onReviewed} />;
 }
 
 export default ReviewSubmissionModal;
