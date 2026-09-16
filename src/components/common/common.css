@@ -1030,6 +1030,11 @@
   font-size: var(--font-size-lg);
   font-weight: 600;
 }
+.ui-modal__description {
+  margin: var(--spacing-xs) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
 .ui-modal__body {
   padding: var(--spacing-lg);
   overflow-y: auto;

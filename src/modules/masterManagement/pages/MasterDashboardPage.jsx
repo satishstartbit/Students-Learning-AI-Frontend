@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LuEye, LuPlus } from 'react-icons/lu';
 import {
   PageHeader,
   Card,
@@ -8,12 +9,13 @@ import {
   Table,
   SearchInput,
   Select,
-  Button,
+  IconButton,
   StatCard,
   Loader,
   ErrorState,
   EmptyState,
 } from '../../../components/common';
+import { Tooltip } from '../../../components/ui/tooltip';
 import { useApi } from '../../../hooks/useApi';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatDateTime } from '../../../utils/date';
@@ -147,12 +149,12 @@ export default function MasterDashboardPage() {
       align: 'right',
       render: (row) => (
         <div style={{ display: 'flex', gap: 'var(--spacing-xs)', justifyContent: 'flex-end' }}>
-          <Button size="sm" variant="secondary" onClick={() => navigate(row.viewPath)}>
-            View
-          </Button>
-          <Button size="sm" onClick={() => navigate(`${row.viewPath}/create`)}>
-            Add
-          </Button>
+          <Tooltip label="View" side="top">
+            <IconButton icon={<LuEye aria-hidden="true" />} label="View" size="sm" onClick={() => navigate(row.viewPath)} />
+          </Tooltip>
+          <Tooltip label="Add" side="top">
+            <IconButton icon={<LuPlus aria-hidden="true" />} label="Add" size="sm" onClick={() => navigate(`${row.viewPath}/create`)} />
+          </Tooltip>
         </div>
       ),
     },

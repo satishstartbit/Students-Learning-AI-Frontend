@@ -69,6 +69,14 @@ export const adminCancelSubscription = (id, { reason, immediate = false }) =>
 export const adminListPayments = (params = {}) =>
   api.get('/subscriptions/admin/payments', { params: clean(params) });
 
+/** The 4 Payments & Refunds KPI tiles - real ledger sums/counts for the given { from, to }, plus % change vs the previous period of the same length. */
+export const adminGetPaymentStats = (params = {}) =>
+  api.get('/subscriptions/admin/payments/stats', { params: clean(params) });
+
+/** A CSV of every payment matching the given filters (same shape as adminListPayments, unpaginated). Returns the raw CSV text - hand it to utils/file.js#downloadTextFile. */
+export const adminExportPayments = (params = {}) =>
+  api.get('/subscriptions/admin/payments/export', { params: clean(params), responseType: 'text' });
+
 export const adminRefundPayment = (id, { amount, reason }) =>
   api.post(`/subscriptions/admin/payments/${id}/refund`, clean({ amount, reason }));
 
@@ -96,6 +104,8 @@ export default {
   adminGetSubscription,
   adminCancelSubscription,
   adminListPayments,
+  adminGetPaymentStats,
+  adminExportPayments,
   adminRefundPayment,
   adminGetStats,
   adminListCouponRedemptions,

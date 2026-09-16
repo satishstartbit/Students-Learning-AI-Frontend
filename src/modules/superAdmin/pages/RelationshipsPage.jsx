@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { LuUnlink, LuUserPlus } from 'react-icons/lu';
 import {
   PageHeader,
   Card,
   Button,
+  IconButton,
   SearchInput,
   DataTable,
   ConfirmationModal,
@@ -12,13 +14,13 @@ import {
   Badge,
   Tabs,
   Select,
-  MultiSelect,
   EmptyState,
   ErrorState,
   Loader,
   Toast,
 } from '../../../components/common';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
+import { Tooltip } from '../../../components/ui/tooltip';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -30,6 +32,7 @@ import { getErrorMessage } from '../../../utils/errorHandler';
 import adminUserService from '../services/adminUser.service';
 import masterGenericService from '../../masterManagement/services/masterGeneric.service';
 import academicService from '../../masterManagement/services/academic.service';
+import AssignRelationshipsModal from '../components/AssignRelationshipsModal';
 
 /**
  * Teacher <-> Student assignments - many-to-many, scoped to a subject and
@@ -37,10 +40,10 @@ import academicService from '../../masterManagement/services/academic.service';
  * Grade 2 and English Grade 2 are different assignments), so every row on
  * this page always shows the subject and grade it was made under.
  *
- * The assignment form is a bulk operation: every teacher chosen is linked to
- * every student chosen (the cartesian product), in one request. Pairs that
- * already exist for the same subject/grade/year are skipped rather than
- * rejected, so resubmitting an overlapping selection is always safe.
+ * The bulk assign form (`AssignRelationshipsModal`) lives in a modal rather
+ * than permanently at the top of the page - the many-to-many logic there is
+ * unchanged, just no longer dominating the screen when the admin only wants
+ * to browse or filter existing assignments.
  */
 const RELATIONSHIP_TYPE = 'teacher_student';
 const MASTER_QUERY = { status: 'active', sortBy: 'display_order', sortOrder: 'asc', limit: 100 };
@@ -80,12 +83,18 @@ function groupBySubjectGrade(items, otherKey) {
 }
 
 /** "By Teacher" / "By Student": one card per person, grouped by subject + grade. */
-function GroupedAssignments({ groups, otherKey, savingId, onStatusChange, onUnassign }) {
+function GroupedAssignments({ groups, otherKey, savingId, onStatusChange, onUnassign, onOpenAssign }) {
   if (groups.length === 0) {
     return (
       <EmptyState
+        icon="🔗"
         title="No assignments match these filters"
-        description="Try adjusting the filters above, or assign a teacher and student using the form."
+        description="Try adjusting the filters above, or assign a teacher and student."
+        action={
+          <Button startIcon={<LuUserPlus aria-hidden="true" />} onClick={onOpenAssign}>
+            Assign Teachers & Students
+          </Button>
+        }
       />
     );
   }
@@ -110,14 +119,14 @@ function GroupedAssignments({ groups, otherKey, savingId, onStatusChange, onUnas
                 className="border-l-2 pl-3"
                 style={{ borderColor: 'var(--color-border-default)' }}
               >
-                <div className="mb-1 text-sm font-semibold">
-                  → {sg.subject || 'No subject'} — {sg.grade || 'No grade'}
+                <div className="mb-2 flex flex-wrap items-center gap-1.5 text-sm font-semibold">
+                  <Badge variant="neutral">{sg.subject || 'No subject'}</Badge>
+                  <Badge variant="info">{sg.grade || 'No grade'}</Badge>
                 </div>
 
                 <ul className="flex flex-col gap-2">
                   {sg.people.map((person) => (
                     <li key={person.relationshipId} className="flex flex-wrap items-center gap-2 text-sm">
-                      <span aria-hidden="true">→</span>
                       <Link to={`/admin/users/${person.id}`}>{formatName(person)}</Link>
                       {person.academicYear && <Badge variant="neutral">{person.academicYear.name}</Badge>}
 
@@ -130,19 +139,20 @@ function GroupedAssignments({ groups, otherKey, savingId, onStatusChange, onUnas
                         className="!w-auto"
                       />
 
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          onUnassign(
-                            otherKey === 'related'
-                              ? { id: person.relationshipId, owner: group.person, related: person }
-                              : { id: person.relationshipId, owner: person, related: group.person }
-                          )
-                        }
-                      >
-                        Unassign
-                      </Button>
+                      <Tooltip label="Unassign" side="top">
+                        <IconButton
+                          icon={<LuUnlink aria-hidden="true" />}
+                          label="Unassign"
+                          size="sm"
+                          onClick={() =>
+                            onUnassign(
+                              otherKey === 'related'
+                                ? { id: person.relationshipId, owner: group.person, related: person }
+                                : { id: person.relationshipId, owner: person, related: group.person }
+                            )
+                          }
+                        />
+                      </Tooltip>
                     </li>
                   ))}
                 </ul>
@@ -198,122 +208,8 @@ export default function RelationshipsPage() {
   const noSubjects = !subjects.isLoading && subjectOptions.length === 0;
   const noGrades = !grades.isLoading && gradeOptions.length === 0;
 
-  // --- assignment form ------------------------------------------------------
-  const [formSubject, setFormSubject] = useState(null);
-  const [formGrade, setFormGrade] = useState(null);
-  const [formTeacherIds, setFormTeacherIds] = useState([]);
-  const [formStudentIds, setFormStudentIds] = useState([]);
-  const [formAcademicYearId, setFormAcademicYearId] = useState(null);
-  const [formStatus, setFormStatus] = useState('active');
-  const [formError, setFormError] = useState(null);
-  const [assignResult, setAssignResult] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [teacherSearch, setTeacherSearch] = useState('');
-  const [studentSearch, setStudentSearch] = useState('');
-
-  const debouncedTeacherSearch = useDebounce(teacherSearch, 350);
-  const debouncedStudentSearch = useDebounce(studentSearch, 350);
-
-  const formTeachers = useApi(adminUserService.listUsers);
-  const formStudents = useApi(adminUserService.listUsers);
-
-  const { run: runFormTeachers } = formTeachers;
-  const { run: runFormStudents } = formStudents;
-
-  // Teachers are only meaningful once both subject and grade are chosen -
-  // both narrow the search server-side, so a large staff list stays paged.
-  useEffect(() => {
-    if (!formSubject || !formGrade) return;
-    runFormTeachers({
-      role: 'TEACHER',
-      status: 'active',
-      subject: formSubject,
-      grade: formGrade,
-      search: debouncedTeacherSearch,
-      limit: 100,
-    }).catch(() => {});
-  }, [runFormTeachers, formSubject, formGrade, debouncedTeacherSearch]);
-
-  useEffect(() => {
-    if (!formGrade) return;
-    runFormStudents({
-      role: 'STUDENT',
-      status: 'active',
-      grade: formGrade,
-      search: debouncedStudentSearch,
-      limit: 100,
-    }).catch(() => {});
-  }, [runFormStudents, formGrade, debouncedStudentSearch]);
-
-  const formTeacherOptions = useMemo(
-    () => (formTeachers.data ?? []).map((t) => ({ value: t.id, label: formatName(t), description: t.email })),
-    [formTeachers.data]
-  );
-  const formStudentOptions = useMemo(
-    () => (formStudents.data ?? []).map((s) => ({ value: s.id, label: formatName(s), description: s.email })),
-    [formStudents.data]
-  );
-
-  const readyForPeople = Boolean(formSubject && formGrade);
-
-  const handleSubjectChange = (next) => {
-    setFormSubject(next);
-    // The teacher list is narrowed by subject; a previous pick may no longer apply.
-    setFormTeacherIds([]);
-    setFormError(null);
-  };
-
-  const handleGradeChange = (next) => {
-    setFormGrade(next);
-    // Both lists are narrowed by grade.
-    setFormTeacherIds([]);
-    setFormStudentIds([]);
-    setFormError(null);
-  };
-
-  const canAssign =
-    Boolean(formSubject && formGrade && formTeacherIds.length && formStudentIds.length && formAcademicYearId) &&
-    !busy;
-
-  const handleAssign = async (event) => {
-    event.preventDefault();
-    setFormError(null);
-    setAssignResult(null);
-
-    if (!formSubject) return setFormError('Select a subject');
-    if (!formGrade) return setFormError('Select a grade');
-    if (!formTeacherIds.length) return setFormError('Select at least one teacher');
-    if (!formStudentIds.length) return setFormError('Select at least one student');
-    if (!formAcademicYearId) return setFormError('Select an academic year');
-
-    setBusy(true);
-    try {
-      const result = await adminUserService.bulkAssignRelationships({
-        subject: formSubject,
-        grade: formGrade,
-        teacherIds: formTeacherIds,
-        studentIds: formStudentIds,
-        academicYearId: formAcademicYearId,
-        status: formStatus,
-      });
-
-      const { createdCount, skippedCount } = result.data;
-      setAssignResult({ createdCount, skippedCount });
-      toast.success(
-        skippedCount > 0
-          ? `${createdCount} assignment(s) created, ${skippedCount} already existed`
-          : `${createdCount} assignment(s) created`
-      );
-
-      setFormTeacherIds([]);
-      setFormStudentIds([]);
-      await refreshCurrentView();
-    } catch (err) {
-      setFormError(getErrorMessage(err));
-    } finally {
-      setBusy(false);
-    }
-  };
+  // --- assign modal -----------------------------------------------------------
+  const assignModal = useModal();
 
   // --- filters --------------------------------------------------------------
   const [search, setSearch] = useState('');
@@ -469,9 +365,22 @@ export default function RelationshipsPage() {
       header: 'Student',
       render: (row) => <Link to={`/admin/users/${row.related?.id}`}>{formatName(row.related)}</Link>,
     },
-    { key: 'subject', header: 'Subject', render: (row) => row.subject || '—' },
-    { key: 'grade', header: 'Grade', render: (row) => row.grade || '—' },
-    { key: 'academicYear', header: 'Academic Year', render: (row) => row.academicYear?.name ?? '—' },
+    {
+      key: 'subject',
+      header: 'Subject',
+      render: (row) => (row.subject ? <Badge variant="neutral">{row.subject}</Badge> : '—'),
+    },
+    {
+      key: 'grade',
+      header: 'Grade',
+      render: (row) => (row.grade ? <Badge variant="info">{row.grade}</Badge> : '—'),
+    },
+    {
+      key: 'academicYear',
+      header: 'Academic Year',
+      className: 'hidden lg:table-cell',
+      render: (row) => (row.academicYear?.name ? <Badge variant="neutral">{row.academicYear.name}</Badge> : '—'),
+    },
     {
       key: 'status',
       header: 'Status',
@@ -486,152 +395,48 @@ export default function RelationshipsPage() {
         />
       ),
     },
-    { key: 'createdAt', header: 'Assigned Date', render: (row) => formatDateTime(row.createdAt) },
+    {
+      key: 'createdAt',
+      header: 'Assigned Date',
+      className: 'hidden lg:table-cell',
+      render: (row) => formatDateTime(row.createdAt),
+    },
     {
       key: 'actions',
       header: 'Actions',
       align: 'right',
+      width: 64,
       render: (row) => (
-        <Button size="sm" variant="secondary" onClick={() => removeModal.open(row)}>
-          Unassign
-        </Button>
+        <Tooltip label="Unassign" side="top">
+          <IconButton
+            icon={<LuUnlink aria-hidden="true" />}
+            label="Unassign"
+            size="sm"
+            onClick={() => removeModal.open(row)}
+          />
+        </Tooltip>
       ),
     },
   ];
-
-  const cartesianCount = formTeacherIds.length * formStudentIds.length;
 
   return (
     <>
       <PageHeader
         title="Teacher & Student Assignments"
         description="One teacher can be assigned to many students, and one student can have many teachers - each link is scoped to a subject and grade."
+        actions={
+          <Button startIcon={<LuUserPlus aria-hidden="true" />} onClick={() => assignModal.open()}>
+            Assign Teachers & Students
+          </Button>
+        }
       />
 
-      <Card
-        title="Assign teachers & students"
-        subtitle="Select a subject and grade, then choose one or more teachers and students. Every teacher chosen is linked to every student chosen."
-        className="ui-field"
-      >
-        {formError && (
-          <Alert variant="error" className="ui-field" onDismiss={() => setFormError(null)}>
-            {formError}
-          </Alert>
-        )}
-
-        {assignResult && (
-          <Alert variant="success" className="ui-field" onDismiss={() => setAssignResult(null)}>
-            {assignResult.createdCount} assignment{assignResult.createdCount === 1 ? '' : 's'} created
-            {assignResult.skippedCount > 0 && `, ${assignResult.skippedCount} already existed`}.
-          </Alert>
-        )}
-
-        {(noSubjects || noGrades) && (
-          <Alert variant="warning" title="Master data missing" className="ui-field">
-            {noSubjects && <div>Add subjects in Master Management before assigning teachers.</div>}
-            {noGrades && <div>Add grade levels in Master Management before assigning teachers.</div>}
-          </Alert>
-        )}
-
-        <form onSubmit={handleAssign}>
-          <div className="grid gap-4 md:grid-cols-2">
-            <SearchableSelect
-              label="1. Subject"
-              required
-              options={subjectOptions}
-              value={formSubject}
-              onChange={handleSubjectChange}
-              loading={subjects.isLoading}
-              placeholder="Select subject"
-              searchPlaceholder="Search subjects…"
-              emptyMessage="No subjects available"
-            />
-
-            <SearchableSelect
-              label="2. Grade"
-              required
-              options={gradeOptions}
-              value={formGrade}
-              onChange={handleGradeChange}
-              loading={grades.isLoading}
-              placeholder="Select grade"
-              searchPlaceholder="Search grades…"
-              emptyMessage="No grade levels available"
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <MultiSelect
-              label="3. Teachers"
-              required
-              searchable
-              showSelectAll
-              options={formTeacherOptions}
-              value={formTeacherIds}
-              onChange={setFormTeacherIds}
-              onSearchChange={setTeacherSearch}
-              filterLocally={false}
-              loading={formTeachers.isLoading}
-              disabled={!readyForPeople}
-              placeholder={readyForPeople ? 'Search and select teachers' : 'Select subject and grade first'}
-              searchPlaceholder="Search teachers…"
-              hint="Every teacher selected is linked to every student selected below."
-            />
-
-            <MultiSelect
-              label="4. Students"
-              required
-              searchable
-              showSelectAll
-              options={formStudentOptions}
-              value={formStudentIds}
-              onChange={setFormStudentIds}
-              onSearchChange={setStudentSearch}
-              filterLocally={false}
-              loading={formStudents.isLoading}
-              disabled={!readyForPeople}
-              placeholder={readyForPeople ? 'Search and select students' : 'Select subject and grade first'}
-              searchPlaceholder="Search students…"
-            />
-          </div>
-
-          {cartesianCount > 0 && (
-            <Alert variant="info" className="ui-field">
-              {formTeacherIds.length} teacher{formTeacherIds.length === 1 ? '' : 's'} × {formStudentIds.length}{' '}
-              student{formStudentIds.length === 1 ? '' : 's'} = <strong>{cartesianCount}</strong> assignment
-              {cartesianCount === 1 ? '' : 's'} will be created for {formSubject} — {formGrade}. Assignments that
-              already exist are skipped automatically.
-            </Alert>
-          )}
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <SearchableSelect
-              label="5. Academic Year"
-              required
-              options={academicYearOptions}
-              value={formAcademicYearId}
-              onChange={setFormAcademicYearId}
-              loading={academicYears.isLoading}
-              placeholder="Select academic year"
-              searchPlaceholder="Search academic years…"
-              emptyMessage="No academic years available"
-            />
-
-            <Select
-              label="6. Status"
-              value={formStatus}
-              onChange={(e) => setFormStatus(e.target.value)}
-              options={STATUS_OPTIONS}
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <Button type="submit" loading={busy} disabled={!canAssign}>
-              Assign teachers to students
-            </Button>
-          </div>
-        </form>
-      </Card>
+      {(noSubjects || noGrades) && (
+        <Alert variant="warning" title="Master data missing" className="ui-field">
+          {noSubjects && <div>Add subjects in Master Management before assigning teachers.</div>}
+          {noGrades && <div>Add grade levels in Master Management before assigning teachers.</div>}
+        </Alert>
+      )}
 
       <Tabs items={VIEW_TABS} activeKey={view} onChange={setView} className="ui-field" />
 
@@ -731,8 +536,15 @@ export default function RelationshipsPage() {
           emptyTitle={hasActiveFilters ? 'No assignments match these filters' : 'No assignments yet'}
           emptyDescription={
             hasActiveFilters
-              ? 'Try adjusting the filters above.'
-              : 'Use the form above to assign teachers and students.'
+              ? 'Try adjusting the filters above, or assign a teacher and student.'
+              : 'Assign a teacher and student to get started.'
+          }
+          emptyAction={
+            !hasActiveFilters && (
+              <Button startIcon={<LuUserPlus aria-hidden="true" />} onClick={() => assignModal.open()}>
+                Assign Teachers & Students
+              </Button>
+            )
           }
           caption="Teacher and student assignments"
         />
@@ -747,8 +559,23 @@ export default function RelationshipsPage() {
           savingId={savingId}
           onStatusChange={handleStatusChange}
           onUnassign={removeModal.open}
+          onOpenAssign={() => assignModal.open()}
         />
       )}
+
+      <AssignRelationshipsModal
+        isOpen={assignModal.isOpen}
+        onClose={assignModal.close}
+        onAssigned={refreshCurrentView}
+        subjectOptions={subjectOptions}
+        subjectsLoading={subjects.isLoading}
+        gradeOptions={gradeOptions}
+        gradesLoading={grades.isLoading}
+        academicYearOptions={academicYearOptions}
+        academicYearsLoading={academicYears.isLoading}
+        noSubjects={noSubjects}
+        noGrades={noGrades}
+      />
 
       <ConfirmationModal
         isOpen={removeModal.isOpen}

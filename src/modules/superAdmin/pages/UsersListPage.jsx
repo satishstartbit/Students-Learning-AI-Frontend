@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { LuEye } from 'react-icons/lu';
 import {
   PageHeader,
   Button,
+  IconButton,
   Card,
   DataTable,
   SearchInput,
@@ -11,6 +13,7 @@ import {
   Badge,
   Toast,
 } from '../../../components/common';
+import { Tooltip } from '../../../components/ui/tooltip';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -171,9 +174,9 @@ export default function UsersListPage({ fixedRole = null }) {
       header: 'Actions',
       align: 'right',
       render: (row) => (
-        <Button size="sm" variant="secondary" onClick={() => navigate(`/admin/users/${row.id}`)}>
-          View
-        </Button>
+        <Tooltip label="View" side="top">
+          <IconButton icon={<LuEye aria-hidden="true" />} label="View" size="sm" onClick={() => navigate(`/admin/users/${row.id}`)} />
+        </Tooltip>
       ),
     },
   ];

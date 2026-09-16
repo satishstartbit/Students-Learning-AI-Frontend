@@ -150,12 +150,7 @@ export default function AdminRevenuePage() {
         <Loader message="Loading revenue…" />
       ) : (
         <>
-          {!singleCurrency && (
-            <Alert variant="info" className="ui-field">
-              Plans use more than one currency ({distinctCurrencies.join(', ')}) - totals are
-              broken out per currency below rather than summed together.
-            </Alert>
-          )}
+
 
           {singleCurrency ? (
             <div
@@ -238,19 +233,6 @@ export default function AdminRevenuePage() {
             />
           </Card>
 
-          <Card>
-            <SectionHeader title="Subscriptions by status" as="h3" />
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-sm)' }}>
-              {Object.keys(byStatus).length === 0 && (
-                <span className="ui-hint">No subscriptions yet.</span>
-              )}
-              {Object.entries(byStatus).map(([status, count]) => (
-                <Badge key={status} variant={status === 'active' ? 'success' : 'neutral'}>
-                  {STATUS_LABELS[status] ?? status}: {count}
-                </Badge>
-              ))}
-            </div>
-          </Card>
         </>
       )}
     </>

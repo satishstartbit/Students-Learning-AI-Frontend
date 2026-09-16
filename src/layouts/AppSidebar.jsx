@@ -356,7 +356,7 @@ export default function AppSidebar({ subtitle, navItems = [] }) {
       <SidebarContent>
         {sections.map((section, index) => (
           <SidebarGroup key={section.group ?? index}>
-            {/* {section.group && <SidebarGroupLabel>{section.group}</SidebarGroupLabel>} */}
+            {section.group && <SidebarGroupLabel>{section.group}</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
                 {section.items.map((entry) => (

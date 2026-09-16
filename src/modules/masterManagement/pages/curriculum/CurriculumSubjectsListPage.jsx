@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { Alert, Button } from '../../../../components/common';
+import { LuList } from 'react-icons/lu';
+import { Alert, IconButton } from '../../../../components/common';
+import { Tooltip } from '../../../../components/ui/tooltip';
 import CurriculumMasterList from '../../components/CurriculumMasterList';
 import { curriculumSubjectService } from '../../services/curriculum.service';
 import { formatGradeRange } from '../../../../utils/gradeRange';
@@ -28,9 +30,14 @@ export default function CurriculumSubjectsListPage() {
         </Alert>
       }
       rowActions={(row) => (
-        <Button size="sm" variant="secondary" onClick={() => navigate(`/admin/masters/topics?subjectId=${row.id}`)}>
-          Topics
-        </Button>
+        <Tooltip label="View topics" side="top">
+          <IconButton
+            icon={<LuList aria-hidden="true" />}
+            label="View topics"
+            size="sm"
+            onClick={() => navigate(`/admin/masters/topics?subjectId=${row.id}`)}
+          />
+        </Tooltip>
       )}
     />
   );

@@ -3,17 +3,16 @@ import { createPortal } from 'react-dom';
 import { cn } from '../../lib/utils';
 
 /**
- * A hover/focus tooltip for the sidebar's collapsed icon rail.
+ * A generic hover/focus tooltip - originally built for the sidebar's
+ * collapsed icon rail, also used for compact icon-only row actions in admin
+ * tables (`side="top"`).
  *
  * Portalled to document.body and positioned with `fixed` coordinates from the
  * trigger's own bounding box, rather than an absolutely-positioned sibling.
- *
- * The rail sits inside several ancestors that clip overflow by design (the
- * app shell wrapper, the sidebar box itself, and its content region while
- * collapsed - all needed so the width-collapse animation doesn't show a
- * horizontal scrollbar). A tooltip flying out to the right of a 52px-wide
- * rail is exactly the content those ancestors clip, so it can only be shown
- * by escaping the DOM tree entirely.
+ * That matters beyond the sidebar too: a tooltip inside a `.ui-table-wrap`
+ * (which scrolls horizontally) or a modal body would otherwise be clipped by
+ * the nearest scrolling/overflow ancestor - escaping to `document.body` sidesteps
+ * that entirely, the same trick `SearchableSelect`'s menu uses.
  */
 export function Tooltip({ label, enabled = true, side = 'right', children, className }) {
   const [visible, setVisible] = useState(false);
@@ -23,10 +22,11 @@ export function Tooltip({ label, enabled = true, side = 'right', children, class
   const show = () => {
     const rect = triggerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    setCoords({
-      top: rect.top + rect.height / 2,
-      left: side === 'right' ? rect.right : rect.left,
-    });
+    setCoords(
+      side === 'top'
+        ? { top: rect.top, left: rect.left + rect.width / 2 }
+        : { top: rect.top + rect.height / 2, left: side === 'right' ? rect.right : rect.left }
+    );
     setVisible(true);
   };
   const hide = () => setVisible(false);
@@ -70,9 +70,11 @@ export function Tooltip({ label, enabled = true, side = 'right', children, class
               top: coords.top,
               left: coords.left,
               transform:
-                side === 'right'
-                  ? 'translate(0.5rem, -50%)'
-                  : 'translate(calc(-100% - 0.5rem), -50%)',
+                side === 'top'
+                  ? 'translate(-50%, calc(-100% - 0.5rem))'
+                  : side === 'right'
+                    ? 'translate(0.5rem, -50%)'
+                    : 'translate(calc(-100% - 0.5rem), -50%)',
               background: 'var(--color-bg-inverse)',
               color: 'var(--color-text-on-dark)',
               boxShadow: 'var(--elevation-3)',

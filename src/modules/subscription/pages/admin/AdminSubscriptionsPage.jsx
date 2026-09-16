@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { LuBan } from 'react-icons/lu';
 import {
   PageHeader,
   Button,
+  IconButton,
   Card,
   DataTable,
   SearchInput,
@@ -16,6 +18,7 @@ import {
   Input,
   Toast,
 } from '../../../../components/common';
+import { Tooltip } from '../../../../components/ui/tooltip';
 import { useApi } from '../../../../hooks/useApi';
 import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
@@ -168,9 +171,9 @@ export default function AdminSubscriptionsPage() {
       align: 'right',
       render: (row) =>
         isLive(row) ? (
-          <Button size="sm" variant="danger" onClick={() => openCancel(row)}>
-            Cancel
-          </Button>
+          <Tooltip label="Cancel subscription" side="top">
+            <IconButton icon={<LuBan aria-hidden="true" />} label="Cancel subscription" size="sm" onClick={() => openCancel(row)} />
+          </Tooltip>
         ) : (
           <span className="ui-hint">—</span>
         ),

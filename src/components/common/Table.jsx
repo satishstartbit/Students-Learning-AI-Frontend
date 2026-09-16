@@ -4,7 +4,10 @@
  * Knows nothing about fetching or pagination - <DataTable /> composes this
  * with loading, empty, error and pagination behaviour.
  *
- * @param columns - [{ key, header, render?, align?, sortable?, width? }]
+ * @param columns - [{ key, header, render?, align?, sortable?, width?, className? }]
+ *   `className` (e.g. a Tailwind `hidden lg:table-cell`) is applied to both
+ *   the header and body cells, so a column can be hidden responsively
+ *   without the header and its cells drifting out of alignment.
  */
 export function Table({
   columns = [],
@@ -38,6 +41,7 @@ export function Table({
                 <th
                   key={column.key}
                   scope="col"
+                  className={column.className}
                   style={{ width: column.width, textAlign: column.align }}
                   aria-sort={isSorted ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
                 >
@@ -72,7 +76,7 @@ export function Table({
                 style={onRowClick ? { cursor: 'pointer' } : undefined}
               >
                 {columns.map((column) => (
-                  <td key={column.key} style={{ textAlign: column.align }}>
+                  <td key={column.key} className={column.className} style={{ textAlign: column.align }}>
                     {cellValue(row, column, index)}
                   </td>
                 ))}

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '../../../../components/common';
+import { LuPause, LuPlay } from 'react-icons/lu';
+import { IconButton } from '../../../../components/common';
+import { Tooltip } from '../../../../components/ui/tooltip';
 import CurriculumMasterList from '../../components/CurriculumMasterList';
 import { audioTrackService } from '../../services/curriculum.service';
 
@@ -53,9 +55,16 @@ export default function AudioTracksListPage() {
       service={audioTrackService}
       columns={columns}
       rowActions={(row) => (
-        <Button size="sm" variant="secondary" onClick={() => preview.toggle(row)} disabled={!row.url} aria-pressed={preview.playingId === row.id}>
-          {preview.playingId === row.id ? 'Stop' : 'Listen'}
-        </Button>
+        <Tooltip label={preview.playingId === row.id ? 'Stop' : 'Listen'} side="top">
+          <IconButton
+            icon={preview.playingId === row.id ? <LuPause aria-hidden="true" /> : <LuPlay aria-hidden="true" />}
+            label={preview.playingId === row.id ? 'Stop' : 'Listen'}
+            size="sm"
+            onClick={() => preview.toggle(row)}
+            disabled={!row.url}
+            aria-pressed={preview.playingId === row.id}
+          />
+        </Tooltip>
       )}
     />
   );

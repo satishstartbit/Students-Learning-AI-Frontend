@@ -13,6 +13,7 @@ export function Modal({
   isOpen,
   onClose,
   title,
+  description,
   children,
   footer,
   size = 'md',
@@ -94,9 +95,14 @@ export function Modal({
         {(title || showCloseButton) && (
           <div className="ui-modal__header">
             {title && (
-              <h2 id={titleId} className="ui-modal__title">
-                {title}
-              </h2>
+              <div className="min-w-0">
+                <h2 id={titleId} className="ui-modal__title">
+                  {title}
+                </h2>
+                {description && (
+                  <p className="ui-modal__description">{description}</p>
+                )}
+              </div>
             )}
             {showCloseButton && (
               <IconButton

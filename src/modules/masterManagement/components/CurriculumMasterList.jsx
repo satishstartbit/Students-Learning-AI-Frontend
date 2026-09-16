@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { LuPencil, LuToggleLeft, LuToggleRight, LuTrash2 } from 'react-icons/lu';
 import {
   PageHeader,
   Button,
+  IconButton,
   Card,
   DataTable,
   SearchInput,
@@ -11,6 +13,7 @@ import {
   ConfirmationModal,
   Toast,
 } from '../../../components/common';
+import { Tooltip } from '../../../components/ui/tooltip';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -114,21 +117,41 @@ export default function CurriculumMasterList({
       render: (row) => (
         <div style={{ display: 'flex', gap: 'var(--spacing-xs)', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
           {rowActions?.(row)}
-          <Button size="sm" variant="secondary" onClick={() => navigate(`${basePath}/${row.id}/edit`)}>
-            Edit
-          </Button>
+          <Tooltip label="Edit" side="top">
+            <IconButton
+              icon={<LuPencil aria-hidden="true" />}
+              label="Edit"
+              size="sm"
+              onClick={() => navigate(`${basePath}/${row.id}/edit`)}
+            />
+          </Tooltip>
           {row.isActive ? (
-            <Button size="sm" variant="secondary" onClick={() => setConfirm({ type: 'deactivate', item: row })}>
-              Deactivate
-            </Button>
+            <Tooltip label="Deactivate" side="top">
+              <IconButton
+                icon={<LuToggleLeft aria-hidden="true" />}
+                label="Deactivate"
+                size="sm"
+                onClick={() => setConfirm({ type: 'deactivate', item: row })}
+              />
+            </Tooltip>
           ) : (
-            <Button size="sm" variant="secondary" onClick={() => setConfirm({ type: 'activate', item: row })}>
-              Activate
-            </Button>
+            <Tooltip label="Activate" side="top">
+              <IconButton
+                icon={<LuToggleRight aria-hidden="true" />}
+                label="Activate"
+                size="sm"
+                onClick={() => setConfirm({ type: 'activate', item: row })}
+              />
+            </Tooltip>
           )}
-          <Button size="sm" variant="danger" onClick={() => setConfirm({ type: 'delete', item: row })}>
-            Delete
-          </Button>
+          <Tooltip label="Delete" side="top">
+            <IconButton
+              icon={<LuTrash2 aria-hidden="true" />}
+              label="Delete"
+              size="sm"
+              onClick={() => setConfirm({ type: 'delete', item: row })}
+            />
+          </Tooltip>
         </div>
       ),
     },

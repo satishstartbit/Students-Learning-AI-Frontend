@@ -84,6 +84,22 @@ export function readFileAsDataUrl(file) {
   });
 }
 
+/**
+ * Saves a string as a local file - the client side of an "Export" button.
+ * `content` is usually a server response already in that format (a CSV, say);
+ * this doesn't build anything, just hands the browser its download.
+ */
+export function downloadTextFile(filename, content, mimeType = 'text/plain') {
+  const url = URL.createObjectURL(new Blob([content], { type: mimeType }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 /** Builds a FormData body for the upload endpoints. */
 export function toFormData(files, { fieldName = 'file', extra = {} } = {}) {
   const formData = new FormData();
@@ -110,4 +126,5 @@ export default {
   revokePreviewUrl,
   readFileAsDataUrl,
   toFormData,
+  downloadTextFile,
 };

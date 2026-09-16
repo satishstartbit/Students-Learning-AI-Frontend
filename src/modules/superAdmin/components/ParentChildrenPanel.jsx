@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { LuPencil, LuUnlink } from 'react-icons/lu';
 import {
   Card,
   Button,
   ButtonGroup,
+  IconButton,
   Input,
   Select,
   SearchInput,
@@ -16,6 +18,7 @@ import {
   Loader,
   SectionHeader,
 } from '../../../components/common';
+import { Tooltip } from '../../../components/ui/tooltip';
 import { useApi } from '../../../hooks/useApi';
 import { useForm } from '../../../hooks/useForm';
 import { useModal } from '../../../hooks/useModal';
@@ -225,29 +228,31 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
                 )}
 
                 <ButtonGroup>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    as={Link}
-                    to={`/admin/users/${child.id}/edit`}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() =>
-                      unlinkModal.open({
-                        child,
-                        // The relationship id comes from the parent's own
-                        // relationship list, loaded by the detail page.
-                        relationshipId: child.relationshipId,
-                      })
-                    }
-                    disabled={!child.relationshipId}
-                  >
-                    Unlink
-                  </Button>
+                  <Tooltip label="Edit" side="top">
+                    <IconButton
+                      icon={<LuPencil aria-hidden="true" />}
+                      label="Edit"
+                      size="sm"
+                      as={Link}
+                      to={`/admin/users/${child.id}/edit`}
+                    />
+                  </Tooltip>
+                  <Tooltip label="Unlink" side="top">
+                    <IconButton
+                      icon={<LuUnlink aria-hidden="true" />}
+                      label="Unlink"
+                      size="sm"
+                      onClick={() =>
+                        unlinkModal.open({
+                          child,
+                          // The relationship id comes from the parent's own
+                          // relationship list, loaded by the detail page.
+                          relationshipId: child.relationshipId,
+                        })
+                      }
+                      disabled={!child.relationshipId}
+                    />
+                  </Tooltip>
                 </ButtonGroup>
               </li>
             ))}
