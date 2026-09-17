@@ -125,6 +125,7 @@ export default function CurriculumMasterList({
             <IconButton
               icon={<LuPencil aria-hidden="true" />}
               label="Edit"
+              variant="primary"
               size="sm"
               onClick={() => navigate(`${basePath}/${row.id}/edit`)}
             />
@@ -134,6 +135,7 @@ export default function CurriculumMasterList({
               <IconButton
                 icon={<LuToggleLeft aria-hidden="true" />}
                 label="Deactivate"
+                variant="warning"
                 size="sm"
                 onClick={() => setConfirm({ type: 'deactivate', item: row })}
               />
@@ -143,6 +145,7 @@ export default function CurriculumMasterList({
               <IconButton
                 icon={<LuToggleRight aria-hidden="true" />}
                 label="Activate"
+                variant="success"
                 size="sm"
                 onClick={() => setConfirm({ type: 'activate', item: row })}
               />
@@ -153,6 +156,7 @@ export default function CurriculumMasterList({
               <IconButton
                 icon={<LuTrash2 aria-hidden="true" />}
                 label="Delete"
+                variant="danger"
                 size="sm"
                 onClick={() => setConfirm({ type: 'delete', item: row })}
               />

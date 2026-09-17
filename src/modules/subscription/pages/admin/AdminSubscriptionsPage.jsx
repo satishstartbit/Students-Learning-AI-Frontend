@@ -172,7 +172,7 @@ export default function AdminSubscriptionsPage() {
       render: (row) =>
         isLive(row) ? (
           <Tooltip label="Cancel subscription" side="top">
-            <IconButton icon={<LuBan aria-hidden="true" />} label="Cancel subscription" size="sm" onClick={() => openCancel(row)} />
+            <IconButton icon={<LuBan aria-hidden="true" />} label="Cancel subscription" variant="danger" size="sm" onClick={() => openCancel(row)} />
           </Tooltip>
         ) : (
           <span className="ui-hint">—</span>

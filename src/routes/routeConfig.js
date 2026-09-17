@@ -43,6 +43,8 @@ import StudentHomePage from '../modules/student/pages/StudentHomePage';
 import StudentPlanPage from '../modules/student/pages/StudentPlanPage';
 import FocusTimerPage from '../modules/student/pages/FocusTimerPage';
 import RewardsPage from '../modules/student/pages/RewardsPage';
+import NotificationsPage from '../modules/student/pages/NotificationsPage';
+import MakeItYoursPage from '../modules/student/pages/MakeItYoursPage';
 import StudentSettingsPage from '../modules/student/pages/StudentSettingsPage';
 import GradeBandPage from '../modules/student/pages/GradeBandPage';
 import KidHomePage from '../modules/student/pages/kid/KidHomePage';
@@ -409,6 +411,18 @@ export const STUDENT_ROUTES = {
       label: 'Settings',
       component: GradeBandPage,
       props: { junior: KidSettingsPage, standard: StudentSettingsPage },
+    },
+    // Grade 6+ only - not part of K-5's nav (kidNav.js).
+    {
+      path: 'notifications',
+      label: 'Notifications',
+      permissions: [PERMISSIONS.NOTIFICATION_READ],
+      component: NotificationsPage,
+    },
+    {
+      path: 'make-it-yours',
+      label: 'Make it yours',
+      component: MakeItYoursPage,
     },
   ],
 };

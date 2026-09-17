@@ -902,9 +902,40 @@
   width: var(--control-height-sm);
   height: var(--control-height-sm);
 }
+
+/*
+ * Semantic action colour, at rest (not just on hover) - danger for
+ * destructive actions (Delete/Unassign/Cancel/Remove), success for
+ * Activate, warning for Deactivate, primary for Edit/View. Icons inherit
+ * this via `currentColor` automatically.
+ */
+.ui-iconbtn--danger {
+  color: var(--color-danger-fg);
+}
 .ui-iconbtn--danger:hover:not(:disabled) {
   background: var(--color-danger-bg);
   color: var(--color-danger-fg);
+}
+.ui-iconbtn--success {
+  color: var(--color-success-fg);
+}
+.ui-iconbtn--success:hover:not(:disabled) {
+  background: var(--color-success-bg);
+  color: var(--color-success-fg);
+}
+.ui-iconbtn--warning {
+  color: var(--color-warning-fg);
+}
+.ui-iconbtn--warning:hover:not(:disabled) {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-fg);
+}
+.ui-iconbtn--primary {
+  color: var(--accent-base);
+}
+.ui-iconbtn--primary:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
 }
 
 .ui-btngroup {

@@ -34,6 +34,7 @@ export default function CurriculumSubjectsListPage() {
           <IconButton
             icon={<LuList aria-hidden="true" />}
             label="View topics"
+            variant="primary"
             size="sm"
             onClick={() => navigate(`/admin/masters/topics?subjectId=${row.id}`)}
           />

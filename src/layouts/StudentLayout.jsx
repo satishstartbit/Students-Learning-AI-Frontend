@@ -1,9 +1,12 @@
 import { useCallback, useMemo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import {
+  LuBell,
   LuCalendarDays,
   LuFileText,
   LuMessageCircle,
+  LuPalette,
+  LuSettings,
   LuSparkles,
   LuSun,
   LuTimer,
@@ -20,18 +23,34 @@ import { isJuniorGrade } from '../utils/gradeBand';
 import AuthenticatedLayout from './AuthenticatedLayout';
 import KidLayout from './KidLayout';
 
-/** Navigation for the student area (/student/*) - Grade 6 and up. K-5 nav lives in modules/student/components/kid/kidNav.js. */
+/**
+ * Navigation for the student area (/student/*) - Grade 6 and up. K-5 nav
+ * lives in modules/student/components/kid/kidNav.js.
+ *
+ * Two groups: the primary "My learning" set, then a visually separate second
+ * section (Notifications / Make it yours / Settings) above the account tile
+ * - AppSidebar.jsx already renders each `{ group, items }` entry as its own
+ * SidebarGroup, so this is a data change only.
+ */
 const NAV_ITEMS = [
   {
     group: 'My learning',
     items: [
-      { to: '/student', label: 'My Day', icon: LuSun, end: true },
-      { to: '/student/check-in', label: 'Check In', icon: LuMessageCircle },
-      { to: '/student/assignments', label: 'Assignments', icon: LuFileText },
-      { to: '/student/assistant', label: 'AI Assistant', icon: LuSparkles },
+      { to: '/student', label: 'Home', icon: LuSun, end: true },
       { to: '/student/calendar', label: 'Plan', icon: LuCalendarDays },
+      { to: '/student/assignments', label: 'Assignments', icon: LuFileText },
+      { to: '/student/check-in', label: 'Check In', icon: LuMessageCircle },
+      { to: '/student/assistant', label: 'AI Assistant', icon: LuSparkles },
       { to: '/student/focus', label: 'Focus', icon: LuTimer },
       { to: '/student/rewards', label: 'Rewards', icon: LuTrophy },
+    ],
+  },
+  {
+    group: null,
+    items: [
+      { to: '/student/notifications', label: 'Notifications', icon: LuBell },
+      { to: '/student/make-it-yours', label: 'Make it yours', icon: LuPalette },
+      { to: '/student/settings', label: 'Settings', icon: LuSettings },
     ],
   },
 ];

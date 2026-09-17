@@ -151,7 +151,7 @@ export default function MasterDashboardPage() {
       render: (row) => (
         <div style={{ display: 'flex', gap: 'var(--spacing-xs)', justifyContent: 'flex-end' }}>
           <Tooltip label="View" side="top">
-            <IconButton icon={<LuEye aria-hidden="true" />} label="View" size="sm" onClick={() => navigate(row.viewPath)} />
+            <IconButton icon={<LuEye aria-hidden="true" />} label="View" variant="primary" size="sm" onClick={() => navigate(row.viewPath)} />
           </Tooltip>
           <Tooltip label="Add" side="top">
             <IconButton icon={<LuPlus aria-hidden="true" />} label="Add" size="sm" onClick={() => navigate(`${row.viewPath}/create`)} />

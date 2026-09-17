@@ -123,6 +123,7 @@ export default function MasterListPage() {
             <IconButton
               icon={<LuPencil aria-hidden="true" />}
               label="Edit"
+              variant="primary"
               size="sm"
               onClick={() => navigate(`/admin/masters/${masterType}/${row.id}/edit`)}
             />
@@ -132,6 +133,7 @@ export default function MasterListPage() {
               <IconButton
                 icon={<LuToggleLeft aria-hidden="true" />}
                 label="Deactivate"
+                variant="warning"
                 size="sm"
                 onClick={() => setConfirm({ type: 'deactivate', item: row })}
               />
@@ -141,6 +143,7 @@ export default function MasterListPage() {
               <IconButton
                 icon={<LuToggleRight aria-hidden="true" />}
                 label="Activate"
+                variant="success"
                 size="sm"
                 onClick={() => setConfirm({ type: 'activate', item: row })}
               />
@@ -150,6 +153,7 @@ export default function MasterListPage() {
             <IconButton
               icon={<LuTrash2 aria-hidden="true" />}
               label="Delete"
+              variant="danger"
               size="sm"
               onClick={() => setConfirm({ type: 'delete', item: row })}
             />

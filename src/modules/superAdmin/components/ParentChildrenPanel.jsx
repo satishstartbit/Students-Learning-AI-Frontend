@@ -232,6 +232,7 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
                     <IconButton
                       icon={<LuPencil aria-hidden="true" />}
                       label="Edit"
+                      variant="primary"
                       size="sm"
                       as={Link}
                       to={`/admin/users/${child.id}/edit`}
@@ -241,6 +242,7 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
                     <IconButton
                       icon={<LuUnlink aria-hidden="true" />}
                       label="Unlink"
+                      variant="danger"
                       size="sm"
                       onClick={() =>
                         unlinkModal.open({

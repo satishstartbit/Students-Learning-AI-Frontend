@@ -46,7 +46,7 @@ export default function PairsEditor({ pairs, onChange, disabled, error }) {
             </span>
             <SideEditor label={`Pair ${index + 1} right item`} side={pair.right} onChange={(right) => update(pair.id, { right })} disabled={disabled} />
             {pairs.length > MIN_PAIRS && (
-              <IconButton label={`Remove pair ${index + 1}`} size="sm" onClick={() => remove(pair.id)} disabled={disabled}>
+              <IconButton label={`Remove pair ${index + 1}`} variant="danger" size="sm" onClick={() => remove(pair.id)} disabled={disabled}>
                 <LuX aria-hidden="true" />
               </IconButton>
             )}

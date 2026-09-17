@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { LuFilterX } from 'react-icons/lu';
+import { LuFilterX, LuHandCoins, LuTrendingUp, LuUndo2, LuUsers } from 'react-icons/lu';
 import {
   PageHeader,
   Card,
@@ -8,26 +8,16 @@ import {
   Input,
   IconButton,
   FilterBar,
-  Badge,
   Alert,
   Loader,
   SectionHeader,
 } from '../../../../components/common';
 import { Tooltip } from '../../../../components/ui/tooltip';
 import { useApi } from '../../../../hooks/useApi';
-import { formatCurrency } from '../../../../utils/format';
+import { formatCurrency, formatNumber } from '../../../../utils/format';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import { DEFAULT_CURRENCY } from '../../../../utils/locale';
 import subscriptionService from '../../services/subscription.service';
-
-const STATUS_LABELS = {
-  trialing: 'Trialing',
-  active: 'Active',
-  past_due: 'Past due',
-  cancelled: 'Cancelled',
-  expired: 'Expired',
-  incomplete: 'Incomplete',
-};
 
 /**
  * /admin/subscriptions/revenue - revenue and subscriber counts by plan.
@@ -35,6 +25,14 @@ const STATUS_LABELS = {
  * Revenue is net (successful charges minus refunds) and is summed from the
  * payment ledger rather than from plan prices, so a plan whose price changed
  * later doesn't retroactively rewrite past revenue.
+ *
+ * This platform bills in one currency (the Canadian-localization default -
+ * plans can't be created in anything else, see SubscriptionPlanFormPage.jsx
+ * and validators/masterBilling.validator.js) so the summary is always one
+ * set of totals. `distinctCurrencies` only exists as a data-integrity check:
+ * if a historical row is ever found in another currency, it's called out as
+ * an anomaly rather than silently summed into the one total or given its own
+ * parallel section as if multi-currency were a normal, supported state here.
  */
 export default function AdminRevenuePage() {
   const [from, setFrom] = useState('');
@@ -50,40 +48,13 @@ export default function AdminRevenuePage() {
 
   const totals = data?.totals;
   const byPlan = useMemo(() => data?.byPlan ?? [], [data]);
-  const byStatus = data?.byStatus ?? {};
 
-  // Plan currency is free text elsewhere in the app, so don't assume every
-  // plan shares one - only label the aggregate totals with a single currency
-  // when that's actually true across every row.
   const distinctCurrencies = useMemo(
     () => [...new Set(byPlan.map((row) => row.currency).filter(Boolean))],
     [byPlan]
   );
-  const singleCurrency = distinctCurrencies.length <= 1;
   const currency = distinctCurrencies[0] ?? DEFAULT_CURRENCY;
-
-  // Recomputed straight from byPlan (rather than trusting the backend's
-  // single `totals` object) so a mixed-currency dataset is never summed
-  // together under one label - each currency gets its own totals.
-  const totalsByCurrency = useMemo(() => {
-    const map = new Map();
-    for (const row of byPlan) {
-      const cur = row.currency ?? DEFAULT_CURRENCY;
-      const entry = map.get(cur) ?? {
-        currency: cur,
-        netRevenue: 0,
-        grossRevenue: 0,
-        refunded: 0,
-        activeSubscribers: 0,
-      };
-      entry.netRevenue += row.netRevenue ?? 0;
-      entry.grossRevenue += row.grossRevenue ?? 0;
-      entry.refunded += row.refunded ?? 0;
-      entry.activeSubscribers += row.activeSubscribers ?? 0;
-      map.set(cur, entry);
-    }
-    return [...map.values()];
-  }, [byPlan]);
+  const hasCurrencyAnomaly = distinctCurrencies.some((c) => c !== DEFAULT_CURRENCY) || distinctCurrencies.length > 1;
 
   const columns = [
     { key: 'planName', header: 'Plan', render: (row) => <strong>{row.planName}</strong> },
@@ -91,9 +62,9 @@ export default function AdminRevenuePage() {
       key: 'activeSubscribers',
       header: 'Active subscribers',
       align: 'right',
-      render: (row) => row.activeSubscribers,
+      render: (row) => formatNumber(row.activeSubscribers),
     },
-    { key: 'paymentCount', header: 'Charges', align: 'right', render: (row) => row.paymentCount },
+    { key: 'paymentCount', header: 'Charges', align: 'right', render: (row) => formatNumber(row.paymentCount) },
     {
       key: 'grossRevenue',
       header: 'Gross',
@@ -110,7 +81,7 @@ export default function AdminRevenuePage() {
             −{formatCurrency(row.refunded, row.currency)}
           </span>
         ) : (
-          '—'
+          <span className="ui-hint">—</span>
         ),
     },
     {
@@ -121,15 +92,33 @@ export default function AdminRevenuePage() {
     },
   ];
 
+  const statGridStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: 'var(--spacing-md)',
+    marginBottom: 'var(--spacing-lg)',
+  };
+
   return (
     <>
       <PageHeader
         title="Revenue"
-        description="Subscription revenue and subscriber counts, by plan."
+        description={`Subscription revenue and subscriber counts, by plan. All figures in ${currency}.`}
         breadcrumbs={[{ label: 'Subscriptions', to: '/admin/subscriptions' }, { label: 'Revenue' }]}
       />
 
-      {error && <Alert variant="error">{getErrorMessage(error)}</Alert>}
+      {error && (
+        <Alert variant="error" className="ui-field">
+          {getErrorMessage(error)}
+        </Alert>
+      )}
+
+      {hasCurrencyAnomaly && (
+        <Alert variant="warning" title="Some records aren't in this platform's currency" className="ui-field">
+          The totals below only include {currency} activity. A payment or plan was found in a different
+          currency - check the Subscription Plans master and the payment ledger for a data-entry mistake.
+        </Alert>
+      )}
 
       <FilterBar>
         <Input fieldClassName="ui-field--compact-labeled" label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
@@ -152,80 +141,35 @@ export default function AdminRevenuePage() {
         <Loader message="Loading revenue…" />
       ) : (
         <>
-
-
-          {singleCurrency ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: 'var(--spacing-md)',
-                marginBottom: 'var(--spacing-lg)',
-              }}
-            >
-              <StatCard
-                label="Net revenue"
-                value={formatCurrency(totals?.netRevenue ?? 0, currency)}
-                hint="After refunds"
-                icon="💰"
-              />
-              <StatCard
-                label="Gross revenue"
-                value={formatCurrency(totals?.grossRevenue ?? 0, currency)}
-                icon="📈"
-              />
-              <StatCard
-                label="Refunded"
-                value={formatCurrency(totals?.refunded ?? 0, currency)}
-                icon="↩️"
-              />
-              <StatCard
-                label="Active subscribers"
-                value={totals?.activeSubscribers ?? 0}
-                hint="Trialing, active or past due"
-                icon="👨‍👩‍👧"
-              />
-            </div>
-          ) : (
-            totalsByCurrency.map((t) => (
-              <div key={t.currency} style={{ marginBottom: 'var(--spacing-lg)' }}>
-                <SectionHeader title={`Totals (${t.currency})`} as="h4" />
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: 'var(--spacing-md)',
-                  }}
-                >
-                  <StatCard
-                    label="Net revenue"
-                    value={formatCurrency(t.netRevenue, t.currency)}
-                    hint="After refunds"
-                    icon="💰"
-                  />
-                  <StatCard
-                    label="Gross revenue"
-                    value={formatCurrency(t.grossRevenue, t.currency)}
-                    icon="📈"
-                  />
-                  <StatCard
-                    label="Refunded"
-                    value={formatCurrency(t.refunded, t.currency)}
-                    icon="↩️"
-                  />
-                  <StatCard
-                    label="Active subscribers"
-                    value={t.activeSubscribers}
-                    hint="Trialing, active or past due"
-                    icon="👨‍👩‍👧"
-                  />
-                </div>
-              </div>
-            ))
-          )}
+          <div style={statGridStyle}>
+            <StatCard
+              label="Net revenue"
+              icon={<LuHandCoins aria-hidden="true" />}
+              value={formatCurrency(totals?.netRevenue ?? 0, currency)}
+              hint="After refunds"
+            />
+            <StatCard
+              label="Gross revenue"
+              icon={<LuTrendingUp aria-hidden="true" />}
+              value={formatCurrency(totals?.grossRevenue ?? 0, currency)}
+              hint="Before refunds"
+            />
+            <StatCard
+              label="Refunded"
+              icon={<LuUndo2 aria-hidden="true" />}
+              value={formatCurrency(totals?.refunded ?? 0, currency)}
+              hint="Returned to parents"
+            />
+            <StatCard
+              label="Active subscribers"
+              icon={<LuUsers aria-hidden="true" />}
+              value={formatNumber(totals?.activeSubscribers ?? 0)}
+              hint="Trialing, active or past due"
+            />
+          </div>
 
           <Card className="ui-field">
-            <SectionHeader title="By plan" as="h3" />
+            <SectionHeader title="By plan" description="Net revenue and subscriber counts for each active plan." as="h3" />
             <Table
               columns={columns}
               data={byPlan}
@@ -234,7 +178,6 @@ export default function AdminRevenuePage() {
               caption="Revenue by plan"
             />
           </Card>
-
         </>
       )}
     </>

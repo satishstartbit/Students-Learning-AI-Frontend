@@ -175,7 +175,7 @@ export default function UsersListPage({ fixedRole = null }) {
       align: 'right',
       render: (row) => (
         <Tooltip label="View" side="top">
-          <IconButton icon={<LuEye aria-hidden="true" />} label="View" size="sm" onClick={() => navigate(`/admin/users/${row.id}`)} />
+          <IconButton icon={<LuEye aria-hidden="true" />} label="View" variant="primary" size="sm" onClick={() => navigate(`/admin/users/${row.id}`)} />
         </Tooltip>
       ),
     },

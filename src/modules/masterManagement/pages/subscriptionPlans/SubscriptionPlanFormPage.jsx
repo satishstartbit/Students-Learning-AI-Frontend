@@ -16,17 +16,6 @@ const BILLING_CYCLE_OPTIONS = [
   { value: 'monthly', label: 'Monthly' },
   { value: 'yearly', label: 'Yearly' },
 ];
-/**
- * Currencies this app actually formats/charges - `formatCurrency`
- * (utils/format.js) and the Stripe checkout flow only ever exercise the
- * Canadian-localization default plus USD; keep this list in sync with
- * whatever the payment/formatting layer is verified against instead of
- * accepting arbitrary free text.
- */
-const CURRENCY_OPTIONS = Array.from(new Set([DEFAULT_CURRENCY, 'USD'])).map((code) => ({
-  value: code,
-  label: code,
-}));
 
 /** Simple key/value editor for the plan's `features` JSON. */
 function FeaturesEditor({ features, onChange }) {
@@ -50,7 +39,7 @@ function FeaturesEditor({ features, onChange }) {
         <div key={index} style={{ display: 'flex', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-xs)' }}>
           <Input placeholder="Feature key" value={key} onChange={(e) => setEntry(index, e.target.value, value)} fieldClassName="" />
           <Input placeholder="Value" value={value} onChange={(e) => setEntry(index, key, e.target.value)} fieldClassName="" />
-          <IconButton label="Remove feature" onClick={() => removeEntry(index)}>×</IconButton>
+          <IconButton label="Remove feature" variant="danger" onClick={() => removeEntry(index)}>×</IconButton>
         </div>
       ))}
       <Button type="button" size="sm" variant="secondary" onClick={addEntry}>Add feature</Button>
@@ -145,8 +134,7 @@ export default function SubscriptionPlanFormPage() {
           <Input label="Plan name" required {...form.getFieldProps('name')} />
           <Select label="Plan type" options={PLAN_TYPE_OPTIONS} required {...form.getFieldProps('planType')} />
           <Select label="Billing cycle" options={BILLING_CYCLE_OPTIONS} required {...form.getFieldProps('billingCycle')} />
-          <Input label="Price" type="number" required {...form.getFieldProps('price')} />
-          <Select label="Currency" options={CURRENCY_OPTIONS} required {...form.getFieldProps('currency')} />
+          <Input label={`Price (${DEFAULT_CURRENCY})`} type="number" required {...form.getFieldProps('price')} />
           <Input label="Trial days" type="number" {...form.getFieldProps('trialDays')} />
           <Input label="Number of students" type="number" {...form.getFieldProps('maxStudents')} />
           <Input label="Number of parents" type="number" {...form.getFieldProps('maxParents')} />

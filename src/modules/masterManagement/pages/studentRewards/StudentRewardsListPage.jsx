@@ -81,19 +81,19 @@ export default function StudentRewardsListPage() {
       render: (row) => (
         <div style={{ display: 'flex', gap: 'var(--spacing-xs)', justifyContent: 'flex-end' }}>
           <Tooltip label="Edit" side="top">
-            <IconButton icon={<LuPencil aria-hidden="true" />} label="Edit" size="sm" onClick={() => navigate(`/admin/masters/student-rewards/${row.id}/edit`)} />
+            <IconButton icon={<LuPencil aria-hidden="true" />} label="Edit" variant="primary" size="sm" onClick={() => navigate(`/admin/masters/student-rewards/${row.id}/edit`)} />
           </Tooltip>
           {row.isActive ? (
             <Tooltip label="Deactivate" side="top">
-              <IconButton icon={<LuToggleLeft aria-hidden="true" />} label="Deactivate" size="sm" onClick={() => setConfirm({ type: 'deactivate', item: row })} />
+              <IconButton icon={<LuToggleLeft aria-hidden="true" />} label="Deactivate" variant="warning" size="sm" onClick={() => setConfirm({ type: 'deactivate', item: row })} />
             </Tooltip>
           ) : (
             <Tooltip label="Activate" side="top">
-              <IconButton icon={<LuToggleRight aria-hidden="true" />} label="Activate" size="sm" onClick={() => setConfirm({ type: 'activate', item: row })} />
+              <IconButton icon={<LuToggleRight aria-hidden="true" />} label="Activate" variant="success" size="sm" onClick={() => setConfirm({ type: 'activate', item: row })} />
             </Tooltip>
           )}
           <Tooltip label="Delete" side="top">
-            <IconButton icon={<LuTrash2 aria-hidden="true" />} label="Delete" size="sm" onClick={() => setConfirm({ type: 'delete', item: row })} />
+            <IconButton icon={<LuTrash2 aria-hidden="true" />} label="Delete" variant="danger" size="sm" onClick={() => setConfirm({ type: 'delete', item: row })} />
           </Tooltip>
         </div>
       ),

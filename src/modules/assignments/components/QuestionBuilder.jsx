@@ -76,7 +76,7 @@ function OptionsEditor({ question, update, disabled, errors }) {
               <PicturePicker compact value={option.image} onChange={(image) => setOption(option.id, { image })} disabled={disabled} />
             </div>
             {question.options.length > MIN_OPTIONS && (
-              <IconButton label={`Remove option ${index + 1}`} size="sm" onClick={() => removeOption(option.id)} disabled={disabled}>
+              <IconButton label={`Remove option ${index + 1}`} variant="danger" size="sm" onClick={() => removeOption(option.id)} disabled={disabled}>
                 <LuX aria-hidden="true" />
               </IconButton>
             )}

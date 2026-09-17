@@ -143,6 +143,7 @@ function GroupedAssignments({ groups, otherKey, savingId, onStatusChange, onUnas
                         <IconButton
                           icon={<LuUnlink aria-hidden="true" />}
                           label="Unassign"
+                          variant="danger"
                           size="sm"
                           onClick={() =>
                             onUnassign(
@@ -411,6 +412,7 @@ export default function RelationshipsPage() {
           <IconButton
             icon={<LuUnlink aria-hidden="true" />}
             label="Unassign"
+            variant="danger"
             size="sm"
             onClick={() => removeModal.open(row)}
           />

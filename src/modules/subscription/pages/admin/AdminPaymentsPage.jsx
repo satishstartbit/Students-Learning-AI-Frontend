@@ -283,7 +283,7 @@ export default function AdminPaymentsPage() {
           items={[
             { key: 'view', label: 'View Details', icon: <LuEye aria-hidden="true" />, onClick: () => setDetailsTarget(row) },
             ...(canRefund(row)
-              ? [{ key: 'refund', label: 'Refund Payment', icon: <LuUndo2 aria-hidden="true" />, onClick: () => openRefund(row) }]
+              ? [{ key: 'refund', label: 'Refund Payment', icon: <LuUndo2 aria-hidden="true" />, onClick: () => openRefund(row), danger: true }]
               : []),
           ]}
         />

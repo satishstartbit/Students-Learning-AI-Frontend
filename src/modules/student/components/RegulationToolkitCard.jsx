@@ -8,31 +8,21 @@ import regulationToolkitService from '../services/regulationToolkit.service';
 
 /**
  * "Tools to help you feel calmer and readier to focus" - a category picker
- * (Breathing/Grounding/Movement/Sound/Mindfulness) plus a detail card for
- * whichever tool is selected.
+ * plus a detail card for whichever tool is selected.
+ *
+ * The category tabs are derived entirely from GET /regulation-toolkit (Master
+ * Management > Regulation Activities) rather than a fixed list - a category
+ * an admin adds shows up as its own tab automatically, using that category's
+ * first tool's own `icon` (also admin-set, and otherwise unused until now) as
+ * the tab icon, with a generic fallback when none of a category's tools has
+ * one set.
  *
  * Reacts to today's check-in: the backend maps the student's stored mood to
  * tool categories (services/regulationToolkit.service.js#MOOD_CATEGORIES),
  * those tiles are marked "Suggested" and the top suggestion opens first.
  * Every tile stays selectable, and the student can skip straight to work.
  */
-
-// "Calming Sounds" and "Music" (the seeded categories) both read as "Sound"
-// in the reference design - shown as one tab, tools from both pooled.
-const CATEGORY_TILES = [
-  { key: 'Breathing', label: 'Breathing', icon: '🫁' },
-  { key: 'Grounding', label: 'Grounding', icon: '🌳' },
-  { key: 'Movement', label: 'Movement', icon: '🤸' },
-  { key: 'Sound', label: 'Sound', icon: '🎧', sourceCategories: ['Calming Sounds', 'Music'] },
-  { key: 'Mindfulness', label: 'Mindfulness', icon: '🧘' },
-];
-
-const tileCategories = (tile) => tile.sourceCategories ?? [tile.key];
-
-function toolsForTile(categories, tile) {
-  const wanted = tileCategories(tile);
-  return categories.filter((c) => wanted.includes(c.category)).flatMap((c) => c.tools);
-}
+const DEFAULT_TILE_ICON = '✨';
 
 export function RegulationToolkitCard() {
   const { checkIn, moods } = useTodayCheckIn();
@@ -48,18 +38,26 @@ export function RegulationToolkitCard() {
     if (checkIn) runRecommendation().catch(() => {});
   }, [checkIn, runRecommendation]);
 
+  const tiles = useMemo(
+    () =>
+      (categories ?? []).map((c) => ({
+        key: c.category,
+        label: c.category,
+        icon: c.tools.find((t) => t.icon)?.icon ?? DEFAULT_TILE_ICON,
+      })),
+    [categories]
+  );
+
   const suggestedCategories = recommendation.data?.categories ?? [];
   const suggestedTool = recommendation.data?.tool ?? null;
-  const suggestedTile = suggestedTool
-    ? CATEGORY_TILES.find((t) => tileCategories(t).includes(suggestedTool.category))
-    : null;
+  const suggestedTile = suggestedTool ? tiles.find((t) => t.key === suggestedTool.category) : null;
 
-  const activeTile = pickedTile ?? suggestedTile?.key ?? 'Breathing';
+  const activeTile = pickedTile ?? suggestedTile?.key ?? tiles[0]?.key ?? null;
 
-  const tileTools = useMemo(() => {
-    const tile = CATEGORY_TILES.find((t) => t.key === activeTile);
-    return tile && categories ? toolsForTile(categories, tile) : [];
-  }, [categories, activeTile]);
+  const tileTools = useMemo(
+    () => categories?.find((c) => c.category === activeTile)?.tools ?? [],
+    [categories, activeTile]
+  );
 
   const defaultIndex = Math.max(
     0,
@@ -103,9 +101,9 @@ export function RegulationToolkitCard() {
               marginBottom: 'var(--spacing-lg)',
             }}
           >
-            {CATEGORY_TILES.map((tile) => {
+            {tiles.map((tile) => {
               const active = tile.key === activeTile;
-              const suggested = tileCategories(tile).some((c) => suggestedCategories.includes(c));
+              const suggested = suggestedCategories.includes(tile.key);
               return (
                 <button
                   key={tile.key}
@@ -185,7 +183,8 @@ export function RegulationToolkitCard() {
               }}
             >
               <div style={{ flex: '1 1 240px', minWidth: 0 }}>
-                <h3 style={{ margin: '0 0 4px', fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
+                <h3 style={{ margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--font-size-lg)', fontWeight: 700 }}>
+                  {selectedTool.icon && <span aria-hidden="true">{selectedTool.icon}</span>}
                   {selectedTool.name}
                 </h3>
                 <p style={{ margin: '0 0 var(--spacing-sm)', color: 'var(--color-text-secondary)' }}>
