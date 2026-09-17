@@ -1810,37 +1810,85 @@
 /*
  * Six tones - decoration only, picked freely and never a status signal.
  * Shared with .ui-sticky-swatch so the colour picker's dots draw from the
- * same values instead of repeating the palette.
+ * same values instead of repeating the palette. .ui-subject-icon (Grade 6+
+ * student area - modules/student/components/SubjectIcon.jsx) draws from the
+ * same six tones for the same reason: a subject tile is the same kind of
+ * friendly-paper-colour decoration as a sticky note, never a status signal.
  */
 .ui-sticky[data-tone='yellow'],
-.ui-sticky-swatch[data-tone='yellow'] {
+.ui-sticky-swatch[data-tone='yellow'],
+.ui-subject-icon[data-tone='yellow'] {
   --sticky-tone-bg: var(--sticky-yellow);
   --sticky-tone-border: var(--sticky-yellow-border);
 }
 .ui-sticky[data-tone='pink'],
-.ui-sticky-swatch[data-tone='pink'] {
+.ui-sticky-swatch[data-tone='pink'],
+.ui-subject-icon[data-tone='pink'] {
   --sticky-tone-bg: var(--sticky-pink);
   --sticky-tone-border: var(--sticky-pink-border);
 }
 .ui-sticky[data-tone='blue'],
-.ui-sticky-swatch[data-tone='blue'] {
+.ui-sticky-swatch[data-tone='blue'],
+.ui-subject-icon[data-tone='blue'] {
   --sticky-tone-bg: var(--sticky-blue);
   --sticky-tone-border: var(--sticky-blue-border);
 }
 .ui-sticky[data-tone='green'],
-.ui-sticky-swatch[data-tone='green'] {
+.ui-sticky-swatch[data-tone='green'],
+.ui-subject-icon[data-tone='green'] {
   --sticky-tone-bg: var(--sticky-green);
   --sticky-tone-border: var(--sticky-green-border);
 }
 .ui-sticky[data-tone='lavender'],
-.ui-sticky-swatch[data-tone='lavender'] {
+.ui-sticky-swatch[data-tone='lavender'],
+.ui-subject-icon[data-tone='lavender'] {
   --sticky-tone-bg: var(--sticky-lavender);
   --sticky-tone-border: var(--sticky-lavender-border);
 }
 .ui-sticky[data-tone='orange'],
-.ui-sticky-swatch[data-tone='orange'] {
+.ui-sticky-swatch[data-tone='orange'],
+.ui-subject-icon[data-tone='orange'] {
   --sticky-tone-bg: var(--sticky-orange);
   --sticky-tone-border: var(--sticky-orange-border);
+}
+
+.ui-subject-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: var(--radius-full);
+  background: var(--sticky-tone-bg);
+  color: var(--sticky-ink);
+}
+
+/*
+ * A due date's month/day on a small two-line tag - the Grade 6+ student
+ * area's Upcoming Deadlines (Home/Plan). Values come from utils/date.js's
+ * formatDate() (locale/timezone-aware), never a raw Date method.
+ */
+.ui-date-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--accent-base);
+  line-height: 1.1;
+}
+.ui-date-badge__month {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ui-date-badge__day {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
 }
 
 .ui-sticky__body {

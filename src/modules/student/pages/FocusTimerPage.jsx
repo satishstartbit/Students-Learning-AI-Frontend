@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { LuCloudRain, LuHeadphones, LuSettings, LuVolumeX } from 'react-icons/lu';
 import { Card, Button, IconButton, Select, Alert, Loader, CircularProgress } from '../../../components/common';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { useFocusTimer, formatClock } from '../hooks/useFocusTimer';
@@ -17,9 +18,9 @@ const PLANNED_OPTIONS = [
 ];
 
 const AUDIO_OPTIONS = [
-  { value: '', label: 'No sound', icon: '🔇' },
-  { value: 'rain', label: 'Rain sounds', icon: '🌧️' },
-  { value: 'music', label: 'Focus music', icon: '🎧' },
+  { value: '', label: 'No sound', icon: LuVolumeX },
+  { value: 'rain', label: 'Rain sounds', icon: LuCloudRain },
+  { value: 'music', label: 'Focus music', icon: LuHeadphones },
 ];
 
 /**
@@ -64,6 +65,7 @@ export default function FocusTimerPage() {
     : formatClock(plannedSeconds);
 
   const audioOption = AUDIO_OPTIONS[audioIndex].value;
+  const AudioIcon = AUDIO_OPTIONS[audioIndex].icon;
 
   const handleStart = () =>
     timer
@@ -198,14 +200,14 @@ export default function FocusTimerPage() {
             <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-xs)' }}>
               <IconButton
                 label={`Sound: ${AUDIO_OPTIONS[audioIndex].label}`}
-                icon={<span aria-hidden="true">{AUDIO_OPTIONS[audioIndex].icon}</span>}
+                icon={<AudioIcon aria-hidden="true" />}
                 onClick={() => setAudioIndex((i) => (i + 1) % AUDIO_OPTIONS.length)}
                 style={{ width: 44, height: 44 }}
               />
               {!isActive && (
                 <IconButton
                   label="Timer settings"
-                  icon={<span aria-hidden="true">⚙️</span>}
+                  icon={<LuSettings aria-hidden="true" />}
                   onClick={() => setShowSettings((v) => !v)}
                   style={{ width: 44, height: 44 }}
                 />

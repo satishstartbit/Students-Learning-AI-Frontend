@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { LuGift, LuTrophy } from 'react-icons/lu';
 import { Card, Button, Badge, Alert, Loader, EmptyState, StatCard } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
@@ -49,7 +50,7 @@ export default function RewardsPage() {
         </Alert>
       )}
 
-      <StatCard label="Your points" value={totalPoints} icon="🏆" className="ui-field" />
+      <StatCard label="Your points" value={totalPoints} icon={<LuTrophy size={22} />} className="ui-field" />
 
       <h2 className="ui-sectionheader__title" style={{ marginBottom: 'var(--spacing-md)' }}>
         Trade in your points
@@ -59,7 +60,7 @@ export default function RewardsPage() {
         <Loader message="Loading rewards…" />
       ) : rewards.length === 0 ? (
         <EmptyState
-          icon="🎁"
+          icon={<LuGift size={28} />}
           title="No rewards yet"
           description="Ask your teacher or parent to add some rewards to trade points for."
           className="ui-field"
@@ -76,7 +77,35 @@ export default function RewardsPage() {
           {rewards.map((reward) => {
             const affordable = totalPoints >= reward.pointsCost;
             return (
-              <Card key={reward.id} title={reward.name} subtitle={reward.description}>
+              <Card key={reward.id}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' }}>
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: 40,
+                      height: 40,
+                      flex: 'none',
+                      borderRadius: 'var(--radius-sm)',
+                      overflow: 'hidden',
+                      display: 'grid',
+                      placeItems: 'center',
+                      background: 'var(--accent-soft)',
+                      color: 'var(--accent-base)',
+                    }}
+                  >
+                    {reward.imageUrl ? (
+                      <img src={reward.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <LuGift size={20} />
+                    )}
+                  </span>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: 0, fontWeight: 700 }}>{reward.name}</p>
+                    {reward.description && (
+                      <p className="ui-hint" style={{ margin: 0 }}>{reward.description}</p>
+                    )}
+                  </div>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-sm)' }}>
                   <Badge variant="primary">{reward.pointsCost} pts</Badge>
                   <Button

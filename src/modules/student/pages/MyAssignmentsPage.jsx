@@ -7,6 +7,7 @@ import { usePagination } from '../../../hooks/usePagination';
 import { formatDueDate, isOverdue } from '../../../utils/date';
 import { ASSIGNMENT_RECIPIENT_STATUS } from '../../../utils/constants';
 import assignmentService from '../../assignments/services/assignment.service';
+import SubjectIcon from '../components/SubjectIcon';
 
 const STATUS_FILTER_OPTIONS = [
   { value: '', label: 'All' },
@@ -66,7 +67,12 @@ export default function MyAssignmentsPage() {
     {
       key: 'title',
       header: 'Assignment',
-      render: (row) => <span style={{ fontWeight: 600 }}>{row.assignment?.title}</span>,
+      render: (row) => (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+          <SubjectIcon subject={row.assignment?.subject} size="sm" />
+          <span style={{ fontWeight: 600 }}>{row.assignment?.title}</span>
+        </span>
+      ),
     },
     { key: 'subject', header: 'Subject', render: (row) => row.assignment?.subject || '—' },
     { key: 'grade', header: 'Grade', render: (row) => row.assignment?.grade || '—' },

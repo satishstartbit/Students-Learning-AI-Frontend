@@ -1,21 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Button, Badge, ProgressBar, Loader, ErrorState } from '../../../components/common';
+import { Card, Button, ProgressBar, Loader, ErrorState } from '../../../components/common';
 import { toast } from '../../../hooks/useToast';
 import { useWeekPlan, startOfWeek } from '../hooks/useWeekPlan';
 import { addDays, formatDate, formatDateKey, formatDuration, getDateKey, daysUntil } from '../../../utils/date';
+import SubjectIcon from '../components/SubjectIcon';
 
 const WEEKDAY_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-const BADGE_VARIANTS = ['primary', 'success', 'warning', 'info', 'danger'];
 const DONE_STATUSES = new Set(['submitted', 'reviewed', 'completed']);
-
-/** A stable colour per subject name, cycling the existing Badge variants rather than a new palette. */
-function variantForSubject(subject) {
-  if (!subject) return 'neutral';
-  let hash = 0;
-  for (let i = 0; i < subject.length; i += 1) hash = (hash * 31 + subject.charCodeAt(i)) | 0;
-  return BADGE_VARIANTS[Math.abs(hash) % BADGE_VARIANTS.length];
-}
 
 function DueSoonRow({ task }) {
   const assignment = task.assignment ?? {};
@@ -27,7 +19,7 @@ function DueSoonRow({ task }) {
       to={`/student/assignments/${assignment.id}`}
       style={{
         display: 'flex',
-        justifyContent: 'space-between',
+        alignItems: 'center',
         gap: 'var(--spacing-sm)',
         padding: 'var(--spacing-sm) 0',
         borderBottom: '1px solid var(--color-border)',
@@ -35,7 +27,8 @@ function DueSoonRow({ task }) {
         color: 'inherit',
       }}
     >
-      <span style={{ minWidth: 0 }}>
+      <SubjectIcon subject={assignment.subject} size="sm" />
+      <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'block', fontWeight: 600, color: 'var(--color-text-primary)' }}>{assignment.title}</span>
         <span className="ui-hint">{assignment.subject}</span>
       </span>
@@ -188,7 +181,8 @@ export default function StudentPlanPage() {
                   return (
                     <Card key={task.recipientId ?? task.id} flat padded={false}>
                       <div style={{ padding: 'var(--spacing-sm)' }}>
-                        <Badge variant={variantForSubject(assignment.subject)}>{assignment.subject}</Badge>
+                        <SubjectIcon subject={assignment.subject} size="sm" />
+                        <p className="ui-hint" style={{ margin: 'var(--spacing-2xs) 0 0' }}>{assignment.subject}</p>
                         <p style={{ margin: 'var(--spacing-xs) 0 0', fontWeight: 700, fontSize: 'var(--font-size-sm)' }}>
                           {assignment.title}
                         </p>

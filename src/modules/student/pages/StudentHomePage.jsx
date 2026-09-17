@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Button, ProgressBar, StickyBoard, Loader, CircularProgress } from '../../../components/common';
+import { LuCamera, LuGift, LuHeadphones, LuPencilLine } from 'react-icons/lu';
+import { Badge, Card, Button, ProgressBar, StickyBoard, Loader, CircularProgress } from '../../../components/common';
 import { useAuth } from '../../../hooks/useAuth';
 import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
@@ -9,6 +10,7 @@ import { useMyTasks } from '../hooks/useMyTasks';
 import { useStudentExperience } from '../hooks/useStudentExperience';
 import StudentCheckInCard from '../components/StudentCheckInCard';
 import NoteEditorModal from '../components/NoteEditorModal';
+import SubjectIcon from '../components/SubjectIcon';
 import rewardService from '../services/reward.service';
 import focusService from '../services/focus.service';
 import noteService from '../services/note.service';
@@ -34,27 +36,47 @@ function UpcomingDeadlineRow({ task }) {
   const days = daysUntil(assignment.dueDate);
   const label =
     days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : days > 1 ? `In ${days} days` : formatDate(assignment.dueDate);
+  const urgent = days != null && days <= 1;
+  const month = formatDate(assignment.dueDate, { month: 'short', day: undefined, year: undefined });
+  const day = formatDate(assignment.dueDate, { month: undefined, day: 'numeric', year: undefined });
 
   return (
     <Link
       to={`/student/assignments/${assignment.id}`}
       style={{
         display: 'flex',
-        justifyContent: 'space-between',
-        gap: 'var(--spacing-sm)',
+        alignItems: 'center',
+        gap: 'var(--spacing-md)',
         padding: 'var(--spacing-sm) 0',
-        borderBottom: '1px solid var(--color-border)',
+        borderBottom: '1px solid var(--color-border-default)',
         textDecoration: 'none',
         color: 'inherit',
       }}
     >
-      <span style={{ minWidth: 0 }}>
-        <span style={{ display: 'block', fontWeight: 600, color: 'var(--color-text-primary)' }}>{assignment.title}</span>
-        <span className="ui-hint">{assignment.subject}</span>
+      <span className="ui-date-badge" aria-hidden="true">
+        <span className="ui-date-badge__month">{month}</span>
+        <span className="ui-date-badge__day">{day}</span>
       </span>
-      <span className="ui-hint" style={{ flex: 'none', whiteSpace: 'nowrap' }}>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span
+          style={{
+            display: 'block',
+            fontWeight: 600,
+            color: 'var(--color-text-primary)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {assignment.title}
+        </span>
+        <span className="ui-hint" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {assignment.subject}
+        </span>
+      </span>
+      <Badge variant={urgent ? 'warning' : 'neutral'} style={{ flex: 'none' }}>
         {label}
-      </span>
+      </Badge>
     </Link>
   );
 }
@@ -82,6 +104,7 @@ export default function StudentHomePage() {
   const toDoCount = tasks.toDo.length;
   const doneToday = tasks.done.length;
   const totalToday = toDoCount + doneToday;
+  const toDoMinutes = tasks.toDo.reduce((sum, t) => sum + (Number(t.assignment?.estimatedMinutes) || 0), 0);
 
   const totalPoints = summary.data?.totalPoints ?? 0;
   const rewards = catalog.data ?? [];
@@ -136,6 +159,7 @@ export default function StudentHomePage() {
           </h1>
           <p className="ui-pageheader__description">
             {toDoCount === 0 ? 'Nothing left today - nice work.' : `${toDoCount} ${toDoCount === 1 ? 'task' : 'tasks'} left today`}
+            {toDoMinutes > 0 ? ` · about ${formatDuration(toDoMinutes)}` : ''}
             {profile?.grade ? ` · ${profile.grade}` : ''}
           </p>
         </div>
@@ -168,37 +192,55 @@ export default function StudentHomePage() {
               <p className="ui-hint">You&apos;re all caught up for today.</p>
             ) : (
               <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
-                {tasks.toDo.slice(0, 5).map((item) => (
-                  <li key={item.id}>
-                    <Link
-                      to={`/student/assignments/${item.assignment?.id ?? item.assignmentId}`}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--spacing-sm)',
-                        padding: 'var(--spacing-sm) var(--spacing-md)',
-                        border: '1px solid var(--color-border-default)',
-                        borderRadius: 'var(--radius-md)',
-                        textDecoration: 'none',
-                        color: 'var(--color-text-primary)',
-                      }}
-                    >
-                      <span
-                        aria-hidden="true"
+                {tasks.toDo.slice(0, 5).map((item, index) => {
+                  const assignment = item.assignment ?? {};
+                  const isNext = index === 0;
+                  const minutes = formatDuration(assignment.estimatedMinutes);
+                  return (
+                    <li key={item.id}>
+                      <Link
+                        to={`/student/assignments/${assignment.id ?? item.assignmentId}`}
                         style={{
-                          width: 10,
-                          height: 10,
-                          flex: 'none',
-                          borderRadius: '50%',
-                          border: '2px solid var(--accent-base)',
-                          background: item.status === 'in_progress' ? 'var(--accent-base)' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 'var(--spacing-md)',
+                          padding: 'var(--spacing-sm) var(--spacing-md)',
+                          border: `1px solid ${isNext ? 'var(--accent-base)' : 'var(--color-border-default)'}`,
+                          borderRadius: 'var(--radius-md)',
+                          background: isNext ? 'var(--accent-soft)' : 'transparent',
+                          textDecoration: 'none',
+                          color: 'var(--color-text-primary)',
                         }}
-                      />
-                      <span style={{ flex: 1, minWidth: 0 }}>{item.assignment?.title ?? 'Assignment'}</span>
-                      <span className="ui-hint">{item.assignment?.subject}</span>
-                    </Link>
-                  </li>
-                ))}
+                      >
+                        <SubjectIcon subject={assignment.subject} size="sm" />
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ display: 'block', fontWeight: 600 }}>{assignment.title ?? 'Assignment'}</span>
+                          <span className="ui-hint">
+                            {assignment.subject}
+                            {minutes ? ` · ${minutes}` : ''}
+                          </span>
+                        </span>
+                        {isNext ? (
+                          <Badge variant="primary" style={{ flex: 'none' }}>
+                            Start
+                          </Badge>
+                        ) : (
+                          <span
+                            aria-hidden="true"
+                            style={{
+                              width: 10,
+                              height: 10,
+                              flex: 'none',
+                              borderRadius: '50%',
+                              border: '2px solid var(--accent-base)',
+                              background: item.status === 'in_progress' ? 'var(--accent-base)' : 'transparent',
+                            }}
+                          />
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </Card>
@@ -217,56 +259,114 @@ export default function StudentHomePage() {
           <StudentCheckInCard />
 
           <Card title="Your progress" className="ui-field" style={{ marginTop: 'var(--spacing-lg)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-lg)', flexWrap: 'wrap' }}>
-              <CircularProgress value={totalPoints} max={nextReward ? nextReward.pointsCost : Math.max(totalPoints, 1)} size={110} strokeWidth={9}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+              <CircularProgress value={totalPoints} max={nextReward ? nextReward.pointsCost : Math.max(totalPoints, 1)} size={120} strokeWidth={10}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontWeight: 700, fontSize: 'var(--font-size-lg)' }}>{totalPoints}</div>
-                  <div className="ui-hint">pts</div>
+                  <div style={{ fontWeight: 700, fontSize: 'var(--font-size-2xl)' }}>{totalPoints}</div>
+                  <div className="ui-hint">points</div>
                 </div>
               </CircularProgress>
 
               {nextReward ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', minWidth: 0 }}>
+                <>
+                  <p className="ui-hint" style={{ margin: 0 }}>{pointsToGo} points to go</p>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--spacing-sm)',
+                      minWidth: 0,
+                      width: '100%',
+                      padding: 'var(--spacing-sm)',
+                      background: 'var(--color-bg-surface-sunken)',
+                      borderRadius: 'var(--radius-md)',
+                    }}
+                  >
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        width: 36,
+                        height: 36,
+                        flex: 'none',
+                        borderRadius: 'var(--radius-sm)',
+                        overflow: 'hidden',
+                        display: 'grid',
+                        placeItems: 'center',
+                        background: 'var(--accent-soft)',
+                        color: 'var(--accent-base)',
+                      }}
+                    >
+                      {nextReward.imageUrl ? (
+                        <img src={nextReward.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <LuGift size={18} aria-hidden="true" />
+                      )}
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>{nextReward.name}</p>
+                      <p className="ui-hint" style={{ margin: 0 }}>{nextReward.pointsCost} pts</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-sm)',
+                    width: '100%',
+                    padding: 'var(--spacing-sm)',
+                    background: 'var(--color-bg-surface-sunken)',
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
                   <span
                     aria-hidden="true"
                     style={{
-                      width: 40,
-                      height: 40,
+                      width: 36,
+                      height: 36,
                       flex: 'none',
-                      borderRadius: '50%',
-                      overflow: 'hidden',
+                      borderRadius: 'var(--radius-sm)',
                       display: 'grid',
                       placeItems: 'center',
-                      background: 'var(--color-bg-surface-sunken)',
-                      fontSize: 20,
+                      background: 'var(--accent-soft)',
+                      color: 'var(--accent-base)',
                     }}
                   >
-                    {nextReward.imageUrl ? (
-                      <img src={nextReward.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      '🎁'
-                    )}
+                    <LuGift size={18} aria-hidden="true" />
                   </span>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 600 }}>{nextReward.name}</p>
-                    <p className="ui-hint" style={{ margin: 0 }}>{pointsToGo} pts to go</p>
-                  </div>
+                  <p className="ui-hint" style={{ margin: 0 }}>
+                    {rewards.length === 0 ? 'Ask your teacher or parent to add rewards to work toward.' : "You've earned every reward so far!"}
+                  </p>
                 </div>
-              ) : (
-                <p className="ui-hint">
-                  {rewards.length === 0 ? 'Ask your teacher or parent to add rewards to work toward.' : "You've earned every reward so far!"}
-                </p>
               )}
             </div>
           </Card>
 
           <Card className="ui-field" style={{ marginTop: 'var(--spacing-lg)', background: 'var(--accent-soft)', border: '1px solid var(--accent-base)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-md)', flexWrap: 'wrap' }}>
-              <div>
-                <p style={{ margin: 0, fontWeight: 700 }}>Start Focus</p>
-                <p className="ui-hint" style={{ margin: 0 }}>
-                  {todayMinutes.data?.minutes ? `${formatDuration(todayMinutes.data.minutes)} focused today` : 'Tune out distractions and get in the zone.'}
-                </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', minWidth: 0 }}>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: 'grid',
+                    placeItems: 'center',
+                    flex: 'none',
+                    width: 40,
+                    height: 40,
+                    borderRadius: 'var(--radius-full)',
+                    background: 'var(--accent-base)',
+                    color: 'var(--accent-on)',
+                  }}
+                >
+                  <LuHeadphones size={20} />
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 700 }}>Start Focus</p>
+                  <p className="ui-hint" style={{ margin: 0 }}>
+                    {todayMinutes.data?.minutes ? `${formatDuration(todayMinutes.data.minutes)} focused today` : 'Tune out distractions and get in the zone.'}
+                  </p>
+                </div>
               </div>
               <Button as={Link} to="/student/focus">
                 Start focus
@@ -274,14 +374,16 @@ export default function StudentHomePage() {
             </div>
           </Card>
 
-          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-lg)' }}>
-            <Button variant="secondary" size="sm" startIcon={<span aria-hidden="true">✏️</span>} onClick={quickAdd} style={{ flex: 1 }}>
-              Type it
-            </Button>
-            <Button variant="secondary" size="sm" startIcon={<span aria-hidden="true">📷</span>} onClick={quickAdd} style={{ flex: 1 }}>
-              Add photo
-            </Button>
-          </div>
+          <Card title="Add assignment" className="ui-field" style={{ marginTop: 'var(--spacing-lg)' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-sm)' }}>
+              <Button variant="secondary" size="sm" startIcon={<LuPencilLine aria-hidden="true" />} onClick={quickAdd} style={{ flex: 1 }}>
+                Type it
+              </Button>
+              <Button variant="secondary" size="sm" startIcon={<LuCamera aria-hidden="true" />} onClick={quickAdd} style={{ flex: 1 }}>
+                Add photo
+              </Button>
+            </div>
+          </Card>
 
           <Card title="Upcoming Deadlines" className="ui-field" style={{ marginTop: 'var(--spacing-lg)' }}>
             {upcomingDeadlines.length === 0 ? (

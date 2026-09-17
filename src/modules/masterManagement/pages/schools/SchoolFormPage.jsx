@@ -1,19 +1,17 @@
 import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { PageHeader, Card, Input, Select, Textarea, Checkbox, Button, Alert, ButtonGroup, SectionHeader, Loader } from '../../../../components/common';
+import { PageHeader, Card, Input, Checkbox, Button, Alert, ButtonGroup, SectionHeader, Loader } from '../../../../components/common';
 import { useForm } from '../../../../hooks/useForm';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
 import { required, email as emailRule, phone as phoneRule, postalCode as postalCodeRule } from '../../../../utils/validation';
-import { CANADIAN_PROVINCES, DEFAULT_COUNTRY } from '../../../../utils/locale';
-import { formatCanadianPostalCode } from '../../../../utils/postalCode';
+import { DEFAULT_COUNTRY } from '../../../../utils/locale';
+import AddressFields from '../../../auth/components/AddressFields';
 import academicService from '../../services/academic.service';
 
-/** "CA" / "CAN" / "Canada" (any case) - the province Select and postal-code format/validation only apply then. */
+/** "CA" / "CAN" / "Canada" (any case) - the postal-code validation rule below only applies then. */
 const isCanada = (country) =>
   !country || ['CA', 'CAN', 'CANADA'].includes(String(country).trim().toUpperCase());
-
-const PROVINCE_OPTIONS = CANADIAN_PROVINCES.map((p) => ({ value: p.code, label: `${p.name} (${p.code})` }));
 
 export default function SchoolFormPage() {
   const { id } = useParams();
@@ -104,31 +102,7 @@ export default function SchoolFormPage() {
         <form onSubmit={form.handleSubmit} noValidate>
           <Input label="School name" required {...form.getFieldProps('name')} />
           <Input label="School code" {...form.getFieldProps('schoolCode')} />
-          <Textarea label="Address" {...form.getFieldProps('address')} />
-          <Input label="City" {...form.getFieldProps('city')} />
-          <Input label="Country" {...form.getFieldProps('country')} />
-
-          {isCanada(form.values.country) ? (
-            <Select
-              label="Province / Territory"
-              options={PROVINCE_OPTIONS}
-              placeholder="Select a province or territory"
-              {...form.getFieldProps('state')}
-            />
-          ) : (
-            <Input label="State / Province" {...form.getFieldProps('state')} />
-          )}
-
-          <Input
-            label="Postal code"
-            placeholder={isCanada(form.values.country) ? 'A1A 1A1' : undefined}
-            {...form.getFieldProps('postalCode')}
-            onChange={(e) => {
-              const raw = e.target.value;
-              const value = isCanada(form.values.country) ? formatCanadianPostalCode(raw) : raw;
-              form.setFieldValue('postalCode', value);
-            }}
-          />
+          <AddressFields values={form.values} getProps={form.getFieldProps} setFieldValue={form.setFieldValue} />
 
           <SectionHeader title="Contact" as="h3" />
           <Input label="Contact person" {...form.getFieldProps('contactPerson')} />
