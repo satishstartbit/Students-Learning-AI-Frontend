@@ -20,8 +20,22 @@ export const deleteActivity = (id) => api.delete(`/admin/master/reward-activitie
 
 export const listRewards = (params = {}) => api.get('/admin/master/student-rewards', { params: clean(params) });
 export const getReward = (id) => api.get(`/admin/master/student-rewards/${id}`);
-export const createReward = (payload) => api.post('/admin/master/student-rewards', payload);
-export const updateReward = (id, payload) => api.patch(`/admin/master/student-rewards/${id}`, payload);
+/**
+ * Plain JSON, or multipart when `imageFile` (an uploaded picture) is present -
+ * every other field then travels as a string the backend validator converts back.
+ */
+function buildRewardBody({ imageFile, ...fields }) {
+  if (!imageFile) return fields;
+  const formData = new FormData();
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) formData.append(key, String(value));
+  });
+  formData.append('image', imageFile);
+  return formData;
+}
+
+export const createReward = (payload) => api.post('/admin/master/student-rewards', buildRewardBody(payload));
+export const updateReward = (id, payload) => api.patch(`/admin/master/student-rewards/${id}`, buildRewardBody(payload));
 export const activateReward = (id) => api.post(`/admin/master/student-rewards/${id}/activate`);
 export const deactivateReward = (id) => api.post(`/admin/master/student-rewards/${id}/deactivate`);
 export const deleteReward = (id) => api.delete(`/admin/master/student-rewards/${id}`);

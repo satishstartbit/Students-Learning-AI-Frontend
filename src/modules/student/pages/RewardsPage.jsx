@@ -1,159 +1,149 @@
-import { useCallback, useState } from 'react';
-import { LuGift, LuTrophy } from 'react-icons/lu';
-import { Card, Button, Badge, Alert, Loader, EmptyState, StatCard } from '../../../components/common';
-import { useApi } from '../../../hooks/useApi';
-import { toast } from '../../../hooks/useToast';
-import rewardService from '../services/reward.service';
+import { useState } from 'react';
+import { Alert, Button } from '../../../components/common';
+import { isTodayInTimezone } from '../../../utils/date';
+import RewardArt from '../components/rewards/RewardArt';
+import '../components/rewards/studentRewards.css';
+import { useRewards } from '../hooks/useRewards';
 
 /**
- * Points earned and rewards to redeem them for. Grade 6+ only - the K-5
- * equivalent is still "coming soon" (KidComingSoonPage).
+ * /student/rewards for Grade 6+ (K-5 has KidRewardsPage), built to the Grade
+ * 6-12 rewards mockup. Rewards are collectibles: a sticker or emoji is
+ * collected automatically once earned points reach its level (backend
+ * services/reward.service.js) - there's nothing to buy or redeem here.
  */
-export default function RewardsPage() {
-  const summary = useApi(rewardService.getSummary, { immediate: true });
-  const catalog = useApi(rewardService.listCatalog, { immediate: true });
-  const [redeemingId, setRedeemingId] = useState(null);
 
-  const reloadSummary = useCallback(() => summary.run().catch(() => {}), [summary]);
+const TABS = [
+  { key: 'stickers', label: 'Stickers' },
+  { key: 'emojis', label: 'Emojis' },
+];
 
-  const totalPoints = summary.data?.totalPoints ?? 0;
-  const recent = summary.data?.recent ?? [];
-  const rewards = catalog.data ?? [];
+const RING = 92;
+const STROKE = 10;
 
-  const handleRedeem = async (reward) => {
-    setRedeemingId(reward.id);
-    try {
-      await rewardService.redeemReward(reward.id);
-      toast.success(`${reward.name} unlocked!`);
-      reloadSummary();
-    } catch (err) {
-      toast.error(err?.message ?? 'Could not redeem that reward right now.');
-    } finally {
-      setRedeemingId(null);
-    }
-  };
+function ProgressRing({ value, points }) {
+  const r = (RING - STROKE) / 2;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="rw-ring" aria-hidden="true">
+      <svg width={RING} height={RING} viewBox={`0 0 ${RING} ${RING}`}>
+        <circle cx={RING / 2} cy={RING / 2} r={r} fill="none" stroke="var(--accent-soft)" strokeWidth={STROKE} />
+        <circle
+          cx={RING / 2}
+          cy={RING / 2}
+          r={r}
+          fill="none"
+          stroke="var(--accent-base)"
+          strokeWidth={STROKE}
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - value)}
+          style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)' }}
+        />
+      </svg>
+      <span>
+        <span className="rw-ring__value">{points}</span>
+        <span className="rw-ring__unit">points</span>
+      </span>
+    </div>
+  );
+}
 
-  if (summary.isLoading && !summary.data) return <Loader message="Loading your rewards…" />;
+function RewardTile({ reward, index }) {
+  const isNew = reward.collected && isTodayInTimezone(reward.collectedAt);
+  const label = reward.collected
+    ? `${reward.name}, collected`
+    : `${reward.name}, ${reward.pointsCost} points to unlock`;
 
   return (
-    <>
-      <div className="ui-pageheader">
-        <div>
-          <h1 className="ui-pageheader__title">Rewards</h1>
-          <p className="ui-pageheader__description">Points for the work you put in - trade them in whenever you like.</p>
-        </div>
+    <li>
+      <div className="rw-tile" data-collected={reward.collected || undefined} data-new={isNew || undefined} aria-label={label} role="group">
+        {isNew && <span className="rw-tile__badge">New</span>}
+        <RewardArt imageUrl={reward.imageUrl} size={64} locked={!reward.collected} delay={(index % 6) * 0.25} />
+        <span className="rw-tile__name">{reward.name}</span>
+        {!reward.collected && <span className="rw-tile__hint">{reward.pointsCost} pts to unlock</span>}
       </div>
+    </li>
+  );
+}
 
-      {summary.error && (
+export default function RewardsPage() {
+  const rewards = useRewards();
+  const [tab, setTab] = useState('stickers');
+
+  const list = tab === 'emojis' ? rewards.emojis : rewards.stickers;
+  const nextText = rewards.next
+    ? `Next up: ${rewards.next.name} ${rewards.next.rewardType === 'emoji' ? 'emoji' : 'sticker'} at ${rewards.next.pointsCost} points — ${rewards.toGo} to go.`
+    : rewards.items.length
+      ? 'You’ve collected every reward - amazing work!'
+      : 'Rewards are on their way.';
+
+  return (
+    <div className="rw-page">
+      <h1 className="rw-title">Rewards</h1>
+      <p className="rw-subtitle">Everything you have collected, and what is coming next.</p>
+
+      {rewards.error && (
         <Alert variant="error" className="ui-field">
-          {summary.error.message}
+          {rewards.error.message}{' '}
+          <Button variant="secondary" size="sm" onClick={rewards.reload}>
+            Try again
+          </Button>
         </Alert>
       )}
 
-      <StatCard label="Your points" value={totalPoints} icon={<LuTrophy size={22} />} className="ui-field" />
-
-      <h2 className="ui-sectionheader__title" style={{ marginBottom: 'var(--spacing-md)' }}>
-        Trade in your points
-      </h2>
-
-      {catalog.isLoading && !catalog.data ? (
-        <Loader message="Loading rewards…" />
-      ) : rewards.length === 0 ? (
-        <EmptyState
-          icon={<LuGift size={28} />}
-          title="No rewards yet"
-          description="Ask your teacher or parent to add some rewards to trade points for."
-          className="ui-field"
-        />
-      ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-            gap: 'var(--spacing-md)',
-            marginBottom: 'var(--spacing-xl)',
-          }}
-        >
-          {rewards.map((reward) => {
-            const affordable = totalPoints >= reward.pointsCost;
-            return (
-              <Card key={reward.id}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' }}>
-                  <span
-                    aria-hidden="true"
-                    style={{
-                      width: 40,
-                      height: 40,
-                      flex: 'none',
-                      borderRadius: 'var(--radius-sm)',
-                      overflow: 'hidden',
-                      display: 'grid',
-                      placeItems: 'center',
-                      background: 'var(--accent-soft)',
-                      color: 'var(--accent-base)',
-                    }}
-                  >
-                    {reward.imageUrl ? (
-                      <img src={reward.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <LuGift size={20} />
-                    )}
-                  </span>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 700 }}>{reward.name}</p>
-                    {reward.description && (
-                      <p className="ui-hint" style={{ margin: 0 }}>{reward.description}</p>
-                    )}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-sm)' }}>
-                  <Badge variant="primary">{reward.pointsCost} pts</Badge>
-                  <Button
-                    size="sm"
-                    variant={affordable ? 'primary' : 'secondary'}
-                    disabled={!affordable}
-                    loading={redeemingId === reward.id}
-                    onClick={() => handleRedeem(reward)}
-                  >
-                    {affordable ? 'Redeem' : 'Not enough yet'}
-                  </Button>
-                </div>
-              </Card>
-            );
-          })}
+      <section className="rw-progress" aria-label="Your points">
+        <ProgressRing value={rewards.progress} points={rewards.points} />
+        <div className="rw-progress__body">
+          <h2 className="rw-progress__title">
+            {rewards.isLoading ? 'Loading your points…' : `${rewards.points} points earned so far`}
+          </h2>
+          <p className="rw-progress__text">{rewards.isLoading ? ' ' : nextText}</p>
+          <div
+            className="rw-bar"
+            role="progressbar"
+            aria-label={rewards.next ? `Progress to ${rewards.next.name}` : 'Rewards progress'}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(rewards.progress * 100)}
+          >
+            <div className="rw-bar__fill" style={{ width: `${Math.round(rewards.progress * 100)}%` }} />
+          </div>
         </div>
-      )}
+      </section>
 
-      <h2 className="ui-sectionheader__title" style={{ marginBottom: 'var(--spacing-md)' }}>
-        Recent activity
-      </h2>
+      <div className="rw-tabs" role="tablist" aria-label="Reward type">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            id={`rw-tab-${t.key}`}
+            aria-controls="rw-panel"
+            aria-selected={tab === t.key}
+            className="rw-tab"
+            onClick={() => setTab(t.key)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
 
-      {recent.length === 0 ? (
-        <p className="ui-hint">Nothing yet - complete a task or a focus session to start earning.</p>
-      ) : (
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
-          {recent.map((item) => (
-            <li
-              key={item.id}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                gap: 'var(--spacing-md)',
-                padding: 'var(--spacing-sm) var(--spacing-md)',
-                border: '1px solid var(--color-border-default)',
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--color-bg-surface)',
-              }}
-            >
-              <span>{item.description || item.activityName || 'Points activity'}</span>
-              <strong style={{ color: item.points >= 0 ? 'var(--color-success-fg)' : 'var(--color-text-secondary)' }}>
-                {item.points >= 0 ? '+' : ''}
-                {item.points}
-              </strong>
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
+      <div id="rw-panel" role="tabpanel" aria-labelledby={`rw-tab-${tab}`}>
+        {rewards.isLoading ? (
+          <ul className="rw-grid" aria-busy="true">
+            {Array.from({ length: 6 }, (_, i) => (
+              <li key={i} className="rw-skeleton" />
+            ))}
+          </ul>
+        ) : list.length === 0 ? (
+          <p className="rw-empty">No {tab} to collect yet - check back soon.</p>
+        ) : (
+          <ul className="rw-grid">
+            {list.map((reward, i) => (
+              <RewardTile key={reward.id} reward={reward} index={i} />
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   );
 }

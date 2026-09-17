@@ -1,13 +1,84 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader, Card, DataTable, StatusBadge, Select } from '../../../components/common';
+import { LuPlus } from 'react-icons/lu';
+import { PageHeader, Card, Button, DataTable, StatusBadge, Select } from '../../../components/common';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
-import { formatDueDate, isOverdue } from '../../../utils/date';
+import { formatDueDate, isOverdue, daysUntilDateKey } from '../../../utils/date';
 import { ASSIGNMENT_RECIPIENT_STATUS } from '../../../utils/constants';
 import assignmentService from '../../assignments/services/assignment.service';
 import SubjectIcon from '../components/SubjectIcon';
+import OwnTaskModal from '../components/home/OwnTaskModal';
+import studentTaskService from '../services/studentTask.service';
+
+/** Due label for a DATE value ("2026-10-14") - the user's own calendar day, not UTC. */
+function ownDueLabel(dueDate) {
+  const days = daysUntilDateKey(dueDate);
+  if (days === null) return 'No due date';
+  if (days === 0) return 'Due today';
+  if (days === 1) return 'Due tomorrow';
+  if (days < 0) return `Overdue by ${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'}`;
+  return `Due in ${days} days`;
+}
+
+/** Tasks the student added for themselves (Home's "Add assignment"), with add/edit through the same dialog. */
+function MyOwnTasksSection() {
+  const own = useApi(studentTaskService.list, { immediate: true });
+  const [dialog, setDialog] = useState(null);
+  const reload = () => own.run().catch(() => {});
+
+  const columns = [
+    {
+      key: 'title',
+      header: 'Task',
+      render: (row) => (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+          <SubjectIcon subject={row.subject} size="sm" />
+          <span style={{ fontWeight: 600 }}>{row.title}</span>
+        </span>
+      ),
+    },
+    { key: 'subject', header: 'Subject', render: (row) => row.subject || '—' },
+    { key: 'due', header: 'Due', render: (row) => ownDueLabel(row.dueDate) },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => (
+        <StatusBadge status={row.status === 'completed' ? 'completed' : 'assigned'} label={row.status === 'completed' ? 'Done' : 'To do'} />
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <Card
+        title="My own tasks"
+        subtitle="Things you added for yourself - only you can see these."
+        actions={
+          <Button size="sm" startIcon={<LuPlus aria-hidden="true" />} onClick={() => setDialog({ mode: 'type' })}>
+            Add a task
+          </Button>
+        }
+        style={{ marginTop: 'var(--spacing-lg)' }}
+      >
+        <DataTable
+          columns={columns}
+          data={own.data ?? []}
+          rowKey="id"
+          isLoading={own.isLoading}
+          error={own.error}
+          onRetry={reload}
+          onRowClick={(row) => setDialog({ mode: 'edit', task: row })}
+          emptyTitle="No tasks of your own yet"
+          emptyDescription="Add anything you need to remember - it shows up on your Home too."
+          caption="My own tasks"
+        />
+      </Card>
+      <OwnTaskModal mode={dialog?.mode ?? null} task={dialog?.task ?? null} onClose={() => setDialog(null)} onChanged={reload} />
+    </>
+  );
+}
 
 const STATUS_FILTER_OPTIONS = [
   { value: '', label: 'All' },
@@ -133,6 +204,8 @@ export default function MyAssignmentsPage() {
         }
         caption="My assignments"
       />
+
+      <MyOwnTasksSection />
     </>
   );
 }

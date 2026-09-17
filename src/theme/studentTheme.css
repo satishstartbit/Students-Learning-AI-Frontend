@@ -1,0 +1,40 @@
+/*
+ * Grade 6+ student area look (the student dashboard mockup): Poppins as the
+ * base face. Applied as a class on <body> by StudentLayout.jsx - same reason
+ * as superAdminTheme.css: Modal/Drawer/dropdowns portal to document.body, so
+ * a wrapping div would never reach them. K-5 (KidLayout) never gets it.
+ *
+ * Colours are untouched on purpose - the mockup's teal is the default Ocean
+ * accent family (theme/accent.css), so a student's own accent choice from
+ * "Make it yours" still applies.
+ */
+body.student-theme {
+  --font-family-base: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-family-base);
+}
+
+/*
+ * Settings -> "Larger text" (StudentSettingsProvider). The type scale is a
+ * mix of tokens and page-level px values, so the page content and dialogs are
+ * zoomed one step rather than only the tokens being bumped - everything grows
+ * together and layouts keep their proportions. The sidebar is left alone so
+ * navigation doesn't jump around.
+ */
+body.student-large-text .ui-shell__main > *,
+body.student-large-text .ui-modal,
+body.student-large-text .ui-drawer {
+  zoom: 1.12;
+}
+
+/*
+ * Settings -> "Reduce motion". CSS transitions/animations are cut here;
+ * motion/react animations are switched off by the provider's <MotionConfig>.
+ */
+body.student-reduce-motion *,
+body.student-reduce-motion *::before,
+body.student-reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}

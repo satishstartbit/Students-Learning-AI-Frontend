@@ -8,10 +8,16 @@ import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
 import rewardService from '../../services/reward.service';
+import RewardArt from '../../../student/components/rewards/RewardArt';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
   { value: 'inactive', label: 'Inactive' },
+];
+
+const TYPE_OPTIONS = [
+  { value: 'sticker', label: 'Stickers' },
+  { value: 'emoji', label: 'Emojis' },
 ];
 
 const ACTION_COPY = {
@@ -26,7 +32,9 @@ export default function StudentRewardsListPage() {
 
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const [sort, setSort] = useState({ by: 'display_order', order: 'asc' });
+  const [rewardType, setRewardType] = useState('');
+  // Students see rewards cheapest first, so that's the default order here too.
+  const [sort, setSort] = useState({ by: 'points_cost', order: 'asc' });
   const [confirm, setConfirm] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -35,8 +43,8 @@ export default function StudentRewardsListPage() {
   const { page, limit, applyMeta, goToPage } = pagination;
 
   const load = useCallback(
-    () => run({ page, limit, search: debouncedSearch, status, sortBy: sort.by, sortOrder: sort.order }),
-    [run, page, limit, debouncedSearch, status, sort]
+    () => run({ page, limit, search: debouncedSearch, status, rewardType, sortBy: sort.by, sortOrder: sort.order }),
+    [run, page, limit, debouncedSearch, status, rewardType, sort]
   );
 
   useEffect(() => {
@@ -70,9 +78,24 @@ export default function StudentRewardsListPage() {
   };
 
   const columns = [
-    { key: 'name', header: 'Reward', sortable: true, render: (row) => <strong>{row.name}</strong> },
-    { key: 'rewardType', header: 'Type', render: (row) => row.rewardType ?? '—' },
-    { key: 'pointsRequired', header: 'Points required', sortable: false, render: (row) => <Badge variant="primary">{row.pointsRequired} pts</Badge> },
+    {
+      key: 'name',
+      header: 'Reward',
+      sortable: true,
+      render: (row) => (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+          <RewardArt imageUrl={row.imageUrl} size={32} animate={false} />
+          <strong>{row.name}</strong>
+        </span>
+      ),
+    },
+    { key: 'rewardType', header: 'Type', render: (row) => (row.rewardType === 'emoji' ? 'Emoji' : row.rewardType === 'sticker' ? 'Sticker' : row.rewardType ?? '—') },
+    { key: 'points_cost', header: 'Points to collect', sortable: true, render: (row) => <Badge variant="primary">{row.pointsRequired} pts</Badge> },
+    {
+      key: 'collectedCount',
+      header: 'Collected by',
+      render: (row) => `${row.collectedCount ?? 0} ${row.collectedCount === 1 ? 'student' : 'students'}`,
+    },
     { key: 'is_active', header: 'Status', render: (row) => <StatusBadge status={row.isActive ? 'active' : 'inactive'} /> },
     {
       key: 'actions',
@@ -100,10 +123,11 @@ export default function StudentRewardsListPage() {
     },
   ];
 
-  const hasFilters = Boolean(search || status);
+  const hasFilters = Boolean(search || status || rewardType);
   const clearFilters = () => {
     setSearch('');
     setStatus('');
+    setRewardType('');
     goToPage(1);
   };
 
@@ -111,13 +135,14 @@ export default function StudentRewardsListPage() {
     <>
       <PageHeader
         title="Student Rewards"
-        description="Rewards students can redeem points for."
+        description="Stickers and emojis students collect automatically as their earned points reach each level."
         breadcrumbs={[{ label: 'Master Management', to: '/admin/masters' }, { label: 'Student Rewards' }]}
         actions={<Button as={Link} to="/admin/masters/student-rewards/create">Add reward</Button>}
       />
 
       <FilterBar>
         <SearchInput fieldClassName="ui-filterbar__search ui-field--compact" placeholder="Reward name" value={search} onChange={(e) => resetTo(setSearch)(e.target.value)} onClear={() => resetTo(setSearch)('')} />
+        <Select fieldClassName="ui-field--compact" label="Type" options={TYPE_OPTIONS} placeholder="All types" value={rewardType} onChange={(e) => resetTo(setRewardType)(e.target.value)} />
         <Select fieldClassName="ui-field--compact" label="Status" options={STATUS_OPTIONS} placeholder="All statuses" value={status} onChange={(e) => resetTo(setStatus)(e.target.value)} />
         <Tooltip label="Clear filters" side="top">
           <IconButton icon={<LuFilterX aria-hidden="true" />} label="Clear filters" size="sm" onClick={clearFilters} disabled={!hasFilters} />

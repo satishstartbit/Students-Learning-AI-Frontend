@@ -1,17 +1,14 @@
 import { useEffect } from 'react';
 import {
-  LuBookOpen,
   LuChartLine,
-  LuClipboardList,
   LuCreditCard,
   LuDatabase,
+  LuGift,
   LuGraduationCap,
-  LuLayers,
   LuLayoutDashboard,
   LuLink,
-  LuListOrdered,
-  LuMusic,
   LuPackage,
+  LuTrophy,
   LuReceiptText,
   LuSchool,
   LuTicketPercent,
@@ -44,6 +41,15 @@ const NAV_ITEMS = [
       },
       { to: '/admin/relationships', label: 'Relationships', icon: LuLink },
       { to: '/admin/masters', label: 'Master Management', icon: LuDatabase },
+    ],
+  },
+  {
+    // The same Master Management screens, surfaced here so everything students
+    // see on their Rewards pages is managed from one obvious place.
+    group: 'Rewards',
+    items: [
+      { to: '/admin/masters/student-rewards', label: 'Stickers & Emojis', icon: LuGift },
+      { to: '/admin/masters/reward-activities', label: 'Points per Activity', icon: LuTrophy },
     ],
   },
   {

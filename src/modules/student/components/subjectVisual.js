@@ -29,19 +29,20 @@ const SUBJECT_VISUALS = [
   {
     match: /(english|reading|writing|literacy|language arts|spelling|phonics|lecture|[ée]criture)/i,
     icon: LuBookOpen,
-    tone: 'lavender',
+    tone: 'pink',
   },
   {
     match: /(french|fran[cç]ais|spanish|espa[nñ]ol|mandarin|punjabi|arabic|german|langu|second language)/i,
     icon: LuGlobe,
-    tone: 'orange',
+    tone: 'blue',
   },
-  { match: /(math|numera|arithm|math[ée]matiques)/i, icon: LuCalculator, tone: 'yellow' },
+  // Tones for the five core subjects follow the Grade 6+ dashboard mockup.
+  { match: /(math|numera|arithm|math[ée]matiques)/i, icon: LuCalculator, tone: 'lavender' },
   { match: /(science|stem|biolog|chemi|physics|sciences)/i, icon: LuFlaskConical, tone: 'green' },
   {
     match: /(social|history|histoire|geograph|g[ée]ograph|civics|indigenous)/i,
     icon: LuLandmark,
-    tone: 'blue',
+    tone: 'orange',
   },
   { match: /(art|drawing|dessin|craft)/i, icon: LuPalette, tone: 'pink' },
   { match: /(music|musique|band|choir)/i, icon: LuMusic, tone: 'lavender' },

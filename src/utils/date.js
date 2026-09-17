@@ -102,6 +102,54 @@ export function formatDateKey(dateKey, { locale, ...options } = {}) {
   }).format(new Date(Date.UTC(year, month - 1, day, 12)));
 }
 
+/** "May 12 – 18, 2025" (en-CA) - a span of two calendar day keys, collapsing the shared parts. */
+export function formatDateKeyRange(startKey, endKey, { locale, ...options } = {}) {
+  const toInstant = (key) => {
+    const [year, month, day] = String(key ?? '').split('-').map(Number);
+    return year && month && day ? new Date(Date.UTC(year, month - 1, day, 12)) : null;
+  };
+  const start = toInstant(startKey);
+  const end = toInstant(endKey);
+  if (!start || !end) return '';
+  return new Intl.DateTimeFormat(locale ?? getActiveLocale(), {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    ...options,
+    timeZone: 'UTC',
+  }).formatRange(start, end);
+}
+
+/** Calendar day key `n` days after `dateKey` (negative = before). Pure date arithmetic, no timezone. */
+export function addDaysToKey(dateKey, n) {
+  const [year, month, day] = String(dateKey ?? '').slice(0, 10).split('-').map(Number);
+  if (!year || !month || !day) return '';
+  return new Date(Date.UTC(year, month - 1, day + n)).toISOString().slice(0, 10);
+}
+
+/** 0 = Monday ... 6 = Sunday, for a calendar day key. */
+export function weekdayOfKey(dateKey) {
+  const [year, month, day] = String(dateKey ?? '').slice(0, 10).split('-').map(Number);
+  return (new Date(Date.UTC(year, month - 1, day)).getUTCDay() + 6) % 7;
+}
+
+/**
+ * Whole days from today (in the user's timezone) to a calendar day key
+ * ("2026-10-14" - a DATE column such as a due date). Negative = in the past.
+ * Use this rather than daysUntil() for DATE values: daysUntil parses the key
+ * as UTC midnight, which is the previous evening anywhere in Canada.
+ */
+export function daysUntilDateKey(dateKey, { timeZone } = {}) {
+  const [year, month, day] = String(dateKey ?? '').slice(0, 10).split('-').map(Number);
+  if (!year || !month || !day) return null;
+  const [ty, tm, td] = getDateKey(new Date(), { timeZone }).split('-').map(Number);
+  return Math.round((Date.UTC(year, month - 1, day) - Date.UTC(ty, tm - 1, td)) / 86400000);
+}
+
+/** True when an instant (e.g. a completedAt timestamp) falls on today in the user's timezone. */
+export const isTodayInTimezone = (value, { timeZone } = {}) =>
+  Boolean(toDate(value)) && getDateKey(value, { timeZone }) === getDateKey(new Date(), { timeZone });
+
 /** Long-form Canadian date: "September 10, 2026". */
 export function formatLongDate(value, options = {}) {
   return formatDate(value, { month: 'long', ...options });
@@ -185,6 +233,29 @@ export function formatRelative(value) {
   return rtf.format(Math.round(days / 30), 'month');
 }
 
+/**
+ * Short "how long ago" for feeds: "Just now", "5m ago", "2h ago" (earlier
+ * today), "Yesterday", "3 days ago", then a date. Day boundaries are the
+ * user's own calendar days (timezone-aware), not 24-hour windows.
+ */
+export function formatTimeAgo(value, { now = new Date(), timeZone } = {}) {
+  const d = toDate(value);
+  if (!d) return '';
+  const minutes = Math.floor((now - d) / 60000);
+  const [y, m, day] = getDateKey(d, { timeZone }).split('-').map(Number);
+  const [ny, nm, nd] = getDateKey(now, { timeZone }).split('-').map(Number);
+  const daysAgo = Math.round((Date.UTC(ny, nm - 1, nd) - Date.UTC(y, m - 1, day)) / 86400000);
+
+  if (daysAgo <= 0) {
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    return `${Math.floor(minutes / 60)}h ago`;
+  }
+  if (daysAgo === 1) return 'Yesterday';
+  if (daysAgo < 7) return `${daysAgo} days ago`;
+  return formatDate(d, { timeZone });
+}
+
 /** Human label for a due date - what assignment cards show. */
 export function formatDueDate(dueDate) {
   const days = daysUntil(dueDate);
@@ -204,6 +275,17 @@ export function formatDuration(minutes) {
   const m = Math.round(total % 60);
   if (!h) return `${m}m`;
   return m ? `${h}h ${m}m` : `${h}h`;
+}
+
+/** Minutes -> "1 hour 15 min" / "25 min" - the friendlier long form for student-facing summaries. */
+export function formatDurationLong(minutes) {
+  const total = Number(minutes);
+  if (!Number.isFinite(total) || total <= 0) return '';
+  const h = Math.floor(total / 60);
+  const m = Math.round(total % 60);
+  const hours = h ? `${h} ${h === 1 ? 'hour' : 'hours'}` : '';
+  const mins = m ? `${m} min` : '';
+  return [hours, mins].filter(Boolean).join(' ');
 }
 
 export default {

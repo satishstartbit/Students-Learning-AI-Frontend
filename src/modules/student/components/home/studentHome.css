@@ -1,0 +1,994 @@
+/*
+ * Grade 6+ Home ("My Day") - built to the student dashboard mockup
+ * (public/image/0e0f85199245c62378a5be33ae5ec4f5cb9a2555.png is its hero
+ * landscape). Everything draws from the shared theme tokens (accent family,
+ * surfaces, sticky-note tones) so accent switching and dark mode still apply;
+ * the handful of literal values below are illustration colours with no token.
+ */
+
+.sh-page {
+  --sh-card-radius: 14px;
+  --sh-row-radius: 10px;
+  --sh-gap: 20px;
+  --sh-done: var(--color-success-fg);
+  --sh-muted: var(--color-text-secondary);
+  --sh-hairline: var(--color-border-default);
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 8px 4px 32px;
+  color: var(--color-text-primary);
+}
+
+/* ------------------------------------------------------------------ hero */
+.sh-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 168px;
+  margin-bottom: 8px;
+}
+.sh-hero__title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.sh-hero__summary {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--sh-muted);
+}
+.sh-hero__art {
+  position: relative;
+  flex: none;
+  width: min(440px, 48%);
+  aspect-ratio: 440 / 190;
+}
+.sh-hero__landscape {
+  position: absolute;
+  inset: auto 0 0 -8%;
+  width: 92%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* The floating "Today's check-in" card, tilted like a note pinned over the view. */
+.sh-checkin {
+  position: absolute;
+  top: 4px;
+  right: 0;
+  width: 190px;
+  padding: 12px 14px;
+  border: 1px solid var(--sh-hairline);
+  border-radius: 10px;
+  background: var(--color-bg-surface);
+  box-shadow: 0 10px 24px -12px rgba(46, 35, 20, 0.35), 0 1px 2px rgba(46, 35, 20, 0.06);
+  transform: rotate(2.5deg);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.sh-checkin:hover,
+.sh-checkin:focus-visible {
+  transform: rotate(0deg) translateY(-2px);
+  box-shadow: 0 14px 28px -12px rgba(46, 35, 20, 0.4);
+}
+.sh-checkin:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+.sh-checkin__label {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sh-muted);
+}
+.sh-checkin__mood {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.sh-checkin__face {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-base);
+  font-size: 15px;
+  overflow: hidden;
+}
+.sh-checkin__face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sh-checkin__energy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--sh-muted);
+}
+.sh-checkin__dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.sh-checkin__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-border-strong);
+}
+.sh-checkin__dot[data-on='true'] {
+  background: var(--accent-base);
+}
+.sh-checkin__meta {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--sh-muted);
+}
+.sh-checkin__cta {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-base);
+}
+
+/* ------------------------------------------------------------------ grid */
+.sh-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--sh-gap);
+  align-items: start;
+}
+.sh-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sh-gap);
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------------ card */
+.sh-card {
+  padding: 20px;
+  border: 1px solid var(--sh-hairline);
+  border-radius: var(--sh-card-radius);
+  background: var(--color-bg-surface);
+  box-shadow: 0 1px 2px rgba(46, 35, 20, 0.04);
+}
+.sh-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.sh-card__heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.sh-card__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--sh-hairline);
+  border-radius: 8px;
+  background: var(--color-bg-surface-sunken);
+  color: var(--color-text-secondary);
+}
+.sh-card__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.sh-card__subtitle {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--sh-muted);
+}
+.sh-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+.sh-card__link:hover {
+  color: var(--accent-base);
+}
+.sh-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+/* ------------------------------------------------------------ today's tasks */
+.sh-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.sh-progress__track {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--color-bg-surface-sunken);
+  overflow: hidden;
+}
+.sh-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-base);
+  transition: width 0.4s ease;
+}
+.sh-progress__label {
+  flex: none;
+  font-size: 11px;
+  color: var(--sh-muted);
+}
+
+.sh-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sh-task {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 12px 8px 6px;
+  border: 1px solid var(--sh-hairline);
+  border-radius: var(--sh-row-radius);
+  background: var(--color-bg-surface);
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+.sh-task:hover {
+  border-color: var(--color-border-strong);
+}
+.sh-task[data-next='true'] {
+  border-color: color-mix(in srgb, var(--accent-base) 55%, transparent);
+  background: var(--accent-soft);
+}
+.sh-task[data-dragging='true'] {
+  box-shadow: 0 12px 24px -12px rgba(46, 35, 20, 0.45);
+  opacity: 0.92;
+}
+.sh-task__handle {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--color-text-tertiary);
+  cursor: grab;
+  touch-action: none;
+}
+.sh-task__handle:active {
+  cursor: grabbing;
+}
+.sh-task__handle:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.sh-task__handle:focus-visible,
+.sh-task__check:focus-visible,
+.sh-task__main:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+.sh-task__check {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-bg-surface);
+  color: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+.sh-task[data-next='true'] .sh-task__check {
+  border-color: var(--accent-base);
+}
+.sh-task__check:hover {
+  border-color: var(--sh-done);
+  color: var(--sh-done);
+}
+.sh-task__check[aria-pressed='true'],
+.sh-task__check[data-done='true'] {
+  border-color: var(--sh-done);
+  background: var(--sh-done);
+  color: #fff;
+}
+.sh-task__check[data-static='true'] {
+  cursor: default;
+}
+.sh-task__main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 2px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sh-task__text {
+  min-width: 0;
+}
+.sh-task__title {
+  display: block;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sh-task[data-done='true'] .sh-task__title {
+  font-weight: 500;
+  color: var(--sh-muted);
+}
+.sh-task__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: 11px;
+  color: var(--sh-muted);
+  white-space: nowrap;
+}
+.sh-task__meta svg {
+  flex: none;
+}
+.sh-task__dot {
+  width: 3px;
+  height: 3px;
+  flex: none;
+  border-radius: 50%;
+  background: currentColor;
+}
+.sh-task__tag {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--color-bg-surface-sunken);
+  font-size: 10px;
+  font-weight: 600;
+}
+.sh-task__side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+.sh-task__pts {
+  font-size: 11px;
+  color: var(--sh-muted);
+}
+.sh-task[data-done='true'] .sh-task__pts {
+  font-weight: 600;
+  color: var(--sh-done);
+}
+.sh-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--accent-base);
+  color: var(--accent-on);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.sh-start:hover {
+  background: var(--accent-hover);
+}
+.sh-start:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+
+/* Subject tile - rounded square, tone background with a deeper tone icon. */
+.sh-subject {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--sh-subject-border, var(--sticky-blue-border));
+  border-radius: 7px;
+  background: var(--sh-subject-bg, var(--sticky-blue));
+  color: var(--sh-subject-fg, #2f5f8f);
+}
+.sh-subject[data-tone='yellow'] { --sh-subject-bg: var(--sticky-yellow); --sh-subject-border: var(--sticky-yellow-border); --sh-subject-fg: #8a6a00; }
+.sh-subject[data-tone='pink'] { --sh-subject-bg: var(--sticky-pink); --sh-subject-border: var(--sticky-pink-border); --sh-subject-fg: #b4235a; }
+.sh-subject[data-tone='blue'] { --sh-subject-bg: var(--sticky-blue); --sh-subject-border: var(--sticky-blue-border); --sh-subject-fg: #0b6b86; }
+.sh-subject[data-tone='green'] { --sh-subject-bg: var(--sticky-green); --sh-subject-border: var(--sticky-green-border); --sh-subject-fg: #2f7d32; }
+.sh-subject[data-tone='lavender'] { --sh-subject-bg: var(--sticky-lavender); --sh-subject-border: var(--sticky-lavender-border); --sh-subject-fg: #6b43c4; }
+.sh-subject[data-tone='orange'] { --sh-subject-bg: var(--sticky-orange); --sh-subject-border: var(--sticky-orange-border); --sh-subject-fg: #b45309; }
+
+/* --------------------------------------------------------- upcoming deadlines */
+.sh-deadlines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sh-deadline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px 8px 8px;
+  border: 1px solid var(--sh-hairline);
+  border-radius: var(--sh-row-radius);
+  background: var(--color-bg-surface);
+  color: inherit;
+  text-decoration: none;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.sh-deadline:hover {
+  border-color: var(--color-border-strong);
+}
+.sh-deadline:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+.sh-datebadge {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: 36px;
+  overflow: hidden;
+  border: 1px solid var(--sh-hairline);
+  border-radius: 6px;
+  background: var(--color-bg-surface);
+  text-align: center;
+}
+.sh-datebadge__month {
+  padding: 1px 0;
+  background: var(--accent-base);
+  color: var(--accent-on);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sh-datebadge__day {
+  padding: 2px 0 3px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.sh-deadline__text {
+  flex: 1;
+  min-width: 0;
+}
+.sh-deadline__title {
+  display: block;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sh-deadline__subject {
+  display: block;
+  margin-top: 1px;
+  font-size: 11px;
+  color: var(--sh-muted);
+}
+.sh-deadline__when {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--sh-muted);
+}
+.sh-deadline__when[data-soon='true'] {
+  font-weight: 500;
+  color: #c2410c;
+}
+
+/* ------------------------------------------------------------------ progress */
+.sh-progresscard__body {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 12px;
+  margin-top: 14px;
+}
+.sh-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+.sh-ring__value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+.sh-ring__unit {
+  font-size: 10px;
+  color: var(--sh-muted);
+}
+.sh-ring__caption {
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.sh-reward {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  max-width: 110px;
+  color: inherit;
+  text-align: center;
+  text-decoration: none;
+}
+.sh-reward__icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent-base) 30%, transparent);
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-base);
+}
+.sh-reward__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sh-reward__name {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.sh-reward__cost {
+  font-size: 10.5px;
+  color: var(--sh-muted);
+}
+
+/* ------------------------------------------------------------------ focus */
+.sh-focus {
+  border-color: color-mix(in srgb, var(--accent-base) 22%, transparent);
+  background: color-mix(in srgb, var(--accent-soft) 80%, var(--color-bg-surface));
+}
+.sh-focus__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.sh-focus__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid var(--accent-base);
+  border-radius: 50%;
+  color: var(--accent-base);
+}
+.sh-focus__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.sh-focus__text {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--sh-muted);
+}
+.sh-focus__button {
+  justify-content: center;
+  width: 100%;
+  height: 38px;
+  font-size: 13px;
+}
+
+/* -------------------------------------------------------------- add task */
+.sh-add__text {
+  margin: 8px 0 12px;
+  font-size: 12px;
+  color: var(--sh-muted);
+}
+.sh-add__tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.sh-add__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 90px;
+  padding: 12px;
+  border: 1px solid var(--sh-hairline);
+  border-radius: var(--sh-row-radius);
+  background: var(--color-bg-surface);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.sh-add__tile:hover {
+  border-color: var(--accent-base);
+  background: var(--accent-soft);
+}
+.sh-add__tile:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+.sh-add__tile svg {
+  margin-bottom: auto;
+  color: var(--color-text-secondary);
+}
+.sh-add__tile-title {
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sh-add__tile-hint {
+  font-size: 10.5px;
+  color: var(--sh-muted);
+}
+
+/* ------------------------------------------------------------------ notes */
+.sh-notes {
+  margin-top: var(--sh-gap);
+}
+.sh-board {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 26px;
+  padding: 26px 24px 30px;
+  border-radius: 10px;
+  background: var(--color-bg-surface-sunken);
+}
+.sh-board__empty {
+  align-self: center;
+  margin: 0;
+  font-size: 13px;
+  color: var(--sh-muted);
+}
+
+.sh-note {
+  --sh-note-bg: var(--sticky-yellow);
+  position: relative;
+  width: 150px;
+  min-height: 132px;
+  transform: rotate(var(--sh-note-rotate, 0deg));
+  transition: transform 0.18s ease;
+  filter: drop-shadow(0 6px 6px rgba(46, 35, 20, 0.14)) drop-shadow(0 1px 1px rgba(46, 35, 20, 0.08));
+}
+.sh-note:hover,
+.sh-note:focus-within {
+  transform: rotate(0deg) translateY(-3px);
+  z-index: 2;
+}
+.sh-note[data-tone='yellow'] { --sh-note-bg: var(--sticky-yellow); }
+.sh-note[data-tone='pink'] { --sh-note-bg: var(--sticky-pink); }
+.sh-note[data-tone='blue'] { --sh-note-bg: var(--sticky-blue); }
+.sh-note[data-tone='green'] { --sh-note-bg: var(--sticky-green); }
+.sh-note[data-tone='lavender'] { --sh-note-bg: var(--sticky-lavender); }
+.sh-note[data-tone='orange'] { --sh-note-bg: var(--sticky-orange); }
+
+/* The paper itself - its shape varies by decoration. */
+.sh-note__paper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 132px;
+  padding: 22px 14px 18px;
+  border: 0;
+  background: var(--sh-note-bg);
+  color: var(--sticky-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sh-note__paper:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 3px;
+}
+.sh-note__title {
+  display: block;
+  margin-bottom: 2px;
+  font-family: 'Patrick Hand', 'Comic Sans MS', cursive;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+.sh-note__text {
+  display: -webkit-box;
+  overflow: hidden;
+  font-family: 'Patrick Hand', 'Comic Sans MS', cursive;
+  font-size: 16px;
+  line-height: 1.25;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+.sh-note[data-done='true'] .sh-note__title,
+.sh-note[data-done='true'] .sh-note__text {
+  color: color-mix(in srgb, var(--sticky-ink) 50%, transparent);
+}
+
+/* Decoration: tape strip across the top. */
+.sh-note__tape {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 58px;
+  height: 20px;
+  margin-left: -29px;
+  background: rgba(236, 228, 214, 0.88);
+  box-shadow: 0 1px 1px rgba(46, 35, 20, 0.08);
+  clip-path: polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 45%);
+  pointer-events: none;
+}
+.sh-note[data-style='corner'] .sh-note__tape {
+  top: -4px;
+  left: -10px;
+  width: 50px;
+  margin-left: 0;
+  transform: rotate(-38deg);
+}
+
+/* Decoration: wavy torn bottom edge. */
+.sh-note[data-style='torn'] .sh-note__paper {
+  padding-bottom: 24px;
+  -webkit-mask: radial-gradient(7px at 50% calc(100% + 3px), #0000 98%, #000) 50% calc(100% - 4px) / 14px 100% repeat-x;
+  mask: radial-gradient(7px at 50% calc(100% + 3px), #0000 98%, #000) 50% calc(100% - 4px) / 14px 100% repeat-x;
+}
+
+/* Decoration: bottom-right corner folded up. */
+.sh-note[data-style='fold'] .sh-note__paper {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%);
+}
+.sh-note__fold {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--sh-note-bg) 70%, #000 12%) 0 50%, transparent 50%);
+  border-top-left-radius: 3px;
+  pointer-events: none;
+}
+
+/* Decoration: top-left corner clipped (with the angled tape over it). */
+.sh-note[data-style='corner'] .sh-note__paper {
+  clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%, 0 16px);
+}
+
+/* Done badge / toggle - a pin-style round button, top-right. */
+.sh-note__check {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1.5px solid color-mix(in srgb, var(--sticky-ink) 35%, transparent);
+  border-radius: 50%;
+  background: var(--color-bg-surface);
+  color: color-mix(in srgb, var(--sticky-ink) 45%, transparent);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background-color 0.15s, color 0.15s;
+}
+.sh-note__check[aria-pressed='true'] {
+  border-color: #7a1f3d;
+  background: #7a1f3d;
+  color: #fff;
+  opacity: 1;
+}
+.sh-note__delete {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--sh-hairline);
+  border-radius: 50%;
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+.sh-note__delete:hover {
+  color: var(--color-danger-fg);
+}
+.sh-note:hover .sh-note__check,
+.sh-note:focus-within .sh-note__check,
+.sh-note:hover .sh-note__delete,
+.sh-note:focus-within .sh-note__delete {
+  opacity: 1;
+}
+@media (hover: none) {
+  .sh-note__check,
+  .sh-note__delete {
+    opacity: 1;
+  }
+}
+.sh-note__check:focus-visible,
+.sh-note__delete:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+
+.sh-note-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 150px;
+  min-height: 132px;
+  border: 1.5px dashed var(--color-border-strong);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--color-bg-surface) 40%, transparent);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+}
+.sh-note-add:hover {
+  border-color: var(--accent-base);
+  background: var(--accent-soft);
+  color: var(--accent-base);
+}
+.sh-note-add:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ states */
+.sh-empty {
+  margin: 0;
+  padding: 18px 8px;
+  font-size: 13px;
+  color: var(--sh-muted);
+  text-align: center;
+}
+.sh-skeleton {
+  height: 56px;
+  border-radius: var(--sh-row-radius);
+  background: linear-gradient(90deg, var(--color-bg-surface-sunken) 0%, var(--color-bg-surface) 50%, var(--color-bg-surface-sunken) 100%);
+  background-size: 200% 100%;
+  animation: sh-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes sh-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sh-skeleton { animation: none; }
+  .sh-note,
+  .sh-checkin,
+  .sh-progress__fill { transition: none; }
+}
+
+/* ------------------------------------------------------------ responsive */
+@media (max-width: 1080px) {
+  .sh-grid {
+    grid-template-columns: minmax(0, 1fr) 270px;
+  }
+}
+@media (max-width: 900px) {
+  .sh-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sh-col--side {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .sh-hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .sh-hero__title {
+    font-size: 24px;
+  }
+  .sh-hero__art {
+    width: 100%;
+    max-width: 380px;
+    align-self: center;
+  }
+  .sh-card {
+    padding: 16px;
+  }
+  .sh-task__pts {
+    display: none;
+  }
+  .sh-board {
+    justify-content: center;
+    padding: 22px 12px 26px;
+    gap: 24px 18px;
+  }
+  .sh-note,
+  .sh-note-add {
+    width: 136px;
+  }
+}

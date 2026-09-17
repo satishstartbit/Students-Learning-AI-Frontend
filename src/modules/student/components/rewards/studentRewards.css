@@ -1,0 +1,203 @@
+/*
+ * Grade 6+ Rewards page (RewardsPage.jsx), built to the Grade 6-12 rewards
+ * mockup: a progress card (ring + "N points earned so far" + bar), a
+ * Stickers / Emojis segmented switch, and a grid of collectible tiles.
+ * Collected tiles show the art in full colour and bob gently (RewardArt);
+ * locked tiles are faded with "N pts to unlock".
+ */
+.rw-page {
+  max-width: 1040px;
+  padding: 8px 4px 40px;
+  color: var(--color-text-primary);
+}
+.rw-title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.rw-subtitle {
+  margin: 6px 0 22px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.rw-progress {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 20px 24px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 16px;
+  background: var(--color-bg-surface);
+  box-shadow: 0 1px 2px rgba(46, 35, 20, 0.04);
+}
+.rw-ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 92px;
+  height: 92px;
+}
+.rw-ring svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+.rw-ring__value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+.rw-ring__unit {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+.rw-progress__body {
+  flex: 1;
+  min-width: 0;
+}
+.rw-progress__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+.rw-progress__text {
+  margin: 4px 0 12px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.rw-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-bg-surface-sunken);
+}
+.rw-bar__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-base);
+  transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.rw-tabs {
+  display: inline-flex;
+  gap: 2px;
+  margin: 22px 0 16px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--color-bg-surface-sunken);
+}
+.rw-tab {
+  height: 32px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.rw-tab[aria-selected='true'] {
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  box-shadow: 0 1px 3px rgba(46, 35, 20, 0.12);
+}
+.rw-tab:focus-visible,
+.rw-tile:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+
+.rw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rw-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  min-height: 124px;
+  padding: 16px 10px 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-bg-surface);
+  text-align: center;
+  transition: border-color 0.15s, box-shadow 0.2s, transform 0.2s;
+}
+.rw-tile[data-collected='true']:hover {
+  border-color: color-mix(in srgb, var(--accent-base) 35%, transparent);
+  box-shadow: 0 10px 22px -14px rgba(46, 35, 20, 0.35);
+  transform: translateY(-2px);
+}
+.rw-tile[data-new='true'] {
+  border-color: color-mix(in srgb, var(--accent-base) 50%, transparent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.rw-tile__name {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.rw-tile__hint {
+  margin-top: -4px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+.rw-tile__badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-base);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.rw-empty {
+  padding: 40px 20px;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 14px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+.rw-skeleton {
+  height: 124px;
+  border-radius: 14px;
+  background: var(--color-bg-surface-sunken);
+}
+
+@media (max-width: 560px) {
+  .rw-title {
+    font-size: 28px;
+  }
+  .rw-progress {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  .rw-ring {
+    align-self: center;
+  }
+  .rw-grid {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 10px;
+  }
+}

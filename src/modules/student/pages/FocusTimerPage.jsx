@@ -5,12 +5,14 @@ import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { useFocusTimer, formatClock } from '../hooks/useFocusTimer';
 import { useMyTasks } from '../hooks/useMyTasks';
 import { useTodayCheckIn } from '../../checkIn/hooks/useTodayCheckIn';
+import { useStudentSettings } from '../hooks/useStudentSettings';
 import RegulationToolkitCard from '../components/RegulationToolkitCard';
 
 // Mirrors StudentCheckInCard's "minutes free" options plus a classic 25 -
 // so a length the student already told the check-in about is always pickable.
 const PLANNED_OPTIONS = [
   { value: '15', label: '15 minutes' },
+  { value: '20', label: '20 minutes' },
   { value: '25', label: '25 minutes' },
   { value: '30', label: '30 minutes' },
   { value: '45', label: '45 minutes' },
@@ -30,16 +32,28 @@ const AUDIO_OPTIONS = [
  */
 export default function FocusTimerPage() {
   const timer = useFocusTimer();
+  const { settings, isLoading: settingsLoading } = useStudentSettings();
+
+  // Waits for Settings so the starting length and sound are the student's own
+  // choices on first paint, rather than snapping over from a default.
+  if (timer.isLoading || settingsLoading) return <Loader message="Loading your focus timer…" />;
+  return <FocusTimer timer={timer} settings={settings} />;
+}
+
+function FocusTimer({ timer, settings }) {
   const tasks = useMyTasks();
   const { checkIn } = useTodayCheckIn();
 
-  // Pre-fill from today's check-in ("30 minutes free") so the ring already
-  // shows the length the student told the check-in about, not a fixed guess.
-  const [plannedMinutes, setPlannedMinutes] = useState(() =>
-    checkIn?.availableMinutes ? String(checkIn.availableMinutes) : '25'
-  );
+  // Settings -> "Default focus length" decides how long a session runs when
+  // Start is pressed. Without saved settings, fall back to today's check-in
+  // ("30 minutes free"), then a classic 25.
+  const [plannedMinutes, setPlannedMinutes] = useState(() => {
+    if (settings?.defaultFocusMinutes) return String(settings.defaultFocusMinutes);
+    return checkIn?.availableMinutes ? String(checkIn.availableMinutes) : '25';
+  });
   const [taskId, setTaskId] = useState(null);
-  const [audioIndex, setAudioIndex] = useState(0);
+  // Settings -> "Background sound": start on the first sound instead of silence.
+  const [audioIndex, setAudioIndex] = useState(() => (settings?.backgroundSound ? 1 : 0));
   const [showSettings, setShowSettings] = useState(false);
   const [justEnded, setJustEnded] = useState(null);
 
@@ -50,8 +64,6 @@ export default function FocusTimerPage() {
         .map((item) => ({ value: item.assignment.id, label: item.assignment.title })),
     [tasks.toDo]
   );
-
-  if (timer.isLoading) return <Loader message="Loading your focus timer…" />;
 
   const { session } = timer;
   const isRunning = session?.status === 'in_progress';

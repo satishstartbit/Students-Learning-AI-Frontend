@@ -1,14 +1,16 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import '@fontsource/poppins/400.css';
+import '@fontsource/poppins/500.css';
+import '@fontsource/poppins/600.css';
+import '@fontsource/poppins/700.css';
 import {
   LuBell,
   LuCalendarDays,
-  LuFileText,
-  LuMessageCircle,
+  LuHouse,
+  LuListChecks,
   LuPalette,
-  LuSettings,
-  LuSparkles,
-  LuSun,
+  LuSettings2,
   LuTimer,
   LuTrophy,
 } from 'react-icons/lu';
@@ -16,41 +18,46 @@ import { useApi } from '../hooks/useApi';
 import { getMe } from '../modules/auth/services/auth.service';
 import { TodayCheckInProvider } from '../modules/checkIn/components/TodayCheckInProvider';
 import { KidLockedScreen } from '../modules/student/components/kid/KidLockedScreen';
+import StudentSettingsProvider from '../modules/student/components/StudentSettingsProvider';
 import { StudentExperienceContext } from '../modules/student/hooks/useStudentExperience';
 import StudentLockedScreen from '../modules/subscription/components/StudentLockedScreen';
 import { SubscriptionAccessContext, useAccessStatus } from '../modules/subscription/hooks/useSubscriptionAccess';
 import { isJuniorGrade } from '../utils/gradeBand';
 import AuthenticatedLayout from './AuthenticatedLayout';
 import KidLayout from './KidLayout';
+import '../theme/studentTheme.css';
 
 /**
  * Navigation for the student area (/student/*) - Grade 6 and up. K-5 nav
  * lives in modules/student/components/kid/kidNav.js.
  *
- * Two groups: the primary "My learning" set, then a visually separate second
- * section (Notifications / Make it yours / Settings) above the account tile
- * - AppSidebar.jsx already renders each `{ group, items }` entry as its own
- * SidebarGroup, so this is a data change only.
+ * Matches the Grade 6+ dashboard mockup: the five primary items at the top,
+ * then Notifications / Make it yours / Settings pinned to the bottom above
+ * the account tile (`placement: 'bottom'`, see AppSidebar.jsx).
+ *
+ * Check In and AI Assistant are deliberately not in the nav (the mockup has
+ * neither) - their routes still exist: the check-in lives on Home's "Today's
+ * check-in" card, and work screens still redirect to /student/check-in when
+ * it's needed.
  */
 const NAV_ITEMS = [
   {
-    group: 'My learning',
+    group: null,
     items: [
-      { to: '/student', label: 'Home', icon: LuSun, end: true },
+      { to: '/student', label: 'Home', icon: LuHouse, end: true },
       { to: '/student/calendar', label: 'Plan', icon: LuCalendarDays },
-      { to: '/student/assignments', label: 'Assignments', icon: LuFileText },
-      { to: '/student/check-in', label: 'Check In', icon: LuMessageCircle },
-      { to: '/student/assistant', label: 'AI Assistant', icon: LuSparkles },
+      { to: '/student/assignments', label: 'Assignments', icon: LuListChecks },
       { to: '/student/focus', label: 'Focus', icon: LuTimer },
       { to: '/student/rewards', label: 'Rewards', icon: LuTrophy },
     ],
   },
   {
     group: null,
+    placement: 'bottom',
     items: [
       { to: '/student/notifications', label: 'Notifications', icon: LuBell },
       { to: '/student/make-it-yours', label: 'Make it yours', icon: LuPalette },
-      { to: '/student/settings', label: 'Settings', icon: LuSettings },
+      { to: '/student/settings', label: 'Settings', icon: LuSettings2 },
     ],
   },
 ];
@@ -110,6 +117,15 @@ export function StudentLayout({ children }) {
     [isJunior, grade, profile, onboarded, refreshProfile]
   );
 
+  // Grade 6+ look (theme/studentTheme.css) on <body> so portaled dialogs get it too -
+  // same approach as SuperAdminLayout. Not applied while the grade is still unknown.
+  const standardShell = !me.isLoading && !isJunior;
+  useEffect(() => {
+    if (!standardShell) return undefined;
+    document.body.classList.add('student-theme');
+    return () => document.body.classList.remove('student-theme');
+  }, [standardShell]);
+
   const { loaded, isLoading: accessLoading, hasAccess, reason, refresh } = accessStatus;
   const access = useMemo(
     () => ({ loaded, isLoading: accessLoading, hasAccess, reason, refresh }),
@@ -131,11 +147,20 @@ export function StudentLayout({ children }) {
   const shell = isJunior ? (
     <KidLayout>{content}</KidLayout>
   ) : (
-    <AuthenticatedLayout navItems={NAV_ITEMS} title="My Learning" subtitle="Student" brand="ML">
-      {content}
-    </AuthenticatedLayout>
+    // Settings (appearance, larger text, reduce motion, display name) apply to the whole Grade 6+ shell.
+    <StudentSettingsProvider>
+      <AuthenticatedLayout
+        navItems={NAV_ITEMS}
+        title="My Learning"
+        subtitle="Student"
+        brand="ML"
+        accountSubtitle={grade ?? undefined}
+        showNotificationBell={false}
+      >
+        {content}
+      </AuthenticatedLayout>
+    </StudentSettingsProvider>
   );
-  
 
   return (
     <StudentExperienceContext.Provider value={experience}>

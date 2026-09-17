@@ -189,7 +189,7 @@ function NavEntry({ entry, isPathActive }) {
  * Built here rather than reusing the shared Dropdown component, which is
  * styled by the older CSS system and would not match the sidebar.
  */
-function UserMenu() {
+function UserMenu({ accountSubtitle }) {
   const { user, role, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -258,7 +258,7 @@ function UserMenu() {
         {avatar}
         <span className="flex min-w-0 flex-1 flex-col text-left leading-tight">
           <span className="truncate text-sm font-semibold">{name}</span>
-          <span className="truncate text-xs opacity-70">{user?.email ?? ROLE_LABELS[role]}</span>
+          <span className="truncate text-xs opacity-70">{accountSubtitle ?? user?.email ?? ROLE_LABELS[role]}</span>
         </span>
         {!collapsed && (
           <LuChevronsUpDown aria-hidden="true" className="ml-auto shrink-0 opacity-70" />
@@ -326,11 +326,11 @@ function UserMenu() {
   );
 }
 
-export default function AppSidebar({ subtitle, navItems = [] }) {
+export default function AppSidebar({ subtitle, navItems = [], accountSubtitle }) {
   const isPathActive = useIsPathActive();
 
   // Accepts both a flat list and { group, items } sections.
-  const sections = navItems.some((entry) => entry.group)
+  const sections = navItems.some((entry) => Array.isArray(entry.items) && ('group' in entry || 'placement' in entry))
     ? navItems
     : [{ group: null, items: navItems }];
 
@@ -355,7 +355,8 @@ export default function AppSidebar({ subtitle, navItems = [] }) {
 
       <SidebarContent>
         {sections.map((section, index) => (
-          <SidebarGroup key={section.group ?? index}>
+          // placement: 'bottom' pins a section to the foot of the nav, just above the account tile.
+          <SidebarGroup key={section.group ?? index} className={section.placement === 'bottom' ? 'mt-auto' : undefined}>
             {section.group && <SidebarGroupLabel>{section.group}</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
@@ -374,7 +375,7 @@ export default function AppSidebar({ subtitle, navItems = [] }) {
 
       <SidebarFooter>
         <SidebarMenu>
-          <UserMenu />
+          <UserMenu accountSubtitle={accountSubtitle} />
         </SidebarMenu>
       </SidebarFooter>
 

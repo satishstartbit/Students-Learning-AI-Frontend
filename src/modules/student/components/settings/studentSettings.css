@@ -1,0 +1,252 @@
+/*
+ * Grade 6+ Settings page (StudentSettingsPage.jsx), built to the student
+ * settings mockup: a single narrow column of titled groups, each a white card
+ * of hairline-separated rows - label + hint on the left, a value/chevron,
+ * switch, select or button on the right. Theme tokens throughout, so the
+ * Appearance setting it controls also restyles this page.
+ */
+.ss-page {
+  max-width: 640px;
+  padding: 8px 4px 40px;
+  color: var(--color-text-primary);
+}
+.ss-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.ss-subtitle {
+  margin: 4px 0 24px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.ss-group {
+  margin-bottom: 22px;
+}
+.ss-group__label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.ss-card {
+  margin: 0;
+  padding: 0 18px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-bg-surface);
+  box-shadow: 0 1px 2px rgba(46, 35, 20, 0.04);
+  list-style: none;
+}
+
+.ss-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+  padding: 12px 0;
+}
+/* Hairline between rows, whether the li is the row or wraps a row button. */
+.ss-card > li + li {
+  border-top: 1px solid var(--color-border-default);
+}
+.ss-row__text {
+  min-width: 0;
+}
+.ss-row__label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.ss-row__label--danger {
+  color: var(--color-danger-fg);
+}
+.ss-row__hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--color-text-secondary);
+}
+.ss-row__control {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+/* A whole row that opens something (Name / Grade / School). */
+.ss-row--button {
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ss-row--button:hover .ss-value {
+  color: var(--color-text-primary);
+}
+.ss-row--button:focus-visible,
+.ss-link:focus-visible,
+.ss-select:focus-visible,
+.ss-signout:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+.ss-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.ss-value__text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ss-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+.ss-link:hover {
+  color: var(--accent-base);
+}
+
+/* Switch - a real checkbox-role button, teal when on. */
+.ss-switch {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-border-strong);
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+.ss-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.18s ease;
+}
+.ss-switch[aria-checked='true'] {
+  background: var(--accent-base);
+}
+.ss-switch[aria-checked='true']::after {
+  transform: translateX(18px);
+}
+.ss-switch:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+.ss-switch:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.ss-select {
+  min-width: 150px;
+  height: 36px;
+  padding: 0 34px 0 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 8px;
+  background: var(--color-bg-surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2367605b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--color-text-primary);
+  appearance: none;
+  cursor: pointer;
+}
+.ss-select:hover {
+  border-color: var(--color-border-strong);
+}
+
+.ss-signout {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--color-danger-solid, #b91c1c);
+  color: var(--color-danger-on-solid, #fff);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ss-signout:hover {
+  filter: brightness(0.92);
+}
+
+/* Help page guides (StudentHelpPage.jsx). */
+.ss-guide > summary {
+  list-style: none;
+}
+.ss-guide > summary::-webkit-details-marker {
+  display: none;
+}
+.ss-guide__chevron {
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+.ss-guide[open] .ss-guide__chevron {
+  transform: rotate(90deg);
+}
+.ss-guide__body {
+  padding: 0 0 16px 26px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.ss-guide__body ol {
+  margin: 0 0 10px;
+  padding-left: 18px;
+  line-height: 1.6;
+}
+
+.ss-skeleton {
+  height: 64px;
+  margin: 8px 0;
+  border-radius: 10px;
+  background: var(--color-bg-surface-sunken);
+}
+
+@media (max-width: 520px) {
+  .ss-row {
+    gap: 10px;
+  }
+  .ss-value {
+    max-width: 120px;
+  }
+  .ss-select {
+    min-width: 0;
+    width: 132px;
+  }
+}

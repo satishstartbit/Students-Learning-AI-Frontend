@@ -20,7 +20,16 @@ import AppSidebar from './AppSidebar';
  * Only the sidebar chrome is Tailwind - page content still uses the existing
  * component library.
  */
-export function AuthenticatedLayout({ navItems = [], title, subtitle, brand, children }) {
+export function AuthenticatedLayout({
+  navItems = [],
+  title,
+  subtitle,
+  brand,
+  accountSubtitle,
+  // Grade 6+ students reach notifications from the sidebar instead (StudentLayout passes false).
+  showNotificationBell = true,
+  children,
+}) {
   const { user } = useAuth();
 
   // Every date/currency formatted anywhere in the app (utils/date.js,
@@ -31,7 +40,7 @@ export function AuthenticatedLayout({ navItems = [], title, subtitle, brand, chi
 
   return (
     <SidebarProvider>
-      <AppSidebar title={title} subtitle={subtitle} brand={brand} navItems={navItems} />
+      <AppSidebar title={title} subtitle={subtitle} brand={brand} navItems={navItems} accountSubtitle={accountSubtitle} />
 
       <SidebarInset>
         <header
@@ -45,9 +54,11 @@ export function AuthenticatedLayout({ navItems = [], title, subtitle, brand, chi
             <LuPanelLeft aria-hidden="true" />
           </SidebarTrigger>
           <span className="min-w-0 truncate text-sm font-semibold">{title}</span>
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            <NotificationBell />
-          </div>
+          {showNotificationBell && (
+            <div className="ml-auto flex shrink-0 items-center gap-2">
+              <NotificationBell />
+            </div>
+          )}
         </header>
 
         {/*

@@ -1,261 +1,168 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Card, Button, ProgressBar, Loader, ErrorState } from '../../../components/common';
-import { toast } from '../../../hooks/useToast';
-import { useWeekPlan, startOfWeek } from '../hooks/useWeekPlan';
-import { addDays, formatDate, formatDateKey, formatDuration, getDateKey, daysUntil } from '../../../utils/date';
-import SubjectIcon from '../components/SubjectIcon';
+import { LuChevronLeft, LuChevronRight, LuPlus } from 'react-icons/lu';
+import { ErrorState } from '../../../components/common';
+import OwnTaskModal from '../components/home/OwnTaskModal';
+import '../components/home/studentHome.css';
+import PlanDayColumn from '../components/plan/PlanDayColumn';
+import PlanMonthPicker from '../components/plan/PlanMonthPicker';
+import { DueSoonCard, WeekSummaryCard } from '../components/plan/PlanSideCards';
+import '../components/plan/studentPlan.css';
+import { useTodayTasks } from '../hooks/useTodayTasks';
+import { addDaysToKey, formatDateKey, formatDateKeyRange, getDateKey, weekdayOfKey } from '../../../utils/date';
 
-const WEEKDAY_LABELS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-const DONE_STATUSES = new Set(['submitted', 'reviewed', 'completed']);
-
-function DueSoonRow({ task }) {
-  const assignment = task.assignment ?? {};
-  const days = daysUntil(assignment.dueDate);
-  const label = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : days > 1 ? `In ${days} days` : formatDate(assignment.dueDate);
-
-  return (
-    <Link
-      to={`/student/assignments/${assignment.id}`}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--spacing-sm)',
-        padding: 'var(--spacing-sm) 0',
-        borderBottom: '1px solid var(--color-border)',
-        textDecoration: 'none',
-        color: 'inherit',
-      }}
-    >
-      <SubjectIcon subject={assignment.subject} size="sm" />
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontWeight: 600, color: 'var(--color-text-primary)' }}>{assignment.title}</span>
-        <span className="ui-hint">{assignment.subject}</span>
-      </span>
-      <span className="ui-hint" style={{ flex: 'none', whiteSpace: 'nowrap' }}>
-        {label}
-      </span>
-    </Link>
-  );
-}
+const byPlanOrder = (a, b) => Number(a.done) - Number(b.done) || a.title.localeCompare(b.title);
 
 /**
- * Grade 6+ "Plan" - a Monday-Sunday calendar of assignments, grouped by due
- * date (see hooks/useWeekPlan.js - reads the same data the Home dashboard
- * already fetches, no new endpoint). "Add assignment" is a personal-task
- * idea from the reference design that has no backend of its own yet, so it
- * says so rather than silently doing nothing.
+ * Grade 6+ "Plan" - built to the Plan mockup. Teacher work (/assignments)
+ * and the student's own tasks (/my-tasks) are laid out on the day they're
+ * due (useTodayTasks().all), Monday to Sunday, with a Day view, a month
+ * calendar to jump around, per-day Add (an own task pre-dated to that day),
+ * the week's progress and what's due soon. Everything is dated in the
+ * student's own timezone via getDateKey/daysUntilDateKey.
  */
 export default function StudentPlanPage() {
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [viewMode, setViewMode] = useState('week');
-
-  const weekStart = useMemo(() => addDays(startOfWeek(), weekOffset * 7), [weekOffset]);
-  const { days, isLoading, error, reload } = useWeekPlan(weekStart);
+  const plan = useTodayTasks();
   const todayKey = getDateKey();
 
-  // Day view: today, if the current week is showing; otherwise the first day
-  // of whichever week is selected (today itself isn't in that week).
-  const dayViewDay = weekOffset === 0 ? days.find((d) => d.key === todayKey) ?? days[0] : days[0];
-  const shownDays = viewMode === 'day' ? [dayViewDay] : days;
+  const [selectedKey, setSelectedKey] = useState(todayKey);
+  const [viewMode, setViewMode] = useState('week');
+  // Own-task dialog: null = closed, else { mode: 'type' | 'edit', task?, dueDate? }.
+  const [taskDialog, setTaskDialog] = useState(null);
 
-  const weekTotal = days.reduce((n, d) => n + d.items.length, 0);
-  const weekDone = days.reduce((n, d) => n + d.items.filter((t) => DONE_STATUSES.has(t.status)).length, 0);
-  const weekMinutes = days.reduce(
-    (n, d) => n + d.items.reduce((m, t) => m + (Number(t.assignment?.estimatedMinutes) || 0), 0),
-    0
+  const weekStartKey = addDaysToKey(selectedKey, -weekdayOfKey(selectedKey));
+  const weekEndKey = addDaysToKey(weekStartKey, 6);
+
+  const byDay = useMemo(() => {
+    const map = new Map();
+    plan.all.forEach((task) => {
+      if (!task.dueDate) return;
+      const key = String(task.dueDate).slice(0, 10);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(task);
+    });
+    map.forEach((list) => list.sort(byPlanOrder));
+    return map;
+  }, [plan.all]);
+
+  const counts = useMemo(() => {
+    const map = new Map();
+    byDay.forEach((list, key) => {
+      map.set(key, { total: list.length, overdue: key < todayKey && list.some((t) => !t.done) });
+    });
+    return map;
+  }, [byDay, todayKey]);
+
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const key = addDaysToKey(weekStartKey, i);
+    return { key, items: byDay.get(key) ?? [] };
+  });
+
+  const weekItems = week.flatMap((d) => d.items);
+  const weekDone = weekItems.filter((t) => t.done).length;
+  const weekDue = weekItems.length - weekDone;
+  const weekMinutes = weekItems.reduce((sum, t) => sum + t.estimatedMinutes, 0);
+
+  const dueSoon = useMemo(
+    () =>
+      plan.all
+        .filter((t) => !t.done && t.dueDate)
+        .sort((a, b) => String(a.dueDate).localeCompare(String(b.dueDate)) || a.title.localeCompare(b.title)),
+    [plan.all]
   );
-  const dueThisWeek = days.reduce((n, d) => n + d.items.filter((t) => !DONE_STATUSES.has(t.status)).length, 0);
 
-  const dueSoon = useMemo(() => {
-    const all = days.flatMap((d) => d.items);
-    return all
-      .filter((t) => !DONE_STATUSES.has(t.status) && t.assignment?.dueDate)
-      .sort((a, b) => daysUntil(a.assignment.dueDate) - daysUntil(b.assignment.dueDate))
-      .slice(0, 4);
-  }, [days]);
+  const step = viewMode === 'week' ? 7 : 1;
+  const shownDays = viewMode === 'week' ? week : week.filter((d) => d.key === selectedKey);
+  const rangeLabel =
+    viewMode === 'week'
+      ? formatDateKeyRange(weekStartKey, weekEndKey)
+      : formatDateKey(selectedKey, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
-  if (isLoading) return <Loader message="Loading your week…" />;
-  if (error) return <ErrorState onRetry={reload} />;
+  const openOwnTask = (task) => setTaskDialog({ mode: 'edit', task: task.raw });
+  const addTask = (dueDate) => setTaskDialog({ mode: 'type', dueDate });
 
   return (
-    <>
-      <div className="ui-pageheader">
-        <div>
-          <h1 className="ui-pageheader__title">Plan</h1>
-          <p className="ui-pageheader__description">Your week, one step at a time.</p>
-        </div>
-      </div>
+    <div className="sh-page sp-page">
+      <header className="sp-header">
+        <h1 className="sp-header__title">Plan</h1>
+        <p className="sp-header__summary">Your week, one step at a time.</p>
+      </header>
 
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 'var(--spacing-md)',
-          marginBottom: 'var(--spacing-lg)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-          <Button size="sm" variant="ghost" onClick={() => setWeekOffset((w) => w - 1)} aria-label="Previous week">
-            ‹
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => setWeekOffset(0)}>
+      <div className="sp-toolbar">
+        <div className="sp-toolbar__nav">
+          <button
+            type="button"
+            className="sp-iconbtn"
+            onClick={() => setSelectedKey((k) => addDaysToKey(k, -step))}
+            aria-label={viewMode === 'week' ? 'Previous week' : 'Previous day'}
+          >
+            <LuChevronLeft size={18} aria-hidden="true" />
+          </button>
+          <button type="button" className="sp-textbtn" onClick={() => setSelectedKey(todayKey)} disabled={selectedKey === todayKey}>
             Today
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setWeekOffset((w) => w + 1)} aria-label="Next week">
-            ›
-          </Button>
-          <span style={{ fontWeight: 700, marginLeft: 'var(--spacing-sm)' }}>
-            {formatDate(weekStart)} – {formatDate(addDays(weekStart, 6))}
-          </span>
+          </button>
+          <button
+            type="button"
+            className="sp-iconbtn"
+            onClick={() => setSelectedKey((k) => addDaysToKey(k, step))}
+            aria-label={viewMode === 'week' ? 'Next week' : 'Next day'}
+          >
+            <LuChevronRight size={18} aria-hidden="true" />
+          </button>
+          <PlanMonthPicker label={rangeLabel} selectedKey={selectedKey} todayKey={todayKey} counts={counts} onPick={setSelectedKey} />
         </div>
 
-        <div style={{ display: 'flex', gap: 'var(--spacing-md)', alignItems: 'center' }}>
-          <div className="ui-btngroup ui-btngroup--attached">
-            <Button size="sm" variant={viewMode === 'week' ? 'primary' : 'secondary'} onClick={() => setViewMode('week')}>
-              Week
-            </Button>
-            <Button size="sm" variant={viewMode === 'day' ? 'primary' : 'secondary'} onClick={() => setViewMode('day')}>
-              Day
-            </Button>
+        <div className="sp-toolbar__actions">
+          <div className="sp-segment" role="group" aria-label="View">
+            {['week', 'day'].map((mode) => (
+              <button key={mode} type="button" aria-pressed={viewMode === mode} onClick={() => setViewMode(mode)}>
+                {mode === 'week' ? 'Week' : 'Day'}
+              </button>
+            ))}
           </div>
-          <Button
-            size="sm"
-            startIcon={<span aria-hidden="true">+</span>}
-            onClick={() => toast.info('Adding your own tasks is coming soon - for now this shows what your teachers assign.')}
-          >
-            Add assignment
-          </Button>
+          <button type="button" className="sp-primary" onClick={() => addTask(selectedKey >= todayKey ? selectedKey : todayKey)}>
+            <LuPlus size={16} aria-hidden="true" /> Add assignment
+          </button>
         </div>
       </div>
 
-      {/* auto-fit, not a fixed split (same trade-off as the Focus page's
-          two-panel layout: equal columns on desktop, but on tablet/phone the
-          sidebar wraps below the week grid instead of squeezing either one -
-          no separate breakpoint needed). */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 'var(--spacing-lg)', alignItems: 'start' }}>
-        {/* A 7-day row this narrow needs its own horizontal scroll well
-            before the page does - never let it widen the page itself. */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${shownDays.length}, minmax(128px, 1fr))`,
-            gap: 'var(--spacing-sm)',
-            overflowX: 'auto',
-            paddingBottom: 'var(--spacing-xs)',
-          }}
-        >
-          {shownDays.map((day, i) => {
-            const dayIndex = days.indexOf(day);
-            const isToday = day.key === todayKey;
-            const done = day.items.filter((t) => DONE_STATUSES.has(t.status)).length;
-            const minutes = day.items.reduce((m, t) => m + (Number(t.assignment?.estimatedMinutes) || 0), 0);
-
-            return (
-              <div
+      <div className="sp-grid">
+        {plan.error && !plan.all.length ? (
+          <ErrorState onRetry={plan.reload} />
+        ) : (
+          <div className="sp-board" data-view={viewMode}>
+            {shownDays.map((day) => (
+              <PlanDayColumn
                 key={day.key}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 'var(--spacing-sm)',
-                  padding: 'var(--spacing-sm)',
-                  borderRadius: 'var(--radius-lg)',
-                  background: isToday ? 'var(--accent-soft, var(--color-primary-soft))' : 'var(--color-surface-alt)',
-                  border: isToday ? '1px solid var(--accent-base, var(--color-primary))' : '1px solid transparent',
+                day={day}
+                layout={viewMode}
+                todayKey={todayKey}
+                selectedKey={selectedKey}
+                isLoading={plan.isLoading}
+                onPickDay={(key) => {
+                  setSelectedKey(key);
+                  setViewMode('day');
                 }}
-              >
-                <div style={{ textAlign: 'center' }}>
-                  <p className="ui-hint" style={{ margin: 0, fontWeight: 700, letterSpacing: '0.04em' }}>
-                    {WEEKDAY_LABELS[dayIndex] ?? WEEKDAY_LABELS[i]}
-                  </p>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: 'var(--font-size-lg)' }}>
-                    {formatDateKey(day.key, { day: 'numeric', month: undefined, year: undefined, weekday: undefined })}
-                  </p>
-                </div>
+                onAdd={addTask}
+                onOpenOwn={openOwnTask}
+                onNextWeek={() => setSelectedKey(addDaysToKey(weekStartKey, 7))}
+              />
+            ))}
+          </div>
+        )}
 
-                {day.items.map((task) => {
-                  const assignment = task.assignment ?? {};
-                  const isDone = DONE_STATUSES.has(task.status);
-                  return (
-                    <Card key={task.recipientId ?? task.id} flat padded={false}>
-                      <div style={{ padding: 'var(--spacing-sm)' }}>
-                        <SubjectIcon subject={assignment.subject} size="sm" />
-                        <p className="ui-hint" style={{ margin: 'var(--spacing-2xs) 0 0' }}>{assignment.subject}</p>
-                        <p style={{ margin: 'var(--spacing-xs) 0 0', fontWeight: 700, fontSize: 'var(--font-size-sm)' }}>
-                          {assignment.title}
-                        </p>
-                        {isDone ? (
-                          <p className="ui-hint" style={{ marginTop: 'var(--spacing-xs)' }}>
-                            ✓ {formatDuration(assignment.estimatedMinutes)}
-                          </p>
-                        ) : (
-                          <>
-                            {assignment.estimatedMinutes ? (
-                              <p className="ui-hint" style={{ margin: 'var(--spacing-xs) 0' }}>
-                                🕐 {formatDuration(assignment.estimatedMinutes)}
-                              </p>
-                            ) : null}
-                            <Button as={Link} to={`/student/assignments/${assignment.id}`} size="sm" fullWidth>
-                              Start
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </Card>
-                  );
-                })}
-
-                <div
-                  style={{
-                    marginTop: 'auto',
-                    paddingTop: 'var(--spacing-xs)',
-                    textAlign: 'center',
-                    fontSize: 'var(--font-size-xs)',
-                    color: 'var(--color-text-secondary)',
-                  }}
-                >
-                  {day.items.length > 0 && (
-                    <>
-                      {done} / {day.items.length} done
-                      {minutes > 0 && <> · {formatDuration(minutes)} planned</>}
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div>
-          <Card title="This week" className="ui-field">
-            <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, margin: '0 0 var(--spacing-xs)' }}>
-              {weekDone} of {weekTotal} steps done
-            </p>
-            <ProgressBar value={weekDone} max={weekTotal || 1} className="ui-field" />
-            <p className="ui-hint">
-              📅 {dueThisWeek} assignment{dueThisWeek === 1 ? '' : 's'} due
-              {weekMinutes > 0 && <> · 🕐 {formatDuration(weekMinutes)} planned</>}
-            </p>
-          </Card>
-
-          <Card
-            title="Due soon"
-            actions={
-              <Link to="/student/assignments" style={{ fontSize: 'var(--font-size-sm)' }}>
-                View all
-              </Link>
-            }
-          >
-            {dueSoon.length === 0 ? (
-              <p className="ui-hint">Nothing due soon.</p>
-            ) : (
-              dueSoon.map((task) => <DueSoonRow key={task.recipientId ?? task.id} task={task} />)
-            )}
-          </Card>
-        </div>
+        <aside className="sp-side">
+          <WeekSummaryCard total={weekItems.length} done={weekDone} dueCount={weekDue} minutes={weekMinutes} isLoading={plan.isLoading} />
+          <DueSoonCard tasks={dueSoon} isLoading={plan.isLoading} onOpenOwn={openOwnTask} />
+        </aside>
       </div>
-    </>
+
+      <OwnTaskModal
+        mode={taskDialog?.mode ?? null}
+        task={taskDialog?.task ?? null}
+        defaultDueDate={taskDialog?.dueDate}
+        onClose={() => setTaskDialog(null)}
+        onChanged={plan.reload}
+      />
+    </div>
   );
 }

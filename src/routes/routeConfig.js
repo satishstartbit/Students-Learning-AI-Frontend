@@ -46,14 +46,15 @@ import RewardsPage from '../modules/student/pages/RewardsPage';
 import NotificationsPage from '../modules/student/pages/NotificationsPage';
 import MakeItYoursPage from '../modules/student/pages/MakeItYoursPage';
 import StudentSettingsPage from '../modules/student/pages/StudentSettingsPage';
+import StudentHelpPage from '../modules/student/pages/StudentHelpPage';
 import GradeBandPage from '../modules/student/pages/GradeBandPage';
 import KidHomePage from '../modules/student/pages/kid/KidHomePage';
 import KidMyWeekPage from '../modules/student/pages/kid/KidMyWeekPage';
 import KidFocusPage from '../modules/student/pages/kid/KidFocusPage';
 import KidFocusActivityPage from '../modules/student/pages/kid/KidFocusActivityPage';
 import KidAssignmentsPage from '../modules/student/pages/kid/KidAssignmentsPage';
-import KidComingSoonPage from '../modules/student/pages/kid/KidComingSoonPage';
 import KidSettingsPage from '../modules/student/pages/kid/KidSettingsPage';
+import KidRewardsPage from '../modules/student/pages/kid/KidRewardsPage';
 import KidCheckInPage from '../modules/student/pages/kid/KidCheckInPage';
 import KidOnboardingPage from '../modules/student/pages/kid/KidOnboardingPage';
 
@@ -403,7 +404,7 @@ export const STUDENT_ROUTES = {
       label: 'Rewards',
       permissions: [PERMISSIONS.REWARD_READ],
       component: GradeBandPage,
-      props: { junior: KidComingSoonPage, standard: RewardsPage, feature: 'rewards' },
+      props: { junior: KidRewardsPage, standard: RewardsPage },
     },
     // K-5: calm mode + log out; Grade 6+: learning profile (from the account menu).
     {
@@ -411,6 +412,13 @@ export const STUDENT_ROUTES = {
       label: 'Settings',
       component: GradeBandPage,
       props: { junior: KidSettingsPage, standard: StudentSettingsPage },
+    },
+    // Grade 6+ "Help and how-to" (linked from Settings); K-5 goes back to its own Settings.
+    {
+      path: 'help',
+      label: 'Help and how-to',
+      component: GradeBandPage,
+      props: { junior: KidSettingsPage, standard: StudentHelpPage },
     },
     // Grade 6+ only - not part of K-5's nav (kidNav.js).
     {

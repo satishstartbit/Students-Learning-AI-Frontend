@@ -4,6 +4,7 @@ import { Badge, Dropdown, EmptyState, IconButton, Loader } from '../../../compon
 import { formatRelative } from '../../../utils/date';
 import { useAuth } from '../../../hooks/useAuth';
 import useNotifications from '../hooks/useNotifications';
+import { studentNotificationPath } from '../studentNotificationPath';
 
 /** Where a notification's `relatedId` should navigate, per signed-in role. */
 const ASSIGNMENT_DETAIL_PATH = {
@@ -23,7 +24,10 @@ export function NotificationBell() {
   const handleSelect = async (notification) => {
     if (!notification.read) await markRead(notification.id);
 
-    if (notification.relatedType === 'assignment' && notification.relatedId) {
+    if (role === 'STUDENT') {
+      const path = studentNotificationPath(notification);
+      if (path) navigate(path);
+    } else if (notification.relatedType === 'assignment' && notification.relatedId) {
       const buildPath = ASSIGNMENT_DETAIL_PATH[role];
       if (buildPath) navigate(buildPath(notification.relatedId));
     }
