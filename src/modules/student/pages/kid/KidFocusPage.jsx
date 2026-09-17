@@ -100,7 +100,7 @@ export default function KidFocusPage() {
   const supportLabel = isPaused ? 'Paused - resume when ready' : isRunning ? "You've got this!" : 'Ready when you are';
 
   const handleStart = () =>
-    timer.start({ plannedMinutes: PLANNED_MINUTES, taskId: nextTask?.assignment?.id }).catch(() => {});
+    timer.start({ plannedMinutes: PLANNED_MINUTES, assignmentId: nextTask?.assignment?.id }).catch(() => {});
 
   const handleComplete = () =>
     timer

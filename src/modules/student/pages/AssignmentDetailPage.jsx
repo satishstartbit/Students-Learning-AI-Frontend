@@ -25,6 +25,8 @@ import { formatFileSize } from '../../../utils/format';
 import { ASSIGNMENT_RECIPIENT_STATUS } from '../../../utils/constants';
 import { DOCUMENT_MIME_TYPES, IMAGE_MIME_TYPES } from '../../../utils/file';
 import assignmentService from '../../assignments/services/assignment.service';
+import StandardAssignmentView from '../components/assignment/StandardAssignmentView';
+import { useStudentExperience } from '../hooks/useStudentExperience';
 import QuestionAnswer from '../../assignments/components/QuestionAnswer';
 
 const ACTIVE_STATUSES = [ASSIGNMENT_RECIPIENT_STATUS.ASSIGNED, ASSIGNMENT_RECIPIENT_STATUS.IN_PROGRESS, ASSIGNMENT_RECIPIENT_STATUS.RETURNED];
@@ -306,13 +308,21 @@ function StudentWork({ item, assignmentId, reload }) {
 }
 
 /**
- * Student-facing assignment page (both grade bands). Kept simple and
+ * Student-facing assignment page.
+ *
+ * Grade 6+ gets the mockup layout (StandardAssignmentView): header with
+ * overall progress, the student's own task breakdown, their work, and a rail
+ * with overview / next step / resources / notes / details. K-5 keeps the
+ * simpler single-column page below - same data, plainer language.
+ *
+ * Kept simple and
  * encouraging - young students use this, so language stays plain and buttons
  * stay big. A task's background sound starts on its own while the task is
  * still to do, with pause and mute always visible.
  */
 export default function AssignmentDetailPage() {
   const { assignmentId } = useParams();
+  const { isJunior } = useStudentExperience();
 
   const detail = useApi(assignmentService.getAssignment);
   const { run } = detail;
@@ -330,6 +340,25 @@ export default function AssignmentDetailPage() {
   const a = item.assignment;
   const overdue = ['assigned', 'in_progress'].includes(item.status) && a.dueDate && isOverdue(a.dueDate);
   const audio = a.backgroundAudio;
+
+  const work = <StudentWork key={`${item.recipientId}:${item.status}`} item={item} assignmentId={assignmentId} reload={load} />;
+
+  if (!isJunior) {
+    return (
+      <>
+        {audio?.url && <TaskAudio key={`${a.id}:${audio.type}:${audio.name}`} audio={audio} autoPlay={ACTIVE_STATUSES.includes(item.status)} />}
+        <StandardAssignmentView item={item} assignmentId={assignmentId} reload={load}>
+          {overdue && (
+            <Alert variant="danger" title="This one is overdue">
+              Try to finish it as soon as you can, or ask your teacher for help.
+            </Alert>
+          )}
+          {work}
+        </StandardAssignmentView>
+        <Toast />
+      </>
+    );
+  }
 
   return (
     <>

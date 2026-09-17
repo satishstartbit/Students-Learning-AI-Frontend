@@ -1,0 +1,564 @@
+/*
+ * Grade 6+ Focus session (FocusTimerPage.jsx), built to the focus mockup:
+ * a session card (task chip, step heading, countdown ring, Pause / End
+ * session / sound), "Your steps" beside it, and "Feeling stuck? Take two
+ * minutes." toolkit cards underneath. Theme tokens throughout; the three
+ * toolkit card tints are illustration colours.
+ */
+.fs-page {
+  max-width: 1080px;
+  padding: 8px 4px 40px;
+  color: var(--color-text-primary);
+}
+.fs-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.fs-subtitle {
+  margin: 4px 0 22px;
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+}
+
+.fs-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.fs-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+.fs-card {
+  padding: 24px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 18px;
+  background: var(--color-bg-surface);
+  box-shadow: 0 1px 2px rgba(46, 35, 20, 0.04);
+}
+
+/* ------------------------------------------------------------ session card */
+.fs-session {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.fs-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.fs-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--sh-chip-bg, var(--color-success-bg));
+  color: var(--sh-chip-fg, var(--color-success-fg));
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.fs-chip[data-tone='yellow'] { --sh-chip-bg: #fdf1c7; --sh-chip-fg: #8a6a00; }
+.fs-chip[data-tone='pink'] { --sh-chip-bg: #fbe0e8; --sh-chip-fg: #b4235a; }
+.fs-chip[data-tone='blue'] { --sh-chip-bg: #dcecf8; --sh-chip-fg: #0b6b86; }
+.fs-chip[data-tone='green'] { --sh-chip-bg: #dff2e3; --sh-chip-fg: #1f7a3a; }
+.fs-chip[data-tone='lavender'] { --sh-chip-bg: #ebe4fb; --sh-chip-fg: #6b43c4; }
+.fs-chip[data-tone='orange'] { --sh-chip-bg: #fde8d6; --sh-chip-fg: #b45309; }
+
+.fs-heading {
+  margin: 14px 0 6px;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.fs-meta {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.fs-ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 190px;
+  height: 190px;
+}
+.fs-ring svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+.fs-ring__arc {
+  transition: stroke-dashoffset 1s linear, stroke 0.3s;
+}
+.fs-clock {
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.fs-state {
+  margin: 10px 0 18px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.fs-state[data-state='done'] {
+  font-weight: 600;
+  color: var(--accent-base);
+}
+.fs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.fs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 112px;
+  height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 10px;
+  background: var(--color-bg-surface);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.fs-btn:hover:not(:disabled) {
+  background: var(--color-bg-surface-sunken);
+}
+.fs-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.fs-btn--primary {
+  border-color: var(--accent-base);
+  background: var(--accent-base);
+  color: var(--accent-on);
+}
+.fs-btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.fs-btn--ghost {
+  min-width: 0;
+  border-color: transparent;
+  background: none;
+}
+.fs-btn--round {
+  width: 44px;
+  min-width: 0;
+  padding: 0;
+  border-radius: 50%;
+}
+.fs-btn--round[aria-pressed='true'] {
+  border-color: var(--accent-base);
+  background: var(--accent-soft);
+  color: var(--accent-base);
+}
+.fs-btn:focus-visible,
+.fs-length:focus-visible,
+.fs-step__main:focus-visible,
+.fs-step__check:focus-visible,
+.fs-tool:focus-visible,
+.fs-link:focus-visible,
+.fs-sound:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+
+/* Idle setup */
+.fs-setup {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 18px;
+  text-align: left;
+}
+.fs-lengths {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 18px;
+}
+.fs-length {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 999px;
+  background: var(--color-bg-surface);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.fs-length[aria-pressed='true'] {
+  border-color: var(--accent-base);
+  background: var(--accent-soft);
+  color: var(--accent-base);
+  font-weight: 600;
+}
+
+/* Sound menu */
+.fs-sound-wrap {
+  position: relative;
+}
+.fs-sound-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 5;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-bg-surface);
+  box-shadow: 0 12px 28px -12px rgba(46, 35, 20, 0.35);
+  text-align: left;
+  transform: translateX(-50%);
+}
+.fs-sound {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.fs-sound:hover,
+.fs-sound[aria-checked='true'] {
+  background: var(--accent-soft);
+}
+
+/* ------------------------------------------------------------ steps panel */
+.fs-steps__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.fs-steps__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--color-text-secondary);
+}
+.fs-steps__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.fs-steps__sub {
+  margin: 1px 0 0;
+  font-size: 11.5px;
+  color: var(--color-text-secondary);
+}
+.fs-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+}
+.fs-progress__track {
+  flex: 1;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-bg-surface-sunken);
+}
+.fs-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-base);
+  transition: width 0.4s ease;
+}
+.fs-progress__label {
+  flex: none;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+.fs-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fs-step {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 6px 8px 6px 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 10px;
+  background: var(--color-bg-surface);
+}
+.fs-step[data-current='true'] {
+  border-color: color-mix(in srgb, var(--accent-base) 45%, transparent);
+  background: var(--accent-soft);
+}
+.fs-step__check {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-bg-surface);
+  font: inherit;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.fs-step[data-current='true'] .fs-step__check {
+  border-color: var(--accent-base);
+  color: var(--accent-base);
+}
+.fs-step[data-done='true'] .fs-step__check {
+  border-color: var(--color-success-solid);
+  background: var(--color-success-solid);
+  color: #fff;
+}
+.fs-step__main {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 2px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.fs-step__main:disabled {
+  cursor: default;
+}
+.fs-step[data-done='true'] .fs-step__main {
+  color: var(--color-text-secondary);
+}
+.fs-step__mins {
+  flex: none;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+.fs-step__edit {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--accent-base);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13.5px;
+}
+.fs-steps__empty {
+  padding: 18px 8px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.fs-add {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.fs-add input {
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+}
+.fs-add input:focus {
+  border-style: solid;
+  border-color: var(--accent-base);
+  outline: none;
+}
+
+/* ------------------------------------------------------------ stuck toolkit */
+.fs-stuck__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.fs-stuck__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.fs-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.fs-link:hover {
+  color: var(--accent-base);
+}
+.fs-tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.fs-tool {
+  --tool-bg: #d8e8f8;
+  --tool-edge: #b7d3ef;
+  --tool-ink: #1d4f86;
+  --tool-dot: #1f4f7a;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 150px;
+  padding: 14px;
+  border: 1px solid var(--tool-edge);
+  border-radius: 14px;
+  background: var(--tool-bg);
+  font: inherit;
+  color: var(--tool-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.fs-tool:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px -14px rgba(46, 35, 20, 0.4);
+}
+.fs-tool[data-cat='grounding'] { --tool-bg: #d9f1dc; --tool-edge: #b9e2be; --tool-ink: #1f6a34; --tool-dot: #1f5a2e; }
+.fs-tool[data-cat='movement'] { --tool-bg: #fde3c8; --tool-edge: #f6c99a; --tool-ink: #8a3d06; --tool-dot: #7a3a0a; }
+.fs-tool[data-cat='mindfulness'] { --tool-bg: #ebe2fb; --tool-edge: #d6c6f5; --tool-ink: #5b3aa6; --tool-dot: #4c2f8c; }
+.fs-tool[data-cat='calming-sounds'],
+.fs-tool[data-cat='music'] { --tool-bg: #dcf0f3; --tool-edge: #bfe1e6; --tool-ink: #0b5f6d; --tool-dot: #0b5563; }
+.fs-tool__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: auto;
+  border-radius: 50%;
+  background: var(--tool-dot);
+  color: #fff;
+}
+.fs-tool__cat {
+  margin-top: 16px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.fs-tool__name {
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.fs-tool__mins {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+/* ------------------------------------------------------------ exercise modal */
+.fs-exercise {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+}
+.fs-exercise ol {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.7;
+}
+.fs-exercise__ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 130px;
+  height: 130px;
+}
+.fs-exercise__ring svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+.fs-breath {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent-base) 22%, transparent);
+  animation: fs-breathe 8s ease-in-out infinite;
+}
+@keyframes fs-breathe {
+  0%, 100% { transform: scale(0.75); }
+  50% { transform: scale(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fs-breath { animation: none; }
+  .fs-ring__arc { transition: none; }
+}
+@media (max-width: 900px) {
+  .fs-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .fs-card {
+    padding: 18px 16px;
+  }
+  .fs-tools {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .fs-tool {
+    min-height: 0;
+  }
+  .fs-clock {
+    font-size: 40px;
+  }
+  .fs-exercise {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+}

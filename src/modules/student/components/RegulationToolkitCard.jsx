@@ -17,6 +17,11 @@ import regulationToolkitService from '../services/regulationToolkit.service';
  * the tab icon, with a generic fallback when none of a category's tools has
  * one set.
  *
+ * `onStartExercise(tool)` opens the guided run-through (components/focus/
+ * ExerciseModal.jsx); without it the Start button is disabled rather than
+ * pretending to do something. `embedded` drops the card chrome and the
+ * "skip to my work" link, for use inside a dialog.
+ *
  * Reacts to today's check-in: the backend maps the student's stored mood to
  * tool categories (services/regulationToolkit.service.js#MOOD_CATEGORIES),
  * those tiles are marked "Suggested" and the top suggestion opens first.
@@ -24,7 +29,12 @@ import regulationToolkitService from '../services/regulationToolkit.service';
  */
 const DEFAULT_TILE_ICON = '✨';
 
-export function RegulationToolkitCard() {
+/** Inside a dialog the title/subtitle are already in the dialog header. */
+function EmbeddedWrapper({ children }) {
+  return <div>{children}</div>;
+}
+
+export function RegulationToolkitCard({ onStartExercise, embedded = false }) {
   const { checkIn, moods } = useTodayCheckIn();
   const { data: categories, isLoading, error } = useApi(regulationToolkitService.listCategories, { immediate: true });
   const recommendation = useApi(regulationToolkitService.getRecommendation);
@@ -67,8 +77,10 @@ export function RegulationToolkitCard() {
 
   const mood = findMood(moods, checkIn?.mood);
 
+  const Wrapper = embedded ? EmbeddedWrapper : Card;
+
   return (
-    <Card
+    <Wrapper
       title="Regulation Toolkit"
       subtitle="Tools to help you feel calmer and readier to focus."
       className="ui-field"
@@ -194,7 +206,7 @@ export function RegulationToolkitCard() {
                   🕐 {selectedTool.durationMinutes} {selectedTool.durationMinutes === 1 ? 'minute' : 'minutes'}
                 </p>
 
-                <Button size="sm" endIcon={<span aria-hidden="true">→</span>}>
+                <Button size="sm" endIcon={<span aria-hidden="true">→</span>} onClick={() => onStartExercise?.(selectedTool)} disabled={!onStartExercise}>
                   Start exercise
                 </Button>
 
@@ -233,12 +245,14 @@ export function RegulationToolkitCard() {
             <p className="ui-hint">No tools in this category yet.</p>
           )}
 
-          <p style={{ margin: 'var(--spacing-md) 0 0' }}>
-            <Link to="/student/assignments">Skip - go straight to my work →</Link>
-          </p>
+          {!embedded && (
+            <p style={{ margin: 'var(--spacing-md) 0 0' }}>
+              <Link to="/student/assignments">Skip - go straight to my work →</Link>
+            </p>
+          )}
         </>
       )}
-    </Card>
+    </Wrapper>
   );
 }
 

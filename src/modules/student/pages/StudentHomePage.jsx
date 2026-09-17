@@ -39,7 +39,8 @@ export default function StudentHomePage() {
   const summary = useApi(rewardService.getSummary, { immediate: true });
   const catalog = useApi(rewardService.listCatalog, { immediate: true });
   const todayMinutes = useApi(focusService.getTodayMinutes, { immediate: true });
-  const notes = useApi(noteService.list, { immediate: true });
+  // The board shows the student's general notes; notes tied to an assignment live on that assignment's page.
+  const notes = useApi(noteService.list, { immediate: true, args: [{ generalOnly: true }] });
 
   // Own-task dialog: null = closed, else { mode: 'type' | 'photo' | 'edit', task? }.
   const [taskDialog, setTaskDialog] = useState(null);
@@ -56,7 +57,7 @@ export default function StudentHomePage() {
     done: n.status === 'done',
   }));
 
-  const reloadNotes = () => notes.run().catch(() => {});
+  const reloadNotes = () => notes.run({ generalOnly: true }).catch(() => {});
 
   const noteAction = async (fn) => {
     try {
