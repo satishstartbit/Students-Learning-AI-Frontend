@@ -27,6 +27,8 @@ import {
 import { Tooltip } from '../components/ui/tooltip';
 import BrandMark from '../components/common/BrandMark';
 import { useAuth } from '../hooks/useAuth';
+import { AvatarPicture } from '../modules/student/components/personalize/AvatarPicture';
+import { useStudentSettings } from '../modules/student/hooks/useStudentSettings';
 import { ROLE_LABELS, USER_ROLES } from '../utils/constants';
 import { formatName, getInitials } from '../utils/format';
 
@@ -216,6 +218,8 @@ function UserMenu({ accountSubtitle }) {
 
   const name = formatName(user);
   const initials = getInitials(name) || '?';
+  // Inert defaults outside the student shells, so this costs other roles nothing.
+  const { settings: studentSettings } = useStudentSettings();
 
   const handleSignOut = () => {
     setOpen(false);
@@ -229,13 +233,19 @@ function UserMenu({ accountSubtitle }) {
     navigate(profilePath);
   };
 
-  /** size-6 so it still fits inside the 32px button on the collapsed rail. */
+  /**
+   * size-6 so it still fits inside the 32px button on the collapsed rail.
+   * A student who picked an avatar on "Make it yours" gets it here; every
+   * other role (and a student who hasn't picked one) keeps their initials.
+   */
   const avatar = (
     <span
       aria-hidden="true"
-      className="bg-sidebar-accent text-sidebar-accent-foreground flex size-6 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold"
+      className="bg-sidebar-accent text-sidebar-accent-foreground flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md text-[11px] font-semibold"
     >
-      {initials}
+      <AvatarPicture imageUrl={studentSettings?.avatar?.imageUrl} size={24}>
+        <span>{initials}</span>
+      </AvatarPicture>
     </span>
   );
 

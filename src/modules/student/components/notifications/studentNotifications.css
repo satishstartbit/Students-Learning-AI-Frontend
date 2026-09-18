@@ -5,7 +5,10 @@
  * throughout; the per-category icon tints are illustration colours.
  */
 .sn-page {
+  /* Centred like the other student pages (Home, Plan, Make it yours), so the
+     column doesn't sit off to the left on a wide screen. */
   max-width: 1040px;
+  margin: 0 auto;
   padding: 8px 4px 40px;
   color: var(--color-text-primary);
 }

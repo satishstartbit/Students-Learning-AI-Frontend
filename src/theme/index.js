@@ -50,4 +50,38 @@ export function applyThemeMode(mode) {
   else root.setAttribute('data-theme', mode);
 }
 
+/**
+ * The accent families theme/accent.css ships, in the order the student
+ * "Make it yours" page shows them. `swatch`/`swatchSoft` are only for the
+ * picker's own preview tiles - everything else reads the live
+ * --accent-* tokens, which follow light/dark on their own.
+ *
+ * Keep in step with the backend whitelist (services/studentSettings.service.js
+ * ACCENTS), which is what a saved choice is validated against.
+ */
+export const ACCENTS = Object.freeze([
+  { value: 'ocean', label: 'Ocean', swatch: '#0b7285', swatchSoft: '#e3f2f6' },
+  { value: 'sunset', label: 'Sunset', swatch: '#c2410c', swatchSoft: '#fff1e8' },
+  { value: 'forest', label: 'Forest', swatch: '#047857', swatchSoft: '#e9f7f1' },
+  { value: 'lavender', label: 'Lavender', swatch: '#7c3aed', swatchSoft: '#f2ecfe' },
+  { value: 'bubblegum', label: 'Bubblegum', swatch: '#be185d', swatchSoft: '#fdeef5' },
+]);
+
+export const DEFAULT_ACCENT = 'ocean';
+
+/**
+ * Applies an accent family by stamping data-accent onto <html>, the mirror of
+ * applyThemeMode. Ocean is the default the bare :root block already defines,
+ * so it needs no attribute.
+ */
+export function applyAccent(accent) {
+  if (typeof document === 'undefined') return;
+
+  const root = document.documentElement;
+  const known = ACCENTS.some((a) => a.value === accent);
+
+  if (!known || accent === DEFAULT_ACCENT) root.removeAttribute('data-accent');
+  else root.setAttribute('data-accent', accent);
+}
+
 export default theme;

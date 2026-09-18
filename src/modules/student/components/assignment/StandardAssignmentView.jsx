@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LuArrowLeft, LuCalendar } from 'react-icons/lu';
-import { StatusBadge } from '../../../../components/common';
+import { ConfirmationModal, StatusBadge } from '../../../../components/common';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
 import { daysUntilDateKey, formatDateKey } from '../../../../utils/date';
@@ -46,6 +46,7 @@ export function StandardAssignmentView({ item, assignmentId, reload, children })
 
   // undefined = closed, null = add, a note = edit.
   const [editingNote, setEditingNote] = useState(undefined);
+  const [noteToDelete, setNoteToDelete] = useState(null);
 
   const activeStepId = active.data?.assignmentId === assignmentId ? active.data?.stepId ?? null : null;
   const total = steps.steps.length;
@@ -76,8 +77,10 @@ export function StandardAssignmentView({ item, assignmentId, reload, children })
     reloadNotes();
   };
 
-  const deleteNote = async (note) => {
-    if (!window.confirm('Delete this note?')) return;
+  // Deleting always asks first, through the app's own dialog (never the browser's).
+  const confirmDeleteNote = async () => {
+    const note = noteToDelete;
+    setNoteToDelete(null);
     setEditingNote(undefined);
     try {
       await noteService.remove(note.id);
@@ -154,7 +157,17 @@ export function StandardAssignmentView({ item, assignmentId, reload, children })
         note={editingNote}
         onClose={() => setEditingNote(undefined)}
         onSave={saveNote}
-        onDelete={deleteNote}
+        onDelete={(note) => setNoteToDelete(note)}
+      />
+
+      <ConfirmationModal
+        isOpen={Boolean(noteToDelete)}
+        onClose={() => setNoteToDelete(null)}
+        onConfirm={confirmDeleteNote}
+        variant="danger"
+        title="Delete this note?"
+        message="This note will be gone for good."
+        confirmLabel="Delete note"
       />
     </div>
   );

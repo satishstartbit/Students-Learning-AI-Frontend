@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LuCamera, LuCheck, LuRotateCcw, LuTrash2, LuX } from 'react-icons/lu';
-import { Alert, Button, Input, Modal, Select, Textarea } from '../../../../components/common';
+import { Alert, Button, ConfirmationModal, Input, Modal, Select, Textarea } from '../../../../components/common';
 import { toast } from '../../../../hooks/useToast';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import { useOnboardingLookup } from '../../../onboarding/hooks/useOnboardingLookup';
@@ -79,6 +79,7 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
   const [attempted, setAttempted] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const existingPhotoUrl = removePhoto ? null : task?.photo?.url ?? null;
   const hasPhoto = Boolean(photoFile || existingPhotoUrl);
@@ -233,9 +234,7 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
                 loading={busy === 'delete'}
                 disabled={Boolean(busy)}
                 startIcon={<LuTrash2 aria-hidden="true" />}
-                onClick={() => {
-                  if (window.confirm(`Delete "${task.title}"?`)) run('delete', () => studentTaskService.remove(task.id), 'Task deleted');
-                }}
+                onClick={() => setConfirmingDelete(true)}
               >
                 Delete
               </Button>
@@ -251,6 +250,21 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
           </Button>
         </div>
       </div>
+
+      {/* The app's own confirm dialog - never the browser's. */}
+      <ConfirmationModal
+        isOpen={confirmingDelete}
+        onClose={() => setConfirmingDelete(false)}
+        onConfirm={() => {
+          setConfirmingDelete(false);
+          run('delete', () => studentTaskService.remove(task.id), 'Task deleted');
+        }}
+        loading={busy === 'delete'}
+        variant="danger"
+        title="Delete this task?"
+        message={task ? `"${task.title}" will be removed from your day. This can't be undone.` : ''}
+        confirmLabel="Delete task"
+      />
     </form>
   );
 }

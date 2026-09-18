@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import '@fontsource/patrick-hand/400.css';
+import { ConfirmationModal } from '../../../components/common';
 import { useAuth } from '../../../hooks/useAuth';
 import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
@@ -46,6 +47,7 @@ export default function StudentHomePage() {
   const [taskDialog, setTaskDialog] = useState(null);
   // Note dialog: undefined = closed, null = add, a note = edit.
   const [editingNote, setEditingNote] = useState(undefined);
+  const [noteToDelete, setNoteToDelete] = useState(null);
 
   const noteItems = (notes.data ?? []).map((n) => ({
     id: n.id,
@@ -82,10 +84,14 @@ export default function StudentHomePage() {
     reloadNotes();
   };
 
-  const handleDeleteNote = (note) => {
-    if (!window.confirm('Delete this note?')) return;
+  // Deleting always asks first, through the app's own dialog (never the browser's).
+  const handleDeleteNote = (note) => setNoteToDelete(note);
+
+  const confirmDeleteNote = async () => {
+    const note = noteToDelete;
+    setNoteToDelete(null);
     setEditingNote(undefined);
-    noteAction(() => noteService.remove(note.id));
+    await noteAction(() => noteService.remove(note.id));
   };
 
   const openOwnTask = (task) => setTaskDialog({ mode: 'edit', task: task.raw });
@@ -128,6 +134,7 @@ export default function StudentHomePage() {
       </div>
 
       <NotesBoard
+        noteStyle={settings?.noteStyle}
         notes={noteItems}
         isLoading={notes.isLoading && !notes.data}
         error={notes.error}
@@ -151,6 +158,16 @@ export default function StudentHomePage() {
         onClose={() => setEditingNote(undefined)}
         onSave={handleSaveNote}
         onDelete={handleDeleteNote}
+      />
+
+      <ConfirmationModal
+        isOpen={Boolean(noteToDelete)}
+        onClose={() => setNoteToDelete(null)}
+        onConfirm={confirmDeleteNote}
+        variant="danger"
+        title="Delete this note?"
+        message="This note will be gone for good."
+        confirmLabel="Delete note"
       />
     </div>
   );

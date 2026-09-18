@@ -19,8 +19,29 @@ function buildEntityApi(basePath) {
   };
 }
 
+/**
+ * Plain JSON, or multipart when `imageFile` (an uploaded picture) is present -
+ * every other field then travels as a string the backend validator converts
+ * back. Same shape as the reward-picture body (reward.service.js).
+ */
+function buildPictureBody({ imageFile, ...fields }) {
+  if (!imageFile) return fields;
+  const formData = new FormData();
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) formData.append(key, String(value));
+  });
+  formData.append('image', imageFile);
+  return formData;
+}
+
 export const themes = buildEntityApi('/admin/master/themes');
-export const avatars = buildEntityApi('/admin/master/avatars');
+
+/** Avatars take an uploaded picture as well as the shared CRUD. */
+export const avatars = {
+  ...buildEntityApi('/admin/master/avatars'),
+  create: (payload) => api.post('/admin/master/avatars', buildPictureBody(payload)),
+  update: (id, payload) => api.patch(`/admin/master/avatars/${id}`, buildPictureBody(payload)),
+};
 export const stickyNoteStyles = buildEntityApi('/admin/master/sticky-note-styles');
 export const stickers = buildEntityApi('/admin/master/stickers');
 

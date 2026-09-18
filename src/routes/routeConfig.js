@@ -53,6 +53,7 @@ import KidMyWeekPage from '../modules/student/pages/kid/KidMyWeekPage';
 import KidFocusPage from '../modules/student/pages/kid/KidFocusPage';
 import KidFocusActivityPage from '../modules/student/pages/kid/KidFocusActivityPage';
 import KidAssignmentsPage from '../modules/student/pages/kid/KidAssignmentsPage';
+import KidMakeItYoursPage from '../modules/student/pages/kid/KidMakeItYoursPage';
 import KidSettingsPage from '../modules/student/pages/kid/KidSettingsPage';
 import KidRewardsPage from '../modules/student/pages/kid/KidRewardsPage';
 import KidCheckInPage from '../modules/student/pages/kid/KidCheckInPage';
@@ -420,7 +421,8 @@ export const STUDENT_ROUTES = {
       component: GradeBandPage,
       props: { junior: KidSettingsPage, standard: StudentHelpPage },
     },
-    // Grade 6+ only - not part of K-5's nav (kidNav.js).
+    // Grade 6+ only - not part of K-5's nav (kidNav.js). "Make it yours"
+    // below is the exception: both bands have it, with a page each.
     {
       path: 'notifications',
       label: 'Notifications',
@@ -430,7 +432,8 @@ export const STUDENT_ROUTES = {
     {
       path: 'make-it-yours',
       label: 'Make it yours',
-      component: MakeItYoursPage,
+      component: GradeBandPage,
+      props: { junior: KidMakeItYoursPage, standard: MakeItYoursPage },
     },
   ],
 };

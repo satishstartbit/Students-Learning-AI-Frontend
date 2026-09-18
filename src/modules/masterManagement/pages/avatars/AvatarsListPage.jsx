@@ -7,6 +7,7 @@ import { useApi } from '../../../../hooks/useApi';
 import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
+import { AvatarPicture } from '../../../student/components/personalize/AvatarPicture';
 import appearanceService from '../../services/appearance.service';
 
 const STATUS_OPTIONS = [
@@ -76,7 +77,10 @@ export default function AvatarsListPage() {
       sortable: true,
       render: (row) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-          <Avatar src={row.imageUrl} name={row.name} size="sm" />
+          {/* Built-in "avatar:<slug>" art draws itself; uploads and links fall back to the image/initials avatar. */}
+          <AvatarPicture imageUrl={row.imageUrl} size={28}>
+            <Avatar src={row.imageUrl} name={row.name} size="sm" />
+          </AvatarPicture>
           <strong>{row.name}</strong>
         </div>
       ),

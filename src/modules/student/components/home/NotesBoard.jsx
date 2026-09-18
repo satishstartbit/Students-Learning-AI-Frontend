@@ -14,6 +14,12 @@ import { LuCheck, LuPlus, LuStickyNote, LuX } from 'react-icons/lu';
 
 // Indexed by age, oldest = 0 - so a board of four newest-first notes reads tape, torn, fold, corner like the mockup.
 const PAPER_STYLES = ['corner', 'fold', 'torn', 'tape'];
+
+/**
+ * "Make it yours" -> Sticky note style. Picking one puts every note on the
+ * same paper; "classic" keeps the mixed board the mockup shows.
+ */
+const CHOSEN_PAPER = { folded: 'fold', torn: 'torn', tag: 'corner' };
 const TILTS = [-2.5, 2, -1.5, 3, -3, 1.5];
 
 function hash(seed) {
@@ -23,9 +29,9 @@ function hash(seed) {
   return Math.abs(h);
 }
 
-function PaperNote({ note, age, onOpen, onToggleDone, onDelete }) {
+function PaperNote({ note, age, paperStyle, onOpen, onToggleDone, onDelete }) {
   const seed = hash(note.id);
-  const style = PAPER_STYLES[age % PAPER_STYLES.length];
+  const style = paperStyle ?? PAPER_STYLES[age % PAPER_STYLES.length];
   const tilt = TILTS[seed % TILTS.length];
   const label = note.title || note.content;
 
@@ -60,7 +66,7 @@ function PaperNote({ note, age, onOpen, onToggleDone, onDelete }) {
   );
 }
 
-export function NotesBoard({ notes, isLoading, error, onRetry, onAdd, onOpen, onToggleDone, onDelete }) {
+export function NotesBoard({ notes, isLoading, error, onRetry, onAdd, onOpen, onToggleDone, onDelete, noteStyle }) {
   const count = notes.length;
 
   return (
@@ -95,6 +101,7 @@ export function NotesBoard({ notes, isLoading, error, onRetry, onAdd, onOpen, on
               key={note.id}
               note={note}
               age={count - 1 - index}
+              paperStyle={CHOSEN_PAPER[noteStyle]}
               onOpen={onOpen}
               onToggleDone={onToggleDone}
               onDelete={onDelete}

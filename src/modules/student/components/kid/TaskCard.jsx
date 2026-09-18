@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { LuClock } from 'react-icons/lu';
 import { cn } from '../../../../lib/utils';
+import { useStudentSettings } from '../../hooks/useStudentSettings';
 import { formatMinutes, starsForMinutes } from './kidFormat';
 import { DueChip, StarRating, StatusCircle, SubjectTile } from './PaperKit';
 
@@ -13,15 +14,35 @@ import { DueChip, StarRating, StatusCircle, SubjectTile } from './PaperKit';
 export function TaskCard({ task, className }) {
   const assignment = task.assignment ?? {};
   const minutes = formatMinutes(assignment.estimatedMinutes);
+  // "Make it yours" -> My card style. Decoration only; "plain" adds nothing.
+  const { settings } = useStudentSettings();
+  const cardStyle = settings?.cardStyle ?? 'taped';
 
   return (
     <Link
       to={`/student/assignments/${assignment.id}`}
       className={cn(
-        'group flex min-h-24 flex-col gap-3 rounded-3xl bg-kid-sheet p-4 no-underline shadow-paper transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-paper-lg',
+        'group relative flex min-h-24 flex-col gap-3 rounded-3xl bg-kid-sheet p-4 no-underline shadow-paper transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-paper-lg',
+        cardStyle === 'folded' && '[clip-path:polygon(0_0,100%_0,100%_calc(100%-22px),calc(100%-22px)_100%,0_100%)]',
         className
       )}
     >
+      {cardStyle === 'taped' && (
+        <span
+          aria-hidden="true"
+          className="absolute -top-2 left-1/2 h-4 w-14 -translate-x-1/2 -rotate-3 rounded-[3px] bg-kid-ink/10"
+        />
+      )}
+      {cardStyle === 'pinned' && (
+        <span
+          aria-hidden="true"
+          className="absolute -top-1.5 left-1/2 size-3.5 -translate-x-1/2 rounded-full bg-kid-teal shadow-paper"
+        />
+      )}
+      {cardStyle === 'folded' && (
+        <span aria-hidden="true" className="absolute bottom-0 right-0 size-[22px] rounded-tl-md bg-kid-paper-deep" />
+      )}
+
       <span className="flex items-start justify-between">
         <SubjectTile subject={assignment.subject} size="sm" />
         <StatusCircle status={task.status} />

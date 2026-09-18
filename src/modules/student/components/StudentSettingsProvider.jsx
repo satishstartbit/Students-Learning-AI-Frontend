@@ -3,21 +3,27 @@ import { useDispatch } from 'react-redux';
 import { MotionConfig } from 'motion/react';
 import { useApi } from '../../../hooks/useApi';
 import { setThemeMode } from '../../../store/slices/themeSlice';
+import { applyAccent } from '../../../theme';
 import { StudentSettingsContext } from '../hooks/useStudentSettings';
 import studentSettingsService from '../services/studentSettings.service';
 
 /**
- * Loads the Grade 6+ student's saved settings once and applies the ones that
- * change how the whole app looks, wherever they are set from:
+ * Loads the student's saved settings once and applies the ones that change
+ * how the whole app looks, wherever they are set from:
  *
  *   appearance    Light / Dark / Match device -> the existing theme slice
  *                 (stamps data-theme on <html>)
+ *   accent        the colour theme from "Make it yours" (data-accent)
  *   largerText    body.student-large-text  (theme/studentTheme.css)
  *   reduceMotion  body.student-reduce-motion + <MotionConfig reducedMotion>
  *
  * Classes go on <body> so portaled dialogs follow them too (same reasoning as
  * the student-theme class in StudentLayout). Saved on the server, so they
  * follow the student to any device.
+ *
+ * Mounted by both student shells - StudentLayout (Grade 6+) and KidLayout
+ * (K-5) - since "Make it yours" exists in both bands; K-5 only sets the
+ * avatar and card style, and leaves the rest at their defaults.
  */
 export function StudentSettingsProvider({ children }) {
   const dispatch = useDispatch();
@@ -32,12 +38,21 @@ export function StudentSettingsProvider({ children }) {
   }, [api.data]);
 
   const appearance = settings?.appearance;
+  const accent = settings?.accent;
   const largerText = Boolean(settings?.largerText);
   const reduceMotion = Boolean(settings?.reduceMotion);
 
   useEffect(() => {
     if (appearance) dispatch(setThemeMode(appearance));
   }, [appearance, dispatch]);
+
+  // Colour theme ("Make it yours"): data-accent on <html>, so every
+  // --accent-* token follows, in light and dark alike.
+  useEffect(() => {
+    if (!accent) return undefined;
+    applyAccent(accent);
+    return () => applyAccent(null);
+  }, [accent]);
 
   useEffect(() => {
     document.body.classList.toggle('student-large-text', largerText);
