@@ -32,7 +32,7 @@ import { getErrorMessage } from '../../../utils/errorHandler';
 import adminUserService from '../services/adminUser.service';
 import masterGenericService from '../../masterManagement/services/masterGeneric.service';
 import academicService from '../../masterManagement/services/academic.service';
-import AssignRelationshipsModal from '../components/AssignRelationshipsModal';
+import InviteTeachersModal from '../components/InviteTeachersModal';
 
 /**
  * Teacher <-> Student assignments - many-to-many, scoped to a subject and
@@ -40,10 +40,9 @@ import AssignRelationshipsModal from '../components/AssignRelationshipsModal';
  * Grade 2 and English Grade 2 are different assignments), so every row on
  * this page always shows the subject and grade it was made under.
  *
- * The bulk assign form (`AssignRelationshipsModal`) lives in a modal rather
- * than permanently at the top of the page - the many-to-many logic there is
- * unchanged, just no longer dominating the screen when the admin only wants
- * to browse or filter existing assignments.
+ * Nobody creates these links directly: "Invite Teachers" (InviteTeachersModal)
+ * sends invitations, and a link appears here once the teacher accepts. This
+ * page lists the accepted links and can pause, resume or remove them.
  */
 const RELATIONSHIP_TYPE = 'teacher_student';
 const MASTER_QUERY = { status: 'active', sortBy: 'display_order', sortOrder: 'asc', limit: 100 };
@@ -89,10 +88,10 @@ function GroupedAssignments({ groups, otherKey, savingId, onStatusChange, onUnas
       <EmptyState
         icon="🔗"
         title="No assignments match these filters"
-        description="Try adjusting the filters above, or assign a teacher and student."
+        description="Try adjusting the filters above, or invite a teacher."
         action={
           <Button startIcon={<LuUserPlus aria-hidden="true" />} onClick={onOpenAssign}>
-            Assign Teachers & Students
+            Invite Teachers
           </Button>
         }
       />
@@ -425,10 +424,10 @@ export default function RelationshipsPage() {
     <>
       <PageHeader
         title="Teacher & Student Assignments"
-        description="One teacher can be assigned to many students, and one student can have many teachers - each link is scoped to a subject and grade."
+        description="Teachers connect with students only by accepting an invitation - from a parent, or sent here with Invite Teachers. Each accepted link is scoped to a subject and grade. Track open invitations under Teacher invitations."
         actions={
           <Button startIcon={<LuUserPlus aria-hidden="true" />} onClick={() => assignModal.open()}>
-            Assign Teachers & Students
+            Invite Teachers
           </Button>
         }
       />
@@ -539,23 +538,23 @@ export default function RelationshipsPage() {
         emptyTitle={hasActiveFilters ? 'No assignments match these filters' : 'No assignments yet'}
         emptyDescription={
           hasActiveFilters
-            ? 'Try adjusting the filters above, or assign a teacher and student.'
-            : 'Assign a teacher and student to get started.'
+            ? 'Try adjusting the filters above, or invite a teacher.'
+            : 'Teachers appear here once they accept an invitation.'
         }
         emptyAction={
           !hasActiveFilters && (
             <Button startIcon={<LuUserPlus aria-hidden="true" />} onClick={() => assignModal.open()}>
-              Assign Teachers & Students
+              Invite Teachers
             </Button>
           )
         }
         caption="Teacher and student assignments"
       />
 
-      <AssignRelationshipsModal
+      <InviteTeachersModal
         isOpen={assignModal.isOpen}
         onClose={assignModal.close}
-        onAssigned={refreshCurrentView}
+        onInvited={refreshCurrentView}
         subjectOptions={subjectOptions}
         subjectsLoading={subjects.isLoading}
         gradeOptions={gradeOptions}

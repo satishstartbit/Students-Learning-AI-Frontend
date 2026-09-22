@@ -7,6 +7,7 @@ import {
   LuGraduationCap,
   LuLayoutDashboard,
   LuLink,
+  LuMailOpen,
   LuPackage,
   LuTrophy,
   LuReceiptText,
@@ -39,7 +40,16 @@ const NAV_ITEMS = [
           { to: '/admin/users/teachers', label: 'Teachers', icon: LuSchool },
         ],
       },
-      { to: '/admin/relationships', label: 'Relationships', icon: LuLink },
+      {
+        // Parents invite teachers and teachers accept (primary path); the
+        // Assignments screen is Super Admin's direct override.
+        label: 'Relationships',
+        icon: LuLink,
+        items: [
+          { to: '/admin/relationships/invitations', label: 'Teacher invitations', icon: LuMailOpen },
+          { to: '/admin/relationships', label: 'Assignments', icon: LuLink, end: true },
+        ],
+      },
       { to: '/admin/masters', label: 'Master Management', icon: LuDatabase },
     ],
   },

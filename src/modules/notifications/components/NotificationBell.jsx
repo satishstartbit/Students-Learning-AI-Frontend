@@ -30,6 +30,11 @@ export function NotificationBell() {
     } else if (notification.relatedType === 'assignment' && notification.relatedId) {
       const buildPath = ASSIGNMENT_DETAIL_PATH[role];
       if (buildPath) navigate(buildPath(notification.relatedId));
+    } else if (notification.relatedType === 'teacher_invitation') {
+      // Teacher: the invitation to answer. Parent: an answer to one of theirs,
+      // shown on the child's card (Children page) under Invitations.
+      if (role === 'TEACHER') navigate('/teacher/invitations');
+      else if (role === 'PARENT') navigate('/parent/children');
     }
   };
 

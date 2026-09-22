@@ -86,7 +86,7 @@ function ChildCard({ child, onView, onEdit, onSetPassword, onRemove }) {
               );
             })
           ) : (
-            <span className="ui-hint">No teachers assigned yet</span>
+            <span className="ui-hint">No teachers connected yet</span>
           )}
         </div>
       </div>
@@ -155,7 +155,7 @@ export default function ParentChildrenPage() {
         <EmptyState
           icon="👨‍👩‍👧"
           title="No children added yet"
-          description="Add your first child to get started - you'll be able to assign teachers and track their subjects right away."
+          description="Add your first child to get started - you'll be able to invite their teachers and track their subjects right away."
           action={<Button onClick={addModal.open}>+ Add Child</Button>}
         />
       )}

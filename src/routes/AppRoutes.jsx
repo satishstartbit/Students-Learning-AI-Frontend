@@ -3,7 +3,7 @@ import PublicRoutes from './PublicRoutes';
 import ProtectedRoutes from './ProtectedRoutes';
 import RoleRoutes from './RoleRoutes';
 import RoutePlaceholder from './RoutePlaceholder';
-import { PUBLIC_ROUTES, ROLE_ROUTE_GROUPS } from './routeConfig';
+import { OPEN_ROUTES, PUBLIC_ROUTES, ROLE_ROUTE_GROUPS } from './routeConfig';
 import { useAuth } from '../hooks/useAuth';
 import { EmptyState, RoleGuard } from '../components/common';
 
@@ -57,6 +57,7 @@ function renderRouteElement(route) {
 
 export function AppRoutes() {
   const PublicLayout = PUBLIC_ROUTES.layout;
+  const OpenLayout = OPEN_ROUTES.layout;
 
   return (
     <Routes>
@@ -71,6 +72,13 @@ export function AppRoutes() {
         }
       >
         {PUBLIC_ROUTES.routes.map((route) => (
+          <Route key={route.path} path={route.path} element={renderRouteElement(route)} />
+        ))}
+      </Route>
+
+      {/* ------------------------------------------ open (signed in or out) */}
+      <Route element={<OpenLayout />}>
+        {OPEN_ROUTES.routes.map((route) => (
           <Route key={route.path} path={route.path} element={renderRouteElement(route)} />
         ))}
       </Route>

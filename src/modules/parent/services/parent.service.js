@@ -63,20 +63,12 @@ export const getChildProgress = (id) => api.get(`/parent/children/${id}/progress
 export const removeChild = (id, { permanent = false } = {}) =>
   api.delete(`/parent/children/${id}`, { params: { permanent } });
 
-// --- teacher assignment -----------------------------------------------------
-
-/** @param {object} payload - { teacherIds, subject, grade, academicYearId, status } */
-export const assignTeachers = (childId, payload) =>
-  api.post(`/parent/children/${childId}/teachers`, payload);
-
-export const updateTeacherAssignment = (childId, relationshipId, payload) =>
-  api.patch(`/parent/children/${childId}/teachers/${relationshipId}`, payload);
+// --- teachers ---------------------------------------------------------------
+// Teachers are connected by invitation (modules/invitations - the teacher has
+// to accept); a parent can remove a connected teacher here.
 
 export const removeTeacherAssignment = (childId, relationshipId) =>
   api.delete(`/parent/children/${childId}/teachers/${relationshipId}`);
-
-/** Teacher directory for the assign-teacher picker. */
-export const listTeachers = (params = {}) => api.get('/parent/teachers', { params: dropEmpty(params) });
 
 // --- lookups (read-only, parent-safe master data) ---------------------------
 
@@ -92,7 +84,7 @@ export const listMasterOptions = (type, params = {}) =>
  * Master options shaped for RoleProfileFields' `lookupFetcher` prop
  * ({ value, label }[]). Add Child / Edit Child pass this so their Grade /
  * Subjects / Strengths / Challenges / Interests fields use the same
- * dropdowns the Assign Teacher modal and the Super Admin forms use.
+ * dropdowns the Invite Teacher modal and the Super Admin forms use.
  */
 export const masterOptionsFetcher = (type) =>
   listMasterOptions(type).then((res) =>
@@ -115,10 +107,7 @@ export default {
   getProgress,
   getChildProgress,
   removeChild,
-  assignTeachers,
-  updateTeacherAssignment,
   removeTeacherAssignment,
-  listTeachers,
   listMasterOptions,
   masterOptionsFetcher,
   listSubjects,

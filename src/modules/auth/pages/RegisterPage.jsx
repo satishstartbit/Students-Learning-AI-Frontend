@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Card,
   Input,
@@ -10,8 +10,13 @@ import {
   Checkbox,
   SectionHeader,
   EmptyState,
+  Loader,
 } from '../../../components/common';
+import { useApi } from '../../../hooks/useApi';
 import { useForm } from '../../../hooks/useForm';
+import { getErrorMessage } from '../../../utils/errorHandler';
+import { formatSubjects } from '../../invitations/invitationStatus';
+import invitationService from '../../invitations/services/teacherInvitation.service';
 import {
   required,
   email as emailRule,
@@ -50,15 +55,60 @@ const ROLE_OPTIONS = [
   },
 ];
 
+/** "Ms. Jane Rivera" -> { firstName: "Jane", lastName: "Rivera" } - a starting point the teacher can edit. */
+function splitName(name) {
+  const parts = String(name ?? '')
+    .replace(/^(mr|mrs|ms|miss|mx|dr|prof)\.?\s+/i, '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  return { firstName: parts[0] ?? '', lastName: parts.slice(1).join(' ') };
+}
+
 export default function RegisterPage() {
-  const [done, setDone] = useState(false);
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get('invite');
+  // Arriving from a parent's teacher invitation: the account is a teacher
+  // account for the invited email, and creating it accepts the invitation.
+  const invitation = useApi(invitationService.getByToken, { immediate: Boolean(inviteToken), args: [inviteToken] });
+  const invite = inviteToken ? invitation.data : null;
+  const inviteUsable = invite?.status === 'pending';
+
+  if (inviteToken && invitation.isLoading && !invitation.data) return <Loader message="Loading your invitation…" />;
+  if (inviteToken && !inviteUsable) {
+    return (
+      <Card>
+        <EmptyState
+          icon="✉"
+          title="This invitation can't be used to sign up"
+          description={
+            invitation.error
+              ? getErrorMessage(invitation.error)
+              : `This invitation has already been ${invite?.status}. Ask the parent to send you a new one.`
+          }
+          action={
+            <Button as={Link} to="/register">
+              Create an account without it
+            </Button>
+          }
+        />
+      </Card>
+    );
+  }
+
+  return <RegisterForm key={invite?.id ?? 'plain'} inviteToken={inviteUsable ? inviteToken : null} invite={inviteUsable ? invite : null} />;
+}
+
+function RegisterForm({ inviteToken, invite }) {
+  const [done, setDone] = useState(null);
+  const invitedName = splitName(invite?.teacherName);
 
   const form = useForm({
     initialValues: {
-      role: USER_ROLES.PARENT,
-      firstName: '',
-      lastName: '',
-      email: '',
+      role: invite ? USER_ROLES.TEACHER : USER_ROLES.PARENT,
+      firstName: invitedName.firstName,
+      lastName: invitedName.lastName,
+      email: invite?.teacherEmail ?? '',
       phone: '',
       password: '',
       confirmPassword: '',
@@ -86,12 +136,32 @@ export default function RegisterPage() {
         password: values.password,
         confirmPassword: values.confirmPassword,
         profile: buildProfilePayload(values.role, values),
+        ...(inviteToken ? { invitationToken: inviteToken } : {}),
       });
 
-      setDone(true);
+      setDone(result?.data?.invitationAccepted ? 'invited' : 'verify');
       return result;
     },
   });
+
+  if (done === 'invited') {
+    return (
+      <Card>
+        <EmptyState
+          icon="✓"
+          title="You're connected"
+          description={`Your account is ready and you've accepted ${invite.invitedBy?.name ?? 'the'}'s invitation for ${
+            invite.student?.firstName ?? 'their child'
+          }. Sign in to get started.`}
+          action={
+            <Button as={Link} to="/login">
+              Sign in
+            </Button>
+          }
+        />
+      </Card>
+    );
+  }
 
   if (done) {
     return (
@@ -114,23 +184,36 @@ export default function RegisterPage() {
 
   return (
     <>
-      <Card title="Let's get you set up" subtitle="It takes about two minutes.">
+      <Card
+        title={invite ? 'Create your teacher account' : "Let's get you set up"}
+        subtitle={invite ? 'Then you are connected straight away.' : 'It takes about two minutes.'}
+      >
         {form.submitError && (
           <Alert variant="error" className="ui-field">
             {form.submitError}
           </Alert>
         )}
 
+        {invite && (
+          <Alert variant="info" className="ui-field" data-testid="register-invite-banner">
+            Creating this account accepts {invite.invitedBy?.name ?? 'the parent'}&apos;s invitation to connect with{' '}
+            {invite.student?.firstName ?? 'their child'} for {formatSubjects(invite.subjects)}.
+          </Alert>
+        )}
+
         <form onSubmit={form.handleSubmit} noValidate>
-          <Radio
-            name="role"
-            label="I am a"
-            options={ROLE_OPTIONS}
-            value={role}
-            onChange={form.handleChange}
-            error={form.touched.role ? form.errors.role : null}
-            required
-          />
+          {/* The invitation fixes the role; otherwise the person picks one. */}
+          {!invite && (
+            <Radio
+              name="role"
+              label="I am a"
+              options={ROLE_OPTIONS}
+              value={role}
+              onChange={form.handleChange}
+              error={form.touched.role ? form.errors.role : null}
+              required
+            />
+          )}
 
           <SectionHeader title="Your details" as="h3" />
 
@@ -141,6 +224,8 @@ export default function RegisterPage() {
             type="email"
             autoComplete="email"
             required
+            readOnly={Boolean(invite)}
+            hint={invite ? 'The address the invitation was sent to' : undefined}
             {...form.getFieldProps('email')}
           />
           <Input label="Phone" type="tel" {...form.getFieldProps('phone')} />

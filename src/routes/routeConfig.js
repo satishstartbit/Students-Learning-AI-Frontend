@@ -12,6 +12,7 @@ import RegisterPage from '../modules/auth/pages/RegisterPage';
 import ForgotPasswordPage from '../modules/auth/pages/ForgotPasswordPage';
 import ResetPasswordPage from '../modules/auth/pages/ResetPasswordPage';
 import VerifyEmailPage from '../modules/auth/pages/VerifyEmailPage';
+import TeacherInvitationPage from '../modules/invitations/pages/TeacherInvitationPage';
 
 import AdminDashboardPage from '../modules/superAdmin/pages/AdminDashboardPage';
 import UsersListPage from '../modules/superAdmin/pages/UsersListPage';
@@ -19,6 +20,7 @@ import CreateUserPage from '../modules/superAdmin/pages/CreateUserPage';
 import UserDetailPage from '../modules/superAdmin/pages/UserDetailPage';
 import EditUserPage from '../modules/superAdmin/pages/EditUserPage';
 import RelationshipsPage from '../modules/superAdmin/pages/RelationshipsPage';
+import TeacherInvitationsAdminPage from '../modules/superAdmin/pages/TeacherInvitationsAdminPage';
 
 import ParentChildrenPage from '../modules/parent/pages/ParentChildrenPage';
 import ParentProfilePage from '../modules/parent/pages/ParentProfilePage';
@@ -36,6 +38,7 @@ import AssignmentFormPage from '../modules/teacher/pages/AssignmentFormPage';
 import AssignmentDetailsPage from '../modules/teacher/pages/AssignmentDetailsPage';
 import TeacherProfilePage from '../modules/teacher/pages/TeacherProfilePage';
 import TeacherProgressPage from '../modules/teacher/pages/TeacherProgressPage';
+import TeacherInvitationsPage from '../modules/teacher/pages/TeacherInvitationsPage';
 
 import MyAssignmentsPage from '../modules/student/pages/MyAssignmentsPage';
 import StudentAssignmentDetailPage from '../modules/student/pages/AssignmentDetailPage';
@@ -136,6 +139,18 @@ export const PUBLIC_ROUTES = {
   ],
 };
 
+/**
+ * Pages in the public shell that must work whether or not someone is signed
+ * in - unlike PUBLIC_ROUTES, a signed-in visitor is NOT sent to their home.
+ * A teacher opening a parent's invitation link may be signed in already (then
+ * accepts right there) or not have an account at all.
+ */
+export const OPEN_ROUTES = {
+  layout: PublicLayout,
+  requiresAuth: false,
+  routes: [{ path: '/invitations/teacher/:token', label: 'Teacher invitation', component: TeacherInvitationPage }],
+};
+
 export const SUPER_ADMIN_ROUTES = {
   basePath: '/admin',
   layout: SuperAdminLayout,
@@ -207,6 +222,13 @@ export const SUPER_ADMIN_ROUTES = {
       label: 'Relationships',
       permissions: [PERMISSIONS.USER_READ],
       component: RelationshipsPage,
+    },
+    {
+      // Oversight of parent -> teacher invitations (the primary linking path).
+      path: 'relationships/invitations',
+      label: 'Teacher invitations',
+      permissions: [PERMISSIONS.USER_READ],
+      component: TeacherInvitationsAdminPage,
     },
 
     /*
@@ -452,6 +474,8 @@ export const TEACHER_ROUTES = {
     },
     { path: 'dashboard', label: 'Dashboard', redirectTo: '/teacher' },
     { path: 'students', label: 'Students', permissions: [PERMISSIONS.USER_READ], component: MyStudentsPage },
+    // Parents' invitations to connect with their child - accept or decline.
+    { path: 'invitations', label: 'Invitations', component: TeacherInvitationsPage },
     {
       path: 'assignments',
       label: 'Assignments',
@@ -566,6 +590,7 @@ export const ROLE_ROUTE_GROUPS = [
 
 export default {
   PUBLIC_ROUTES,
+  OPEN_ROUTES,
   ROLE_ROUTE_GROUPS,
   SUPER_ADMIN_ROUTES,
   STUDENT_ROUTES,

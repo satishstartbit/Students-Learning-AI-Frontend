@@ -2,11 +2,9 @@ import { useCallback, useEffect } from 'react';
 import {
   Alert,
   Avatar,
-  Badge,
   Button,
-  ButtonGroup,
-  ConfirmationModal,
   EmptyState,
+  ConfirmationModal,
   Loader,
   Modal,
   SectionHeader,
@@ -19,17 +17,30 @@ import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName, titleCase } from '../../../utils/format';
 import { formatDate } from '../../../utils/date';
+import invitationService from '../../invitations/services/teacherInvitation.service';
 import parentService from '../services/parent.service';
-import AssignTeacherModal from './AssignTeacherModal';
+import InviteTeacherModal from './InviteTeacherModal';
+import TeacherInvitationsList from './TeacherInvitationsList';
 
-/** "View Details" - the child's own info plus their subjects & teachers. */
+/**
+ * "View Details" - the child's own info plus their teachers.
+ *
+ * A parent connects a teacher by inviting them (InviteTeacherModal); the
+ * teacher has to accept before they appear under "Connected teachers". Every
+ * invitation's status - pending, accepted, declined, expired, cancelled - is
+ * listed underneath, with re-send / cancel for open ones.
+ */
 export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged }) {
   const detail = useApi(parentService.getChild);
-  const assignModal = useModal();
+  const invitations = useApi(invitationService.listForChild);
+  const inviteModal = useModal();
   const removeModal = useModal();
 
   const load = useCallback(() => {
-    if (childId) detail.run(childId).catch(() => {});
+    if (childId) {
+      detail.run(childId).catch(() => {});
+      invitations.run(childId).catch(() => {});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [childId]);
 
@@ -58,24 +69,13 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
     }
   };
 
-  const childGrade = child?.profile?.grade ?? null;
+  const invitationItems = Array.isArray(invitations.data) ? invitations.data : [];
+  const pendingCount = invitationItems.filter((i) => i.status === 'pending').length;
 
   const columns = [
     { key: 'subject', header: 'Subject', render: (r) => r.subject ?? '—' },
-    // {
-    //   key: 'grade',
-    //   header: 'Grade',
-    //   render: (r) => (
-    //     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-    //       {r.grade ?? '—'}
-    //       {r.grade && childGrade && r.grade !== childGrade && (
-    //         <Badge variant="warning">Off-grade</Badge>
-    //       )}
-    //     </span>
-    //   ),
-    // },
-    { key: 'academicYear', header: 'Academic year', render: (r) => r.academicYear?.name ?? '—' },
     { key: 'teacher', header: 'Teacher', render: (r) => formatName(r.owner) },
+    { key: 'academicYear', header: 'Academic year', render: (r) => r.academicYear?.name ?? '—' },
     {
       key: 'status',
       header: 'Status',
@@ -86,17 +86,18 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
       header: '',
       align: 'right',
       render: (r) => (
-        <ButtonGroup>
-          <Button size="sm" variant="secondary" onClick={() => assignModal.open(r)}>
-            Change teacher
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => removeModal.open(r)}>
-            Remove
-          </Button>
-        </ButtonGroup>
+        <Button size="sm" variant="secondary" onClick={() => removeModal.open(r)}>
+          Remove
+        </Button>
       ),
     },
   ];
+
+  const inviteButton = (
+    <Button size="sm" onClick={() => inviteModal.open()}>
+      + Invite a teacher
+    </Button>
+  );
 
   return (
     <>
@@ -144,33 +145,50 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
             </div>
 
             <SectionHeader
-              title="Subjects & teachers"
+              title="Connected teachers"
+              description="Teachers who accepted your invitation. Each subject they teach is listed on its own row."
               as="h3"
               className="ui-field"
-              actions={<Button size="sm" onClick={() => assignModal.open(null)}>+ Assign Teacher</Button>}
+              actions={inviteButton}
             />
 
             {teacherAssignments.length === 0 ? (
               <EmptyState
                 icon="🧑‍🏫"
-                title="No teachers assigned yet"
-                description="Assign a teacher so this child's subjects show up here."
-                action={<Button onClick={() => assignModal.open(null)}>+ Assign Teacher</Button>}
+                title="No teachers connected yet"
+                description={
+                  pendingCount
+                    ? `You have ${pendingCount} invitation${pendingCount === 1 ? '' : 's'} waiting for a teacher to accept.`
+                    : "Invite your child's teachers - they'll appear here once they accept."
+                }
+                action={pendingCount ? null : inviteButton}
               />
             ) : (
               <Table columns={columns} data={teacherAssignments} rowKey="id" />
             )}
+
+            {invitationItems.length > 0 && (
+              <>
+                <SectionHeader
+                  title="Invitations"
+                  description="Every teacher you've invited for this child, and where each invitation stands."
+                  as="h3"
+                  className="ui-field"
+                />
+                <TeacherInvitationsList invitations={invitationItems} onChanged={refresh} />
+              </>
+            )}
+            {invitations.error && <Alert variant="error">{getErrorMessage(invitations.error)}</Alert>}
           </>
         )}
       </Modal>
 
-      <AssignTeacherModal
-        key={`${assignModal.payload?.id ?? 'new'}-${assignModal.isOpen}`}
-        isOpen={assignModal.isOpen}
+      <InviteTeacherModal
+        key={`invite-${inviteModal.isOpen}`}
+        isOpen={inviteModal.isOpen}
         child={child}
-        replacing={assignModal.payload}
-        onClose={assignModal.close}
-        onAssigned={refresh}
+        onClose={inviteModal.close}
+        onInvited={refresh}
       />
 
       <ConfirmationModal
@@ -180,13 +198,11 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
         title="Remove this teacher?"
         message={
           removeModal.payload
-            ? `${formatName(removeModal.payload.owner)} will no longer be assigned to ${
-                removeModal.payload.subject
-              } (${removeModal.payload.grade}${
-                removeModal.payload.academicYear?.name
-                  ? `, ${removeModal.payload.academicYear.name}`
-                  : ''
-              }) for ${child ? formatName(child) : 'this child'}.`
+            ? `${formatName(removeModal.payload.owner)} will no longer be connected to ${
+                child ? formatName(child) : 'this child'
+              } for ${removeModal.payload.subject ?? 'this subject'}${
+                removeModal.payload.academicYear?.name ? ` (${removeModal.payload.academicYear.name})` : ''
+              }. To reconnect later, send them a new invitation.`
             : ''
         }
         confirmLabel="Remove"

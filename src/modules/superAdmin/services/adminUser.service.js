@@ -92,16 +92,11 @@ export function listRelationshipsGrouped(params = {}) {
   return api.get('/admin/relationships/grouped', { params: query });
 }
 
-/** @param {object} payload - { relationshipType, userId, relatedUserId } */
+/** @param {object} payload - { relationshipType: 'parent_child', userId, relatedUserId } - teachers are linked by invitation. */
 export const createRelationship = (payload) => api.post('/admin/relationships', payload);
 
-/**
- * Assigns every teacher in teacherIds to every student in studentIds for one
- * subject/grade/academic year - the teacher <-> student many-to-many form.
- * @param {object} payload - { subject, grade, academicYearId, status, teacherIds, studentIds }
- */
-export const bulkAssignRelationships = (payload) =>
-  api.post('/admin/relationships/bulk-assign', payload);
+// Teacher <-> student links are made only by invitation
+// (modules/invitations - teacherInvitation.service.js#adminInvite).
 
 /** Status is the only editable field once a relationship exists. */
 export const updateRelationship = (id, payload) => api.patch(`/admin/relationships/${id}`, payload);
@@ -124,7 +119,6 @@ export default {
   listRelationships,
   listRelationshipsGrouped,
   createRelationship,
-  bulkAssignRelationships,
   updateRelationship,
   deleteRelationship,
 };
