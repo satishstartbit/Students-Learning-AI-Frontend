@@ -1,0 +1,258 @@
+/* =====================================================================
+   Teacher Assignments list (the "Assignments" mockup). Prefix: al-.
+   Fonts and the base table look come from theme/portalTheme.css; colours
+   are the shared tokens so dark mode keeps working.
+   ===================================================================== */
+
+.al-page {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* --- Status tabs: outlined pills, soft teal + check when selected ----- */
+.al-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.al-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 9999px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.al-tab:hover {
+  background: var(--color-bg-surface-sunken);
+}
+.al-tab[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+}
+.al-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* --- Filter row ------------------------------------------------------ */
+.al-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.al-search {
+  position: relative;
+  flex: 1 1 280px;
+  min-width: 0;
+}
+.al-search svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-secondary);
+  pointer-events: none;
+}
+.al-search input,
+.al-select {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 10px;
+  background-color: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 14px;
+}
+.al-search input {
+  padding: 0 12px 0 36px;
+}
+.al-search input::placeholder {
+  color: var(--color-text-tertiary);
+}
+.al-select {
+  flex: 0 1 150px;
+  width: auto;
+  min-width: 130px;
+  padding: 0 34px 0 12px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2367605b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+}
+.al-select--placeholder {
+  color: var(--color-text-secondary);
+}
+.al-search input:focus-visible,
+.al-select:focus-visible {
+  outline: none;
+  border-color: var(--accent-base);
+  box-shadow: var(--focus-ring);
+}
+.al-clear {
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.al-clear:hover:not(:disabled) {
+  background: var(--color-bg-surface-sunken);
+}
+.al-clear:disabled {
+  color: var(--color-text-tertiary);
+  cursor: default;
+}
+
+/* --- Table cells ------------------------------------------------------ */
+.al-title {
+  display: grid;
+  gap: 2px;
+  min-width: 160px;
+}
+.al-title a {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-base);
+  text-decoration: none;
+}
+.al-title a:hover {
+  text-decoration: underline;
+}
+.al-meta {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.al-subject {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.al-subject__tile {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 1px solid var(--al-tile-border, var(--sticky-blue-border));
+  border-radius: 7px;
+  background: var(--al-tile-bg, var(--sticky-blue));
+  color: var(--al-tile-fg, #0b6b86);
+}
+.al-subject__tile[data-tone='yellow'] { --al-tile-bg: var(--sticky-yellow); --al-tile-border: var(--sticky-yellow-border); --al-tile-fg: #8a6a00; }
+.al-subject__tile[data-tone='pink'] { --al-tile-bg: var(--sticky-pink); --al-tile-border: var(--sticky-pink-border); --al-tile-fg: #b4235a; }
+.al-subject__tile[data-tone='blue'] { --al-tile-bg: var(--sticky-blue); --al-tile-border: var(--sticky-blue-border); --al-tile-fg: #0b6b86; }
+.al-subject__tile[data-tone='green'] { --al-tile-bg: var(--sticky-green); --al-tile-border: var(--sticky-green-border); --al-tile-fg: #2f7d32; }
+.al-subject__tile[data-tone='lavender'] { --al-tile-bg: var(--sticky-lavender); --al-tile-border: var(--sticky-lavender-border); --al-tile-fg: #6b43c4; }
+.al-subject__tile[data-tone='orange'] { --al-tile-bg: var(--sticky-orange); --al-tile-border: var(--sticky-orange-border); --al-tile-fg: #b45309; }
+
+.al-muted {
+  color: var(--color-text-secondary);
+}
+
+.al-progress {
+  display: grid;
+  gap: 4px;
+  min-width: 120px;
+  max-width: 150px;
+}
+.al-progress__track {
+  height: 5px;
+  border-radius: 9999px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+.al-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-base);
+}
+.al-progress__label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.al-due {
+  white-space: nowrap;
+}
+
+/* Status chip - small borderless pill. */
+.al-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  background: var(--color-bg-surface-sunken);
+  color: var(--color-text-secondary);
+}
+.al-status--published { background: var(--accent-soft); color: var(--accent-hover); }
+.al-status--due-today { background: var(--color-warning-bg); color: var(--color-warning-fg); }
+.al-status--overdue { background: var(--color-danger-bg); color: var(--color-danger-fg); }
+.al-status--completed { background: var(--color-success-bg); color: var(--color-success-fg); }
+
+.al-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.al-actions .ui-btn {
+  min-height: 34px;
+  padding: 0 14px;
+}
+.al-kebab {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.al-kebab:hover {
+  background: var(--color-bg-surface-sunken);
+}
+.al-kebab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.al-footer {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 640px) {
+  .al-select {
+    flex: 1 1 140px;
+  }
+}

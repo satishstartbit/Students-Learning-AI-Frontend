@@ -1,0 +1,335 @@
+/* =====================================================================
+   Teacher + Parent portal look (the Teacher Portal mockups): Nunito for
+   body text, Poppins for headings, the Ocean teal accent on a warm
+   off-white canvas, a white sidebar whose active item is a soft teal pill,
+   and a denser 14px type scale.
+
+   Applied as `portal-theme` on <body> by TeacherLayout and ParentLayout -
+   same reason as studentTheme.css / superAdminTheme.css: Modal, Drawer and
+   dropdowns portal to document.body, so a wrapping div would never reach
+   them. Every rule is prefixed `body.portal-theme`, so the Student, K-5
+   and Super Admin areas are untouched.
+
+   Colours come from the shared tokens (variables.css / accent.css) rather
+   than hex values, so dark mode and the accent switcher keep working. The
+   mockup's teal IS the default Ocean accent.
+   ===================================================================== */
+
+body.portal-theme {
+  --font-family-base: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-heading: 'Poppins', 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Denser type scale - the mockups set body copy at 14px. */
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --field-font-size: 14px;
+  --btn-font-size-sm: 13px;
+  --btn-font-size-md: 14px;
+  --btn-font-size-lg: 16px;
+  --btn-height-sm: 34px;
+  --btn-height-md: 40px;
+  --btn-height-lg: 48px;
+  --btn-padding-x-sm: 12px;
+  --btn-padding-x-md: 18px;
+  --btn-padding-x-lg: 24px;
+
+  /* Cards sit flat on the canvas with a hairline border, as in the mockups. */
+  --portal-card-radius: 14px;
+  --portal-card-shadow: 0 1px 2px rgba(46, 35, 20, 0.03);
+
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+}
+
+/* Headings: Poppins, semibold. */
+body.portal-theme h1,
+body.portal-theme h2,
+body.portal-theme h3,
+body.portal-theme h4,
+body.portal-theme .ui-pageheader__title,
+body.portal-theme .ui-card__title,
+body.portal-theme .ui-sectionheader__title,
+body.portal-theme .ui-state__title,
+body.portal-theme .ui-statcard__value,
+body.portal-theme .ui-modal__title,
+body.portal-theme .ui-drawer__title {
+  font-family: var(--font-family-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* --------------------------------------------------------------------
+   Sidebar. Targets the data-slot attributes of components/ui/sidebar.jsx
+   with plain (unlayered) rules so they outrank the Tailwind utilities -
+   see superAdminTheme.css for why the --color-sidebar-* tokens can't be
+   used instead.
+   -------------------------------------------------------------------- */
+body.portal-theme [data-slot='sidebar'] {
+  background-color: var(--color-bg-surface);
+  border-color: var(--color-border-default);
+  font-family: var(--font-family-base);
+}
+
+body.portal-theme [data-slot='sidebar-header'] {
+  padding: 14px 10px 0;
+}
+
+body.portal-theme [data-slot='sidebar-header'] [data-slot='sidebar-menu-button'] {
+  min-height: 44px;
+}
+
+/* The brand mark is a rounded square in the mockups, not a circle. */
+body.portal-theme [data-slot='sidebar-header'] [aria-hidden='true'][style*='border-radius'] {
+  border-radius: 8px !important;
+}
+
+/* The star inside the brand mark stays white - the nav-icon rule below
+   would otherwise grey it, since the brand sits in a menu button too. */
+body.portal-theme [data-slot='sidebar-header'] [data-slot='sidebar-menu-button'] svg {
+  width: auto;
+  height: auto;
+  color: var(--accent-on);
+}
+
+body.portal-theme [data-slot='sidebar-group-label'] {
+  height: 24px;
+  margin-top: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+body.portal-theme [data-slot='sidebar-menu'] {
+  gap: 2px;
+}
+
+body.portal-theme [data-slot='sidebar-menu-button'],
+body.portal-theme [data-slot='sidebar-menu-sub-button'] {
+  min-height: 38px;
+  gap: 10px;
+  padding-inline: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+body.portal-theme [data-slot='sidebar-menu-button'] svg,
+body.portal-theme [data-slot='sidebar-menu-sub-button'] svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-secondary);
+}
+
+body.portal-theme [data-slot='sidebar-menu-button']:hover,
+body.portal-theme [data-slot='sidebar-menu-sub-button']:hover {
+  background-color: var(--color-bg-surface-sunken);
+  color: var(--color-text-primary);
+}
+
+body.portal-theme [data-slot='sidebar-menu-button'][data-active='true'],
+body.portal-theme [data-slot='sidebar-menu-sub-button'][data-active='true'] {
+  background-color: var(--accent-soft);
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+body.portal-theme [data-slot='sidebar-menu-button'][data-active='true'] svg,
+body.portal-theme [data-slot='sidebar-menu-sub-button'][data-active='true'] svg {
+  color: var(--color-text-primary);
+}
+
+/* Account tile: initials on a soft teal circle, name over the subtitle. */
+body.portal-theme [data-slot='sidebar-footer'] {
+  border-top: 1px solid var(--color-border-default);
+  margin-inline: 10px;
+  padding-inline: 0;
+  padding-block: 12px;
+}
+
+body.portal-theme [data-slot='sidebar-footer'] [data-slot='sidebar-menu-button'] {
+  min-height: 48px;
+}
+
+body.portal-theme [data-slot='sidebar-footer'] .bg-sidebar-accent {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background-color: var(--accent-soft);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------
+   Top bar + canvas.
+   -------------------------------------------------------------------- */
+body.portal-theme [data-slot='sidebar-inset'] {
+  background-color: var(--color-bg-canvas);
+}
+
+body.portal-theme [data-slot='sidebar-inset'] > header {
+  height: 52px;
+}
+
+/* "Teacher Portal" reads as a quiet label in the mockups, not a heading. */
+body.portal-theme [data-slot='sidebar-inset'] > header > span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------------------
+   Page header: large Poppins title with its description directly under
+   it and no rule beneath.
+   -------------------------------------------------------------------- */
+body.portal-theme .ui-pageheader {
+  align-items: center;
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 18px;
+}
+
+body.portal-theme .ui-pageheader__title {
+  font-size: 26px;
+  line-height: 1.25;
+}
+
+body.portal-theme .ui-pageheader__description {
+  margin-top: 2px;
+  font-size: 14px;
+}
+
+/* --------------------------------------------------------------------
+   Surfaces.
+   -------------------------------------------------------------------- */
+body.portal-theme .ui-card,
+body.portal-theme .ui-filterbar,
+body.portal-theme .ui-table-wrap {
+  border-radius: var(--portal-card-radius);
+  border-color: var(--color-border-default);
+  box-shadow: var(--portal-card-shadow);
+}
+
+body.portal-theme .ui-card__title {
+  font-size: 16px;
+}
+
+body.portal-theme .ui-statcard__label {
+  font-size: 12px;
+}
+
+body.portal-theme .ui-statcard__value {
+  font-size: 22px;
+}
+
+body.portal-theme .ui-state__title {
+  font-size: 16px;
+}
+
+body.portal-theme .ui-state__description {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* --------------------------------------------------------------------
+   Buttons: 40px, 10px radius, 14px semibold.
+   -------------------------------------------------------------------- */
+body.portal-theme .ui-btn {
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+body.portal-theme .ui-btn--sm {
+  border-radius: 8px;
+}
+
+/* --------------------------------------------------------------------
+   Fields: 14px text, 10px radius.
+   -------------------------------------------------------------------- */
+body.portal-theme .ui-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------
+   Tables: sentence-case 12px header on the canvas tone, roomy rows.
+   -------------------------------------------------------------------- */
+body.portal-theme .ui-table-wrap {
+  background: var(--color-bg-surface);
+}
+
+body.portal-theme .ui-table {
+  font-family: var(--font-family-base);
+  font-size: 14px;
+}
+
+body.portal-theme .ui-table th,
+body.portal-theme .ui-table td {
+  padding: 12px 14px;
+}
+
+body.portal-theme .ui-table th:first-child,
+body.portal-theme .ui-table td:first-child {
+  padding-left: 16px;
+}
+
+body.portal-theme .ui-table th:last-child,
+body.portal-theme .ui-table td:last-child {
+  padding-right: 16px;
+}
+
+body.portal-theme .ui-table thead th {
+  padding-block: 10px;
+  background: var(--color-bg-canvas);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+body.portal-theme .ui-table td {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+/* A whisper of a hover - the mockup's rows stay white. */
+body.portal-theme .ui-table tbody tr:hover {
+  background: color-mix(in srgb, var(--color-bg-canvas) 70%, var(--color-bg-surface));
+}
+
+body.portal-theme .ui-pagination {
+  font-size: 12px;
+}
+
+body.portal-theme .ui-table a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+body.portal-theme .ui-table a:hover {
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------
+   Badges: small rounded pills with no outline, as the status chips in the
+   mockups ("Published", "Due today", "Completed").
+   -------------------------------------------------------------------- */
+body.portal-theme .ui-badge {
+  border-color: transparent;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  padding-inline: 8px;
+}
+
+body.portal-theme .ui-tabs__tab {
+  font-size: 14px;
+}

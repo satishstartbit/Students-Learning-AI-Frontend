@@ -20,7 +20,19 @@ const isCanada = (country) =>
 
 const PROVINCE_OPTIONS = CANADIAN_PROVINCES.map((p) => ({ value: p.code, label: `${p.name} (${p.code})` }));
 
-export default function AddressFields({ values, getProps, setFieldValue }) {
+/** Country picker for the profile layout: the platform is Canadian, with the US as the one other common case. */
+const COUNTRY_OPTIONS = [
+  { value: 'Canada', label: 'Canada' },
+  { value: 'United States', label: 'United States' },
+];
+
+/**
+ * `layout="profile"` is the My Profile pages' arrangement (street address,
+ * then postal code + city, then province + country, two to a row, with a
+ * short "fills in from this" hint); the default stacked layout is unchanged
+ * for the other forms that use this component.
+ */
+export default function AddressFields({ values, getProps, setFieldValue, layout = 'stacked' }) {
   const canadian = isCanada(values.country);
 
   // The first 3 characters of the postal code (the FSA) are enough to look
@@ -59,6 +71,46 @@ export default function AddressFields({ values, getProps, setFieldValue }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedFsa, canadian]);
 
+  const postalCodeProps = {
+    ...getProps('postalCode'),
+    onChange: (e) => {
+      const raw = e.target.value;
+      setFieldValue('postalCode', canadian ? formatCanadianPostalCode(raw) : raw);
+    },
+  };
+
+  if (layout === 'profile') {
+    const countryOptions = values.country && !COUNTRY_OPTIONS.some((o) => o.value === values.country)
+      ? [{ value: values.country, label: values.country }, ...COUNTRY_OPTIONS]
+      : COUNTRY_OPTIONS;
+    return (
+      <div className="pf-grid">
+        <div className="pf-span-2">
+          <Input label="Street address" autoComplete="street-address" {...getProps('address')} />
+        </div>
+        <Input
+          label="Postal code"
+          placeholder={canadian ? 'A1A 1A1' : undefined}
+          autoComplete="postal-code"
+          hint={canadian ? (filled ? 'City and province filled in from this - edit them if not quite right.' : 'City and province fill in from this.') : undefined}
+          {...postalCodeProps}
+        />
+        <Input label="City" autoComplete="address-level2" {...getProps('city')} />
+        {canadian ? (
+          <Select
+            label="Province / territory"
+            options={PROVINCE_OPTIONS}
+            placeholder="Select a province or territory"
+            {...getProps('state')}
+          />
+        ) : (
+          <Input label="State / province" {...getProps('state')} />
+        )}
+        <Select label="Country" options={countryOptions} placeholder="Select a country" {...getProps('country')} />
+      </div>
+    );
+  }
+
   return (
     <>
       <Textarea label="Address" rows={2} {...getProps('address')} />
@@ -80,11 +132,7 @@ export default function AddressFields({ values, getProps, setFieldValue }) {
         label="Postal code"
         placeholder={canadian ? 'A1A 1A1' : undefined}
         hint={canadian && filled ? 'City/province filled in from your postal code - edit them if not quite right.' : undefined}
-        {...getProps('postalCode')}
-        onChange={(e) => {
-          const raw = e.target.value;
-          setFieldValue('postalCode', canadian ? formatCanadianPostalCode(raw) : raw);
-        }}
+        {...postalCodeProps}
       />
     </>
   );

@@ -15,6 +15,7 @@ import onboardingService from '../modules/onboarding/services/onboarding.service
 import { ParentOnboardingContext } from '../modules/parent/hooks/useParentOnboarding';
 import { SubscriptionAccessContext, useAccessStatus } from '../modules/subscription/hooks/useSubscriptionAccess';
 import AuthenticatedLayout from './AuthenticatedLayout';
+import usePortalTheme from './usePortalTheme';
 
 /**
  * Navigation for the parent area (/parent/*).
@@ -57,6 +58,7 @@ const SUBSCRIPTION_EXEMPT_PATHS = [SUBSCRIPTION_PATH, '/parent/subscription/chec
  *      the same requests on its own; this is the friendly version.
  */
 export function ParentLayout({ children }) {
+  usePortalTheme();
   const location = useLocation();
   const onboarding = useApi(onboardingService.getMyOnboarding, { immediate: true });
   const { run } = onboarding;
@@ -85,7 +87,7 @@ export function ParentLayout({ children }) {
   return (
     <ParentOnboardingContext.Provider value={context}>
       <SubscriptionAccessContext.Provider value={access}>
-        <AuthenticatedLayout navItems={NAV_ITEMS} title="Portal" subtitle="Parent" brand="FP">
+        <AuthenticatedLayout navItems={NAV_ITEMS} title="Parent Portal" subtitle="Parent" brand="FP">
           {content}
         </AuthenticatedLayout>
       </SubscriptionAccessContext.Provider>

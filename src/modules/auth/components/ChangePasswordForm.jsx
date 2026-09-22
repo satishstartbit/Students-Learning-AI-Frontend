@@ -15,8 +15,11 @@ const INITIAL_VALUES = { currentPassword: '', newPassword: '', confirmNewPasswor
  * verifies the current password and revokes every session on success, so the
  * user is signed out locally and sent back to /login rather than staying on
  * a page whose access token the server has already invalidated.
+ *
+ * `compact` is the My Profile card look: a secondary "Change password"
+ * button aligned to the right, under the fields.
  */
-export default function ChangePasswordForm() {
+export default function ChangePasswordForm({ compact = false }) {
   const navigate = useNavigate();
   const { signOut } = useAuth();
 
@@ -56,7 +59,7 @@ export default function ChangePasswordForm() {
       <PasswordInput
         label="New password"
         autoComplete="new-password"
-        hint="8+ characters with upper case, lower case and a number"
+        hint="At least 8 characters, with an upper case letter, a lower case letter and a number."
         required
         {...form.getFieldProps('newPassword')}
       />
@@ -67,9 +70,17 @@ export default function ChangePasswordForm() {
         {...form.getFieldProps('confirmNewPassword')}
       />
 
-      <Button type="submit" loading={form.isSubmitting}>
-        Change password
-      </Button>
+      {compact ? (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button type="submit" variant="secondary" loading={form.isSubmitting}>
+            Change password
+          </Button>
+        </div>
+      ) : (
+        <Button type="submit" loading={form.isSubmitting}>
+          Change password
+        </Button>
+      )}
     </form>
   );
 }

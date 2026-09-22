@@ -15,10 +15,14 @@ function dropEmpty(params = {}) {
 }
 
 /**
- * Teacher: { page, limit, sortBy, sortOrder, search, subject, grade, status, dueBefore, dueAfter }
+ * Teacher: { page, limit, sortBy, sortOrder, search, subject, grade, view, dueBefore, dueAfter, noDueDate }
+ *   view: published | scheduled | draft | completed | archived (omit for all)
  * Student: { page, limit, status, subject }
  */
 export const listAssignments = (params = {}) => api.get('/assignments', { params: dropEmpty(params) });
+
+/** Teacher: { all, published, scheduled, draft, completed, archived } under the same filters as the list. */
+export const getAssignmentCounts = (params = {}) => api.get('/assignments/counts', { params: dropEmpty(params) });
 
 export const getAssignment = (id) => api.get(`/assignments/${id}`);
 
@@ -28,6 +32,9 @@ export const createAssignment = (payload) => api.post('/assignments', payload);
 export const updateAssignment = (id, payload) => api.patch(`/assignments/${id}`, payload);
 
 export const publishAssignment = (id) => api.patch(`/assignments/${id}/publish`);
+
+/** Published -> draft again; the API refuses once any student has started. */
+export const unpublishAssignment = (id) => api.patch(`/assignments/${id}/unpublish`);
 
 export const archiveAssignment = (id) => api.patch(`/assignments/${id}/archive`);
 
@@ -69,10 +76,12 @@ export const reviewSubmission = (submissionId, payload) =>
 
 export default {
   listAssignments,
+  getAssignmentCounts,
   getAssignment,
   createAssignment,
   updateAssignment,
   publishAssignment,
+  unpublishAssignment,
   archiveAssignment,
   deleteAssignment,
   addAssignmentFiles,

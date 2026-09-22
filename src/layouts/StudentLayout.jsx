@@ -107,7 +107,9 @@ export function StudentLayout({ children }) {
 
   const profile = me.data?.user?.profile ?? null;
   const grade = profile?.grade ?? null;
-  const isJunior = isJuniorGrade(grade);
+  // The server's KIDS_UI band wins when it reports one, so the split can be
+  // changed without rebuilding the app; VITE_KIDS_UI is the fallback.
+  const isJunior = isJuniorGrade(grade, me.data?.gradeBand?.juniorMaxGrade);
   const onboarded = Boolean(profile?.onboarding_completed_at);
 
   const refreshProfile = useCallback(() => runMe().catch(() => {}), [runMe]);

@@ -1,139 +1,191 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { LuFilterX } from 'react-icons/lu';
-import {
-  PageHeader,
-  FilterBar,
-  SearchInput,
-  IconButton,
-  DataTable,
-  StatusBadge,
-  Button,
-  ConfirmationModal,
-  ProgressBar,
-  Select,
-  DatePicker,
-  Toast,
-} from '../../../components/common';
-import { SearchableSelect } from '../../../components/ui/searchable-select';
-import { Tooltip } from '../../../components/ui/tooltip';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { LuCheck, LuEllipsisVertical, LuEye, LuPlus, LuSearch, LuSend, LuArchive, LuTrash2, LuUndo2 } from 'react-icons/lu';
+import { PageHeader, DataTable, Button, ConfirmationModal, Dropdown, Toast } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { useDebounce } from '../../../hooks/useDebounce';
-import { useModal } from '../../../hooks/useModal';
 import { toast } from '../../../hooks/useToast';
-import { formatDate, isOverdue } from '../../../utils/date';
+import { addDaysToKey, daysUntilDateKey, formatDateKey, getDateKey } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { ASSIGNMENT_CRUD_STATUS } from '../../../utils/constants';
 import assignmentService from '../../assignments/services/assignment.service';
 import teacherStudentService from '../services/teacherStudent.service';
+import { getSubjectVisual } from '../../student/components/subjectVisual';
+import '../components/assignmentsList/assignmentsList.css';
 
-const STATUS_FILTER_OPTIONS = [
-  { value: '', label: 'Any status' },
-  { value: ASSIGNMENT_CRUD_STATUS.DRAFT, label: 'Draft' },
-  { value: ASSIGNMENT_CRUD_STATUS.PUBLISHED, label: 'Published' },
-  { value: ASSIGNMENT_CRUD_STATUS.ARCHIVED, label: 'Archived' },
-  { value: ASSIGNMENT_CRUD_STATUS.COMPLETED, label: 'Completed' },
+/** Status tabs, in the mockup's order. Archived only shows once there is something archived. */
+const TABS = [
+  { view: '', label: 'All', countKey: 'all' },
+  { view: 'published', label: 'Published', countKey: 'published' },
+  { view: 'scheduled', label: 'Scheduled', countKey: 'scheduled' },
+  { view: 'draft', label: 'Drafts', countKey: 'draft' },
+  { view: 'completed', label: 'Completed', countKey: 'completed' },
+  { view: 'archived', label: 'Archived', countKey: 'archived', hideWhenEmpty: true },
+];
+const VIEWS = new Set(TABS.map((t) => t.view));
+
+const DUE_OPTIONS = [
+  { value: '', label: 'Any due date' },
+  { value: 'overdue', label: 'Overdue' },
+  { value: 'today', label: 'Due today' },
+  { value: 'week', label: 'Next 7 days' },
+  { value: 'later', label: 'Later' },
+  { value: 'none', label: 'No due date' },
 ];
 
-/** "Overdue" is derived for display only - never a stored backend status. */
-function displayStatus(row) {
-  if (row.status === ASSIGNMENT_CRUD_STATUS.PUBLISHED && row.dueDate && isOverdue(row.dueDate)) {
-    return { status: 'overdue', label: 'Overdue' };
+/** The due-date dropdown as API params, in the teacher's own calendar (utils/date reads their timezone). */
+function dueParams(due, today) {
+  switch (due) {
+    case 'overdue':
+      return { dueBefore: addDaysToKey(today, -1) };
+    case 'today':
+      return { dueAfter: today, dueBefore: today };
+    case 'week':
+      return { dueAfter: today, dueBefore: addDaysToKey(today, 6) };
+    case 'later':
+      return { dueAfter: addDaysToKey(today, 7) };
+    case 'none':
+      return { noDueDate: true };
+    default:
+      return {};
   }
-  return { status: row.status, label: undefined };
+}
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/**
+ * What a row's status chip says. The stored status is draft/published/
+ * archived (+ derived "completed"); Scheduled / Due today / Overdue are read
+ * from the dates so the teacher sees what the student sees today.
+ */
+function rowState(row, today) {
+  if (row.status === ASSIGNMENT_CRUD_STATUS.ARCHIVED) return { key: 'archived', label: 'Archived' };
+  if (row.status === ASSIGNMENT_CRUD_STATUS.DRAFT) return { key: 'draft', label: 'Draft' };
+  if (row.status === ASSIGNMENT_CRUD_STATUS.COMPLETED) return { key: 'completed', label: 'Completed' };
+  if (row.startDate && row.startDate.slice(0, 10) > today) return { key: 'scheduled', label: 'Scheduled' };
+  const days = row.dueDate ? daysUntilDateKey(row.dueDate) : null;
+  if (days !== null && days < 0) return { key: 'overdue', label: 'Overdue' };
+  if (days === 0) return { key: 'due-today', label: 'Due today' };
+  return { key: 'published', label: 'Published' };
+}
+
+function dueLabel(dueDate) {
+  if (!dueDate) return '—';
+  const days = daysUntilDateKey(dueDate);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Tomorrow';
+  if (days === -1) return 'Yesterday';
+  return formatDateKey(dueDate.slice(0, 10));
+}
+
+function SubjectCell({ subject }) {
+  if (!subject) return <span className="al-muted">—</span>;
+  const { icon: Icon, tone } = getSubjectVisual(subject);
+  return (
+    <span className="al-subject">
+      <span className="al-subject__tile" data-tone={tone} aria-hidden="true">
+        <Icon size={14} strokeWidth={2.1} />
+      </span>
+      {subject}
+    </span>
+  );
+}
+
+function SubmittedCell({ row, state }) {
+  let label;
+  let percent = 0;
+  if (state.key === 'draft') label = 'Not published';
+  else if (state.key === 'scheduled') label = `Opens ${formatDateKey(row.startDate.slice(0, 10), { year: undefined })}`;
+  else if (!row.recipientCount) label = 'No students';
+  else {
+    percent = Math.round(((row.submittedCount ?? 0) / row.recipientCount) * 100);
+    label = `${row.submittedCount ?? 0} of ${row.recipientCount} submitted`;
+  }
+  return (
+    <div className="al-progress">
+      <div className="al-progress__track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-label={label}>
+        <div className="al-progress__fill" style={{ width: `${percent}%` }} />
+      </div>
+      <span className="al-progress__label">{label}</span>
+    </div>
+  );
 }
 
 export default function AssignmentsListPage() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = VIEWS.has(searchParams.get('view') ?? '') ? (searchParams.get('view') ?? '') : '';
+
   const pagination = usePagination();
   const { page, limit, applyMeta, goToPage } = pagination;
 
   const [search, setSearch] = useState('');
-  const [subject, setSubject] = useState(null);
-  const [grade, setGrade] = useState(null);
-  const [status, setStatus] = useState('');
-  const [dueBefore, setDueBefore] = useState('');
-  const [dueAfter, setDueAfter] = useState('');
-
+  const [subject, setSubject] = useState('');
+  const [grade, setGrade] = useState('');
+  const [due, setDue] = useState('');
   const debouncedSearch = useDebounce(search, 350);
+  const today = getDateKey();
 
-  const subjects = useApi(teacherStudentService.listLookupSubjects);
-  const grades = useApi(teacherStudentService.listLookupGrades);
-  const { run: runSubjects } = subjects;
-  const { run: runGrades } = grades;
+  const subjects = useApi(teacherStudentService.listLookupSubjects, { immediate: true });
+  const grades = useApi(teacherStudentService.listLookupGrades, { immediate: true });
 
-  useEffect(() => {
-    runSubjects().catch(() => {});
-  }, [runSubjects]);
-
-  useEffect(() => {
-    runGrades().catch(() => {});
-  }, [runGrades]);
-
-  const subjectOptions = useMemo(
-    () => (subjects.data ?? []).map((s) => ({ value: s.name, label: s.name })),
-    [subjects.data]
-  );
-  const gradeOptions = useMemo(
-    () => (grades.data ?? []).map((g) => ({ value: g.name, label: g.name })),
-    [grades.data]
+  // Filters shared by the list and the tab counts.
+  const filters = useMemo(
+    () => ({ search: debouncedSearch || undefined, subject: subject || undefined, grade: grade || undefined, ...dueParams(due, today) }),
+    [debouncedSearch, subject, grade, due, today]
   );
 
   const list = useApi(assignmentService.listAssignments);
+  const counts = useApi(assignmentService.getAssignmentCounts);
   const { run: runList, meta } = list;
+  const { run: runCounts } = counts;
 
-  const query = useMemo(
-    () => ({
-      page,
-      limit,
-      search: debouncedSearch || undefined,
-      subject: subject || undefined,
-      grade: grade || undefined,
-      status: status || undefined,
-      dueBefore: dueBefore || undefined,
-      dueAfter: dueAfter || undefined,
-    }),
-    [page, limit, debouncedSearch, subject, grade, status, dueBefore, dueAfter]
-  );
-
-  const load = useCallback(() => runList(query), [runList, query]);
+  const load = useCallback(() => {
+    runCounts(filters).catch(() => {});
+    return runList({ ...filters, view: view || undefined, page, limit }).catch(() => {});
+  }, [runList, runCounts, filters, view, page, limit]);
 
   useEffect(() => {
-    load().catch(() => {});
+    load();
   }, [load]);
 
   useEffect(() => {
     if (meta?.total !== undefined) applyMeta(meta);
   }, [meta, applyMeta]);
 
-  const hasActiveFilters =
-    Boolean(search) || Boolean(subject) || Boolean(grade) || Boolean(status) || Boolean(dueBefore) || Boolean(dueAfter);
+  const hasFilters = Boolean(search || subject || grade || due);
+
+  const withReset = (setter) => (value) => {
+    setter(value);
+    goToPage(1);
+  };
 
   const clearFilters = () => {
     setSearch('');
-    setSubject(null);
-    setGrade(null);
-    setStatus('');
-    setDueBefore('');
-    setDueAfter('');
+    setSubject('');
+    setGrade('');
+    setDue('');
     goToPage(1);
   };
 
-  const withFilterReset = (setter) => (next) => {
-    setter(next);
+  const pickTab = (next) => {
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set('view', next);
+    else params.delete('view');
+    setSearchParams(params, { replace: true });
     goToPage(1);
   };
 
-  // --- row actions -------------------------------------------------------
+  // ---- row actions ----
   const [busyId, setBusyId] = useState(null);
-  const deleteModal = useModal();
-  const [deleting, setDeleting] = useState(false);
+  const [confirm, setConfirm] = useState(null); // { kind: 'delete'|'archive'|'unpublish', row }
 
-  const handlePublish = async (row) => {
+  const act = async (row, fn, message) => {
     setBusyId(row.id);
     try {
-      await assignmentService.publishAssignment(row.id);
-      toast.success('Assignment published');
+      await fn(row.id);
+      toast.success(message);
       await load();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -142,224 +194,216 @@ export default function AssignmentsListPage() {
     }
   };
 
-  const handleArchive = async (row) => {
-    setBusyId(row.id);
-    try {
-      await assignmentService.archiveAssignment(row.id);
-      toast.success('Assignment archived');
-      await load();
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setBusyId(null);
-    }
+  const runConfirmed = async () => {
+    const { kind, row } = confirm;
+    setConfirm(null);
+    if (kind === 'delete') await act(row, assignmentService.deleteAssignment, 'Draft deleted');
+    if (kind === 'archive') await act(row, assignmentService.archiveAssignment, 'Assignment archived');
+    if (kind === 'unpublish') await act(row, assignmentService.unpublishAssignment, 'Moved back to drafts');
   };
 
-  const handleDelete = async () => {
-    setDeleting(true);
-    try {
-      await assignmentService.deleteAssignment(deleteModal.payload.id);
-      toast.success('Assignment deleted');
-      deleteModal.close();
-      await load();
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setDeleting(false);
+  const menuItems = (row, state) => {
+    const items = [{ key: 'view', label: 'View details', icon: <LuEye aria-hidden="true" />, onClick: () => navigate(`/teacher/assignments/${row.id}`) }];
+    if (state.key === 'draft') {
+      items.push({
+        key: 'publish',
+        label: row.recipientCount ? 'Publish' : 'Publish (add students first)',
+        icon: <LuSend aria-hidden="true" />,
+        disabled: !row.recipientCount,
+        onClick: () => act(row, assignmentService.publishAssignment, 'Assignment published'),
+      });
     }
+    const isLive = row.status === ASSIGNMENT_CRUD_STATUS.PUBLISHED;
+    if (isLive && !row.startedCount) {
+      items.push({ key: 'unpublish', label: 'Unpublish', icon: <LuUndo2 aria-hidden="true" />, onClick: () => setConfirm({ kind: 'unpublish', row }) });
+    }
+    if (isLive || row.status === ASSIGNMENT_CRUD_STATUS.COMPLETED) {
+      items.push({ key: 'archive', label: 'Archive', icon: <LuArchive aria-hidden="true" />, onClick: () => setConfirm({ kind: 'archive', row }) });
+    }
+    if (state.key === 'draft') {
+      items.push({ divider: true }, { key: 'delete', label: 'Delete draft', icon: <LuTrash2 aria-hidden="true" />, danger: true, onClick: () => setConfirm({ kind: 'delete', row }) });
+    }
+    return items;
   };
 
   const columns = [
     {
       key: 'title',
       header: 'Assignment',
-      render: (row) => (
-        <Link to={`/teacher/assignments/${row.id}`} style={{ fontWeight: 600 }}>
-          {row.title}
-        </Link>
-      ),
-    },
-    { key: 'subject', header: 'Subject', render: (row) => row.subject || '—' },
-    { key: 'grade', header: 'Grade', render: (row) => row.grade || '—' },
-    {
-      key: 'recipients',
-      header: 'Students',
-      render: (row) => `${row.recipientCount ?? 0} student${row.recipientCount === 1 ? '' : 's'}`,
-    },
-    {
-      key: 'progress',
-      header: 'Submitted',
       render: (row) => {
-        const total = row.recipientCount ?? 0;
-        const submitted = row.submittedCount ?? 0;
+        const meta = [row.questionCount ? plural(row.questionCount, 'question') : 'No questions', row.estimatedMinutes ? `${row.estimatedMinutes} min` : null].filter(Boolean).join(' · ');
         return (
-          <div style={{ minWidth: 120 }}>
-            <ProgressBar value={total ? submitted : 0} max={total || 1} size="sm" />
-            <span className="ui-hint">
-              {submitted}/{total} submitted
-            </span>
+          <div className="al-title">
+            <Link to={`/teacher/assignments/${row.id}`}>{row.title}</Link>
+            <span className="al-meta">{meta}</span>
           </div>
         );
       },
     },
+    { key: 'subject', header: 'Subject', render: (row) => <SubjectCell subject={row.subject} /> },
+    { key: 'grade', header: 'Grade', render: (row) => (row.grade ? <span style={{ whiteSpace: 'nowrap' }}>{row.grade}</span> : <span className="al-muted">—</span>) },
+    { key: 'recipients', header: 'Students', render: (row) => (row.recipientCount ? row.recipientCount : <span className="al-muted">—</span>) },
+    { key: 'submitted', header: 'Submitted', render: (row) => <SubmittedCell row={row} state={rowState(row, today)} /> },
+    { key: 'dueDate', header: 'Due', render: (row) => <span className={`al-due ${row.dueDate ? '' : 'al-muted'}`.trim()}>{dueLabel(row.dueDate)}</span> },
     {
-      key: 'dueDate',
-      header: 'Due',
+      key: 'status',
+      header: 'Status',
       render: (row) => {
-        const { status: derivedStatus, label } = displayStatus(row);
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span>{row.dueDate ? formatDate(row.dueDate) : 'No due date'}</span>
-            {derivedStatus === 'overdue' && <StatusBadge status={derivedStatus} label={label} />}
-          </div>
-        );
+        const state = rowState(row, today);
+        return <span className={`al-status al-status--${state.key}`}>{state.label}</span>;
       },
     },
-    { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-    { key: 'createdAt', header: 'Created', render: (row) => formatDate(row.createdAt) },
     {
       key: 'actions',
-      header: 'Actions',
+      header: <span className="ui-sr-only">Actions</span>,
       align: 'right',
-      render: (row) => (
-        <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          <Button size="sm" variant="secondary" as={Link} to={`/teacher/assignments/${row.id}`}>
-            View
-          </Button>
-          {row.status !== ASSIGNMENT_CRUD_STATUS.ARCHIVED && (
-            <Button size="sm" variant="secondary" as={Link} to={`/teacher/assignments/${row.id}/edit`}>
-              Edit
+      render: (row) => {
+        const state = rowState(row, today);
+        const archived = state.key === 'archived';
+        return (
+          <div className="al-actions">
+            <Button size="sm" variant="secondary" as={Link} to={archived ? `/teacher/assignments/${row.id}` : `/teacher/assignments/${row.id}/edit`}>
+              {archived ? 'View' : 'Edit'}
             </Button>
-          )}
-          {row.status === ASSIGNMENT_CRUD_STATUS.DRAFT && (
-            <Button size="sm" onClick={() => handlePublish(row)} loading={busyId === row.id}>
-              Publish
-            </Button>
-          )}
-          {row.status === ASSIGNMENT_CRUD_STATUS.PUBLISHED && (
-            <Button size="sm" variant="secondary" onClick={() => handleArchive(row)} loading={busyId === row.id}>
-              Archive
-            </Button>
-          )}
-          {row.status === ASSIGNMENT_CRUD_STATUS.DRAFT && (
-            <Button size="sm" variant="danger" onClick={() => deleteModal.open(row)}>
-              Delete
-            </Button>
-          )}
-        </div>
-      ),
+            <Dropdown
+              align="end"
+              trigger={
+                <button type="button" className="al-kebab" aria-label={`More actions for ${row.title}`} disabled={busyId === row.id}>
+                  <LuEllipsisVertical size={16} aria-hidden="true" />
+                </button>
+              }
+              items={menuItems(row, state)}
+            />
+          </div>
+        );
+      },
     },
   ];
 
+  const rows = list.data ?? [];
+  const tabCounts = counts.data ?? {};
+  const total = pagination.total;
+
+  const confirmCopy = {
+    delete: { title: 'Delete this draft?', message: (r) => `"${r.title}" will be permanently deleted. This can't be undone.`, label: 'Delete draft', variant: 'danger' },
+    archive: { title: 'Archive this assignment?', message: (r) => `"${r.title}" moves to Archived. Students keep their work, but it can no longer be edited.`, label: 'Archive' },
+    unpublish: { title: 'Unpublish this assignment?', message: (r) => `"${r.title}" goes back to your drafts and ${plural(r.recipientCount ?? 0, 'student')} stop seeing it.`, label: 'Unpublish' },
+  };
+  const copy = confirm ? confirmCopy[confirm.kind] : null;
+
+  const emptyTitle = hasFilters || view ? 'No assignments match' : 'No assignments yet';
+  const emptyDescription = hasFilters || view ? 'Try another tab, or clear the filters.' : 'Create your first assignment to get started.';
+
   return (
-    <>
+    <div className="al-page">
       <PageHeader
         title="Assignments"
-        description="Everything you've created, published or archived."
+        description="Everything you have created, published or saved as a draft."
         actions={
-          <Button as={Link} to="/teacher/assignments/new">
+          <Button as={Link} to="/teacher/assignments/new" startIcon={<LuPlus />}>
             Create assignment
           </Button>
         }
+        style={{ marginBottom: 0 }}
       />
 
-      <FilterBar>
-        <SearchInput
-          fieldClassName="ui-filterbar__search ui-field--compact"
-          placeholder="Search by title"
-          value={search}
-          onChange={(e) => withFilterReset(setSearch)(e.target.value)}
-          onClear={() => withFilterReset(setSearch)('')}
-        />
-        <SearchableSelect
-          className="ui-field--compact"
-          label="Subject"
-          options={subjectOptions}
-          value={subject}
-          onChange={withFilterReset(setSubject)}
-          loading={subjects.isLoading}
-          placeholder="Any subject"
-          searchPlaceholder="Search subjects…"
-        />
-        <SearchableSelect
-          className="ui-field--compact"
-          label="Grade"
-          options={gradeOptions}
-          value={grade}
-          onChange={withFilterReset(setGrade)}
-          loading={grades.isLoading}
-          placeholder="Any grade"
-          searchPlaceholder="Search grades…"
-        />
-        <Select
-          fieldClassName="ui-field--compact"
-          label="Status"
-          value={status}
-          onChange={(e) => withFilterReset(setStatus)(e.target.value)}
-          options={STATUS_FILTER_OPTIONS}
-        />
-        <DatePicker
-          fieldClassName="ui-field--compact-labeled"
-          label="Due after"
-          value={dueAfter}
-          onChange={(e) => withFilterReset(setDueAfter)(e.target.value)}
-        />
-        <DatePicker
-          fieldClassName="ui-field--compact-labeled"
-          label="Due before"
-          value={dueBefore}
-          onChange={(e) => withFilterReset(setDueBefore)(e.target.value)}
-        />
+      <ul className="al-tabs" aria-label="Filter by status">
+        {TABS.filter((t) => !t.hideWhenEmpty || tabCounts[t.countKey] > 0 || view === t.view).map((t) => {
+          const selected = view === t.view;
+          const n = tabCounts[t.countKey];
+          return (
+            <li key={t.countKey}>
+              <button type="button" className="al-tab" aria-pressed={selected} onClick={() => pickTab(t.view)}>
+                {selected && <LuCheck size={13} strokeWidth={2.6} aria-hidden="true" />}
+                {t.label}
+                {n !== undefined && <span aria-label={`, ${n}`}> · {n}</span>}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
 
-        <Tooltip label="Clear filters" side="top">
-          <IconButton
-            icon={<LuFilterX aria-hidden="true" />}
-            label="Clear filters"
-            size="sm"
-            onClick={clearFilters}
-            disabled={!hasActiveFilters}
-          />
-        </Tooltip>
-      </FilterBar>
+      <div className="al-filters" role="search">
+        <label className="al-search">
+          <span className="ui-sr-only">Search by title</span>
+          <LuSearch size={16} aria-hidden="true" />
+          <input type="search" placeholder="Search by title" value={search} onChange={(e) => withReset(setSearch)(e.target.value)} />
+        </label>
+        <select
+          className={`al-select ${subject ? '' : 'al-select--placeholder'}`.trim()}
+          aria-label="Subject"
+          value={subject}
+          onChange={(e) => withReset(setSubject)(e.target.value)}
+        >
+          <option value="">All subjects</option>
+          {(subjects.data ?? []).map((s) => (
+            <option key={s.id ?? s.name} value={s.name}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+        <select className={`al-select ${grade ? '' : 'al-select--placeholder'}`.trim()} aria-label="Grade" value={grade} onChange={(e) => withReset(setGrade)(e.target.value)}>
+          <option value="">All grades</option>
+          {(grades.data ?? []).map((g) => (
+            <option key={g.id ?? g.name} value={g.name}>
+              {g.name}
+            </option>
+          ))}
+        </select>
+        <select className={`al-select ${due ? '' : 'al-select--placeholder'}`.trim()} aria-label="Due date" value={due} onChange={(e) => withReset(setDue)(e.target.value)}>
+          {DUE_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <button type="button" className="al-clear" onClick={clearFilters} disabled={!hasFilters}>
+          Clear
+        </button>
+      </div>
 
       <DataTable
         columns={columns}
-        data={list.data ?? []}
+        data={rows}
         isLoading={list.isLoading}
         error={list.error}
         onRetry={load}
         pagination={pagination}
         onPageChange={goToPage}
-        emptyTitle={hasActiveFilters ? 'No assignments match these filters' : 'No assignments yet'}
-        emptyDescription={
-          hasActiveFilters ? 'Try adjusting the filters above.' : 'Create your first assignment to get started.'
-        }
+        emptyTitle={emptyTitle}
+        emptyDescription={emptyDescription}
         emptyAction={
-          !hasActiveFilters && (
-            <Button as={Link} to="/teacher/assignments/new">
+          !hasFilters && !view ? (
+            <Button as={Link} to="/teacher/assignments/new" startIcon={<LuPlus />}>
               Create assignment
+            </Button>
+          ) : (
+            <Button variant="secondary" onClick={() => { clearFilters(); pickTab(''); }}>
+              Show all assignments
             </Button>
           )
         }
         caption="Assignments"
       />
 
+      {pagination.totalPages <= 1 && total > 0 && (
+        <p className="al-footer" role="status">
+          Showing {rows.length} of {plural(total, 'assignment')}
+        </p>
+      )}
+
       <ConfirmationModal
-        isOpen={deleteModal.isOpen}
-        onClose={deleteModal.close}
-        onConfirm={handleDelete}
-        title="Delete this draft?"
-        message={
-          deleteModal.payload
-            ? `"${deleteModal.payload.title}" will be permanently deleted. This cannot be undone.`
-            : ''
-        }
-        confirmLabel="Delete"
-        variant="danger"
-        loading={deleting}
+        isOpen={Boolean(confirm)}
+        onClose={() => setConfirm(null)}
+        onConfirm={runConfirmed}
+        title={copy?.title ?? ''}
+        message={confirm ? copy.message(confirm.row) : ''}
+        confirmLabel={copy?.label}
+        variant={copy?.variant}
+        loading={Boolean(busyId)}
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

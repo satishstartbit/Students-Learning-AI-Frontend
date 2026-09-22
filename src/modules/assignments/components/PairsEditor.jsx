@@ -3,20 +3,22 @@ import { Button, IconButton, Input } from '../../../components/common';
 import PicturePicker from '../media/PicturePicker';
 import { MAX_PAIRS, MIN_PAIRS, newPair } from './questionDrafts';
 
-/** One side of a pair (left or right) - a short label, text and/or a compact picture. */
+/** One side of a pair (left or right) - text plus a compact picture button, on one line. */
 function SideEditor({ label, side, onChange, disabled }) {
   return (
-    <div style={{ flex: '1 1 12rem', minWidth: 0 }}>
-      <Input
-        aria-label={label}
-        placeholder={label}
-        value={side.text}
-        maxLength={200}
-        disabled={disabled}
-        onChange={(e) => onChange({ ...side, text: e.target.value })}
-        reserveHelper={false}
-        fieldClassName="ui-field--compact"
-      />
+    <div className="af-option" style={{ flex: '1 1 12rem', minWidth: 0 }}>
+      <div className="af-option__text">
+        <Input
+          aria-label={label}
+          placeholder={label}
+          value={side.text}
+          maxLength={200}
+          disabled={disabled}
+          onChange={(e) => onChange({ ...side, text: e.target.value })}
+          reserveHelper={false}
+          fieldClassName="ui-field--compact"
+        />
+      </div>
       <PicturePicker compact value={side.image} onChange={(image) => onChange({ ...side, image })} disabled={disabled} />
     </div>
   );
@@ -36,7 +38,14 @@ export default function PairsEditor({ pairs, onChange, disabled, error }) {
       <legend className="ui-label">Matching pairs - each left item matches exactly one right item</legend>
       <div style={{ display: 'grid', gap: 'var(--spacing-sm)' }}>
         {pairs.map((pair, index) => (
-          <div key={pair.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-sm)' }}>
+          <div
+            key={pair.id}
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 'var(--spacing-sm)',
+            }}
+          >
             <span className="ui-hint" style={{ paddingTop: 10, width: 20, flexShrink: 0 }}>
               {index + 1}.
             </span>
@@ -44,7 +53,12 @@ export default function PairsEditor({ pairs, onChange, disabled, error }) {
             <span aria-hidden="true" className="ui-hint" style={{ paddingTop: 10 }}>
               &harr;
             </span>
-            <SideEditor label={`Pair ${index + 1} right item`} side={pair.right} onChange={(right) => update(pair.id, { right })} disabled={disabled} />
+            <SideEditor
+              label={`Pair ${index + 1} right item`}
+              side={pair.right}
+              onChange={(right) => update(pair.id, { right })}
+              disabled={disabled}
+            />
             {pairs.length > MIN_PAIRS && (
               <IconButton label={`Remove pair ${index + 1}`} variant="danger" size="sm" onClick={() => remove(pair.id)} disabled={disabled}>
                 <LuX aria-hidden="true" />

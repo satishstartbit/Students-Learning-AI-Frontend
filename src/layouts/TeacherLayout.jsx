@@ -7,7 +7,11 @@ import {
   LuUser,
   LuUsers,
 } from 'react-icons/lu';
+import { useEffect } from 'react';
+import { useApi } from '../hooks/useApi';
+import { getMe } from '../modules/auth/services/auth.service';
 import AuthenticatedLayout from './AuthenticatedLayout';
+import usePortalTheme from './usePortalTheme';
 
 /** Navigation for the teacher area (/teacher/*). */
 const NAV_ITEMS = [
@@ -27,8 +31,21 @@ const NAV_ITEMS = [
 ];
 
 export function TeacherLayout({ children }) {
+  usePortalTheme();
+
+  // The account tile shows the teacher's school under their name. Re-read
+  // when My Profile saves, so a changed school shows straight away.
+  const me = useApi(getMe, { immediate: true });
+  const { run: runMe } = me;
+  useEffect(() => {
+    const onUpdated = () => runMe().catch(() => {});
+    window.addEventListener('profile:updated', onUpdated);
+    return () => window.removeEventListener('profile:updated', onUpdated);
+  }, [runMe]);
+  const school = me.data?.user?.profile?.profile_data?.school || undefined;
+
   return (
-    <AuthenticatedLayout navItems={NAV_ITEMS} title="Teacher Portal" subtitle="Teacher" brand="TP">
+    <AuthenticatedLayout navItems={NAV_ITEMS} title="Teacher Portal" subtitle="Teacher" brand="TP" accountSubtitle={school}>
       {children}
     </AuthenticatedLayout>
   );

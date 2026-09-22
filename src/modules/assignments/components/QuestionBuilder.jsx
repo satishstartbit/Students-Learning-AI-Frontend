@@ -1,11 +1,14 @@
-import { LuArrowDown, LuArrowUp, LuPlus, LuTrash2, LuX } from 'react-icons/lu';
-import { Button, Card, Checkbox, IconButton, Input, Radio } from '../../../components/common';
+import { DragDropProvider } from '@dnd-kit/react';
+import { isSortable, useSortable } from '@dnd-kit/react/sortable';
+import { LuArrowDown, LuArrowUp, LuGripVertical, LuPlus, LuTrash2, LuX } from 'react-icons/lu';
+import { Button, Checkbox, Input, Textarea } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import PicturePicker from '../media/PicturePicker';
 import curriculumService from '../services/curriculum.service';
 import PairsEditor from './PairsEditor';
 import PassageEditor from './PassageEditor';
 import { MAX_OPTIONS, MAX_QUESTIONS, MIN_OPTIONS, MIN_PAIRS, newOption, newPair, newQuestion } from './questionDrafts';
+import './assignmentForm.css';
 
 /** Switching a question's type needs that type's fields seeded, or e.g. a fresh Matching question starts with 0 pairs. */
 function defaultsForType(answerType, current) {
@@ -18,22 +21,44 @@ function defaultsForType(answerType, current) {
   return {};
 }
 
-// Shown while the admin-managed Question Types master hasn't loaded yet (or has none active) -
-// keyed by `code` so a live-fetched label/description always wins once it arrives.
-const FALLBACK_TYPES = [
-  { code: 'mcq', name: 'Quiz (Multiple Choice)', description: 'Marked automatically when the student submits.' },
-  { code: 'free_text', name: 'Description (Written Answer)', description: 'You mark it when you review the submission.' },
-  { code: 'matching', name: 'Matching', description: 'Match left items to right items. Marked automatically, with partial credit.' },
-  { code: 'passage_mcq', name: 'Passage', description: 'A reading passage, then multiple choice. Marked automatically.' },
+// Short pill labels (the mockup's), and the line under the pills. The line
+// comes from the admin-managed Question Types master when it has one.
+const TYPES = [
+  { code: 'mcq', label: 'Multiple choice', hint: 'Pick the correct answer. Marked automatically.' },
+  { code: 'free_text', label: 'Written answer', hint: 'Students type an answer. You mark it when reviewing.' },
+  { code: 'matching', label: 'Matching', hint: 'Students match each left item to its right item. Marked automatically.' },
+  { code: 'passage_mcq', label: 'Passage', hint: 'Students read a passage, then pick an answer. Marked automatically.' },
 ];
 
-function useAnswerTypeOptions() {
+function useAnswerTypes() {
   const { data } = useApi(curriculumService.listQuestionTypes, { immediate: true });
   const byCode = new Map((data ?? []).map((t) => [t.code, t]));
-  return FALLBACK_TYPES.map((fallback) => {
-    const live = byCode.get(fallback.code);
-    return { value: fallback.code, label: live?.name ?? fallback.name, description: live?.description ?? fallback.description };
-  });
+  return TYPES.map((t) => ({ ...t, hint: byCode.get(t.code)?.description || t.hint, title: byCode.get(t.code)?.name }));
+}
+
+function TypePills({ question, types, disabled, onPick }) {
+  const current = types.find((t) => t.code === question.answerType);
+  return (
+    <fieldset className="af-types">
+      <legend className="af-types__label">Question type</legend>
+      <div className="af-types__row">
+        {types.map((t) => (
+          <label key={t.code} className="af-type" title={t.title}>
+            <input
+              type="radio"
+              name={`answer-type-${question.key}`}
+              value={t.code}
+              checked={question.answerType === t.code}
+              disabled={disabled}
+              onChange={() => onPick(t.code)}
+            />
+            <span>{t.label}</span>
+          </label>
+        ))}
+      </div>
+      {current && <p className="af-types__hint">{current.hint}</p>}
+    </fieldset>
+  );
 }
 
 function OptionsEditor({ question, update, disabled, errors }) {
@@ -45,27 +70,25 @@ function OptionsEditor({ question, update, disabled, errors }) {
     });
 
   return (
-    <fieldset className="ui-field" style={{ border: 0, padding: 0, margin: '0 0 var(--spacing-md)' }}>
-      <legend className="ui-label">Answer options - select the correct one</legend>
-      <div style={{ display: 'grid', gap: 'var(--spacing-sm)' }}>
+    <fieldset className="af-options">
+      <legend>Answer options · select the correct one</legend>
+      <div className="af-options__list">
         {question.options.map((option, index) => (
-          <div key={option.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-sm)' }}>
-            {/* .ui-choice supplies the control's colours and the 48px hit area. */}
-            <label className={`ui-choice ${disabled ? 'ui-choice--disabled' : ''}`.trim()} title="Mark as the correct answer" style={{ flexShrink: 0, paddingTop: 6 }}>
-              <input
-                type="radio"
-                className="ui-choice__control"
-                name={`correct-${question.key}`}
-                checked={question.correctOptionId === option.id}
-                onChange={() => update({ correctOptionId: option.id })}
-                disabled={disabled}
-                aria-label={`Option ${index + 1} is the correct answer`}
-              />
-            </label>
-            <div style={{ flex: '1 1 14rem', minWidth: 0 }}>
+          <div key={option.id} className="af-option">
+            <input
+              type="radio"
+              className="af-option__radio"
+              name={`correct-${question.key}`}
+              checked={question.correctOptionId === option.id}
+              onChange={() => update({ correctOptionId: option.id })}
+              disabled={disabled}
+              aria-label={`Option ${index + 1} is the correct answer`}
+              title="Mark as the correct answer"
+            />
+            <div className="af-option__text">
               <Input
                 aria-label={`Option ${index + 1}`}
-                placeholder={index === 0 ? 'e.g. Apple' : `Option ${index + 1}`}
+                placeholder={`Option ${index + 1}`}
                 value={option.text}
                 maxLength={200}
                 disabled={disabled}
@@ -73,31 +96,28 @@ function OptionsEditor({ question, update, disabled, errors }) {
                 reserveHelper={false}
                 fieldClassName="ui-field--compact"
               />
-              <PicturePicker compact value={option.image} onChange={(image) => setOption(option.id, { image })} disabled={disabled} />
             </div>
-            {question.options.length > MIN_OPTIONS && (
-              <IconButton label={`Remove option ${index + 1}`} variant="danger" size="sm" onClick={() => removeOption(option.id)} disabled={disabled}>
-                <LuX aria-hidden="true" />
-              </IconButton>
-            )}
+            <PicturePicker compact value={option.image} onChange={(image) => setOption(option.id, { image })} disabled={disabled} />
+            <button
+              type="button"
+              className="af-icon-btn af-icon-btn--danger"
+              aria-label={`Remove option ${index + 1}`}
+              title="Remove option"
+              onClick={() => removeOption(option.id)}
+              disabled={disabled || question.options.length <= MIN_OPTIONS}
+            >
+              <LuX size={16} aria-hidden="true" />
+            </button>
           </div>
         ))}
       </div>
       {question.options.length < MAX_OPTIONS && (
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          startIcon={<LuPlus />}
-          disabled={disabled}
-          onClick={() => update({ options: [...question.options, newOption()] })}
-          style={{ marginTop: 'var(--spacing-xs)', alignSelf: 'flex-start' }}
-        >
-          Add option
-        </Button>
+        <button type="button" className="af-add-link" disabled={disabled} onClick={() => update({ options: [...question.options, newOption()] })}>
+          <LuPlus size={14} aria-hidden="true" /> Add option
+        </button>
       )}
       {(errors?.options || errors?.correct) && (
-        <p className="ui-hint" role="alert" style={{ color: 'var(--color-danger-fg)', marginBottom: 0 }}>
+        <p className="af-error" role="alert">
           {errors.options || errors.correct}
         </p>
       )}
@@ -105,129 +125,147 @@ function OptionsEditor({ question, update, disabled, errors }) {
   );
 }
 
+function QuestionCard({ q, index, count, types, errors, locked, update, move, remove }) {
+  const { ref, handleRef, isDragging } = useSortable({ id: q.key, index, disabled: locked });
+  const qErrors = errors[q.key];
+
+  return (
+    <article
+      ref={ref}
+      className={['af-question', isDragging && 'af-question--dragging', qErrors && 'af-question--error'].filter(Boolean).join(' ')}
+      aria-label={`Question ${index + 1}`}
+    >
+      <div className="af-question__head">
+        <button ref={handleRef} type="button" className="af-question__handle" aria-label={`Drag to reorder question ${index + 1}`} disabled={locked}>
+          <LuGripVertical size={16} aria-hidden="true" />
+        </button>
+        <h3 className="af-question__title">Question {index + 1}</h3>
+        <button type="button" className="af-icon-btn" aria-label="Move question up" onClick={() => move(index, -1)} disabled={locked || index === 0}>
+          <LuArrowUp size={16} aria-hidden="true" />
+        </button>
+        <button type="button" className="af-icon-btn" aria-label="Move question down" onClick={() => move(index, 1)} disabled={locked || index === count - 1}>
+          <LuArrowDown size={16} aria-hidden="true" />
+        </button>
+        <button type="button" className="af-icon-btn af-icon-btn--danger" aria-label={`Remove question ${index + 1}`} onClick={remove} disabled={locked}>
+          <LuTrash2 size={16} aria-hidden="true" />
+        </button>
+      </div>
+
+      <PicturePicker value={q.image} onChange={(image) => update({ image })} disabled={locked} />
+
+      <Input
+        label="Question"
+        required
+        placeholder="What is this?"
+        value={q.prompt}
+        maxLength={1000}
+        disabled={locked}
+        error={qErrors?.prompt}
+        onChange={(e) => update({ prompt: e.target.value })}
+      />
+
+      <TypePills question={q} types={types} disabled={locked} onPick={(code) => update({ answerType: code, ...defaultsForType(code, q) })} />
+
+      {q.answerType === 'passage_mcq' && (
+        <PassageEditor value={q.passage} onChange={(passage) => update({ passage })} disabled={locked} error={qErrors?.passage} />
+      )}
+
+      {(q.answerType === 'mcq' || q.answerType === 'passage_mcq') && (
+        <OptionsEditor question={q} update={update} disabled={locked} errors={qErrors} />
+      )}
+
+      {q.answerType === 'matching' && (
+        <PairsEditor pairs={q.pairs} onChange={(pairs) => update({ pairs })} disabled={locked} error={qErrors?.pairs} />
+      )}
+
+      {q.answerType === 'free_text' && (
+        <Textarea
+          label="Model answer (optional)"
+          hint="Only you see this. Use it as a guide when marking."
+          value={q.expectedAnswer}
+          maxLength={1000}
+          rows={3}
+          disabled={locked}
+          onChange={(e) => update({ expectedAnswer: e.target.value })}
+        />
+      )}
+
+      <div className="af-points">
+        <Input
+          label="Points"
+          type="number"
+          min="1"
+          max="1000"
+          value={q.points}
+          disabled={locked}
+          onChange={(e) => update({ points: e.target.value })}
+          reserveHelper={false}
+        />
+        <Checkbox
+          label="Optional question"
+          checked={q.required === false}
+          disabled={locked}
+          onChange={(e) => update({ required: !e.target.checked })}
+          title="The student may skip this question"
+        />
+      </div>
+    </article>
+  );
+}
+
 /**
  * Builds a task's questions: each has an optional picture, a prompt, a
- * points value and whether it's required, plus one of 4 answer shapes -
+ * points value and whether it's optional, plus one of 4 answer shapes -
  * multiple choice, written answer, matching, or a reading passage with
  * multiple choice. Entirely optional - an empty list means a plain task.
+ * Reorder by dragging the grip or with the arrow buttons.
  *
  * `questions` are drafts (see questionDrafts.js); `errors` comes from
  * validateQuestions. `locked` = a student has started, so no edits.
  */
 export default function QuestionBuilder({ questions, onChange, errors = {}, locked = false }) {
-  const answerTypeOptions = useAnswerTypeOptions();
+  const types = useAnswerTypes();
   const update = (key, patch) => onChange(questions.map((q) => (q.key === key ? { ...q, ...patch } : q)));
-  const move = (index, delta) => {
+  const moveTo = (from, to) => {
+    if (to < 0 || to >= questions.length || from === to) return;
     const next = [...questions];
-    const [item] = next.splice(index, 1);
-    next.splice(index + delta, 0, item);
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
     onChange(next);
+  };
+
+  const handleDragEnd = (event) => {
+    if (event.canceled) return;
+    const { source } = event.operation;
+    if (isSortable(source) && source.initialIndex !== source.index) moveTo(source.initialIndex, source.index);
   };
 
   return (
     <div>
       {questions.length === 0 && (
-        <p className="ui-hint" style={{ marginTop: 0 }}>
-          No questions yet. Mix quiz, written-answer, matching and passage questions in one task.
+        <p className="af-roster__note" style={{ marginTop: 0 }}>
+          No questions yet. Mix multiple choice, written answers, matching and passages in one assignment.
         </p>
       )}
 
-      <div style={{ display: 'grid', gap: 'var(--spacing-md)' }}>
-        {questions.map((q, index) => (
-          <Card key={q.key} flat aria-label={`Question ${index + 1}`}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' }}>
-              <strong>Question {index + 1}</strong>
-              <div style={{ display: 'flex', gap: 4 }}>
-                <IconButton label="Move question up" size="sm" onClick={() => move(index, -1)} disabled={locked || index === 0}>
-                  <LuArrowUp aria-hidden="true" />
-                </IconButton>
-                <IconButton label="Move question down" size="sm" onClick={() => move(index, 1)} disabled={locked || index === questions.length - 1}>
-                  <LuArrowDown aria-hidden="true" />
-                </IconButton>
-                <IconButton
-                  label={`Remove question ${index + 1}`}
-                  size="sm"
-                  variant="danger"
-                  onClick={() => onChange(questions.filter((item) => item.key !== q.key))}
-                  disabled={locked}
-                >
-                  <LuTrash2 aria-hidden="true" />
-                </IconButton>
-              </div>
-            </div>
-
-            <PicturePicker value={q.image} onChange={(image) => update(q.key, { image })} disabled={locked} />
-
-            <Input
-              label="Question"
-              required
-              placeholder="What is this?"
-              value={q.prompt}
-              maxLength={1000}
-              disabled={locked}
-              error={errors[q.key]?.prompt}
-              onChange={(e) => update(q.key, { prompt: e.target.value })}
+      <DragDropProvider onDragEnd={handleDragEnd}>
+        <div className="af-questions">
+          {questions.map((q, index) => (
+            <QuestionCard
+              key={q.key}
+              q={q}
+              index={index}
+              count={questions.length}
+              types={types}
+              errors={errors}
+              locked={locked}
+              update={(patch) => update(q.key, patch)}
+              move={(i, delta) => moveTo(i, i + delta)}
+              remove={() => onChange(questions.filter((item) => item.key !== q.key))}
             />
-
-            <Radio
-              name={`answer-type-${q.key}`}
-              label="Question type"
-              direction="row"
-              value={q.answerType}
-              disabled={locked}
-              onChange={(e) => update(q.key, { answerType: e.target.value, ...defaultsForType(e.target.value, q) })}
-              options={answerTypeOptions}
-            />
-
-            <div className="grid gap-4 sm:grid-cols-2 ui-field">
-              <Input
-                label="Points"
-                type="number"
-                min="1"
-                max="1000"
-                value={q.points}
-                disabled={locked}
-                onChange={(e) => update(q.key, { points: e.target.value })}
-                reserveHelper={false}
-              />
-              <Checkbox
-                label="Optional - the student may skip this question"
-                checked={q.required === false}
-                disabled={locked}
-                onChange={(e) => update(q.key, { required: !e.target.checked })}
-              />
-            </div>
-
-            {q.answerType === 'passage_mcq' && (
-              <PassageEditor
-                value={q.passage}
-                onChange={(passage) => update(q.key, { passage })}
-                disabled={locked}
-                error={errors[q.key]?.passage}
-              />
-            )}
-
-            {(q.answerType === 'mcq' || q.answerType === 'passage_mcq') && (
-              <OptionsEditor question={q} update={(patch) => update(q.key, patch)} disabled={locked} errors={errors[q.key]} />
-            )}
-
-            {q.answerType === 'matching' && (
-              <PairsEditor pairs={q.pairs} onChange={(pairs) => update(q.key, { pairs })} disabled={locked} error={errors[q.key]?.pairs} />
-            )}
-
-            {q.answerType === 'free_text' && (
-              <Input
-                label="Teacher notes (optional)"
-                hint="Only you see this, as a reminder when marking."
-                value={q.expectedAnswer}
-                maxLength={1000}
-                disabled={locked}
-                onChange={(e) => update(q.key, { expectedAnswer: e.target.value })}
-              />
-            )}
-          </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      </DragDropProvider>
 
       <Button
         type="button"
@@ -235,7 +273,7 @@ export default function QuestionBuilder({ questions, onChange, errors = {}, lock
         startIcon={<LuPlus />}
         disabled={locked || questions.length >= MAX_QUESTIONS}
         onClick={() => onChange([...questions, newQuestion()])}
-        style={{ marginTop: 'var(--spacing-md)' }}
+        style={{ marginTop: 12 }}
       >
         Add question
       </Button>

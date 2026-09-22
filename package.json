@@ -15,6 +15,7 @@
     "@emoji-mart/react": "^1.1.1",
     "@fontsource-variable/fredoka": "^5.3.0",
     "@fontsource/andika": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
     "@fontsource/patrick-hand": "^5.3.0",
     "@fontsource/poppins": "^5.3.0",
     "@reduxjs/toolkit": "^2.12.0",
