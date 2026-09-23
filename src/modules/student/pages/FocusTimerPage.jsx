@@ -161,7 +161,7 @@ function FocusSession({ timer, settings }) {
   const subjectTone = getSubjectVisual(assignment?.subject).tone;
 
   return (
-    <div className="fs-page">
+    <div className="fs-page td-page">
       <h1 className="fs-title">Focus session</h1>
       <p className="fs-subtitle">One step at a time. Everything else can wait.</p>
 

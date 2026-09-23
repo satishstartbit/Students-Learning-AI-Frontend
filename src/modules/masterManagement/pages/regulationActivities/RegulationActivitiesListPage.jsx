@@ -119,7 +119,7 @@ export default function RegulationActivitiesListPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Regulation Activities"
         description="Breathing, grounding, movement and calming activities recommended after a check-in."
@@ -167,6 +167,6 @@ export default function RegulationActivitiesListPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

@@ -2135,6 +2135,29 @@
   position: relative;
   padding: var(--spacing-xl);
 }
+
+/* The standard page frame: stacks a page's top-level sections with one
+   consistent gap and caps the reading width. Carried by the root element of
+   every page rendered inside AuthenticatedLayout (Super Admin, Teacher,
+   Parent and the non-Kid Student pages) - it is on each page rather than on
+   the shell, so a page that needs a different frame can simply not use it.
+
+   Lived in modules/teacher/components/dashboard/teacherDashboard.css while
+   TeacherDashboardPage was its only user; shared now, so it belongs here.
+   A page that also has its own root class (.sh-page, .pf-page, .al-page,
+   ...) keeps it: those module stylesheets load after this one, so their own
+   max-width/padding still wins and .td-page only supplies what they don't
+   set. */
+.td-page {
+  display: grid;
+  gap: 14px;
+  /* Centred in the shell, not pinned left: past 1120px the leftover width is
+     split evenly on both sides instead of pooling to the right. */
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
+}
+
 .ui-shell__public {
   display: flex;
   flex-direction: column;

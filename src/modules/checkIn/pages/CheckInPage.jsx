@@ -30,7 +30,7 @@ export default function CheckInPage() {
   const tool = recommendation.data?.tool ?? null;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Check in"
         description="How are you arriving today? It takes a few seconds and helps suggest what might help."
@@ -77,6 +77,6 @@ export default function CheckInPage() {
           </Card>
         )}
       </div>
-    </>
+    </div>
   );
 }

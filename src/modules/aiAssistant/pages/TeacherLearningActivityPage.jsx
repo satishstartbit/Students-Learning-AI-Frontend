@@ -102,7 +102,7 @@ export default function TeacherLearningActivityPage() {
   ];
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Student Learning Activity"
         description="How your students are using the AI learning assistant. Conversations stay private - this shows activity only."
@@ -164,6 +164,6 @@ export default function TeacherLearningActivityPage() {
             : 'Once your students start using the AI learning assistant, their activity will appear here.'
         }
       />
-    </>
+    </div>
   );
 }

@@ -121,7 +121,7 @@ export default function AvatarsListPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Avatars"
         description="Avatar images students can choose from."
@@ -169,6 +169,6 @@ export default function AvatarsListPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

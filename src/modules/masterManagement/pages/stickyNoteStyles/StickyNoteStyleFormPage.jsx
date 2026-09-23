@@ -50,7 +50,7 @@ export default function StickyNoteStyleFormPage() {
   if (isEdit && loadingItem && !existing) return <Loader message="Loading style…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit sticky note style' : 'Add sticky note style'}
         breadcrumbs={[
@@ -79,6 +79,6 @@ export default function StickyNoteStyleFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

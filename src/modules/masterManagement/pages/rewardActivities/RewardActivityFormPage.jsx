@@ -72,7 +72,7 @@ export default function RewardActivityFormPage() {
   if (isEdit && loadingItem && !existing) return <Loader message="Loading activity…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit reward activity' : 'Add reward activity'}
         breadcrumbs={[
@@ -110,6 +110,6 @@ export default function RewardActivityFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

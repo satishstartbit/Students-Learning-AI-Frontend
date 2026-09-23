@@ -54,7 +54,7 @@ export default function CurriculumSubjectFormPage() {
   if (isEdit && isLoading && !existing) return <Loader message="Loading subject…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit subject' : 'Add subject'}
         breadcrumbs={[
@@ -77,6 +77,6 @@ export default function CurriculumSubjectFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

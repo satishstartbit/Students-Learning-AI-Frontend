@@ -73,7 +73,7 @@ export default function AcademicYearFormPage() {
   if (isEdit && loadingItem && !existing) return <Loader message="Loading academic year…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit academic year' : 'Add academic year'}
         breadcrumbs={[
@@ -110,6 +110,6 @@ export default function AcademicYearFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

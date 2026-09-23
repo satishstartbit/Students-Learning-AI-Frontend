@@ -128,7 +128,7 @@ export default function TeacherProfilePage() {
   const emailChanged = record && form.values.email.trim().toLowerCase() !== String(record.email ?? '').toLowerCase();
 
   return (
-    <div className="pf-page">
+    <div className="pf-page td-page">
       <h1 className="pf-title">My Profile</h1>
       <p className="pf-subtitle">Your details, what you teach, and your password.</p>
 

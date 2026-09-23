@@ -361,7 +361,7 @@ export default function AssignmentDetailPage() {
   }
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={a.title}
         description={[a.subject || 'No subject', a.topic?.name, a.grade || 'No grade'].filter(Boolean).join(' · ')}
@@ -425,6 +425,6 @@ export default function AssignmentDetailPage() {
       <StudentWork key={`${item.recipientId}:${item.status}`} item={item} assignmentId={assignmentId} reload={load} />
 
       <Toast />
-    </>
+    </div>
   );
 }

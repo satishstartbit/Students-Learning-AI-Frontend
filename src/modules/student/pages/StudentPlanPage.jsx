@@ -81,7 +81,7 @@ export default function StudentPlanPage() {
   const addTask = (dueDate) => setTaskDialog({ mode: 'type', dueDate });
 
   return (
-    <div className="sh-page sp-page">
+    <div className="sh-page sp-page td-page">
       <header className="sp-header">
         <h1 className="sp-header__title">Plan</h1>
         <p className="sp-header__summary">Your week, one step at a time.</p>

@@ -24,7 +24,7 @@ export default function ParentOnboardingPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Welcome! Tell us about your family"
         description="A few questions so teachers and your child's learning tools can support them the way that works at home. You can change these any time on My Profile."
@@ -39,6 +39,6 @@ export default function ParentOnboardingPage() {
           <ParentFamilyForm answers={onboarding.data.answers} submitLabel="Save and continue" onSaved={handleSaved} />
         </Card>
       )}
-    </>
+    </div>
   );
 }

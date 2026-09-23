@@ -100,7 +100,7 @@ export default function AdminRevenuePage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Revenue"
         description={`Subscription revenue and subscriber counts, by plan. All figures in ${currency}.`}
@@ -180,6 +180,6 @@ export default function AdminRevenuePage() {
           </Card>
         </>
       )}
-    </>
+    </div>
   );
 }

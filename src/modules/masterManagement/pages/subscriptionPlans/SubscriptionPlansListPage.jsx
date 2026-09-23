@@ -114,7 +114,7 @@ export default function SubscriptionPlansListPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Subscription Plans"
         description="Billing plans available to parents."
@@ -162,6 +162,6 @@ export default function SubscriptionPlansListPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

@@ -320,7 +320,7 @@ export default function ParentSubscriptionPage() {
   const allPayments = payments.data ?? [];
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Subscription"
         description={
@@ -550,6 +550,6 @@ export default function ParentSubscriptionPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

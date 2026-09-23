@@ -97,7 +97,7 @@ export default function StudentHomePage() {
   const openOwnTask = (task) => setTaskDialog({ mode: 'edit', task: task.raw });
 
   return (
-    <div className="sh-page">
+    <div className="sh-page td-page">
       <HomeHero
         firstName={settings?.preferredName || user?.firstName}
         openCount={plan.openCount}

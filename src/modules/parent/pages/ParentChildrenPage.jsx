@@ -140,7 +140,7 @@ export default function ParentChildrenPage() {
   const rows = children.data ?? [];
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="My Children"
         description="View and manage your children, their subjects and their teachers."
@@ -219,6 +219,6 @@ export default function ParentChildrenPage() {
         confirmLabel="Remove"
         variant="danger"
       />
-    </>
+    </div>
   );
 }

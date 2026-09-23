@@ -74,7 +74,7 @@ export default function QuestionTypeFormPage() {
   if (isEdit && isLoading && !existing) return <Loader message="Loading question type…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit question type' : 'Add question type'}
         breadcrumbs={[
@@ -110,6 +110,6 @@ export default function QuestionTypeFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

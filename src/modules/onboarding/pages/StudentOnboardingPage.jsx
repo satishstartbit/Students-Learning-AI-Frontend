@@ -189,7 +189,7 @@ export default function StudentOnboardingPage() {
   const completed = onboarding.data?.completed;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={completed ? 'My learning profile' : 'Welcome! Tell us about you'}
         description={
@@ -204,6 +204,6 @@ export default function StudentOnboardingPage() {
         <ErrorState title="We couldn't load your questions" error={onboarding.error} onRetry={() => onboarding.run().catch(() => {})} />
       )}
       {onboarding.data && <StudentOnboardingForm onboarding={onboarding.data} onSaved={handleSaved} />}
-    </>
+    </div>
   );
 }

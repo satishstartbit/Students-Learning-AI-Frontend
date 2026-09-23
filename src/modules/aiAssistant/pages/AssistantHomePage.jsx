@@ -41,7 +41,7 @@ export default function AssistantHomePage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="AI Learning Assistant"
         description="Ask questions, get things explained, and practice with a friendly helper."
@@ -87,6 +87,6 @@ export default function AssistantHomePage() {
           </Card>
         </>
       )}
-    </>
+    </div>
   );
 }

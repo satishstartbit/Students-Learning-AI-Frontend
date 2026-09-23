@@ -116,7 +116,7 @@ export default function StickyNoteStylesListPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Sticky Note Styles"
         description="Visual styles available for student sticky notes."
@@ -164,6 +164,6 @@ export default function StickyNoteStylesListPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

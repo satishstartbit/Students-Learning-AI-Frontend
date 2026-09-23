@@ -60,7 +60,7 @@ export default function ThemeFormPage() {
   if (isEdit && loadingItem && !existing) return <Loader message="Loading theme…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit colour theme' : 'Add colour theme'}
         breadcrumbs={[
@@ -94,6 +94,6 @@ export default function ThemeFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

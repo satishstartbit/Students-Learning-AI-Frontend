@@ -106,7 +106,7 @@ export default function AudioTrackFormPage() {
       : currentFile?.url ?? null;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit sound' : 'Add sound'}
         breadcrumbs={[
@@ -161,6 +161,6 @@ export default function AudioTrackFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

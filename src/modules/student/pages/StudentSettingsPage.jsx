@@ -214,7 +214,7 @@ export default function StudentSettingsPage() {
   const schools = about.schools ?? [];
 
   return (
-    <div className="ss-page">
+    <div className="ss-page td-page">
       {header}
 
       <Group icon={LuSmile} label="About you">

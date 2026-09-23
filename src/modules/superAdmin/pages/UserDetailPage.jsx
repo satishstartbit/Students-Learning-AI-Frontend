@@ -111,7 +111,7 @@ export default function UserDetailPage() {
   const isSuspended = user.status === USER_STATUS.SUSPENDED;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={formatName(user)}
         description={user.email}
@@ -265,6 +265,6 @@ export default function UserDetailPage() {
       </ConfirmationModal>
 
       <Toast />
-    </>
+    </div>
   );
 }

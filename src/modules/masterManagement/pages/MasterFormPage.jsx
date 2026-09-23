@@ -104,7 +104,7 @@ export default function MasterFormPage() {
   if (isEdit && loadingItem && !existing) return <Loader message="Loading record…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? `Edit ${typeRow?.label ?? 'record'}` : `Add ${typeRow?.label ?? 'record'}`}
         breadcrumbs={[
@@ -167,6 +167,6 @@ export default function MasterFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

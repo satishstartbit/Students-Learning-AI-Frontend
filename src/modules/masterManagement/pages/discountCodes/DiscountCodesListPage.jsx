@@ -129,7 +129,7 @@ export default function DiscountCodesListPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Discount Codes"
         description="Promotional codes applicable to subscription plans."
@@ -177,6 +177,6 @@ export default function DiscountCodesListPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

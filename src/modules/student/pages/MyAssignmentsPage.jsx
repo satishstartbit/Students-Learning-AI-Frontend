@@ -161,7 +161,7 @@ export default function MyAssignmentsPage() {
   const hasActiveFilters = Boolean(status) || Boolean(subject);
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader title="My Assignments" description="Everything your teachers have given you to do." />
 
       <Card className="ui-field">
@@ -206,6 +206,6 @@ export default function MyAssignmentsPage() {
       />
 
       <MyOwnTasksSection />
-    </>
+    </div>
   );
 }

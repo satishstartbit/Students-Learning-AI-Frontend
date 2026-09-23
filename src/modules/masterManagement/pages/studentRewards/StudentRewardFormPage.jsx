@@ -341,7 +341,7 @@ export default function StudentRewardFormPage() {
   }, [isEdit, id, fetchItem]);
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit reward' : 'Add reward'}
         description="Stickers and emojis students collect on their Rewards page as their points grow."
@@ -359,6 +359,6 @@ export default function StudentRewardFormPage() {
         // Keyed so the form (and its picture state) mounts once with the loaded record.
         <RewardForm key={existing?.id ?? 'new'} id={id} existing={isEdit ? existing : null} />
       )}
-    </>
+    </div>
   );
 }

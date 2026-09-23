@@ -75,7 +75,7 @@ export default function TeacherProgressPage() {
   ];
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader title="Progress" description="Today's check-ins and progress on the tasks you've assigned." />
 
       <div
@@ -123,6 +123,6 @@ export default function TeacherProgressPage() {
           <StudentProgressDetail progress={detail.data} />
         )}
       </Modal>
-    </>
+    </div>
   );
 }

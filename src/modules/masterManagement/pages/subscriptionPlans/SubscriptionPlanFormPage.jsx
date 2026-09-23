@@ -118,7 +118,7 @@ export default function SubscriptionPlanFormPage() {
   if (isEdit && loadingItem && !existing) return <Loader message="Loading plan…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit subscription plan' : 'Add subscription plan'}
         breadcrumbs={[
@@ -155,6 +155,6 @@ export default function SubscriptionPlanFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

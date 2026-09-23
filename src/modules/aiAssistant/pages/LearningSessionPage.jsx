@@ -167,7 +167,7 @@ export default function LearningSessionPage() {
   const subtitle = [session.topic, session.grade].filter(Boolean).join(' · ') || 'General';
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={session.subject}
         description={subtitle}
@@ -291,6 +291,6 @@ export default function LearningSessionPage() {
           onChange={(e) => setExplainTopicValue(e.target.value)}
         />
       </Modal>
-    </>
+    </div>
   );
 }

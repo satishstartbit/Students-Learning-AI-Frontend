@@ -73,7 +73,7 @@ const GUIDES = [
 
 export default function StudentHelpPage() {
   return (
-    <div className="ss-page">
+    <div className="ss-page td-page">
       <Link to="/student/settings" className="ss-link" style={{ marginBottom: 12 }}>
         <LuChevronLeft size={14} aria-hidden="true" /> Settings
       </Link>

@@ -101,7 +101,7 @@ export default function TeacherInvitationsPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Invitations"
         description="Parents invite you to connect with their child. Accept to see that student on your Students page."
@@ -177,6 +177,6 @@ export default function TeacherInvitationsPage() {
           onChange={(e) => setReason(e.target.value)}
         />
       </Modal>
-    </>
+    </div>
   );
 }

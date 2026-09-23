@@ -108,7 +108,7 @@ export default function RewardActivitiesListPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Reward Activities"
         description="Point values earned for platform activities. Change the point value here without touching application code."
@@ -156,6 +156,6 @@ export default function RewardActivitiesListPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

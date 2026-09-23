@@ -295,7 +295,7 @@ export default function AdminPaymentsPage() {
     refundTarget && Number(refundAmount) >= refundableAmount(refundTarget) - 0.001;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Payments & Refunds"
         description="Monitor and manage platform payments, refunds, and billing activity."
@@ -590,6 +590,6 @@ export default function AdminPaymentsPage() {
       </Drawer>
 
       <Toast />
-    </>
+    </div>
   );
 }

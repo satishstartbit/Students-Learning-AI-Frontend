@@ -62,7 +62,7 @@ export default function ParentProgressPage() {
   const selected = children.find((c) => c.student.id === selectedId);
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader title="Progress" description="How your children are arriving each day, and how their tasks are going." />
 
       <div
@@ -116,6 +116,6 @@ export default function ParentProgressPage() {
           <StudentProgressDetail progress={detail.data} showTeacher />
         )}
       </Card>
-    </>
+    </div>
   );
 }

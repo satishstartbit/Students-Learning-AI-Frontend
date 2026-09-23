@@ -163,7 +163,7 @@ export default function MyStudentsPage() {
   const nobodyAtAll = !list.isLoading && !hasFilters && !view && tabCounts.all === 0;
 
   return (
-    <div className="al-page">
+    <div className="al-page td-page">
       <PageHeader title="My Students" description="Everyone you teach, across every subject and grade." style={{ marginBottom: 0 }} />
 
       {nobodyAtAll ? (

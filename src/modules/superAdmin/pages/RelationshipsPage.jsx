@@ -421,7 +421,7 @@ export default function RelationshipsPage() {
   ];
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Teacher & Student Assignments"
         description="Teachers connect with students only by accepting an invitation - from a parent, or sent here with Invite Teachers. Each accepted link is scoped to a subject and grade. Track open invitations under Teacher invitations."
@@ -581,6 +581,6 @@ export default function RelationshipsPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

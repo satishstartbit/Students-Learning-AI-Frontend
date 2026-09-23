@@ -91,7 +91,7 @@ export default function CreateUserPage() {
   const role = form.values.role;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Create user"
         description="The new user sets their own password from an emailed link."
@@ -153,7 +153,7 @@ export default function CreateUserPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }
 

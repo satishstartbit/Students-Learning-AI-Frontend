@@ -125,7 +125,7 @@ export default function EditUserPage() {
     form.values.email && form.values.email.toLowerCase() !== user.email.toLowerCase();
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={`Edit ${user.firstName ?? 'user'}`}
         description={`${ROLE_LABELS[user.role] ?? user.role} · ${user.email}`}
@@ -190,7 +190,7 @@ export default function EditUserPage() {
       </Card>
 
       <Toast />
-    </>
+    </div>
   );
 }
 

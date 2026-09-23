@@ -119,7 +119,7 @@ export default function AcademicYearsListPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Academic Years"
         description="Only one academic year can be marked current at a time."
@@ -167,6 +167,6 @@ export default function AcademicYearsListPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

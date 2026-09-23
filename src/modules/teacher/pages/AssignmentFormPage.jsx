@@ -411,7 +411,7 @@ function AssignmentEditor({ initial }) {
   const cancelTo = saved.id && isEdit ? `/teacher/assignments/${saved.id}` : '/teacher/assignments';
 
   return (
-    <div className="af-page">
+    <div className="af-page td-page">
       <Link to="/teacher/assignments" className="af-back">
         <LuArrowLeft size={15} aria-hidden="true" /> Back to assignments
       </Link>

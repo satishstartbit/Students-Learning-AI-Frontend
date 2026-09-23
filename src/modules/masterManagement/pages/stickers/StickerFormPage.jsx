@@ -59,7 +59,7 @@ export default function StickerFormPage() {
   if (isEdit && loadingItem && !existing) return <Loader message="Loading sticker…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit sticker' : 'Add sticker'}
         breadcrumbs={[
@@ -88,6 +88,6 @@ export default function StickerFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

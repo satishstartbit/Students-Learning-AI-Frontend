@@ -33,7 +33,7 @@ export default function AdminDashboardPage() {
   const suspended = useUserCount({ status: 'suspended' });
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={`Welcome back, ${user?.firstName ?? 'Admin'}`}
         description="Platform overview and account administration."
@@ -63,6 +63,6 @@ export default function AdminDashboardPage() {
           hint="Accounts that cannot sign in"
         />
       </div>
-    </>
+    </div>
   );
 }

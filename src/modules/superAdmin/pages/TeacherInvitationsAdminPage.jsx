@@ -183,7 +183,7 @@ export default function TeacherInvitationsAdminPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Teacher invitations"
         description="Every invitation to connect a teacher with a student - sent by parents, or by Super Admin with Invite Teachers on the Assignments page. A teacher is connected only when they accept."
@@ -241,6 +241,6 @@ export default function TeacherInvitationsAdminPage() {
             : ''
         }
       />
-    </>
+    </div>
   );
 }

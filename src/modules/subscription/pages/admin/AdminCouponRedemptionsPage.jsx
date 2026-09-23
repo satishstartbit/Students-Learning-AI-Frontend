@@ -57,7 +57,7 @@ export default function AdminCouponRedemptionsPage() {
   if (isLoading && !data) return <Loader message="Loading redemptions…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={coupon ? `Redemptions — ${coupon.code}` : 'Redemptions'}
         description={coupon?.name}
@@ -107,6 +107,6 @@ export default function AdminCouponRedemptionsPage() {
           caption="Coupon redemptions"
         />
       </Card>
-    </>
+    </div>
   );
 }

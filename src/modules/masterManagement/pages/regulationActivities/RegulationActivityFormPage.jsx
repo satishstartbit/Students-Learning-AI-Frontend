@@ -74,7 +74,7 @@ export default function RegulationActivityFormPage() {
   if (isEdit && loadingItem && !existing) return <Loader message="Loading activity…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit regulation activity' : 'Add regulation activity'}
         breadcrumbs={[
@@ -108,6 +108,6 @@ export default function RegulationActivityFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

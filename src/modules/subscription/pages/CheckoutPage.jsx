@@ -157,7 +157,7 @@ export default function CheckoutPage() {
   const savedCard = paymentMethod.data ? paymentMethod.data.card : (state?.savedCard ?? null);
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Payment"
         description="Your card is entered securely with Stripe and is never stored on our servers."
@@ -236,6 +236,6 @@ export default function CheckoutPage() {
           </p>
         </Card>
       </div>
-    </>
+    </div>
   );
 }

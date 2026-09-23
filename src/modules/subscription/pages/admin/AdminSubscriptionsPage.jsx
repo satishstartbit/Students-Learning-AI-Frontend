@@ -191,7 +191,7 @@ export default function AdminSubscriptionsPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Subscriptions"
         description="Every parent subscription across the platform."
@@ -313,6 +313,6 @@ export default function AdminSubscriptionsPage() {
       </Modal>
 
       <Toast />
-    </>
+    </div>
   );
 }

@@ -77,7 +77,7 @@ export default function RewardsPage() {
       : 'Rewards are on their way.';
 
   return (
-    <div className="rw-page">
+    <div className="rw-page td-page">
       <h1 className="rw-title">Rewards</h1>
       <p className="rw-subtitle">Everything you have collected, and what is coming next.</p>
 

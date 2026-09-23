@@ -202,7 +202,7 @@ export default function UsersListPage({ fixedRole = null }) {
       };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={heading.title}
         description={heading.description}
@@ -286,6 +286,6 @@ export default function UsersListPage({ fixedRole = null }) {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

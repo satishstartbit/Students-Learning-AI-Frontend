@@ -109,7 +109,7 @@ export default function SchoolsListPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Schools / Organizations"
         description="Supports future school and organization onboarding."
@@ -157,6 +157,6 @@ export default function SchoolsListPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

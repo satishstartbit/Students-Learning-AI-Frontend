@@ -67,7 +67,7 @@ export default function TaskTypeFormPage() {
   if (isEdit && isLoading && !existing) return <Loader message="Loading task type…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit task type' : 'Add task type'}
         breadcrumbs={[
@@ -102,6 +102,6 @@ export default function TaskTypeFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

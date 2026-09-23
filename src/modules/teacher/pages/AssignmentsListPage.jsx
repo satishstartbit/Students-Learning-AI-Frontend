@@ -295,7 +295,7 @@ export default function AssignmentsListPage() {
   const emptyDescription = hasFilters || view ? 'Try another tab, or clear the filters.' : 'Create your first assignment to get started.';
 
   return (
-    <div className="al-page">
+    <div className="al-page td-page">
       <PageHeader
         title="Assignments"
         description="Everything you have created, published or saved as a draft."

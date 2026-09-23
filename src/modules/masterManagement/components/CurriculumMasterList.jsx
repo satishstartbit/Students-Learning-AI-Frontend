@@ -175,7 +175,10 @@ export default function CurriculumMasterList({
   };
 
   return (
-    <>
+    // td-page here rather than in each of the five list pages: this component
+    // is the whole body of every one of them (Task types, Question types,
+    // Subjects, Topics, Audio tracks), so it is their page root.
+    <div className="td-page">
       <PageHeader
         title={title}
         description={description}
@@ -251,6 +254,6 @@ export default function CurriculumMasterList({
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

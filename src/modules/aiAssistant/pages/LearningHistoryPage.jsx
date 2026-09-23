@@ -87,7 +87,7 @@ export default function LearningHistoryPage() {
   ];
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Learning History"
         description="Everything you have worked on with your learning assistant."
@@ -133,6 +133,6 @@ export default function LearningHistoryPage() {
           ) : null
         }
       />
-    </>
+    </div>
   );
 }

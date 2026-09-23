@@ -71,7 +71,7 @@ export default function TopicFormPage() {
   if (isEdit && isLoading && !existing) return <Loader message="Loading topic…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit topic' : 'Add topic'}
         breadcrumbs={[
@@ -103,6 +103,6 @@ export default function TopicFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

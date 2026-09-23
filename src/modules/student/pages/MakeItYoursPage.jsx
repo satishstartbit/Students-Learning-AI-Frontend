@@ -84,7 +84,7 @@ export default function MakeItYoursPage() {
   const firstName = settings.preferredName || settings.about?.firstName || user?.firstName || 'friend';
 
   return (
-    <div className="my-page">
+    <div className="my-page td-page">
       <header className="my-header">
         <h1 className="my-header__title">Make it yours</h1>
         <p className="my-header__summary">Set it up how you like it. Everything saves as you go.</p>

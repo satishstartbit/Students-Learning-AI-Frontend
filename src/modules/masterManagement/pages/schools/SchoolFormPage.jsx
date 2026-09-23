@@ -87,7 +87,7 @@ export default function SchoolFormPage() {
   if (isEdit && loadingItem && !existing) return <Loader message="Loading school…" />;
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit school' : 'Add school'}
         breadcrumbs={[
@@ -121,6 +121,6 @@ export default function SchoolFormPage() {
           </ButtonGroup>
         </form>
       </Card>
-    </>
+    </div>
   );
 }

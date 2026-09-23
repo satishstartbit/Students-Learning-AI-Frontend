@@ -4,11 +4,8 @@
    mood face, pills) from ../students/teacherStudents.css.
    ===================================================================== */
 
-.td-page {
-  display: grid;
-  gap: 14px;
-  max-width: 1120px;
-}
+/* .td-page now lives in components/common/common.css - it is the shared page
+   frame every authenticated page carries, not a dashboard-only rule. */
 
 .td-head {
   display: flex;

@@ -245,7 +245,7 @@ export default function AssignmentDetailsPage() {
   ];
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={assignment.title}
         description={`${assignment.subject || 'No subject'} · ${assignment.grade || 'No grade'}`}
@@ -440,6 +440,6 @@ export default function AssignmentDetailsPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

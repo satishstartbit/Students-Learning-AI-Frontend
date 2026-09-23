@@ -217,7 +217,7 @@ export default function MasterDashboardPage() {
   const hasFilters = Boolean(search || category);
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Master Management"
         description="Reference lists used across the platform, grouped by area. Deactivate a value instead of deleting it when it is still in use."
@@ -295,6 +295,6 @@ export default function MasterDashboardPage() {
           />
         ))
       )}
-    </>
+    </div>
   );
 }

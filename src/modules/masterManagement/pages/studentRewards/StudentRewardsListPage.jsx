@@ -132,7 +132,7 @@ export default function StudentRewardsListPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Student Rewards"
         description="Stickers and emojis students collect automatically as their earned points reach each level."
@@ -181,6 +181,6 @@ export default function StudentRewardsListPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

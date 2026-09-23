@@ -121,7 +121,7 @@ export default function ThemesListPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Colour Themes"
         description="Dashboard colour themes students can choose from."
@@ -169,6 +169,6 @@ export default function ThemesListPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

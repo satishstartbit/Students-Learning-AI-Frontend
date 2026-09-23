@@ -94,7 +94,7 @@ export default function ParentLearningSummaryPage() {
   }
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Learning Summary"
         description="How your child is getting on with their learning assistant and assignments."
@@ -202,6 +202,6 @@ export default function ParentLearningSummaryPage() {
           />
         </>
       )}
-    </>
+    </div>
   );
 }

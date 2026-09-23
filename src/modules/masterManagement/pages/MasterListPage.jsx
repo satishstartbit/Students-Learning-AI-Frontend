@@ -189,7 +189,7 @@ export default function MasterListPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={typeRow?.label ?? 'Master data'}
         description={typeRow?.description}
@@ -262,6 +262,6 @@ export default function MasterListPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

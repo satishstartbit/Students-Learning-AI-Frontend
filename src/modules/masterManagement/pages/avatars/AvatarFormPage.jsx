@@ -284,7 +284,7 @@ export default function AvatarFormPage() {
   }, [isEdit, id, fetchItem]);
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title={isEdit ? 'Edit avatar' : 'Add avatar'}
         description="Avatars students can choose from on their “Make it yours” page."
@@ -301,6 +301,6 @@ export default function AvatarFormPage() {
         // Mounted once the record is in, so the picture picker seeds from it.
         <AvatarForm key={existing?.id ?? 'new'} id={id} existing={existing} />
       )}
-    </>
+    </div>
   );
 }

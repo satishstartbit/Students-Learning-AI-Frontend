@@ -64,8 +64,12 @@ export function AuthenticatedLayout({
         {/*
           The only scrolling region. min-w-0 lets wide tables scroll inside
           their own container rather than widening the page.
+
+          ts-page (components/common/common.css) is the shared page frame -
+          applied here rather than on each page's root so every page gets the
+          same gap and reading width and a new page cannot forget it.
         */}
-        <main className="ui-shell__main min-w-0 flex-1 overflow-y-auto">
+        <main className="ui-shell__main  min-w-0 flex-1 overflow-y-auto">
           {children ?? <Outlet />}
         </main>
       </SidebarInset>

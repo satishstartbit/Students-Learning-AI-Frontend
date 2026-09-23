@@ -215,10 +215,10 @@ function StudentPageLoader({ id }) {
   else content = <StudentOverview data={overview.data} onReload={reload} />;
 
   return (
-    <>
+    <div className="td-page">
       {content}
       <Toast />
-    </>
+    </div>
   );
 }
 

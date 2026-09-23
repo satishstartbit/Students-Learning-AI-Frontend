@@ -117,7 +117,7 @@ export default function StickersListPage() {
   };
 
   return (
-    <>
+    <div className="td-page">
       <PageHeader
         title="Stickers"
         description="Decorative stickers students can add to their dashboard."
@@ -165,6 +165,6 @@ export default function StickersListPage() {
       />
 
       <Toast />
-    </>
+    </div>
   );
 }

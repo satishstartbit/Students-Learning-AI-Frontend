@@ -159,7 +159,7 @@ export default function NotificationsPage() {
   const empty = EMPTY[filterKey];
 
   return (
-    <div className="sn-page">
+    <div className="sn-page td-page">
       <header className="sn-head">
         <div>
           <h1 className="sn-title">Notifications</h1>
