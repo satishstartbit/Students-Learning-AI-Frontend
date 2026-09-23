@@ -9,6 +9,7 @@ import {
   LuUser,
   LuUsersRound,
 } from 'react-icons/lu';
+import AppSettingsProvider from '../components/appearance/AppSettingsProvider';
 import { Loader } from '../components/common';
 import { useApi } from '../hooks/useApi';
 import onboardingService from '../modules/onboarding/services/onboarding.service';
@@ -87,9 +88,14 @@ export function ParentLayout({ children }) {
   return (
     <ParentOnboardingContext.Provider value={context}>
       <SubscriptionAccessContext.Provider value={access}>
-        <AuthenticatedLayout navItems={NAV_ITEMS} title="Parent Portal" subtitle="Parent" brand="FP">
-          {content}
-        </AuthenticatedLayout>
+        {/* The parent's own colour theme and light/dark - the same picker and
+            stored setting the teacher and student areas use. Inside the
+            gates, so it applies on the locked screen too. */}
+        <AppSettingsProvider>
+          <AuthenticatedLayout navItems={NAV_ITEMS} title="Parent Portal" subtitle="Parent" brand="FP">
+            {content}
+          </AuthenticatedLayout>
+        </AppSettingsProvider>
       </SubscriptionAccessContext.Provider>
     </ParentOnboardingContext.Provider>
   );

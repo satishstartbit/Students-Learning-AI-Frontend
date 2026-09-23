@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import AccentPicker from '../../../components/appearance/AccentPicker';
+import { useAppSettings } from '../../../components/appearance/useAppSettings';
 import { Alert, Button, Input, Loader } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
@@ -54,6 +56,8 @@ export default function ParentProfilePage() {
   const { user, setUser } = useAuth();
   const reload = () => run().catch(() => {});
   const photo = useProfilePhoto({ onChanged: reload });
+  // Colour theme - the shell provides it (layouts/ParentLayout.jsx).
+  const appSettings = useAppSettings();
 
   const form = useForm({
     initialValues: valuesFromMe(null),
@@ -155,6 +159,18 @@ export default function ParentProfilePage() {
             ) : (
               <Loader message="Loading…" />
             )}
+          </ProfileSection>
+
+          <ProfileSection title="Colour theme" hint="Changes the accent colour across your whole dashboard.">
+            <AccentPicker
+              value={appSettings.accent}
+              disabled={appSettings.isLoading}
+              onChange={(accent) =>
+                appSettings.update({ accent }).catch((err) => {
+                  toast.error(getErrorMessage(err) || 'Couldn’t save that - please try again.');
+                })
+              }
+            />
           </ProfileSection>
 
           <ProfileSection title="Change password">

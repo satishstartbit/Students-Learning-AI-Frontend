@@ -10,6 +10,7 @@ import {
 import { useEffect } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getMe } from '../modules/auth/services/auth.service';
+import AppSettingsProvider from '../components/appearance/AppSettingsProvider';
 import AuthenticatedLayout from './AuthenticatedLayout';
 import usePortalTheme from './usePortalTheme';
 
@@ -45,9 +46,14 @@ export function TeacherLayout({ children }) {
   const school = me.data?.user?.profile?.profile_data?.school || undefined;
 
   return (
-    <AuthenticatedLayout navItems={NAV_ITEMS} title="Teacher Portal" subtitle="Teacher" brand="TP" accountSubtitle={school}>
-      {children}
-    </AuthenticatedLayout>
+    // The teacher's own colour theme and light/dark, applied for as long as
+    // they are in this area - the same picker and the same stored setting the
+    // student and parent areas use (components/appearance/).
+    <AppSettingsProvider>
+      <AuthenticatedLayout navItems={NAV_ITEMS} title="Teacher Portal" subtitle="Teacher" brand="TP" accountSubtitle={school}>
+        {children}
+      </AuthenticatedLayout>
+    </AppSettingsProvider>
   );
 }
 

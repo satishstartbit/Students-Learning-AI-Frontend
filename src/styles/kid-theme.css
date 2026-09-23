@@ -86,14 +86,10 @@
      alias defined only at :root (e.g. --color-icon-primary: var(--color-
      text-primary)) would resolve against :root's own text colour, not
      this scope's, unless restated here. */
-  --accent-base: var(--kid-teal);
-  --accent-hover: var(--kid-teal-deep);
-  --accent-pressed: var(--kid-teal-deep);
-  --accent-soft: #dcefee;
-  --accent-soft-hover: #c9e8e6;
-  --accent-border: #a9d6d3;
-  --accent-on: #ffffff;
-  --accent-ring: var(--kid-teal);
+  /* The --accent-* family is NOT set here: it is set in the two blocks
+     below, so that a colour theme chosen on "Make it yours" can reach this
+     area. Declaring it here would win over the html[data-accent] rules and
+     pin the kid space to teal for ever. */
   --color-secondary: var(--kid-blue);
   --color-secondary-hover: var(--kid-navy);
   --color-secondary-soft: var(--kid-sky);
@@ -189,6 +185,42 @@
   line-height: 1.55;
   color: var(--kid-ink);
   background-color: var(--kid-paper);
+}
+
+/* =====================================================================
+   The colour theme, chosen on "My colours" (K-5) or "Make it yours"
+   (Grade 6+) and stamped on <html> as data-accent by theme/index.js.
+
+   Ocean is the default family and sets no attribute, so the first block is
+   this area's own craft teal - the palette the K-5 design was drawn in,
+   unchanged. Pick any other family and the second block takes over: the
+   kid space's own "teal" tokens re-point at that family, so every
+   bg-kid-teal button, tick and highlight follows, and the --accent-* tokens
+   are simply inherited from <html> rather than restated here.
+
+   The paper, ink and craft colours (pink, yellow, green, ...) never move -
+   they are the illustration palette, not the theme.
+   ===================================================================== */
+:root:not([data-accent]) .kid-theme {
+  --accent-base: var(--kid-teal);
+  --accent-hover: var(--kid-teal-deep);
+  --accent-pressed: var(--kid-teal-deep);
+  --accent-soft: #dcefee;
+  --accent-soft-hover: #c9e8e6;
+  --accent-border: #a9d6d3;
+  --accent-on: #ffffff;
+  --accent-ring: var(--kid-teal);
+}
+
+:root[data-accent] .kid-theme {
+  /* No --accent-* here on purpose: they inherit from the <html> family, and
+     re-pointing --kid-teal at --accent-base below would otherwise be a
+     circular definition. */
+  --kid-teal: var(--accent-base);
+  --kid-teal-deep: var(--accent-hover);
+  /* The pale companion surface (selected tiles, chips) and the ink on it. */
+  --kid-sky: var(--accent-soft);
+  --kid-navy: var(--accent-pressed);
 }
 
 /*

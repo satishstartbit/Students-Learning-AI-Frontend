@@ -1,0 +1,112 @@
+/* =====================================================================
+   Colour-theme picker (AccentPicker.jsx). Prefix: ap-.
+
+   One picker for every role: the Teacher and Parent profile pages, and the
+   K-5 "Make it yours" page. It is the Grade 6+ picker's design
+   (modules/student/components/personalize/makeItYours.css - .my-tiles /
+   .my-tile / .my-swatch), rebuilt here so the two match: a wide swatch of
+   the family's own two tones split on the diagonal, the name under it, and
+   a tick on the corner of the chosen one.
+
+   The swatch colours are the accent families' own (theme/index.js ACCENTS),
+   the one place a colour is named here - everything else is a theme token,
+   so the picker follows whichever family is currently applied.
+   ===================================================================== */
+
+.ap-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ap-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 8px 10px;
+  border: 1.5px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, transform 0.15s;
+}
+.ap-option:hover {
+  border-color: var(--accent-border, var(--color-border-strong));
+  transform: translateY(-1px);
+}
+.ap-option[aria-pressed='true'] {
+  border-color: var(--accent-base);
+  background: color-mix(in srgb, var(--accent-soft) 60%, transparent);
+  font-weight: 500;
+}
+.ap-option:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+.ap-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* The family's base colour over its own soft tint, split on the diagonal -
+   a choice reads the same way it will once applied. */
+.ap-swatch {
+  width: 100%;
+  height: 46px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--ap-swatch) 0 58%, var(--ap-swatch-soft) 58% 100%);
+}
+
+.ap-label {
+  overflow: hidden;
+  max-width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The tick sits on the corner of the tile, as on the Grade 6+ page. */
+.ap-tick {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-base);
+  color: var(--accent-on);
+}
+
+/* --- The kid version: bigger targets, bigger type ----------------------- */
+.ap-list--kid {
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 14px;
+}
+.ap-list--kid .ap-option {
+  padding: 16px 12px 14px;
+  border-width: 2px;
+  border-radius: 18px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.ap-list--kid .ap-swatch {
+  height: 62px;
+  border-radius: 12px;
+}
+.ap-list--kid .ap-tick {
+  top: -9px;
+  right: -9px;
+  width: 26px;
+  height: 26px;
+}

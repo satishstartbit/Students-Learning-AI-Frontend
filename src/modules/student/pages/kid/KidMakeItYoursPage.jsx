@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { LuArrowRight, LuCheck, LuLock, LuPalette } from 'react-icons/lu';
 import { cn } from '../../../../lib/utils';
+import { ACCENTS, DEFAULT_ACCENT } from '../../../../theme';
 import { toast } from '../../../../hooks/useToast';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import { AvatarPicture } from '../../components/personalize/AvatarPicture';
@@ -86,6 +87,7 @@ export default function KidMakeItYoursPage() {
   if (!settings) return <KidOops className="m-4 sm:m-8" onRetry={reload} message={getErrorMessage(error) || undefined} />;
 
   const cardStyle = settings.cardStyle ?? 'taped';
+  const accent = settings.accent ?? DEFAULT_ACCENT;
   const collected = rewards.stickers.filter((s) => s.collected);
 
   return (
@@ -124,6 +126,38 @@ export default function KidMakeItYoursPage() {
             })}
           </ul>
         )}
+      </section>
+
+      {/* The same colour theme the Grade 6+ "Make it yours" page sets, in
+          this band's own tiles - one stored setting either way, so a student
+          who moves up a band keeps the colour they picked. */}
+      <section aria-labelledby="kid-colours-heading" className={SECTION}>
+        <h2 id="kid-colours-heading" className="font-kid-display text-2xl font-semibold text-kid-ink">
+          My colours
+        </h2>
+        <p className="mt-1 text-lg text-kid-ink-soft">Pick a colour. It changes your whole space.</p>
+
+        <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {ACCENTS.map((option) => (
+            <Tile
+              key={option.value}
+              label={option.label}
+              selected={accent === option.value}
+              ariaLabel={accent === option.value ? `${option.label}, chosen` : `Choose ${option.label}`}
+              onClick={() => save({ accent: option.value })}
+            >
+              {/* The same two-tone diagonal swatch the Grade 6+ picker uses,
+                  at this band's size. */}
+              <span
+                className="block h-14 w-full rounded-xl"
+                style={{
+                  background: `linear-gradient(135deg, ${option.swatch} 0 58%, ${option.swatchSoft} 58% 100%)`,
+                }}
+                aria-hidden="true"
+              />
+            </Tile>
+          ))}
+        </ul>
       </section>
 
       <section aria-labelledby="kid-cards-heading" className={SECTION}>
