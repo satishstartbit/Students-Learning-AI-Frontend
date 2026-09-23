@@ -119,8 +119,11 @@ export default function TeacherProgressPage() {
         {detail.error && !detail.isLoading && (
           <ErrorState title="We couldn't load this student" error={detail.error} onRetry={() => runDetail(selected.student.id).catch(() => {})} />
         )}
+        {/* The same detail the parent's Progress panel shows - today's
+            check-in/tasks/focus cards, the 14-day check-in strip and the task
+            table - with this teacher's own wording for the stages. */}
         {!detail.isLoading && !detail.error && detail.data?.student?.id === selected?.student.id && (
-          <StudentProgressDetail progress={detail.data} />
+          <StudentProgressDetail progress={detail.data} name={selected?.student?.firstName} />
         )}
       </Modal>
     </div>

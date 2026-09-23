@@ -22,7 +22,7 @@ import StudentSettingsProvider from '../modules/student/components/StudentSettin
 import { StudentExperienceContext } from '../modules/student/hooks/useStudentExperience';
 import StudentLockedScreen from '../modules/subscription/components/StudentLockedScreen';
 import { SubscriptionAccessContext, useAccessStatus } from '../modules/subscription/hooks/useSubscriptionAccess';
-import { isJuniorGrade } from '../utils/gradeBand';
+import { isCheckInRequired, isJuniorGrade } from '../utils/gradeBand';
 import AuthenticatedLayout from './AuthenticatedLayout';
 import KidLayout from './KidLayout';
 import '../theme/studentTheme.css';
@@ -37,8 +37,8 @@ import '../theme/studentTheme.css';
  *
  * Check In and AI Assistant are deliberately not in the nav (the mockup has
  * neither) - their routes still exist: the check-in lives on Home's "Today's
- * check-in" card, and work screens still redirect to /student/check-in when
- * it's needed.
+ * check-in" card, which is how a Grade 6+ student reaches it, since nothing
+ * forces them to one (RequireCheckIn holds the kid band only).
  */
 const NAV_ITEMS = [
   {
@@ -97,7 +97,9 @@ function StudentShellLoading() {
  *     except the questionnaire and Settings redirects to it (area-wide, so
  *     it's decided once, here).
  *   - check-in: TodayCheckInProvider loads today's check-in for the whole
- *     area; individual work routes enforce it with RequireCheckIn.
+ *     area; individual work routes enforce it with RequireCheckIn, which
+ *     applies to the kid band only (KIDS_UI) - for older students the
+ *     check-in is offered, not required.
  */
 export function StudentLayout({ children }) {
   const location = useLocation();
@@ -112,11 +114,20 @@ export function StudentLayout({ children }) {
   const isJunior = isJuniorGrade(grade, me.data?.gradeBand?.juniorMaxGrade);
   const onboarded = Boolean(profile?.onboarding_completed_at);
 
+  // Whether the daily check-in is mandatory for this student: the server's
+  // answer for their own grade (KIDS_UI) when it has one, otherwise the same
+  // rule worked out locally from VITE_KIDS_UI.
+  const serverCheckInRequired = me.data?.gradeBand?.checkInRequired;
+  const checkInRequired =
+    typeof serverCheckInRequired === 'boolean'
+      ? serverCheckInRequired
+      : isCheckInRequired(grade, me.data?.gradeBand?.juniorMaxGrade);
+
   const refreshProfile = useCallback(() => runMe().catch(() => {}), [runMe]);
 
   const experience = useMemo(
-    () => ({ isJunior, grade, profile, onboarded, refreshProfile }),
-    [isJunior, grade, profile, onboarded, refreshProfile]
+    () => ({ isJunior, checkInRequired, grade, profile, onboarded, refreshProfile }),
+    [isJunior, checkInRequired, grade, profile, onboarded, refreshProfile]
   );
 
   // Grade 6+ look (theme/studentTheme.css) on <body> so portaled dialogs get it too -

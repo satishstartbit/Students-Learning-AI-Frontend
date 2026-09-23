@@ -3,6 +3,9 @@ import {
   Badge,
   Card,
   DataTable,
+  ErrorState,
+  Loader,
+  Modal,
   PageHeader,
   ProgressBar,
   SectionHeader,
@@ -11,19 +14,24 @@ import {
 } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { formatRelative } from '../../../utils/date';
+import LearningSummaryPanel from '../components/LearningSummaryPanel';
 import * as aiAssistantService from '../services/aiAssistant.service';
 
 /**
- * What the teacher's own students have been practising with the AI assistant.
+ * What the teacher's own students have been practising with the AI assistant:
+ * the roster at a glance, and one student's full summary on a row click.
  *
  * Deliberately aggregates only - topics, counts and completion rates. The
  * conversation itself is never exposed here; the backend does not return it.
  */
 export default function TeacherLearningActivityPage() {
   const [subject, setSubject] = useState('');
+  const [selected, setSelected] = useState(null);
 
   const { data, error, isLoading, run } = useApi(aiAssistantService.getTeacherLearningActivity);
   const { data: subjectData, run: runSubjects } = useApi(aiAssistantService.listSubjects);
+  const detail = useApi(aiAssistantService.getTeacherStudentLearningSummary);
+  const { run: runDetail } = detail;
 
   const load = useCallback(() => run({ subject }), [run, subject]);
 
@@ -38,6 +46,10 @@ export default function TeacherLearningActivityPage() {
       /* the filter just stays empty if lookups fail */
     });
   }, [runSubjects]);
+
+  useEffect(() => {
+    if (selected) runDetail(selected.studentId).catch(() => {});
+  }, [selected, runDetail]);
 
   const students = data?.students ?? [];
   const topics = data?.topics ?? [];
@@ -148,7 +160,7 @@ export default function TeacherLearningActivityPage() {
         />
       </Card>
 
-      <SectionHeader title="Per student" />
+      <SectionHeader title="Per student" description="Open a student for their subjects, topics and recent sessions." />
 
       <DataTable
         columns={columns}
@@ -157,6 +169,7 @@ export default function TeacherLearningActivityPage() {
         isLoading={isLoading}
         error={error}
         onRetry={load}
+        onRowClick={(row) => setSelected(row)}
         emptyTitle={subject ? 'No activity for that subject' : 'No learning activity yet'}
         emptyDescription={
           subject
@@ -164,6 +177,33 @@ export default function TeacherLearningActivityPage() {
             : 'Once your students start using the AI learning assistant, their activity will appear here.'
         }
       />
+
+      {/* The same summary the parent sees for their own child - a wide modal
+          rather than the 420px Drawer, since the bars and session table need
+          the room. */}
+      <Modal
+        isOpen={Boolean(selected)}
+        onClose={() => setSelected(null)}
+        title={selected?.studentName ?? 'Learning summary'}
+        size="lg"
+      >
+        {detail.isLoading && <Loader message="Loading learning summary…" />}
+
+        {detail.error && !detail.isLoading && (
+          <ErrorState
+            title="We couldn't load this student"
+            error={detail.error}
+            onRetry={() => runDetail(selected.studentId).catch(() => {})}
+          />
+        )}
+
+        {!detail.isLoading && !detail.error && detail.data && (
+          <LearningSummaryPanel
+            summary={detail.data}
+            emptyDescription="When this student uses the AI learning assistant, their sessions will be listed here."
+          />
+        )}
+      </Modal>
     </div>
   );
 }

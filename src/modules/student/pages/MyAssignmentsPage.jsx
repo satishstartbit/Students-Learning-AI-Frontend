@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LuPlus } from 'react-icons/lu';
-import { PageHeader, Card, Button, DataTable, StatusBadge, Select } from '../../../components/common';
+import { Button, DataTable, StatusBadge, Select } from '../../../components/common';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
@@ -11,6 +11,7 @@ import assignmentService from '../../assignments/services/assignment.service';
 import SubjectIcon from '../components/SubjectIcon';
 import OwnTaskModal from '../components/home/OwnTaskModal';
 import studentTaskService from '../services/studentTask.service';
+import '../components/assignments/studentAssignments.css';
 
 /** Due label for a DATE value ("2026-10-14") - the user's own calendar day, not UTC. */
 function ownDueLabel(dueDate) {
@@ -33,13 +34,17 @@ function MyOwnTasksSection() {
       key: 'title',
       header: 'Task',
       render: (row) => (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+        <span className="sa-task">
           <SubjectIcon subject={row.subject} size="sm" />
-          <span style={{ fontWeight: 600 }}>{row.title}</span>
+          <span className="sa-task__title">{row.title}</span>
         </span>
       ),
     },
-    { key: 'subject', header: 'Subject', render: (row) => row.subject || '—' },
+    {
+      key: 'subject',
+      header: 'Subject',
+      render: (row) => row.subject || <span className="sa-muted">—</span>,
+    },
     { key: 'due', header: 'Due', render: (row) => ownDueLabel(row.dueDate) },
     {
       key: 'status',
@@ -52,16 +57,17 @@ function MyOwnTasksSection() {
 
   return (
     <>
-      <Card
-        title="My own tasks"
-        subtitle="Things you added for yourself - only you can see these."
-        actions={
+      <section className="sa-section">
+        <div className="sa-section__head">
+          <div>
+            <h2 className="sa-section__title">My own tasks</h2>
+            <p className="sa-section__subtitle">Things you added for yourself - only you can see these.</p>
+          </div>
           <Button size="sm" startIcon={<LuPlus aria-hidden="true" />} onClick={() => setDialog({ mode: 'type' })}>
             Add a task
           </Button>
-        }
-        style={{ marginTop: 'var(--spacing-lg)' }}
-      >
+        </div>
+
         <DataTable
           columns={columns}
           data={own.data ?? []}
@@ -74,7 +80,8 @@ function MyOwnTasksSection() {
           emptyDescription="Add anything you need to remember - it shows up on your Home too."
           caption="My own tasks"
         />
-      </Card>
+      </section>
+
       <OwnTaskModal mode={dialog?.mode ?? null} task={dialog?.task ?? null} onClose={() => setDialog(null)} onChanged={reload} />
     </>
   );
@@ -139,14 +146,22 @@ export default function MyAssignmentsPage() {
       key: 'title',
       header: 'Assignment',
       render: (row) => (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+        <span className="sa-task">
           <SubjectIcon subject={row.assignment?.subject} size="sm" />
-          <span style={{ fontWeight: 600 }}>{row.assignment?.title}</span>
+          <span className="sa-task__title">{row.assignment?.title}</span>
         </span>
       ),
     },
-    { key: 'subject', header: 'Subject', render: (row) => row.assignment?.subject || '—' },
-    { key: 'grade', header: 'Grade', render: (row) => row.assignment?.grade || '—' },
+    {
+      key: 'subject',
+      header: 'Subject',
+      render: (row) => row.assignment?.subject || <span className="sa-muted">—</span>,
+    },
+    {
+      key: 'grade',
+      header: 'Grade',
+      render: (row) => row.assignment?.grade || <span className="sa-muted">—</span>,
+    },
     { key: 'due', header: 'Due', render: (row) => formatDueDate(row.assignment?.dueDate) },
     {
       key: 'status',
@@ -161,49 +176,71 @@ export default function MyAssignmentsPage() {
   const hasActiveFilters = Boolean(status) || Boolean(subject);
 
   return (
-    <div className="td-page">
-      <PageHeader title="My Assignments" description="Everything your teachers have given you to do." />
-
-      <Card className="ui-field">
-        <div className="grid gap-4 md:grid-cols-2">
-          <Select
-            label="Status"
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              goToPage(1);
-            }}
-            options={STATUS_FILTER_OPTIONS}
-          />
-          <SearchableSelect
-            label="Subject"
-            options={subjectOptions}
-            value={subject}
-            onChange={(v) => {
-              setSubject(v);
-              goToPage(1);
-            }}
-            placeholder="All subjects"
-          />
+    // The page's own header and type scale, matching Home/Plan/Notifications/
+    // Settings (components/assignments/studentAssignments.css) rather than the
+    // console-sized PageHeader and Card this page used to borrow.
+    <div className="sa-page td-page">
+      <header className="sa-head">
+        <div>
+          <h1 className="sa-title">My Assignments</h1>
+          <p className="sa-subtitle">Everything your teachers have given you to do.</p>
         </div>
-      </Card>
+      </header>
 
-      <DataTable
-        columns={columns}
-        data={items}
-        rowKey="recipientId"
-        isLoading={list.isLoading}
-        error={list.error}
-        onRetry={load}
-        onRowClick={(row) => navigate(`/student/assignments/${row.assignment.id}`)}
-        pagination={pagination}
-        onPageChange={goToPage}
-        emptyTitle="No assignments yet"
-        emptyDescription={
-          hasActiveFilters ? 'Try a different filter.' : 'When your teacher gives you an assignment, it will show up here.'
-        }
-        caption="My assignments"
-      />
+      <section className="sa-section">
+        <p className="sa-eyebrow">Filter</p>
+        <div className="sa-card">
+          <div className="sa-filters">
+            <Select
+              label="Status"
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                goToPage(1);
+              }}
+              options={STATUS_FILTER_OPTIONS}
+            />
+            <SearchableSelect
+              label="Subject"
+              options={subjectOptions}
+              value={subject}
+              onChange={(v) => {
+                setSubject(v);
+                goToPage(1);
+              }}
+              placeholder="All subjects"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="sa-section">
+        <div className="sa-section__head">
+          <div>
+            <h2 className="sa-section__title">From your teachers</h2>
+            <p className="sa-section__subtitle">Open one to see what to do and hand it in.</p>
+          </div>
+        </div>
+
+        <DataTable
+          columns={columns}
+          data={items}
+          rowKey="recipientId"
+          isLoading={list.isLoading}
+          error={list.error}
+          onRetry={load}
+          onRowClick={(row) => navigate(`/student/assignments/${row.assignment.id}`)}
+          pagination={pagination}
+          onPageChange={goToPage}
+          emptyTitle="No assignments yet"
+          emptyDescription={
+            hasActiveFilters
+              ? 'Try a different filter.'
+              : 'When your teacher gives you an assignment, it will show up here.'
+          }
+          caption="My assignments"
+        />
+      </section>
 
       <MyOwnTasksSection />
     </div>

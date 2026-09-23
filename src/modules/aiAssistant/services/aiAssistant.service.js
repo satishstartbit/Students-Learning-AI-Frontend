@@ -65,6 +65,10 @@ export const getParentLearningSummary = (childId) =>
 /** One row per child (name, grade, sessions this month) for the summary's child picker. */
 export const getParentLearningOverview = () => api.get('/parent/learning-summary');
 
+/** The same per-student summary, for a student this teacher teaches. */
+export const getTeacherStudentLearningSummary = (studentId) =>
+  api.get(`/teacher/learning-activity/${studentId}`);
+
 export default {
   listSubjects,
   startSession,
@@ -80,4 +84,5 @@ export default {
   getTeacherLearningActivity,
   getParentLearningSummary,
   getParentLearningOverview,
+  getTeacherStudentLearningSummary,
 };

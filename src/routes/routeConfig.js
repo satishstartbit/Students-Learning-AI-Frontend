@@ -330,9 +330,13 @@ export const STUDENT_ROUTES = {
    * `junior` for K-5, `standard` (or the placeholder) for Grade 6+. See
    * layouts/StudentLayout.jsx for how the grade band is decided.
    *
-   * Every screen where work starts carries `guards: [RequireCheckIn]` - no
-   * work before today's check-in. Home, Check In, Rewards, Settings and
-   * Onboarding stay open. (Onboarding itself is gated area-wide in the layout.)
+   * Every screen where work starts carries `guards: [RequireCheckIn]`, which
+   * holds only the kid band: no work before today's check-in for K-5, while
+   * an older student is let straight through and checks in when they choose.
+   * Which grades that covers is KIDS_UI/VITE_KIDS_UI - see
+   * modules/checkIn/components/RequireCheckIn.jsx and utils/gradeBand.js.
+   * Home, Check In, Rewards, Settings and Onboarding stay open to everyone.
+   * (Onboarding itself is gated area-wide in the layout.)
    */
   routes: [
     {

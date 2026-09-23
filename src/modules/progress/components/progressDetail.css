@@ -1,0 +1,224 @@
+/* =====================================================================
+   One student's progress detail. Prefix: pg-.
+
+   Shared by the Parent Progress page (inside its per-child panel) and the
+   Teacher Progress drawer/modal, so the two never drift: the three cards,
+   the check-in strip and the assigned-task table are drawn once, here and
+   in StudentProgressDetail.jsx.
+
+   Colours are shared tokens: accent tints via color-mix so the Color/Theme
+   switcher still drives them, and the mood faces reuse the sticky-note
+   palette the app already uses for feelings.
+   ===================================================================== */
+
+/* --- Cards and section blocks ------------------------------------------ */
+.pg-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.pg-card {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-bg-surface);
+}
+.pg-card__label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.pg-card__value {
+  margin: 0;
+  font-family: var(--font-family-heading, inherit);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.pg-card__note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.pg-block {
+  margin-top: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-bg-surface);
+}
+.pg-block__title {
+  margin: 0;
+  font-size: 16px;
+}
+.pg-block__lead {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* --- Small parts -------------------------------------------------------- */
+.pg-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.pg-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: var(--color-border-strong);
+}
+.pg-dot--on {
+  background: var(--accent-base);
+}
+
+.pg-bar {
+  height: 4px;
+  margin-top: 10px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--accent-base) 16%, transparent);
+  overflow: hidden;
+}
+.pg-bar__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-base);
+}
+
+/* Subject chip - the same subject keeps the same tone everywhere a parent or
+   teacher sees it - the tone comes from getSubjectVisual
+   (modules/student/components/subjectVisual.js), the same helper the
+   student's own Home and Plan use. */
+.pg-subject {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+  background: var(--pg-subject-bg, var(--sticky-blue));
+  color: var(--pg-subject-fg, #0b6b86);
+}
+.pg-subject[data-tone='green'] { --pg-subject-bg: var(--sticky-green); --pg-subject-fg: #2f7d32; }
+.pg-subject[data-tone='pink'] { --pg-subject-bg: var(--sticky-pink); --pg-subject-fg: #b4235a; }
+.pg-subject[data-tone='blue'] { --pg-subject-bg: var(--sticky-blue); --pg-subject-fg: #0b6b86; }
+.pg-subject[data-tone='lavender'] { --pg-subject-bg: var(--sticky-lavender); --pg-subject-fg: #6b43c4; }
+.pg-subject[data-tone='orange'] { --pg-subject-bg: var(--sticky-orange); --pg-subject-fg: #b45309; }
+.pg-subject[data-tone='yellow'] { --pg-subject-bg: var(--sticky-yellow); --pg-subject-fg: #8a6a00; }
+
+/* --- Today's check-in card ---------------------------------------------- */
+.pg-checkin {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pg-checkin__text {
+  min-width: 0;
+}
+.pg-checkin__mood {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.pg-checkin__time {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.pg-energy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* --- Check-in strip ------------------------------------------------------ */
+.pg-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(44px, 1fr);
+  gap: 4px;
+  margin-top: 14px;
+  /* Narrow screens (and the teacher's modal) scroll the strip rather than
+     squeezing 14 days flat. */
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.pg-day {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-width: 44px;
+}
+.pg-day__weekday {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+.pg-day__num {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: -3px;
+}
+.pg-face {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--pg-face-border, var(--sticky-blue-border));
+  background: var(--pg-face-bg, var(--sticky-blue));
+  font-size: 15px;
+  line-height: 1;
+}
+.pg-face--empty {
+  border-style: dashed;
+  border-color: var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text-tertiary);
+}
+.pg-day__dots {
+  display: flex;
+  gap: 2px;
+  min-height: 5px;
+}
+.pg-day__dots .pg-dot {
+  width: 5px;
+  height: 5px;
+}
+
+.pg-face[data-mood='calm'] { --pg-face-bg: var(--sticky-green); --pg-face-border: var(--sticky-green-border); }
+.pg-face[data-mood='ready_to_focus'] { --pg-face-bg: var(--sticky-blue); --pg-face-border: var(--sticky-blue-border); }
+.pg-face[data-mood='tired'] { --pg-face-bg: var(--sticky-lavender); --pg-face-border: var(--sticky-lavender-border); }
+.pg-face[data-mood='distracted'] { --pg-face-bg: var(--sticky-orange); --pg-face-border: var(--sticky-orange-border); }
+.pg-face[data-mood='tense'] { --pg-face-bg: var(--sticky-pink); --pg-face-border: var(--sticky-pink-border); }
+.pg-face[data-mood='overwhelmed'] { --pg-face-bg: var(--sticky-yellow); --pg-face-border: var(--sticky-yellow-border); }
+
+.pg-strip__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.pg-strip__summary strong {
+  color: var(--color-text-primary);
+}
+
+/* --- Assigned tasks ------------------------------------------------------ */
+.pg-tasks {
+  margin-top: 12px;
+}
+.pg-task__title {
+  font-weight: 600;
+}

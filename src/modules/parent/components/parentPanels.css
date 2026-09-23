@@ -3,9 +3,12 @@
    Summary). Prefix: pp-.
 
    Both pages are "pick a child, then everything below is about them", so
-   the picker, the caret that ties the chosen card to the panel, the panel
-   itself and the stat cards inside it live here once. Page-specific
-   content sits in parentProgress.css / parentLearningSummary.css.
+   the picker, the caret that ties the chosen card to the panel and the
+   panel itself live here once. What goes inside the panel is the same
+   detail a teacher sees, drawn by the shared components:
+   modules/progress/components/StudentProgressDetail.jsx (+
+   progressDetail.css) and modules/aiAssistant/components/
+   LearningSummaryPanel.jsx (+ learningSummary.css).
 
    Colours are shared tokens only: the accent tints are color-mix on
    --accent-base, so the Color/Theme switcher still drives both pages.
@@ -122,101 +125,3 @@
   font-size: 13px;
   color: var(--color-text-secondary);
 }
-
-/* --- Stat cards and section blocks inside a panel ---------------------- */
-.pp-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
-}
-
-.pp-card {
-  min-width: 0;
-  padding: 14px 16px;
-  border: 1px solid var(--color-border-default);
-  border-radius: 12px;
-  background: var(--color-bg-surface);
-}
-.pp-card__label {
-  margin: 0 0 10px;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
-.pp-card__value {
-  margin: 0;
-  font-family: var(--font-family-heading, inherit);
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.pp-card__note {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
-
-.pp-block {
-  margin-top: 14px;
-  padding: 16px 18px;
-  border: 1px solid var(--color-border-default);
-  border-radius: 12px;
-  background: var(--color-bg-surface);
-}
-.pp-block__title {
-  margin: 0;
-  font-size: 16px;
-}
-.pp-block__lead {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
-
-/* --- Small parts both pages draw --------------------------------------- */
-.pp-dots {
-  display: inline-flex;
-  gap: 3px;
-}
-.pp-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 9999px;
-  background: var(--color-border-strong);
-}
-.pp-dot--on {
-  background: var(--accent-base);
-}
-
-.pp-bar {
-  height: 4px;
-  margin-top: 10px;
-  border-radius: 9999px;
-  background: color-mix(in srgb, var(--accent-base) 16%, transparent);
-  overflow: hidden;
-}
-.pp-bar__fill {
-  height: 100%;
-  border-radius: inherit;
-  background: var(--accent-base);
-}
-
-/* Subject chip - the same subject keeps the same tone on both pages; which
-   tone a subject gets is decided in the page (toneFor). */
-.pp-subject {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.6;
-  white-space: nowrap;
-  background: var(--pp-subject-bg, var(--sticky-blue));
-  color: var(--pp-subject-fg, #0b6b86);
-}
-.pp-subject[data-tone='green'] { --pp-subject-bg: var(--sticky-green); --pp-subject-fg: #2f7d32; }
-.pp-subject[data-tone='pink'] { --pp-subject-bg: var(--sticky-pink); --pp-subject-fg: #b4235a; }
-.pp-subject[data-tone='blue'] { --pp-subject-bg: var(--sticky-blue); --pp-subject-fg: #0b6b86; }
-.pp-subject[data-tone='lavender'] { --pp-subject-bg: var(--sticky-lavender); --pp-subject-fg: #6b43c4; }
-.pp-subject[data-tone='orange'] { --pp-subject-bg: var(--sticky-orange); --pp-subject-fg: #b45309; }
-.pp-subject[data-tone='yellow'] { --pp-subject-bg: var(--sticky-yellow); --pp-subject-fg: #8a6a00; }

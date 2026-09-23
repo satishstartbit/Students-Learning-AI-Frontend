@@ -95,4 +95,30 @@ export function isJuniorGrade(grade, maxGrade = JUNIOR_MAX_GRADE) {
   return number !== null && number <= top;
 }
 
-export default { JUNIOR_MAX_GRADE, KIDS_UI_LABEL, DEFAULT_KIDS_UI, parseGradeNumber, parseKidsBand, isJuniorGrade };
+/**
+ * Must this student check in before their work screens open?
+ *
+ * Mandatory inside the kid band, optional above it: the daily check-in is
+ * part of how the K-5 day starts, while an older student decides for
+ * themselves whether to record one - Assignments, Plan, Focus and the
+ * assistant stay open either way (modules/checkIn/components/
+ * RequireCheckIn.jsx).
+ *
+ * Which grades that covers is KIDS_UI, so moving the band moves this rule
+ * with it. The server sends its own answer with GET /auth/me
+ * (gradeBand.checkInRequired) and that wins; this is the VITE_KIDS_UI
+ * fallback for before it arrives.
+ */
+export function isCheckInRequired(grade, maxGrade = JUNIOR_MAX_GRADE) {
+  return isJuniorGrade(grade, maxGrade);
+}
+
+export default {
+  JUNIOR_MAX_GRADE,
+  KIDS_UI_LABEL,
+  DEFAULT_KIDS_UI,
+  parseGradeNumber,
+  parseKidsBand,
+  isJuniorGrade,
+  isCheckInRequired,
+};

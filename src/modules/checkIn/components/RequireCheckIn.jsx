@@ -9,12 +9,23 @@ import { useTodayCheckIn } from '../hooks/useTodayCheckIn';
  * today's check-in first. Without one, the student is sent to Check In with
  * `?next=` set, and returned here once they've checked in.
  *
+ * Only for the kid band, though: `checkInRequired` (useStudentExperience,
+ * from the server's KIDS_UI with VITE_KIDS_UI as the fallback) is true for
+ * K-5 and false above it. An older student can still check in whenever they
+ * want - Check In stays in their nav and their day still records it - but
+ * nothing here blocks their way to the work. Moving KIDS_UI moves which
+ * grades are held at this gate, with no code change.
+ *
  * Applied per route through `guards` in routes/routeConfig.js.
  */
 export function RequireCheckIn({ children }) {
   const { checkedIn, isLoading, error, refresh } = useTodayCheckIn();
-  const { isJunior } = useStudentExperience();
+  const { isJunior, checkInRequired } = useStudentExperience();
   const location = useLocation();
+
+  // Optional for this student: straight through, and no waiting on the
+  // check-in lookup to decide it.
+  if (!checkInRequired) return children;
 
   if (isLoading) {
     return isJunior ? (

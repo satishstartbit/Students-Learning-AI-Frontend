@@ -1,0 +1,133 @@
+/*
+ * Grade 6+ My Assignments page (MyAssignmentsPage.jsx). Prefix: sa-.
+ *
+ * This page was drawn entirely with the generic design-system components, so
+ * it read a size larger and a face apart from the rest of the student area.
+ * Everything here matches what the sibling pages already establish - Home
+ * (studentHome.css), Plan, Notifications (studentNotifications.css) and
+ * Settings (studentSettings.css):
+ *
+ *   page      centred column, 8px 4px 40px padding
+ *   title     26px / 600 / 1.2, subtitle 13px secondary
+ *   eyebrow   10.5px uppercase, 0.08em tracking, secondary
+ *   card      14px radius, hairline border, surface, 0 1px 2px shadow
+ *
+ * The face comes from body.student-theme (Poppins, theme/studentTheme.css) -
+ * inherited, never restated here - and every colour is a theme token, so the
+ * student's own accent and appearance choices still drive the page.
+ */
+.sa-page {
+  /* Centred like the other student pages, so the column doesn't sit off to
+     the left on a wide screen. */
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 8px 4px 40px;
+  color: var(--color-text-primary);
+}
+
+.sa-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.sa-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.sa-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* --- Section (filters, each table) ------------------------------------- */
+.sa-section {
+  margin-top: 22px;
+}
+.sa-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.sa-section__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.sa-section__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.sa-section__subtitle {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--color-text-secondary);
+}
+
+.sa-card {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-bg-surface);
+  box-shadow: 0 1px 2px rgba(46, 35, 20, 0.04);
+}
+
+/* DataTable already draws its own bordered surface (.ui-table-wrap), so the
+   tables are not wrapped in a second card - that container is simply given
+   the same 14px radius and shadow as the cards above. */
+.sa-page .ui-table-wrap {
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(46, 35, 20, 0.04);
+}
+
+.sa-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* --- Table type ---------------------------------------------------------
+   The shared DataTable is sized for the admin console; inside this page it
+   follows the student scale (13px rows, 10.5px uppercase headers) like the
+   Home and Notifications lists it sits beside. Scoped to .sa-page so no
+   other screen's table is touched. */
+.sa-page .ui-table th {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.sa-page .ui-table td {
+  font-size: 13px;
+}
+.sa-page .ui-table :is(th, td) {
+  padding-block: 12px;
+}
+
+.sa-task {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.sa-task__title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.sa-muted {
+  color: var(--color-text-secondary);
+}

@@ -9,10 +9,13 @@ import { findMood } from '../moods';
 import { describeNextPath, safeNextPath } from '../nextPath';
 
 /**
- * /student/check-in for Grade 6+ - the standalone check-in every work screen
- * sends a student to first (components/RequireCheckIn.jsx). Same card as
- * My Day; once checked in it offers a matched calming tool, or straight on to
- * wherever the student was heading.
+ * /student/check-in for Grade 6+ - the standalone check-in.
+ *
+ * Optional at this age: RequireCheckIn only holds the kid band (KIDS_UI) at
+ * the gate, so an older student comes here because they chose to, not
+ * because a work screen sent them. Same card as My Day; once checked in it
+ * offers a matched calming tool, or straight on to wherever they were
+ * heading if something did pass `?next=`.
  */
 export default function CheckInPage() {
   const [params] = useSearchParams();
