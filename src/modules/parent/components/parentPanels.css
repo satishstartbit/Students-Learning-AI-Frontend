@@ -1,0 +1,222 @@
+/* =====================================================================
+   The shared shape of the parent's per-child pages (Progress, Learning
+   Summary). Prefix: pp-.
+
+   Both pages are "pick a child, then everything below is about them", so
+   the picker, the caret that ties the chosen card to the panel, the panel
+   itself and the stat cards inside it live here once. Page-specific
+   content sits in parentProgress.css / parentLearningSummary.css.
+
+   Colours are shared tokens only: the accent tints are color-mix on
+   --accent-base, so the Color/Theme switcher still drives both pages.
+   ===================================================================== */
+
+/* --- Choose a child ---------------------------------------------------- */
+.pp-picker__label {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.pp-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.pp-child {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pp-child:hover {
+  border-color: var(--color-border-strong);
+}
+.pp-child[aria-pressed='true'] {
+  border-color: var(--accent-base);
+  box-shadow: 0 0 0 1px var(--accent-base);
+  background: color-mix(in srgb, var(--accent-base) 5%, var(--color-bg-surface));
+}
+
+/* The caret that ties the selected card to the panel below it. */
+.pp-child[aria-pressed='true']::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  transform: rotate(45deg);
+  border: 1px solid var(--accent-base);
+  border-width: 0 1px 1px 0;
+  background: color-mix(in srgb, var(--accent-base) 5%, var(--color-bg-surface));
+}
+
+.pp-child__body {
+  flex: 1;
+  min-width: 0;
+}
+.pp-child__name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.pp-child__grade {
+  margin-top: 1px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.pp-child__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+.pp-child__tick {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: var(--accent-base);
+  color: var(--accent-on);
+}
+
+/* --- The selected child's panel ---------------------------------------- */
+.pp-panel {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--accent-base) 22%, var(--color-border-default));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--accent-base) 6%, var(--color-bg-surface));
+}
+
+.pp-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.pp-panel__title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.25;
+}
+.pp-panel__sub {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* --- Stat cards and section blocks inside a panel ---------------------- */
+.pp-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.pp-card {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-bg-surface);
+}
+.pp-card__label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.pp-card__value {
+  margin: 0;
+  font-family: var(--font-family-heading, inherit);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.pp-card__note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.pp-block {
+  margin-top: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-bg-surface);
+}
+.pp-block__title {
+  margin: 0;
+  font-size: 16px;
+}
+.pp-block__lead {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* --- Small parts both pages draw --------------------------------------- */
+.pp-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.pp-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: var(--color-border-strong);
+}
+.pp-dot--on {
+  background: var(--accent-base);
+}
+
+.pp-bar {
+  height: 4px;
+  margin-top: 10px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--accent-base) 16%, transparent);
+  overflow: hidden;
+}
+.pp-bar__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-base);
+}
+
+/* Subject chip - the same subject keeps the same tone on both pages; which
+   tone a subject gets is decided in the page (toneFor). */
+.pp-subject {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+  background: var(--pp-subject-bg, var(--sticky-blue));
+  color: var(--pp-subject-fg, #0b6b86);
+}
+.pp-subject[data-tone='green'] { --pp-subject-bg: var(--sticky-green); --pp-subject-fg: #2f7d32; }
+.pp-subject[data-tone='pink'] { --pp-subject-bg: var(--sticky-pink); --pp-subject-fg: #b4235a; }
+.pp-subject[data-tone='blue'] { --pp-subject-bg: var(--sticky-blue); --pp-subject-fg: #0b6b86; }
+.pp-subject[data-tone='lavender'] { --pp-subject-bg: var(--sticky-lavender); --pp-subject-fg: #6b43c4; }
+.pp-subject[data-tone='orange'] { --pp-subject-bg: var(--sticky-orange); --pp-subject-fg: #b45309; }
+.pp-subject[data-tone='yellow'] { --pp-subject-bg: var(--sticky-yellow); --pp-subject-fg: #8a6a00; }

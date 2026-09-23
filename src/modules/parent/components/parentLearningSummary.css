@@ -1,0 +1,107 @@
+/* =====================================================================
+   Parent Learning Summary (/parent/learning-summary) - the parts only this
+   page draws. Prefix: pl-, on top of parentPanels.css (picker, panel, stat
+   cards, subject chips), which the page imports alongside this file.
+   ===================================================================== */
+
+/* Subjects practised (wide) beside Topics studied (narrow), collapsing to
+   one column when there isn't room for both. */
+.pl-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 14px;
+  margin-top: 14px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .pl-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* The blocks inside the split already sit in a row, so they don't add the
+   stacking margin .pp-block carries on its own. */
+.pl-split > .pp-block {
+  margin-top: 0;
+  height: 100%;
+}
+
+/* --- Subjects practised ------------------------------------------------- */
+.pl-subjects {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+.pl-subject {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+/* The tinted tile carrying the subject's icon. */
+.pl-subject__icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--pp-subject-bg, var(--sticky-blue));
+  color: var(--pp-subject-fg, #0b6b86);
+}
+.pl-subject__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.pl-subject__name {
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.pl-subject__rate {
+  flex: none;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.pl-subject__meta {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+/* The bar sits between the name and the counts, not under everything. */
+.pl-subject .pp-bar {
+  margin-top: 8px;
+}
+
+/* --- Topics studied ------------------------------------------------------ */
+.pl-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.pl-topic {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 9999px;
+  font-size: 12px;
+  background: var(--color-bg-surface);
+}
+.pl-topic__count {
+  font-weight: 700;
+  color: var(--accent-base);
+}
+
+/* --- Recent learning activity -------------------------------------------- */
+.pl-activity {
+  margin-top: 12px;
+}
+.pl-activity__topic {
+  font-weight: 500;
+}
+.pl-muted {
+  color: var(--color-text-secondary);
+}

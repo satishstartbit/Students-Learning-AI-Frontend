@@ -62,6 +62,9 @@ export const getTeacherLearningActivity = (params = {}) =>
 export const getParentLearningSummary = (childId) =>
   api.get(`/parent/children/${childId}/learning-summary`);
 
+/** One row per child (name, grade, sessions this month) for the summary's child picker. */
+export const getParentLearningOverview = () => api.get('/parent/learning-summary');
+
 export default {
   listSubjects,
   startSession,
@@ -76,4 +79,5 @@ export default {
   getHint,
   getTeacherLearningActivity,
   getParentLearningSummary,
+  getParentLearningOverview,
 };

@@ -1,0 +1,180 @@
+/* =====================================================================
+   Parent "My Children" (/parent/children). Prefix: pc-.
+
+   One card per child: who they are, the subjects they are learning, and
+   every teacher connected or invited - each card ending in the three
+   actions a parent reaches for (progress, edit, password). Colours are
+   shared tokens only, so the accent/theme switcher still drives the card.
+   ===================================================================== */
+
+.pc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+  align-items: start;
+}
+
+/* A column so the actions can be pinned to the foot of the card: cards in
+   the same row are stretched to the tallest, and a ragged row of buttons
+   part-way up each card reads as broken. */
+.pc-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-bg-surface);
+}
+
+/* --- Head: avatar, name, @username · grade, the ⋮ menu ---------------- */
+.pc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.pc-head__body {
+  flex: 1;
+  min-width: 0;
+}
+.pc-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--color-text-primary);
+}
+.pc-meta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.pc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.pc-rule {
+  height: 1px;
+  margin: 14px 0;
+  background: var(--color-border-default);
+}
+
+/* --- Sections: Subjects, Teachers ------------------------------------- */
+.pc-section + .pc-section {
+  margin-top: 14px;
+}
+.pc-section__label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.pc-section__empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.pc-subjects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* --- Teacher rows ----------------------------------------------------- */
+.pc-teachers {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pc-teacher {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--color-bg-surface-sunken);
+}
+.pc-teacher__body {
+  flex: 1;
+  min-width: 0;
+}
+.pc-teacher__name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+.pc-teacher__meta {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+/* Pending invitations read as lighter than a live connection. */
+.pc-teacher--pending .pc-teacher__name {
+  font-weight: 500;
+}
+
+/* --- Inline "+ Invite a teacher" -------------------------------------- */
+.pc-inline-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-base);
+  cursor: pointer;
+}
+.pc-inline-action:hover {
+  text-decoration: underline;
+}
+.pc-inline-action:disabled {
+  color: var(--color-text-tertiary);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+/* --- Foot: the three per-child actions -------------------------------- */
+.pc-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  /* margin-top:auto pins this to the bottom of a stretched card. */
+  margin-top: auto;
+  padding-top: 14px;
+}
+.pc-foot > * {
+  flex: none;
+}
+
+/* The ⋮ trigger: quiet until hovered, like the mockup. */
+.pc-kebab {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.pc-kebab:hover {
+  background: var(--color-bg-surface-sunken);
+  color: var(--color-text-primary);
+}

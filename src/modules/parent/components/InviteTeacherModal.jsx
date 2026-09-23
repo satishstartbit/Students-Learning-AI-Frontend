@@ -25,7 +25,11 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }) {
   const [subjects, setSubjects] = useState([]);
-  const [grade, setGrade] = useState(child?.profile?.grade ?? null);
+  // The details modal passes a full child (grade under `profile`), the My
+  // Children cards pass a list item (grade at the top level) - both default
+  // the picker to the child's own grade.
+  const childGrade = child?.profile?.grade ?? child?.grade ?? null;
+  const [grade, setGrade] = useState(childGrade);
   const [teacherId, setTeacherId] = useState(null);
   // The picked teacher's option, kept so their name still shows if a later search hides them.
   const [picked, setPicked] = useState(null);
@@ -187,7 +191,7 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
             loading={lookupsLoading}
             placeholder="Select grade"
             searchPlaceholder="Search grades…"
-            hint={child?.profile?.grade ? `${formatName(child)} is in ${child.profile.grade}` : undefined}
+            hint={childGrade ? `${formatName(child)} is in ${childGrade}` : undefined}
             error={attempted ? errors.grade : undefined}
           />
         </div>

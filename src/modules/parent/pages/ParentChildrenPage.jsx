@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LuEllipsisVertical, LuPlus } from 'react-icons/lu';
 import {
   Alert,
   Avatar,
   Badge,
   Button,
-  ButtonGroup,
-  Card,
   ConfirmationModal,
+  Dropdown,
   EmptyState,
   Loader,
   PageHeader,
@@ -17,100 +18,157 @@ import { useModal } from '../../../hooks/useModal';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
+import { formatSubjects } from '../../invitations/invitationStatus';
 import parentService from '../services/parent.service';
 import AddChildModal from '../components/AddChildModal';
 import EditChildModal from '../components/EditChildModal';
 import ChildDetailsModal from '../components/ChildDetailsModal';
+import InviteTeacherModal from '../components/InviteTeacherModal';
 import SetChildPasswordModal from '../components/SetChildPasswordModal';
+import '../components/parentChildren.css';
 
-/** One child, as a "clean and friendly" card - the ticket's primary layout. */
-function ChildCard({ child, onView, onEdit, onSetPassword, onRemove }) {
-  const subjects = useMemo(
-    () => [...new Set((child.teachers ?? []).map((t) => t.subject).filter(Boolean))],
-    [child.teachers]
-  );
+/** A connected teacher and an invited one, as the same row shape. */
+function teacherRows(child) {
+  const connected = (child.teachers ?? []).map((t) => ({
+    key: `rel-${t.id}`,
+    name: formatName(t.owner) || t.owner?.email || 'Teacher',
+    meta: [t.subject, t.academicYear?.name].filter(Boolean).join(' · '),
+    badge: { variant: 'success', label: 'Connected' },
+    pending: false,
+  }));
+
+  // Only invitations still waiting on the teacher come back from the API
+  // (parent.service#listChildren), so nothing here duplicates a row above:
+  // an accepted invitation has already become a connection.
+  const invited = (child.invitations ?? []).map((inv) => ({
+    key: `inv-${inv.id}`,
+    name: inv.teacher?.name || inv.teacherName || inv.teacherEmail,
+    meta: [formatSubjects(inv.subjects), inv.academicYear?.name].filter(Boolean).join(' · '),
+    badge:
+      inv.status === 'expired'
+        ? { variant: 'neutral', label: 'Invite expired' }
+        : { variant: 'warning', label: 'Invite sent' },
+    pending: true,
+  }));
+
+  return [...connected, ...invited];
+}
+
+/** One child: who they are, what they're learning, and who teaches them. */
+function ChildCard({ child, onProgress, onEdit, onSetPassword, onInvite, onView, onRemove }) {
+  const rows = useMemo(() => teacherRows(child), [child]);
+
+  // Subjects follow the teachers - the ones already teaching this child plus
+  // the ones invited to - rather than being set on the child directly.
+  const subjects = useMemo(() => {
+    const fromTeachers = (child.teachers ?? []).map((t) => t.subject);
+    const fromInvites = (child.invitations ?? []).flatMap((inv) => inv.subjects ?? []);
+    return [...new Set([...fromTeachers, ...fromInvites].filter(Boolean))];
+  }, [child.teachers, child.invitations]);
+
+  const name = formatName(child);
 
   return (
-    <Card className="ui-field">
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-md)' }}>
-        <Avatar src={child.profileImageUrl} name={formatName(child)} size="lg" />
+    <article className="pc-card">
+      <div className="pc-head">
+        <Avatar src={child.profileImageUrl} name={name} size="lg" />
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: '1.05rem' }}>{formatName(child)}</div>
-          <div className="ui-hint">@{child.username}</div>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 'var(--spacing-sm)' }}>
-            {child.grade && <Badge variant="neutral">{child.grade}</Badge>}
-            <StatusBadge status={child.status} />
-            {child.emailVerified ? (
-              <Badge variant="success" dot>
-                Verified
-              </Badge>
-            ) : (
-              <Badge variant="warning" dot>
-                Pending
-              </Badge>
-            )}
-          </div>
+        <div className="pc-head__body">
+          <h3 className="pc-name">{name}</h3>
+          <p className="pc-meta">
+            {[child.username ? `@${child.username}` : null, child.grade].filter(Boolean).join(' · ')}
+          </p>
         </div>
+
+        <Dropdown
+          align="end"
+          trigger={
+            <button type="button" className="pc-kebab" aria-label={`More actions for ${name}`}>
+              <LuEllipsisVertical aria-hidden="true" />
+            </button>
+          }
+          items={[
+            { key: 'view', label: 'View details', onClick: () => onView(child) },
+            { key: 'invite', label: 'Invite a teacher', onClick: () => onInvite(child) },
+            { key: 'divider', divider: true },
+            { key: 'remove', label: 'Remove child', danger: true, onClick: () => onRemove(child) },
+          ]}
+        />
       </div>
 
-      <div style={{ marginTop: 'var(--spacing-md)' }}>
-        <span className="ui-hint">Subjects</span>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-          {subjects.length ? (
-            subjects.map((s) => (
+      <div className="pc-chips">
+        <StatusBadge status={child.status} />
+        {child.emailVerified ? (
+          <Badge variant="success" dot>
+            Email verified
+          </Badge>
+        ) : (
+          <Badge variant="warning" dot>
+            Invite pending
+          </Badge>
+        )}
+      </div>
+
+      <div className="pc-rule" />
+
+      <section className="pc-section">
+        <p className="pc-section__label">Subjects</p>
+        {subjects.length ? (
+          <div className="pc-subjects">
+            {subjects.map((s) => (
               <Badge key={s} variant="primary">
                 {s}
               </Badge>
-            ))
-          ) : (
-            <span className="ui-hint">No subjects assigned yet</span>
-          )}
-        </div>
-      </div>
+            ))}
+          </div>
+        ) : (
+          <p className="pc-section__empty">Added by the teacher once they connect.</p>
+        )}
+      </section>
 
-      <div style={{ marginTop: 'var(--spacing-md)' }}>
-        <span className="ui-hint">Teachers</span>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-          {child.teachers?.length ? (
-            child.teachers.map((t) => {
-              const offGrade = t.grade && child.grade && t.grade !== child.grade;
-              return (
-                <Badge key={t.id} variant="neutral">
-                  {formatName(t.owner)} · {t.subject}
-                  {t.grade ? ` · ${t.grade}` : ''}
-                  {t.academicYear?.name ? ` · ${t.academicYear.name}` : ''}
-                  {offGrade ? ' · off-grade' : ''}
-                </Badge>
-              );
-            })
-          ) : (
-            <span className="ui-hint">No teachers connected yet</span>
-          )}
-        </div>
-      </div>
+      <section className="pc-section">
+        <p className="pc-section__label">Teachers</p>
+        {rows.length ? (
+          <ul className="pc-teachers">
+            {rows.map((row) => (
+              <li key={row.key} className={`pc-teacher${row.pending ? ' pc-teacher--pending' : ''}`}>
+                <Avatar name={row.name} size="sm" />
+                <span className="pc-teacher__body">
+                  <span className="pc-teacher__name">{row.name}</span>
+                  {row.meta && <span className="pc-teacher__meta">{row.meta}</span>}
+                </span>
+                <Badge variant={row.badge.variant}>{row.badge.label}</Badge>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="pc-section__empty">No teachers connected yet.</p>
+        )}
 
-      <ButtonGroup style={{ marginTop: 'var(--spacing-lg)', flexWrap: 'wrap' }}>
-        <Button size="sm" onClick={() => onView(child)}>
-          View Details
+        <button type="button" className="pc-inline-action" onClick={() => onInvite(child)}>
+          <LuPlus aria-hidden="true" />
+          Invite a teacher
+        </button>
+      </section>
+
+      <div className="pc-foot">
+        <Button size="sm" variant="ghost" onClick={() => onProgress(child)}>
+          View progress
         </Button>
-        <Button size="sm" variant="secondary" onClick={() => onEdit(child)}>
+        <Button size="sm" variant="ghost" onClick={() => onEdit(child)}>
           Edit
         </Button>
-        <Button size="sm" variant="secondary" onClick={() => onSetPassword(child)}>
+        <Button size="sm" variant="ghost" onClick={() => onSetPassword(child)}>
           Set password
         </Button>
-        <Button size="sm" variant="secondary" onClick={() => onRemove(child)}>
-          Remove
-        </Button>
-      </ButtonGroup>
-    </Card>
+      </div>
+    </article>
   );
 }
 
 /** /parent/children - the parent's "My Children" hub. */
 export default function ParentChildrenPage() {
+  const navigate = useNavigate();
   const children = useApi(parentService.listChildren);
   const { run: runChildren } = children;
 
@@ -118,6 +176,7 @@ export default function ParentChildrenPage() {
   const editModal = useModal();
   const detailsModal = useModal();
   const passwordModal = useModal();
+  const inviteModal = useModal();
   const removeModal = useModal();
 
   const load = useCallback(() => runChildren({ limit: 100 }), [runChildren]);
@@ -138,13 +197,19 @@ export default function ParentChildrenPage() {
   };
 
   const rows = children.data ?? [];
+  const addButton = (
+    <Button onClick={addModal.open}>
+      <LuPlus aria-hidden="true" />
+      Add child
+    </Button>
+  );
 
   return (
     <div className="td-page">
       <PageHeader
         title="My Children"
-        description="View and manage your children, their subjects and their teachers."
-        actions={<Button onClick={addModal.open}>+ Add Child</Button>}
+        description="Your children, their subjects and the teachers they are connected to."
+        actions={addButton}
       />
 
       {children.isLoading && rows.length === 0 && <Loader message="Loading your children…" />}
@@ -156,25 +221,22 @@ export default function ParentChildrenPage() {
           icon="👨‍👩‍👧"
           title="No children added yet"
           description="Add your first child to get started - you'll be able to invite their teachers and track their subjects right away."
-          action={<Button onClick={addModal.open}>+ Add Child</Button>}
+          action={addButton}
         />
       )}
 
       {rows.length > 0 && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: 'var(--spacing-lg)',
-          }}
-        >
+        <div className="pc-grid">
           {rows.map((child) => (
             <ChildCard
               key={child.id}
               child={child}
-              onView={(c) => detailsModal.open(c.id)}
+              // The Progress page opens on this child rather than its own first one.
+              onProgress={(c) => navigate(`/parent/progress?childId=${encodeURIComponent(c.id)}`)}
               onEdit={(c) => editModal.open(c.id)}
               onSetPassword={(c) => passwordModal.open(c)}
+              onInvite={(c) => inviteModal.open(c)}
+              onView={(c) => detailsModal.open(c.id)}
               onRemove={(c) => removeModal.open(c)}
             />
           ))}
@@ -204,6 +266,16 @@ export default function ParentChildrenPage() {
         child={passwordModal.payload}
         onClose={passwordModal.close}
         onUpdated={load}
+      />
+
+      {/* Remounted per child so the fields start empty, and the child's own
+          grade is what the modal defaults to. */}
+      <InviteTeacherModal
+        key={`invite-${inviteModal.payload?.id ?? 'none'}-${inviteModal.isOpen}`}
+        isOpen={inviteModal.isOpen}
+        child={inviteModal.payload}
+        onClose={inviteModal.close}
+        onInvited={load}
       />
 
       <ConfirmationModal
