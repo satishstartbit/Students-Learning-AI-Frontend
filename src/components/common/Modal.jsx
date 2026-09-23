@@ -16,6 +16,10 @@ export function Modal({
   description,
   children,
   footer,
+  // For a dialog that draws its own heading in the body instead of passing
+  // `title` (so the header row would duplicate it) - without one, an
+  // aria-modal dialog reaches a screen reader unnamed.
+  ariaLabel,
   size = 'md',
   closeOnOverlayClick = true,
   closeOnEscape = true,
@@ -89,6 +93,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : ariaLabel}
         onKeyDown={handleKeyDown}
         tabIndex={-1}
       >

@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Alert, Button, Card, PageHeader } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
-import StudentCheckInCard from '../../student/components/StudentCheckInCard';
+import { ENERGY_LEVELS } from '../moods';
 import regulationToolkitService from '../../student/services/regulationToolkit.service';
+import StudentCheckInModal from '../components/StudentCheckInModal';
 import { useTodayCheckIn } from '../hooks/useTodayCheckIn';
 import { findMood } from '../moods';
 import { describeNextPath, safeNextPath } from '../nextPath';
@@ -11,16 +12,27 @@ import { describeNextPath, safeNextPath } from '../nextPath';
 /**
  * /student/check-in for Grade 6+ - the standalone check-in.
  *
+ * The check-in itself is the dialog (components/StudentCheckInModal.jsx), the
+ * same one Home opens, so there is one form to keep in step rather than two.
+ * This page opens it straight away when today has no check-in yet, and
+ * otherwise shows what they said with a way back in.
+ *
  * Optional at this age: RequireCheckIn only holds the kid band (KIDS_UI) at
- * the gate, so an older student comes here because they chose to, not
- * because a work screen sent them. Same card as My Day; once checked in it
- * offers a matched calming tool, or straight on to wherever they were
- * heading if something did pass `?next=`.
+ * the gate, so an older student comes here because they chose to, not because
+ * a work screen sent them. Once checked in it offers a matched calming tool,
+ * or straight on to wherever they were heading if something passed `?next=`.
  */
 export default function CheckInPage() {
   const [params] = useSearchParams();
   const next = safeNextPath(params.get('next'));
-  const { checkedIn, checkIn, moods } = useTodayCheckIn();
+  const { checkedIn, checkIn, moods, isLoading } = useTodayCheckIn();
+
+  // null means "nobody has opened or closed it yet", in which case the
+  // default applies: with nothing recorded today, the dialog is already open
+  // on arrival rather than hiding behind a button they came here to press.
+  // Derived rather than synced from an effect, so the first paint is right.
+  const [dialogChoice, setDialogChoice] = useState(null);
+  const dialogOpen = dialogChoice ?? (!isLoading && !checkedIn);
 
   const recommendation = useApi(regulationToolkitService.getRecommendation);
   const { run } = recommendation;
@@ -53,10 +65,27 @@ export default function CheckInPage() {
           alignItems: 'start',
         }}
       >
-        <StudentCheckInCard />
+        {checkedIn ? (
+          <Card title="You're checked in" subtitle={mood ? `Feeling ${mood.name.toLowerCase()} today.` : undefined}>
+            <p style={{ marginTop: 0 }}>
+              Energy {checkIn.energy}/{ENERGY_LEVELS.length}
+              {checkIn.availableMinutes != null ? ` · about ${checkIn.availableMinutes} min today` : ''}
+              {checkIn.bodyAreas?.length ? ` · felt in your ${checkIn.bodyAreas.join(', ')}` : ''}
+            </p>
+            {checkIn.note && <p style={{ marginTop: 0 }}>&ldquo;{checkIn.note}&rdquo;</p>}
+
+            <Button variant="secondary" size="sm" onClick={() => setDialogChoice(true)}>
+              Change my check-in
+            </Button>
+          </Card>
+        ) : (
+          <Card title="Today's check-in" subtitle="Takes a few seconds, once a day.">
+            <Button onClick={() => setDialogChoice(true)}>Check in</Button>
+          </Card>
+        )}
 
         {checkedIn && (
-          <Card title="You're checked in" subtitle={mood ? `Feeling ${mood.name.toLowerCase()} today.` : undefined}>
+          <Card title="What might help" subtitle={tool ? 'Matched to how you said you feel.' : undefined}>
             {tool ? (
               <p style={{ marginTop: 0 }}>
                 Suggested for how you feel: <strong>{tool.name}</strong>
@@ -80,6 +109,8 @@ export default function CheckInPage() {
           </Card>
         )}
       </div>
+
+      <StudentCheckInModal isOpen={dialogOpen} onClose={() => setDialogChoice(false)} />
     </div>
   );
 }

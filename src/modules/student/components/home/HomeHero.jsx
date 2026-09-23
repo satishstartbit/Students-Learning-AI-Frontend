@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { LuSmile } from 'react-icons/lu';
-import { Modal } from '../../../../components/common';
 import { getHourInTimezone, formatDurationLong } from '../../../../utils/date';
 import { useTodayCheckIn } from '../../../checkIn/hooks/useTodayCheckIn';
 import { ENERGY_LEVELS, findMood } from '../../../checkIn/moods';
-import StudentCheckInCard from '../StudentCheckInCard';
+import StudentCheckInModal from '../../../checkIn/components/StudentCheckInModal';
 
 const LANDSCAPE_SRC = `${import.meta.env.BASE_URL}image/0e0f85199245c62378a5be33ae5ec4f5cb9a2555.png`;
 
@@ -86,9 +85,10 @@ export function HomeHero({ firstName, openCount, minutesLeft, isLoading }) {
         <CheckInPeek onOpen={() => setCheckInOpen(true)} />
       </div>
 
-      <Modal isOpen={checkInOpen} onClose={() => setCheckInOpen(false)} title="Today's check-in" size="md">
-        <StudentCheckInCard title="How are you today?" onSaved={() => setCheckInOpen(false)} />
-      </Modal>
+      {/* The check-in itself is a dialog of its own (mood tiles, body areas,
+          energy, time, note) - the card used to be dropped into a generic
+          Modal here, which framed a card inside a dialog. */}
+      <StudentCheckInModal isOpen={checkInOpen} onClose={() => setCheckInOpen(false)} />
     </section>
   );
 }

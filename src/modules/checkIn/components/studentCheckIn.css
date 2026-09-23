@@ -1,0 +1,318 @@
+/* =====================================================================
+   Grade 6+ daily check-in dialog (StudentCheckInModal.jsx). Prefix: ci-.
+
+   Built to the check-in mockup: a soft face at the top, a 3-across grid of
+   mood tiles (a white card holding a tinted art panel, label underneath),
+   then hairline-separated blocks for the body areas, energy, time and a
+   place to add a few words, ending in Continue with "Not now" below it.
+
+   Every list in it is master data (Emotional States, Body Areas, Available
+   Time), so tile counts and wording follow whatever Super Admin publishes -
+   nothing here assumes six moods or four time ranges. Mood tints come from
+   each mood's own background colour, falling back to the sticky-note
+   palette in file order so an admin who sets none still gets the pastel
+   spread the mockup shows.
+
+   Colours are theme tokens throughout (the teal is the accent family), and
+   the face is inherited from body.student-theme - so a student's own accent
+   and appearance choices still drive the dialog.
+   ===================================================================== */
+
+.ci-dialog {
+  display: grid;
+  gap: 16px;
+}
+
+/* --- Head: face, title, lead ------------------------------------------- */
+.ci-head {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 3px;
+}
+.ci-face {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 6px;
+  border-radius: 9999px;
+  background: var(--accent-soft);
+  color: var(--accent-base);
+}
+.ci-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.ci-lead {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* A hairline between blocks, as in the mockup. */
+.ci-rule {
+  height: 1px;
+  margin: 2px 0;
+  background: var(--color-border-default);
+}
+
+/* --- Blocks ------------------------------------------------------------- */
+.ci-fieldset {
+  display: grid;
+  gap: 8px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.ci-legend {
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.ci-hint {
+  margin: -2px 0 0;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+/* Energy and time sit side by side, stacking when there isn't room. */
+.ci-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 20px;
+}
+
+/* --- Mood tiles --------------------------------------------------------- */
+.ci-moods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 520px) {
+  .ci-moods {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* The tile is a white card; the colour lives in the art panel inside it. */
+.ci-mood {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: 10px 10px 12px;
+  border: 1.5px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+}
+.ci-mood:hover {
+  border-color: color-mix(in srgb, var(--accent-base) 45%, var(--color-border-default));
+}
+.ci-mood[aria-pressed='true'] {
+  border-color: var(--accent-base);
+  box-shadow: 0 0 0 1px var(--accent-base);
+}
+/* The panel spans the tile, as in the mockup - the glyph is centred in it
+   rather than the panel shrinking to the glyph. */
+.ci-mood__art {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 60px;
+  border-radius: 10px;
+  background: var(--ci-mood-bg, var(--sticky-blue));
+  /* The glyph is drawn in a deeper shade of its own tint so each tile reads
+     as one colour rather than a grey drawing on a pastel field. */
+  color: color-mix(in srgb, var(--ci-mood-bg, var(--sticky-blue)) 55%, #1f2937);
+}
+.ci-mood__image {
+  border-radius: 8px;
+  object-fit: cover;
+}
+.ci-mood__emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+.ci-mood__tick {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 9999px;
+  background: var(--accent-base);
+  color: var(--accent-on);
+}
+
+/* --- Body areas: figure beside chips ------------------------------------ */
+.ci-body {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+@media (max-width: 420px) {
+  .ci-body {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+}
+.ci-figure {
+  width: 72px;
+  height: auto;
+  color: var(--accent-base);
+}
+/* A region lights up only while its chip is picked. */
+.ci-figure__part {
+  fill: var(--color-bg-surface);
+  stroke: currentColor;
+  stroke-width: 1.4;
+  transition: fill 120ms ease;
+}
+.ci-figure__part[data-on='true'] {
+  fill: var(--accent-soft);
+}
+.ci-figure__dot {
+  fill: var(--accent-base);
+}
+
+.ci-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.ci-chip {
+  padding: 6px 13px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 9999px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.ci-chip:hover {
+  border-color: var(--color-border-strong);
+}
+.ci-chip[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--accent-base) 45%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent-hover, var(--accent-base));
+  font-weight: 600;
+}
+
+/* Time ranges read as a 2x2 block rather than a ragged row. */
+.ci-chips--grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.ci-chips--grid .ci-chip {
+  text-align: center;
+}
+
+/* --- Energy bars --------------------------------------------------------
+   The panel sizes itself to the bars, and the Low/High scale under it spans
+   exactly the same width - hence the wrapper, rather than a guessed
+   min-width on the scale. */
+.ci-energy-wrap {
+  display: grid;
+  gap: 6px;
+  width: fit-content;
+}
+.ci-energy {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 56px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 10px;
+  background: var(--color-bg-surface);
+}
+/* Height and shade both come from --ci-step (the level, set per button), so
+   the row climbs and the filled part deepens to the right without any of it
+   being written into the markup. Any number of levels works. */
+.ci-energy__step {
+  width: 14px;
+  height: calc(26% + var(--ci-step) * 14%);
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: var(--color-bg-surface-sunken);
+  cursor: pointer;
+}
+.ci-energy__step[data-filled='true'] {
+  background: color-mix(in srgb, var(--accent-base) calc(45% + var(--ci-step) * 12%), #ffffff);
+}
+.ci-energy__step:hover {
+  outline: 1px solid var(--accent-base);
+}
+.ci-energy__scale {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  font-size: 10.5px;
+  color: var(--color-text-secondary);
+}
+
+/* --- Note --------------------------------------------------------------- */
+.ci-note {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 10px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 13px;
+}
+.ci-note::placeholder {
+  color: var(--color-text-tertiary);
+}
+.ci-note:focus-visible {
+  outline: 2px solid var(--accent-base);
+  outline-offset: 1px;
+}
+
+/* --- Foot --------------------------------------------------------------- */
+.ci-error {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--color-danger-fg);
+}
+.ci-actions {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+.ci-actions .ui-btn {
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+/* "Not now" is a quiet way out, not a second button competing with Continue. */
+.ci-later {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.ci-later:hover {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+}
