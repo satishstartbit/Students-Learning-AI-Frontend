@@ -1,0 +1,64 @@
+/* =====================================================================
+   Super Admin sidebar: black panel.
+
+   Scoped to `body.super-admin-theme`, a class layouts/SuperAdminLayout.jsx
+   puts on <body> for as long as it is mounted (a body class, not a
+   wrapping element, for the same reason usePortalTheme uses one - the
+   mobile sidebar renders through a portal). Teacher/Parent keep the white
+   portal sidebar: they never add this class, and every rule below is
+   written `body.super-admin-theme ...` so it cannot match outside it.
+
+   Deliberately NOT theme/superAdminTheme.css: that file is the record of
+   the retired navy treatment and would repaint buttons, tabs, cards and
+   badges too. Only the sidebar changes here; the rest of the console stays
+   on the light portal look (theme/portalTheme.css).
+
+   Shared components are not edited - these rules target the data-slot
+   attributes components/ui/sidebar.jsx already renders, with plain
+   (unlayered) rules so they outrank the `@layer utilities` Tailwind
+   classes without `!important` (see the portalTheme.css sidebar section
+   for why the --color-sidebar-* tokens can't be used instead).
+   ===================================================================== */
+
+/* Colours come from redefining the shared tokens on the sidebar element
+   rather than repainting each descendant: every portalTheme.css sidebar
+   rule already reads them, as does the BrandMark wordmark's inline
+   `color: var(--color-text-primary)` - an inline style no plain rule could
+   outrank. The overrides are scoped to the sidebar subtree, so the rest of
+   the console (and the Color/Theme switcher) is untouched. */
+body.super-admin-theme [data-slot='sidebar'] {
+  --color-bg-surface: #000000;
+  --color-bg-surface-sunken: rgba(255, 255, 255, 0.08); /* hover */
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #a1a1aa;
+  --color-border-default: rgba(255, 255, 255, 0.14);
+  --color-danger-fg: #f87171; /* "Log out" - the light-mode rose is unreadable on black */
+
+  /* Active item / avatar chip: the accent mixed into black instead of the
+     pale tint, so it still follows whichever accent family the user picked
+     in the Color/Theme switcher. */
+  --accent-soft: color-mix(in srgb, var(--accent-base) 30%, #000000);
+  --accent-soft-hover: color-mix(in srgb, var(--accent-base) 40%, #000000);
+
+  background-color: #000000;
+  color: var(--color-text-primary);
+}
+
+/* Tailwind resolves `bg-sidebar-border` / `border-sidebar-border` at build
+   time, so the submenu's left rule and the separator need the colour
+   directly. */
+body.super-admin-theme [data-slot='sidebar-menu-sub'] {
+  border-color: var(--color-border-default);
+}
+
+body.super-admin-theme [data-slot='sidebar-separator'] {
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+/* Keyboard-focus ring: white reads on black, where the accent ring would
+   not. Tailwind's ring utilities read `--tw-ring-color` when the
+   box-shadow is drawn, so overriding it here does take effect. */
+body.super-admin-theme [data-slot='sidebar-menu-button']:focus-visible,
+body.super-admin-theme [data-slot='sidebar-menu-sub-button']:focus-visible {
+  --tw-ring-color: #ffffff;
+}

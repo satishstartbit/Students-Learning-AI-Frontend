@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import {
   LuChartLine,
   LuCreditCard,
@@ -7,7 +6,6 @@ import {
   LuGraduationCap,
   LuLayoutDashboard,
   LuLink,
-  LuMailOpen,
   LuPackage,
   LuTrophy,
   LuReceiptText,
@@ -16,8 +14,10 @@ import {
   LuUsers,
   LuUsersRound,
 } from 'react-icons/lu';
+import { useEffect } from 'react';
 import AuthenticatedLayout from './AuthenticatedLayout';
-import '../theme/superAdminTheme.css';
+import usePortalTheme from './usePortalTheme';
+import '../theme/superAdminSidebar.css';
 
 /**
  * Navigation for the Super Admin area (/admin/*).
@@ -46,22 +46,14 @@ const NAV_ITEMS = [
         label: 'Relationships',
         icon: LuLink,
         items: [
-          { to: '/admin/relationships/invitations', label: 'Teacher invitations', icon: LuMailOpen },
+          // { to: '/admin/relationships/invitations', label: 'Teacher invitations', icon: LuMailOpen },
           { to: '/admin/relationships', label: 'Assignments', icon: LuLink, end: true },
         ],
       },
       { to: '/admin/masters', label: 'Master Management', icon: LuDatabase },
     ],
   },
-  {
-    // The same Master Management screens, surfaced here so everything students
-    // see on their Rewards pages is managed from one obvious place.
-    group: 'Rewards',
-    items: [
-      { to: '/admin/masters/student-rewards', label: 'Stickers & Emojis', icon: LuGift },
-      { to: '/admin/masters/reward-activities', label: 'Points per Activity', icon: LuTrophy },
-    ],
-  },
+
   {
     // Plans and codes are the same Master Management screens, surfaced here
     // too so the whole billing picture is reachable from one place.
@@ -78,19 +70,28 @@ const NAV_ITEMS = [
 
 export function SuperAdminLayout({ children }) {
   /*
-   * Scoped via a class on <body>, not a wrapping div, because Modal/Drawer/
-   * MultiSelect/SearchableSelect (components/common) render through
-   * createPortal(..., document.body) - a wrapping div here would never be
-   * an ancestor of that portaled content in the DOM, so its CSS variables
-   * (theme/superAdminTheme.css) would not reach dialogs or dropdowns opened
-   * from an admin page. <body> is an ancestor of both the app root and any
-   * portal target, so this reaches everything the Super Admin panel can
-   * render. Removed on unmount so navigating to another role's layout
-   * (a different top-level route) restores the default theme immediately.
+   * The same light portal look the Teacher and Parent areas use (white
+   * sidebar with a soft teal active pill, Nunito/Poppins, flat cards) -
+   * the Master Management mockup is this theme, and one console-wide look
+   * beats a navy sidebar on every screen but that one. The old navy
+   * treatment is theme/superAdminTheme.css, now unused.
+   * 
+   * usePortalTheme puts the class on <body> rather than a wrapping div,
+   * because Modal/Drawer/MultiSelect/SearchableSelect render through
+   * createPortal(..., document.body): a wrapper here would not be their
+   * ancestor, so its variables would never reach a dialog or dropdown
+   * opened from an admin page.
+   */
+  usePortalTheme();
+
+  /*
+   * Plus the one Super-Admin-only deviation: a black sidebar
+   * (theme/superAdminSidebar.css). Body class for the same portal reason as
+   * above - the mobile sidebar renders through createPortal.
    */
   useEffect(() => {
-    document.body.classList.add('admin-theme');
-    return () => document.body.classList.remove('admin-theme');
+    document.body.classList.add('super-admin-theme');
+    return () => document.body.classList.remove('super-admin-theme');
   }, []);
 
   return (

@@ -17,6 +17,7 @@ const endDateAfterStartDate =
   (value, allValues = {}) =>
     isEmpty(value) || isEmpty(allValues.startDate) || value > allValues.startDate ? null : message;
 import academicService from '../../services/academic.service';
+import '../../components/masterPages.css';
 
 export default function AcademicYearFormPage() {
   const { id } = useParams();
@@ -82,7 +83,7 @@ export default function AcademicYearFormPage() {
         ]}
       />
 
-      <Card>
+      <Card className="ms-form">
         {form.submitError && <Alert variant="error" className="ui-field">{form.submitError}</Alert>}
 
         <form onSubmit={form.handleSubmit} noValidate>

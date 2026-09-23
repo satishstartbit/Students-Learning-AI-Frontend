@@ -8,6 +8,7 @@ import { required } from '../../../../utils/validation';
 import { formatGradeRange, fromGradeValue, gradeOrderRule, toGradeValue } from '../../../../utils/gradeRange';
 import GradeRangeFields from '../../components/GradeRangeFields';
 import { curriculumSubjectService, topicService } from '../../services/curriculum.service';
+import '../../components/masterPages.css';
 
 const listAllSubjects = () => curriculumSubjectService.list({ limit: 100, sortBy: 'name', sortOrder: 'asc' });
 
@@ -79,7 +80,7 @@ export default function TopicFormPage() {
           { label: isEdit ? 'Edit' : 'Create' },
         ]}
       />
-      <Card>
+      <Card className="ms-form">
         {loadError && <Alert variant="error" className="ui-field">{loadError.message}</Alert>}
         {form.submitError && <Alert variant="error" className="ui-field">{form.submitError}</Alert>}
         <form onSubmit={form.handleSubmit} noValidate>

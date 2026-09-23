@@ -8,6 +8,7 @@ import { pattern, required } from '../../../../utils/validation';
 import { fromGradeValue, gradeOrderRule, toGradeValue } from '../../../../utils/gradeRange';
 import GradeRangeFields from '../../components/GradeRangeFields';
 import { taskTypeService } from '../../services/curriculum.service';
+import '../../components/masterPages.css';
 
 const LIST_PATH = '/admin/masters/task-types';
 const EMPTY = { name: '', description: '', minGrade: '', maxGrade: '', subtaskStyle: '', displayOrder: 0, isActive: true };
@@ -75,7 +76,7 @@ export default function TaskTypeFormPage() {
           { label: isEdit ? 'Edit' : 'Create' },
         ]}
       />
-      <Card>
+      <Card className="ms-form">
         {loadError && <Alert variant="error" className="ui-field">{loadError.message}</Alert>}
         {form.submitError && <Alert variant="error" className="ui-field">{form.submitError}</Alert>}
         <form onSubmit={form.handleSubmit} noValidate>

@@ -1,0 +1,106 @@
+/* =====================================================================
+   Master Management dashboard (/admin/masters), built to the mockup:
+   a four-tile stat row, a compact filter row, and one flat card per area
+   whose heading collapses the table under it.
+
+   Prefixed `mm-`. Only this page imports it.
+   ===================================================================== */
+
+.mm-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.mm-group {
+  margin-bottom: var(--spacing-md);
+}
+
+/* The whole heading row toggles the area, so it is a real button. */
+.mm-group__head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mm-group__head:hover {
+  background: var(--color-bg-surface-sunken);
+}
+
+.mm-group__head:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.mm-group__chevron {
+  flex: none;
+  color: var(--color-text-secondary);
+  transition: transform 0.15s ease;
+}
+
+.mm-group__head[aria-expanded='false'] .mm-group__chevron {
+  transform: rotate(-90deg);
+}
+
+.mm-group__title {
+  font-family: var(--font-family-heading, inherit);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+/* The table is the card's own body: no second border inside the card.
+
+   `position: relative` is load-bearing, not decoration: the wide table
+   scrolls inside this box, but the visually-hidden labels in it
+   (.ui-sr-only, which is position: absolute) would otherwise be placed
+   against the page instead, and drag a horizontal scrollbar onto the whole
+   page at phone width. Making the wrap their containing block keeps that
+   overflow where the scrolling happens. */
+.mm-group .ui-table-wrap {
+  position: relative;
+  border: 0;
+  border-top: 1px solid var(--color-border-default);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Sort arrows are noise on a nine-row table - they appear on hover, or on
+   the column actually sorted. */
+.mm-group .ui-table__sort > span {
+  opacity: 0;
+}
+
+.mm-group th:hover .ui-table__sort > span,
+.mm-group .ui-table__sort:focus-visible > span,
+.mm-group th[aria-sort] .ui-table__sort > span {
+  opacity: 1;
+}
+
+.mm-master__name {
+  font-weight: 600;
+}
+
+/* A count worth noticing: rows hidden from the product. */
+.mm-count--flagged {
+  color: var(--color-warning-fg);
+  font-weight: 600;
+}
+
+.mm-muted {
+  color: var(--color-text-secondary);
+}
+
+.mm-row-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  justify-content: flex-end;
+}

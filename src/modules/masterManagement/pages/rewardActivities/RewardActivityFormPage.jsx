@@ -6,6 +6,7 @@ import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
 import { required, pattern, min } from '../../../../utils/validation';
 import rewardService from '../../services/reward.service';
+import '../../components/masterPages.css';
 
 const KEY_PATTERN = /^[a-z][a-z0-9_]*$/;
 
@@ -81,7 +82,7 @@ export default function RewardActivityFormPage() {
         ]}
       />
 
-      <Card>
+      <Card className="ms-form">
         {form.submitError && <Alert variant="error" className="ui-field">{form.submitError}</Alert>}
 
         <form onSubmit={form.handleSubmit} noValidate>

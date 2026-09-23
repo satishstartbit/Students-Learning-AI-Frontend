@@ -26,6 +26,7 @@ import RewardArt from '../../../student/components/rewards/RewardArt';
 import { StickerArt } from '../../../student/components/rewards/StickerArt';
 import { STICKER_OPTIONS, STICKER_PREFIX } from '../../../student/components/rewards/stickerCatalog';
 import rewardService from '../../services/reward.service';
+import '../../components/masterPages.css';
 
 // Loaded on first open - the emoji data set is a few hundred KB (same as IconField).
 const EmojiPickerPanel = lazy(() => import('../../../assignments/media/EmojiPickerPanel'));
@@ -187,7 +188,7 @@ function RewardForm({ id, existing }) {
   };
 
   return (
-    <Card>
+    <Card className="ms-form">
       {form.submitError && form.submitError !== pictureError && (
         <Alert variant="error" className="ui-field">
           {form.submitError}

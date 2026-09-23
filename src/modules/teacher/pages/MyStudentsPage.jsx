@@ -1,212 +1,263 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { LuFilterX } from 'react-icons/lu';
-import {
-  PageHeader,
-  FilterBar,
-  SearchInput,
-  IconButton,
-  DataTable,
-  Avatar,
-  Badge,
-  StatusBadge,
-  Toast,
-} from '../../../components/common';
-import { SearchableSelect } from '../../../components/ui/searchable-select';
-import { Tooltip } from '../../../components/ui/tooltip';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { LuCheck, LuSearch, LuUsers } from 'react-icons/lu';
+import { PageHeader, DataTable, EmptyState, Toast } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { useDebounce } from '../../../hooks/useDebounce';
-import { useModal } from '../../../hooks/useModal';
-import { formatDateTime } from '../../../utils/date';
-import { formatName } from '../../../utils/format';
 import teacherStudentService from '../services/teacherStudent.service';
-import StudentDetailModal from '../components/StudentDetailModal';
+import { MoodFace, StudentAvatar, SubjectChips } from '../components/students/StudentBits';
+import { fullName, lastActiveLabel, relativeDay } from '../components/students/studentFormat';
+import '../components/assignmentsList/assignmentsList.css';
+import '../components/students/teacherStudents.css';
+
+/** Tabs, in the mockup's order. */
+const TABS = [
+  { view: '', label: 'All', countKey: 'all' },
+  { view: 'attention', label: 'Needs attention', countKey: 'attention' },
+  { view: 'no_checkin', label: 'No check-in today', countKey: 'noCheckin' },
+  { view: 'invited', label: 'Invited', countKey: 'invited' },
+];
+const VIEWS = new Set(TABS.map((t) => t.view));
+
+const WELLBEING_OPTIONS = [
+  { value: '', label: 'Any wellbeing' },
+  { value: 'struggling', label: 'Finding it hard' },
+  { value: 'okay', label: 'Doing okay' },
+  { value: 'none', label: 'No check-in this week' },
+];
+
+const STATE_PILL = {
+  active: { label: 'Active', tone: 'success' },
+  invited: { label: 'Invited', tone: '' },
+  suspended: { label: 'Suspended', tone: 'danger' },
+};
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+function WellbeingCell({ student }) {
+  const c = student.latestCheckIn;
+  if (!c) {
+    return (
+      <span className="ts-wellbeing">
+        <MoodFace checkIn={null} />
+        <span className="ts-muted">No check-ins yet</span>
+      </span>
+    );
+  }
+  return (
+    <span className="ts-wellbeing">
+      <MoodFace checkIn={c} />
+      <span className="ts-wellbeing__text">
+        <span>
+          {c.moodName} · {relativeDay(c.date)}
+        </span>
+        {student.alert && <span className="ts-pill ts-pill--danger">Alert</span>}
+      </span>
+    </span>
+  );
+}
 
 /**
- * Teacher's roster - every student assigned to them, across every subject
- * and grade. Search + filter + paginate, following the pattern already
- * established by `superAdmin/pages/RelationshipsPage.jsx`.
+ * My Students - everyone this teacher teaches, how they're doing today and
+ * who needs a look: tabs (All / Needs attention / No check-in today /
+ * Invited), search and filters, and a row per student linking to their page.
  */
 export default function MyStudentsPage() {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view = VIEWS.has(searchParams.get('view') ?? '') ? (searchParams.get('view') ?? '') : '';
+
   const pagination = usePagination();
   const { page, limit, applyMeta, goToPage } = pagination;
 
   const [search, setSearch] = useState('');
-  const [subject, setSubject] = useState(null);
-  const [grade, setGrade] = useState(null);
-
+  const [subject, setSubject] = useState('');
+  const [grade, setGrade] = useState('');
+  const [wellbeing, setWellbeing] = useState('');
   const debouncedSearch = useDebounce(search, 350);
 
-  const subjects = useApi(teacherStudentService.listLookupSubjects);
-  const grades = useApi(teacherStudentService.listLookupGrades);
-  const { run: runSubjects } = subjects;
-  const { run: runGrades } = grades;
+  const subjects = useApi(teacherStudentService.listLookupSubjects, { immediate: true });
+  const grades = useApi(teacherStudentService.listLookupGrades, { immediate: true });
 
-  useEffect(() => {
-    runSubjects().catch(() => {});
-  }, [runSubjects]);
-
-  useEffect(() => {
-    runGrades().catch(() => {});
-  }, [runGrades]);
-
-  const subjectOptions = useMemo(
-    () => (subjects.data ?? []).map((s) => ({ value: s.name, label: s.name })),
-    [subjects.data]
-  );
-  const gradeOptions = useMemo(
-    () => (grades.data ?? []).map((g) => ({ value: g.name, label: g.name })),
-    [grades.data]
+  const filters = useMemo(
+    () => ({ search: debouncedSearch || undefined, subject: subject || undefined, grade: grade || undefined, wellbeing: wellbeing || undefined }),
+    [debouncedSearch, subject, grade, wellbeing]
   );
 
-  const list = useApi(teacherStudentService.listMyStudents);
+  const list = useApi(teacherStudentService.listRoster);
+  const counts = useApi(teacherStudentService.getRosterCounts);
   const { run: runList, meta } = list;
+  const { run: runCounts } = counts;
 
-  const query = useMemo(
-    () => ({
-      page,
-      limit,
-      search: debouncedSearch || undefined,
-      subject: subject || undefined,
-      grade: grade || undefined,
-    }),
-    [page, limit, debouncedSearch, subject, grade]
-  );
-
-  const load = useCallback(() => runList(query), [runList, query]);
+  const load = useCallback(() => {
+    runCounts(filters).catch(() => {});
+    return runList({ ...filters, view: view || undefined, page, limit }).catch(() => {});
+  }, [runList, runCounts, filters, view, page, limit]);
 
   useEffect(() => {
-    load().catch(() => {});
+    load();
   }, [load]);
 
   useEffect(() => {
     if (meta?.total !== undefined) applyMeta(meta);
   }, [meta, applyMeta]);
 
-  const hasActiveFilters = Boolean(search) || Boolean(subject) || Boolean(grade);
-
+  const hasFilters = Boolean(search || subject || grade || wellbeing);
+  const withReset = (setter) => (value) => {
+    setter(value);
+    goToPage(1);
+  };
   const clearFilters = () => {
     setSearch('');
-    setSubject(null);
-    setGrade(null);
+    setSubject('');
+    setGrade('');
+    setWellbeing('');
     goToPage(1);
   };
-
-  const withFilterReset = (setter) => (next) => {
-    setter(next);
+  const pickTab = (next) => {
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set('view', next);
+    else params.delete('view');
+    setSearchParams(params, { replace: true });
     goToPage(1);
   };
-
-  const detailModal = useModal();
 
   const columns = [
     {
-      key: 'name',
+      key: 'student',
       header: 'Student',
-      render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-          <Avatar src={row.profileImageUrl} name={formatName(row)} size="sm" />
-          <div>
-            <div style={{ fontWeight: 600 }}>{formatName(row)}</div>
-            <div className="ui-hint">{row.email}</div>
-          </div>
-        </div>
+      render: (s) => (
+        <span className="ts-person">
+          <StudentAvatar student={s} />
+          <span>
+            <Link to={`/teacher/students/${s.id}`} onClick={(e) => e.stopPropagation()}>
+              {fullName(s)}
+            </Link>
+            <span className="ts-email">{s.email}</span>
+          </span>
+        </span>
       ),
     },
-    { key: 'grade', header: 'Grade', render: (row) => row.grade || '—' },
+    { key: 'grade', header: 'Grade', render: (s) => (s.grade ? <span className="ts-nowrap">{s.grade}</span> : <span className="ts-muted">—</span>) },
+    { key: 'subjects', header: 'Subjects', render: (s) => <SubjectChips subjects={s.subjects} /> },
+    { key: 'wellbeing', header: 'Wellbeing', render: (s) => <WellbeingCell student={s} /> },
     {
-      key: 'subjects',
-      header: 'Subjects',
-      render: (row) => {
-        const relationships = row.relationships ?? [];
-        if (relationships.length === 0) return row.subjects || '—';
+      key: 'state',
+      header: 'Status',
+      render: (s) => {
+        const pill = STATE_PILL[s.state] ?? STATE_PILL.active;
         return (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {relationships.map((r) => (
-              <Badge key={r.id} variant="neutral">
-                {r.subject}
-                {r.grade ? ` (${r.grade})` : ''}
-              </Badge>
-            ))}
-          </div>
+          <span className={`ts-pill ${pill.tone ? `ts-pill--${pill.tone}` : ''}`.trim()} title={s.state === 'invited' ? "Hasn't signed in yet" : undefined}>
+            {pill.label}
+          </span>
         );
       },
     },
-    { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-    {
-      key: 'lastActive',
-      header: 'Last active',
-      render: (row) => (row.lastLoginAt ? formatDateTime(row.lastLoginAt) : 'Never'),
-    },
+    { key: 'lastActive', header: 'Last active', render: (s) => <span className="ts-nowrap">{lastActiveLabel(s.lastActiveAt)}</span> },
   ];
 
+  const rows = Array.isArray(list.data) ? list.data : [];
+  const tabCounts = counts.data ?? {};
+  const total = pagination.total;
+  const nobodyAtAll = !list.isLoading && !hasFilters && !view && tabCounts.all === 0;
+
   return (
-    <>
-      <PageHeader title="My Students" description="Students you teach, across every subject and grade." />
+    <div className="al-page">
+      <PageHeader title="My Students" description="Everyone you teach, across every subject and grade." style={{ marginBottom: 0 }} />
 
-      <FilterBar>
-        <SearchInput
-          fieldClassName="ui-filterbar__search ui-field--compact"
-          placeholder="Search by name or email"
-          value={search}
-          onChange={(e) => withFilterReset(setSearch)(e.target.value)}
-          onClear={() => withFilterReset(setSearch)('')}
-        />
-
-        <SearchableSelect
-          className="ui-field--compact"
-          label="Subject"
-          options={subjectOptions}
-          value={subject}
-          onChange={withFilterReset(setSubject)}
-          loading={subjects.isLoading}
-          placeholder="Any subject"
-          searchPlaceholder="Search subjects…"
-        />
-
-        <SearchableSelect
-          className="ui-field--compact"
-          label="Grade"
-          options={gradeOptions}
-          value={grade}
-          onChange={withFilterReset(setGrade)}
-          loading={grades.isLoading}
-          placeholder="Any grade"
-          searchPlaceholder="Search grades…"
-        />
-
-        <Tooltip label="Clear filters" side="top">
-          <IconButton
-            icon={<LuFilterX aria-hidden="true" />}
-            label="Clear filters"
-            size="sm"
-            onClick={clearFilters}
-            disabled={!hasActiveFilters}
+      {nobodyAtAll ? (
+        <div className="ts-card">
+          <EmptyState
+            icon={
+              <span className="ts-face ts-face--lg ts-tone" data-tone="blue" style={{ width: 54, height: 54 }}>
+                <LuUsers size={24} aria-hidden="true" />
+              </span>
+            }
+            title="No students yet"
+            description="Students appear here once your school adds them to your classes. If someone is missing, ask your school admin."
           />
-        </Tooltip>
-      </FilterBar>
+        </div>
+      ) : (
+        <>
+          <ul className="al-tabs" aria-label="Filter students">
+            {TABS.map((t) => {
+              const selected = view === t.view;
+              const n = tabCounts[t.countKey];
+              return (
+                <li key={t.countKey}>
+                  <button type="button" className="al-tab" aria-pressed={selected} onClick={() => pickTab(t.view)}>
+                    {selected && <LuCheck size={13} strokeWidth={2.6} aria-hidden="true" />}
+                    {t.label}
+                    {n !== undefined && <span aria-label={`, ${n}`}> · {n}</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
 
-      <DataTable
-        columns={columns}
-        data={list.data ?? []}
-        isLoading={list.isLoading}
-        error={list.error}
-        onRetry={load}
-        onRowClick={(row) => detailModal.open(row.id)}
-        pagination={pagination}
-        onPageChange={goToPage}
-        emptyTitle={hasActiveFilters ? 'No students match these filters' : 'No students assigned yet'}
-        emptyDescription={
-          hasActiveFilters
-            ? 'Try adjusting the filters above.'
-            : 'Students you are assigned to teach will show up here.'
-        }
-        caption="My students"
-      />
+          <div className="al-filters" role="search">
+            <label className="al-search">
+              <span className="ui-sr-only">Search by name or email</span>
+              <LuSearch size={16} aria-hidden="true" />
+              <input type="search" placeholder="Search by name or email" value={search} onChange={(e) => withReset(setSearch)(e.target.value)} />
+            </label>
+            <select className={`al-select ${subject ? '' : 'al-select--placeholder'}`.trim()} aria-label="Subject" value={subject} onChange={(e) => withReset(setSubject)(e.target.value)}>
+              <option value="">All subjects</option>
+              {(subjects.data ?? []).map((s) => (
+                <option key={s.id ?? s.name} value={s.name}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            <select className={`al-select ${grade ? '' : 'al-select--placeholder'}`.trim()} aria-label="Grade" value={grade} onChange={(e) => withReset(setGrade)(e.target.value)}>
+              <option value="">All grades</option>
+              {(grades.data ?? []).map((g) => (
+                <option key={g.id ?? g.name} value={g.name}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+            <select
+              className={`al-select ${wellbeing ? '' : 'al-select--placeholder'}`.trim()}
+              aria-label="Wellbeing"
+              value={wellbeing}
+              onChange={(e) => withReset(setWellbeing)(e.target.value)}
+            >
+              {WELLBEING_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <button type="button" className="al-clear" onClick={clearFilters} disabled={!hasFilters}>
+              Clear
+            </button>
+          </div>
 
-      <StudentDetailModal isOpen={detailModal.isOpen} studentId={detailModal.payload} onClose={detailModal.close} />
+          <DataTable
+            columns={columns}
+            data={rows}
+            isLoading={list.isLoading}
+            error={list.error}
+            onRetry={load}
+            onRowClick={(s) => navigate(`/teacher/students/${s.id}`)}
+            pagination={pagination}
+            onPageChange={goToPage}
+            emptyTitle="No students match"
+            emptyDescription={view === 'attention' ? 'No unread check-in alerts right now.' : 'Try another tab, or clear the filters.'}
+            caption="My students"
+          />
+
+          {pagination.totalPages <= 1 && total > 0 && (
+            <p className="al-footer" role="status">
+              Showing {rows.length} of {plural(tabCounts.all ?? total, 'student')}
+            </p>
+          )}
+        </>
+      )}
 
       <Toast />
-    </>
+    </div>
   );
 }

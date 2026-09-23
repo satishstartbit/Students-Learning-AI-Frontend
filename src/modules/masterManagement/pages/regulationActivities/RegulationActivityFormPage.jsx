@@ -6,6 +6,7 @@ import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
 import { required } from '../../../../utils/validation';
 import regulationService from '../../services/regulation.service';
+import '../../components/masterPages.css';
 
 const ACTIVITY_TYPE_HINT = 'e.g. Breathing, Grounding, Movement, Calming Sounds, Music, Mindfulness';
 
@@ -83,7 +84,7 @@ export default function RegulationActivityFormPage() {
         ]}
       />
 
-      <Card>
+      <Card className="ms-form">
         {form.submitError && <Alert variant="error" className="ui-field">{form.submitError}</Alert>}
 
         <form onSubmit={form.handleSubmit} noValidate>

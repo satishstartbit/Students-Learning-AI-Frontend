@@ -30,6 +30,9 @@ export function NotificationBell() {
     } else if (notification.relatedType === 'assignment' && notification.relatedId) {
       const buildPath = ASSIGNMENT_DETAIL_PATH[role];
       if (buildPath) navigate(buildPath(notification.relatedId));
+    } else if (notification.relatedType === 'student' && notification.relatedId && role === 'TEACHER') {
+      // A check-in alert - the student's page, where it can be marked seen.
+      navigate(`/teacher/students/${notification.relatedId}`);
     } else if (notification.relatedType === 'teacher_invitation') {
       // Teacher: the invitation to answer. Parent: an answer to one of theirs,
       // shown on the child's card (Children page) under Invitations.

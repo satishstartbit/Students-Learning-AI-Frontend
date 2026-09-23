@@ -1,0 +1,78 @@
+/* =====================================================================
+   Shared layout for the Master Management create/edit screens, so every
+   master form reads like the Teacher Portal forms rather than a column
+   of inputs stretched across a 1400px card.
+
+   The look itself (colours, fonts, radii, table and badge treatment)
+   comes from theme/portalTheme.css, which the whole admin console now
+   uses - nothing here restates it.
+
+   Prefixed `ms-`. Applied by putting `className="ms-form"` on the form
+   page's <Card>.
+   ===================================================================== */
+
+.ms-form {
+  max-width: 760px;
+}
+
+/* Two columns of fields, as on the teacher profile and the mockups. */
+.ms-form form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--spacing-lg);
+  align-items: start;
+}
+
+/*
+ * Anything that is not a plain field - an alert, a section heading, the
+ * button row, an upload or colour picker, a preview - spans both columns.
+ * Fields opt back into a single column below, which keeps an unknown
+ * child (a picker a master adds later) full width by default rather than
+ * squeezed into half.
+ */
+.ms-form form > * {
+  grid-column: 1 / -1;
+}
+
+.ms-form form > .ui-field {
+  grid-column: auto;
+}
+
+/* A textarea, a checkbox row or a colour swatch reads badly at half width. */
+.ms-form form > .ui-field:has(textarea),
+.ms-form form > .ui-field:has(.ui-choice),
+.ms-form form > .ui-field:has(input[type='color']),
+.ms-form form > .ui-field--wide {
+  grid-column: 1 / -1;
+}
+
+/* Section headings need air above them, but not on the first row. */
+.ms-form form > .ui-sectionheader {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border-default);
+}
+
+/* Save / Cancel sit bottom-right, with the primary action outermost. */
+.ms-form form > .ui-btngroup {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+  margin-top: var(--spacing-xs);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border-default);
+}
+
+/* One column once two no longer fit - fields are ~280px at their tightest. */
+@media (max-width: 720px) {
+  .ms-form form {
+    grid-template-columns: 1fr;
+  }
+
+  .ms-form form > .ui-field {
+    grid-column: 1 / -1;
+  }
+
+  .ms-form form > .ui-btngroup .ui-btn {
+    flex: 1;
+  }
+}

@@ -1,0 +1,256 @@
+/* =====================================================================
+   Teacher dashboard (the "Good morning, Priya" mockup). Prefix: td-.
+   Fonts/type scale come from theme/portalTheme.css; student bits (avatar,
+   mood face, pills) from ../students/teacherStudents.css.
+   ===================================================================== */
+
+.td-page {
+  display: grid;
+  gap: 14px;
+  max-width: 1120px;
+}
+
+.td-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.td-greeting {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.25;
+}
+.td-subtitle {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+/* --- Stat cards ------------------------------------------------------- */
+.td-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.td-stat {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.td-stat__label {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.td-stat__value {
+  margin: 4px 0 0;
+  font-family: var(--font-family-heading, inherit);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.td-stat__note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.td-stat__note--danger { color: var(--color-danger-fg); }
+.td-stat__note--warning { color: var(--color-warning-fg); }
+
+/* --- Wellbeing alerts panel -------------------------------------------- */
+.td-alerts {
+  border: 1px solid var(--color-danger-border);
+  border-radius: 14px;
+  background: var(--color-danger-bg);
+  padding: 14px 16px;
+}
+.td-alerts__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.td-alerts__title {
+  margin: 0;
+  font-size: 15px;
+  color: var(--color-danger-fg);
+}
+.td-alerts__note {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.td-alerts__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.td-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--color-bg-surface);
+}
+.td-alert__body {
+  flex: 1;
+  min-width: 0;
+}
+.td-alert__name {
+  font-size: 14px;
+  font-weight: 600;
+}
+.td-alert__text {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* --- Panels grid -------------------------------------------------------- */
+.td-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.td-panel {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  padding: 16px 18px;
+  min-width: 0;
+}
+.td-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.td-panel__title {
+  margin: 0;
+  font-size: 16px;
+}
+.td-panel__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.td-panel__link:hover {
+  color: var(--accent-base);
+}
+
+.td-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.td-list > li + li {
+  border-top: 1px solid var(--color-border-default);
+}
+
+/* Due soon row */
+.td-due {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 130px auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+.td-due__title {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+.td-due__title:hover {
+  color: var(--accent-base);
+  text-decoration: underline;
+}
+.td-meta {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.td-progress__track {
+  height: 5px;
+  border-radius: 9999px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+.td-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-base);
+}
+
+/* Needs attention / marking / activity rows */
+.td-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+.td-row__body {
+  flex: 1;
+  min-width: 0;
+}
+.td-row__title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+a.td-row__title:hover {
+  color: var(--accent-base);
+  text-decoration: underline;
+}
+.td-activity__icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 9999px;
+  background: var(--color-bg-surface-sunken);
+  color: var(--color-text-secondary);
+}
+.td-empty {
+  margin: 0;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 1023px) {
+  .td-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .td-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .td-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .td-due {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .td-due .td-progress {
+    display: none;
+  }
+  .td-alert {
+    flex-wrap: wrap;
+  }
+}

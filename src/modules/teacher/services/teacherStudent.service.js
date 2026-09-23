@@ -18,6 +18,20 @@ export const listMyStudents = (params = {}) => api.get('/teacher/students', { pa
 
 export const getMyStudent = (id) => api.get(`/teacher/students/${id}`);
 
+/**
+ * My Students table: { page, limit, search, subject, grade, view, wellbeing }
+ *   view: attention | no_checkin | invited; wellbeing: struggling | okay | none
+ */
+export const listRoster = (params = {}) => api.get('/teacher/roster', { params: dropEmpty(params) });
+
+/** { all, attention, noCheckin, invited } under the same filters as the table. */
+export const getRosterCounts = (params = {}) => api.get('/teacher/roster/counts', { params: dropEmpty(params) });
+
+/** The student's page: header, alert, stats, assignments, this week's check-ins, recent check-ins. */
+export const getStudentOverview = (id) => api.get(`/teacher/students/${id}/overview`);
+
+export const markAlertSeen = (studentId, alertId) => api.post(`/teacher/students/${studentId}/alerts/${alertId}/seen`);
+
 export const listLookupSubjects = (params = {}) =>
   api.get('/teacher/lookups/subjects', { params: dropEmpty(params) });
 
@@ -49,6 +63,10 @@ export const masterOptionsFetcher = (type) =>
   );
 
 export default {
+  listRoster,
+  getRosterCounts,
+  getStudentOverview,
+  markAlertSeen,
   listMyStudents,
   getMyStudent,
   listLookupSubjects,

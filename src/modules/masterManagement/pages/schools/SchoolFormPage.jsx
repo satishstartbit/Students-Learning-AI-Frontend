@@ -8,6 +8,7 @@ import { required, email as emailRule, phone as phoneRule, postalCode as postalC
 import { DEFAULT_COUNTRY } from '../../../../utils/locale';
 import AddressFields from '../../../auth/components/AddressFields';
 import academicService from '../../services/academic.service';
+import '../../components/masterPages.css';
 
 /** "CA" / "CAN" / "Canada" (any case) - the postal-code validation rule below only applies then. */
 const isCanada = (country) =>
@@ -96,7 +97,7 @@ export default function SchoolFormPage() {
         ]}
       />
 
-      <Card>
+      <Card className="ms-form">
         {form.submitError && <Alert variant="error" className="ui-field">{form.submitError}</Alert>}
 
         <form onSubmit={form.handleSubmit} noValidate>

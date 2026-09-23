@@ -229,6 +229,20 @@ body.portal-theme .ui-statcard__value {
   font-size: 22px;
 }
 
+/* Stat tiles carry their icon in a bordered square, as in the mockups. */
+body.portal-theme .ui-statcard__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: 1px solid var(--color-border-default);
+  border-radius: 8px;
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}
+
 body.portal-theme .ui-state__title {
   font-size: 16px;
 }
@@ -236,6 +250,29 @@ body.portal-theme .ui-state__title {
 body.portal-theme .ui-state__description {
   font-size: 13px;
   line-height: 1.55;
+}
+
+/* --------------------------------------------------------------------
+   Dialogs: the same flat card treatment, so a confirm/deactivate dialog
+   reads as part of the page it opened from.
+   -------------------------------------------------------------------- */
+body.portal-theme .ui-modal,
+body.portal-theme .ui-drawer {
+  border-radius: var(--portal-card-radius);
+}
+
+body.portal-theme .ui-modal__title,
+body.portal-theme .ui-drawer__title {
+  font-size: 17px;
+}
+
+body.portal-theme .ui-modal__body {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+body.portal-theme .ui-modal__footer {
+  background: var(--color-bg-canvas);
 }
 
 /* --------------------------------------------------------------------

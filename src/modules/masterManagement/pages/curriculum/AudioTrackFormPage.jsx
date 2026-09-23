@@ -22,6 +22,7 @@ import { required } from '../../../../utils/validation';
 import { formatFileSize } from '../../../../utils/format';
 import { AUDIO_ACCEPT } from '../../../../utils/file';
 import { audioTrackService } from '../../services/curriculum.service';
+import '../../components/masterPages.css';
 
 const LIST_PATH = '/admin/masters/audio-tracks';
 const SOURCE_OPTIONS = [
@@ -114,7 +115,7 @@ export default function AudioTrackFormPage() {
           { label: isEdit ? 'Edit' : 'Create' },
         ]}
       />
-      <Card>
+      <Card className="ms-form">
         {loadError && <Alert variant="error" className="ui-field">{loadError.message}</Alert>}
         {form.submitError && <Alert variant="error" className="ui-field">{form.submitError}</Alert>}
         <form onSubmit={form.handleSubmit} noValidate>

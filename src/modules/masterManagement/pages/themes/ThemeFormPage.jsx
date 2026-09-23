@@ -6,6 +6,7 @@ import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
 import { required } from '../../../../utils/validation';
 import appearanceService from '../../services/appearance.service';
+import '../../components/masterPages.css';
 
 const DEFAULT_CONFIG = { primary: '#4F46E5', secondary: '#818CF8', background: '#FFFFFF', text: '#111827' };
 
@@ -69,7 +70,7 @@ export default function ThemeFormPage() {
         ]}
       />
 
-      <Card>
+      <Card className="ms-form">
         {form.submitError && <Alert variant="error" className="ui-field">{form.submitError}</Alert>}
 
         <form onSubmit={form.handleSubmit} noValidate>

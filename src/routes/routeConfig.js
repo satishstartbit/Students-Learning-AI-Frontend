@@ -33,6 +33,7 @@ import RequireCheckIn from '../modules/checkIn/components/RequireCheckIn';
 
 import TeacherDashboardPage from '../modules/teacher/pages/TeacherDashboardPage';
 import MyStudentsPage from '../modules/teacher/pages/MyStudentsPage';
+import TeacherStudentPage from '../modules/teacher/pages/TeacherStudentPage';
 import AssignmentsListPage from '../modules/teacher/pages/AssignmentsListPage';
 import AssignmentFormPage from '../modules/teacher/pages/AssignmentFormPage';
 import AssignmentDetailsPage from '../modules/teacher/pages/AssignmentDetailsPage';
@@ -474,6 +475,7 @@ export const TEACHER_ROUTES = {
     },
     { path: 'dashboard', label: 'Dashboard', redirectTo: '/teacher' },
     { path: 'students', label: 'Students', permissions: [PERMISSIONS.USER_READ], component: MyStudentsPage },
+    { path: 'students/:id', label: 'Student', permissions: [PERMISSIONS.USER_READ], component: TeacherStudentPage },
     // Parents' invitations to connect with their child - accept or decline.
     { path: 'invitations', label: 'Invitations', component: TeacherInvitationsPage },
     {

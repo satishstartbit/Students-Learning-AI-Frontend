@@ -280,7 +280,7 @@ export default function AssignmentsListPage() {
     },
   ];
 
-  const rows = list.data ?? [];
+  const rows = Array.isArray(list.data) ? list.data : [];
   const tabCounts = counts.data ?? {};
   const total = pagination.total;
 

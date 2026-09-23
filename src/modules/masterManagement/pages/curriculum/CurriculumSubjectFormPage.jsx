@@ -8,6 +8,7 @@ import { required } from '../../../../utils/validation';
 import { fromGradeValue, gradeOrderRule, toGradeValue } from '../../../../utils/gradeRange';
 import GradeRangeFields from '../../components/GradeRangeFields';
 import { curriculumSubjectService } from '../../services/curriculum.service';
+import '../../components/masterPages.css';
 
 const LIST_PATH = '/admin/masters/curriculum-subjects';
 
@@ -62,7 +63,7 @@ export default function CurriculumSubjectFormPage() {
           { label: isEdit ? 'Edit' : 'Create' },
         ]}
       />
-      <Card>
+      <Card className="ms-form">
         {loadError && <Alert variant="error" className="ui-field">{loadError.message}</Alert>}
         {form.submitError && <Alert variant="error" className="ui-field">{form.submitError}</Alert>}
         <form onSubmit={form.handleSubmit} noValidate>

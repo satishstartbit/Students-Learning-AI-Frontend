@@ -6,6 +6,7 @@ import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
 import { required, max } from '../../../../utils/validation';
 import billingService from '../../services/billing.service';
+import '../../components/masterPages.css';
 
 const DISCOUNT_TYPE_OPTIONS = [
   { value: 'percentage', label: 'Percentage' },
@@ -103,7 +104,7 @@ export default function DiscountCodeFormPage() {
         ]}
       />
 
-      <Card>
+      <Card className="ms-form">
         {form.submitError && <Alert variant="error" className="ui-field">{form.submitError}</Alert>}
 
         <form onSubmit={form.handleSubmit} noValidate>

@@ -1,4 +1,10 @@
 /* =====================================================================
+   NO LONGER APPLIED (2026-09-23). The Super Admin console now uses the
+   same light portal look as the Teacher and Parent areas
+   (theme/portalTheme.css, via layouts/usePortalTheme.js), per the Master
+   Management mockup. Nothing imports this file or adds `.admin-theme`;
+   it is kept only as the record of the previous navy treatment.
+
    Super Admin theme - scoped to `.admin-theme`, a class layouts/
    SuperAdminLayout.jsx puts on <body> for as long as it is mounted (see
    that file for why it is a body class rather than a wrapping element).

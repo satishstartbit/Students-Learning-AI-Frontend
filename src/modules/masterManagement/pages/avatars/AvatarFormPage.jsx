@@ -22,6 +22,7 @@ import { AvatarArt } from '../../../student/components/personalize/AvatarArt';
 import { AvatarPicture } from '../../../student/components/personalize/AvatarPicture';
 import { AVATAR_OPTIONS, AVATAR_PREFIX } from '../../../student/components/personalize/avatarCatalog';
 import appearanceService from '../../services/appearance.service';
+import '../../components/masterPages.css';
 
 /**
  * Avatars master - the buddies students choose from on "Make it yours"
@@ -158,7 +159,7 @@ function AvatarForm({ id, existing }) {
   };
 
   return (
-    <Card>
+    <Card className="ms-form">
       {form.submitError && form.submitError !== pictureError && (
         <Alert variant="error" className="ui-field">
           {form.submitError}

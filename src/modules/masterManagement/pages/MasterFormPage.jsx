@@ -19,6 +19,7 @@ import { required } from '../../../utils/validation';
 import masterGenericService from '../services/masterGeneric.service';
 import DynamicExtraFields from '../components/DynamicExtraFields';
 import IconField from '../components/IconField';
+import '../components/masterPages.css';
 
 /**
  * Generic master create/edit form - one screen shared by every simple lookup
@@ -113,7 +114,7 @@ export default function MasterFormPage() {
         ]}
       />
 
-      <Card>
+      <Card className="ms-form">
         {form.submitError && (
           <Alert variant="error" className="ui-field">
             {form.submitError}
