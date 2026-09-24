@@ -53,6 +53,15 @@ export const updateChild = (id, payload) => api.patch(`/parent/children/${id}`, 
 export const setChildPassword = (id, { password, confirmPassword }) =>
   api.patch(`/parent/children/${id}/password`, { password, confirmPassword });
 
+/**
+ * Overview page (/parent): each child today, the week's work, alerts and what
+ * needs the parent - one aggregate, scoped to the signed-in parent.
+ */
+export const getDashboard = () => api.get('/parent/dashboard');
+
+/** Marks a child's check-in alert as seen by this parent (teachers keep their own). */
+export const markAlertSeen = (childId, alertId) => api.post(`/parent/children/${childId}/alerts/${alertId}/seen`);
+
 /** Progress page: one summary per child (today's check-in + task counts). */
 export const getProgress = () => api.get('/parent/progress');
 
@@ -104,6 +113,8 @@ export default {
   addChild,
   updateChild,
   setChildPassword,
+  getDashboard,
+  markAlertSeen,
   getProgress,
   getChildProgress,
   removeChild,

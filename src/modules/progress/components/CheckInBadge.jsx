@@ -1,18 +1,31 @@
 import { Badge } from '../../../components/common';
-import { describeMood, ENERGY_LEVELS } from '../../checkIn/moods';
+import { ENERGY_LEVELS } from '../../checkIn/moods';
+import { useMoodLookup } from '../../checkIn/hooks/useMoodLookup';
 import { MOOD_TONE } from '../stages';
+import MoodIcon from './MoodIcon';
 
-/** Today's check-in at a glance: the feeling, energy, and time - or "Not checked in yet". */
+/**
+ * Today's check-in at a glance: the feeling, energy, and time - or "Not
+ * checked in yet".
+ *
+ * The face is the mood's own icon from Master Management (useMoodLookup),
+ * not a static emoji, so a teacher or parent sees exactly what the student
+ * picked. The badge's colour still comes from MOOD_TONE, which is about how
+ * much attention a feeling deserves rather than what it looks like.
+ */
 export function CheckInBadge({ today, showDetails = true }) {
+  const { moodFor } = useMoodLookup();
+
   if (!today?.checkedIn) return <Badge variant="neutral">Not checked in yet</Badge>;
 
   const { checkIn } = today;
-  const mood = describeMood(checkIn.mood);
+  const mood = moodFor(checkIn.mood);
 
   return (
     <span style={{ display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
       <Badge variant={MOOD_TONE[checkIn.mood] ?? 'neutral'}>
-        <span aria-hidden="true">{mood.emoji}</span> {mood.name}
+        <MoodIcon mood={mood} size={16} />
+        {mood?.name ?? checkIn.mood}
       </Badge>
       {showDetails && (
         <span className="ui-hint">

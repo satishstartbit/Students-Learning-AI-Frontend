@@ -70,7 +70,11 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
   };
 
   const invitationItems = Array.isArray(invitations.data) ? invitations.data : [];
-  const pendingCount = invitationItems.filter((i) => i.status === 'pending').length;
+  // Requests Growing Focus is still reviewing, and invitations already
+  // emailed to a teacher - both mean "a teacher is on the way".
+  const reviewCount = invitationItems.filter((i) => i.status === 'awaiting_approval').length;
+  const sentCount = invitationItems.filter((i) => i.status === 'pending').length;
+  const pendingCount = reviewCount + sentCount;
 
   const columns = [
     { key: 'subject', header: 'Subject', render: (r) => r.subject ?? '—' },
@@ -158,8 +162,17 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
                 title="No teachers connected yet"
                 description={
                   pendingCount
-                    ? `You have ${pendingCount} invitation${pendingCount === 1 ? '' : 's'} waiting for a teacher to accept.`
-                    : "Invite your child's teachers - they'll appear here once they accept."
+                    ? [
+                        reviewCount
+                          ? `${reviewCount} request${reviewCount === 1 ? ' is' : 's are'} with us for review - we email the teacher once approved.`
+                          : null,
+                        sentCount
+                          ? `${sentCount} invitation${sentCount === 1 ? ' is' : 's are'} waiting for the teacher to accept.`
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')
+                    : "Invite your child's teachers - we review each request, then email the teacher. They'll appear here once they accept."
                 }
                 action={pendingCount ? null : inviteButton}
               />

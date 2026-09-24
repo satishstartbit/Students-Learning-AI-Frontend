@@ -1,21 +1,19 @@
 import { useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { LuArrowRight, LuSmilePlus } from 'react-icons/lu';
-import { Confetti } from '../../../../components/ui/confetti';
 import { cn } from '../../../../lib/utils';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useModal } from '../../../../hooks/useModal';
 import { useTodayCheckIn } from '../../../checkIn/hooks/useTodayCheckIn';
 import { ENERGY_LEVELS, findMood, usesLegacyArt } from '../../../checkIn/moods';
-import { useMotionAllowed } from '../../hooks/useKidPreferences';
 import { AdminMoodTile } from './AdminMoodTile';
 import { CheckInModal } from './CheckInModal';
 import { KidButton } from './KidButton';
 import { kidCopyFor } from './kidMoodCopy';
+import { MoodCelebration } from './MoodCelebration';
 import { MoodFace } from './MoodFace';
 import { PaperCard, Tape } from './PaperKit';
-
-const CONFETTI_COLOURS = ['#f6c445', '#f4b6c1', '#1f7a80', '#7b68d6', '#95c07b'];
 
 /**
  * "Today's check-in" for K-5: how are you feeling, and how much energy do
@@ -30,15 +28,15 @@ const CONFETTI_COLOURS = ['#f6c445', '#f4b6c1', '#1f7a80', '#7b68d6', '#95c07b']
  *
  * Both pickers are real radio groups (visually hidden native inputs), so
  * arrow keys, screen readers and switch access work without custom keyboard
- * code. The first check-in of the day gets a small burst of confetti - never
- * in calm mode or with reduced motion.
+ * code. After a save, the mood reveal (MoodCelebration) takes over - it
+ * respects calm mode and reduced motion itself.
  */
 export function CheckInCard({ onSaved, variant = 'inline' }) {
   const { checkIn, isLoading, save, moods, moodsLoading } = useTodayCheckIn();
   const { user } = useAuth();
   const [editing, setEditing] = useState(false);
-  const motionAllowed = useMotionAllowed();
-  const confettiRef = useRef(null);
+  // The mood code to celebrate, once a save on this page has landed.
+  const [celebrating, setCelebrating] = useState(null);
   const uid = useId();
   const modal = useModal();
 
@@ -48,25 +46,14 @@ export function CheckInCard({ onSaved, variant = 'inline' }) {
     return <PaperCard tone="sheet" aria-busy="true" className="h-64 animate-pulse" />;
   }
 
-  const fireConfetti = (result) => {
-    if (result.created && motionAllowed) {
-      confettiRef.current?.fire({
-        particleCount: 70,
-        spread: 80,
-        startVelocity: 26,
-        scalar: 0.9,
-        origin: { y: 0.45 },
-        colors: CONFETTI_COLOURS,
-        disableForReducedMotion: true,
-      });
-    }
-  };
-
   const handleInlineSave = async (values) => {
     const result = await save(values);
     setEditing(false);
-    fireConfetti(result);
     onSaved?.(result);
+    // The mood reveal takes it from here - it has its own particles, so the
+    // confetti burst would only fire behind it. The dialog path reaches the
+    // same overlay from its "Let's go" button.
+    setCelebrating(values.mood);
   };
 
   const handleModalSave = async (values) => {
@@ -95,29 +82,38 @@ export function CheckInCard({ onSaved, variant = 'inline' }) {
     );
   }
 
-  // Outside the compact/expanded switch: saving swaps the card for its compact
-  // summary before the confetti fires, so the canvas must survive that swap.
-  const confetti = (
-    <Confetti
-      ref={confettiRef}
-      manualstart
-      globalOptions={{ resize: true, useWorker: false }}
-      className="pointer-events-none absolute inset-0 z-20 size-full"
-    />
-  );
+  /*
+   * The reveal after an inline save - the /student/check-in page has no
+   * dialog and no "Let's go" button, so without this it is the one way into
+   * a check-in (including changing one) that never showed the mood.
+   *
+   * Portalled into .kid-theme, like the dialog, so it keeps the --kid-*
+   * tokens and escapes any transformed ancestor.
+   */
+  const celebration =
+    celebrating &&
+    createPortal(
+      <MoodCelebration
+        mood={celebrating}
+        moodRow={findMood(moods, celebrating)}
+        name={user?.firstName}
+        onDone={() => setCelebrating(null)}
+      />,
+      document.querySelector('.kid-theme') ?? document.body
+    );
 
   if (current && !editing) {
     return (
       <div className="relative">
-        {confetti}
         <CompactCheckIn mood={current} onChange={() => setEditing(true)} />
+        {celebration}
       </div>
     );
   }
 
   return (
     <div className="relative">
-      {confetti}
+      {celebration}
       <PaperCard as="section" aria-labelledby={`${uid}-title`} tone="green" className="px-4 pb-5 pt-7">
         <Tape tone="yellow" className="-top-3 right-8 rotate-6" />
 

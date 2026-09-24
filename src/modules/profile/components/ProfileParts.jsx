@@ -19,8 +19,23 @@ export function ProfileSection({ title, hint, children, className = '', ...rest 
  * The card at the top of the page: photo (or initials), name, one line of
  * context ("Teacher · Central High · 4 years teaching"), and the photo's own
  * Upload / Remove - which save straight away, separate from the form below.
+ *
+ * A form that saves the photo with the rest of its fields (the parent's Add /
+ * Edit child dialogs) passes `canRemove`/`removeLabel`/`note` to say so
+ * instead, and `placeholderName` for while no name has been typed yet.
  */
-export function ProfileHeaderCard({ name, meta, photoUrl, busy, onUpload, onRemove }) {
+export function ProfileHeaderCard({
+  name,
+  placeholderName,
+  meta,
+  photoUrl,
+  busy,
+  onUpload,
+  onRemove,
+  canRemove = Boolean(photoUrl),
+  removeLabel = 'Remove',
+  note = 'Profile photo · JPG, PNG, WEBP or HEIC',
+}) {
   const inputRef = useRef(null);
   const [failedUrl, setFailedUrl] = useState(null);
   const showPhoto = photoUrl && failedUrl !== photoUrl;
@@ -31,9 +46,9 @@ export function ProfileHeaderCard({ name, meta, photoUrl, busy, onUpload, onRemo
         {showPhoto ? <img src={photoUrl} alt="" onError={() => setFailedUrl(photoUrl)} /> : getInitials(name) || '?'}
       </span>
       <div className="pf-header__text">
-        <p className="pf-header__name">{name}</p>
+        <p className="pf-header__name">{name || placeholderName}</p>
         {meta && <p className="pf-header__meta">{meta}</p>}
-        <p className="pf-header__note">Profile photo · JPG, PNG, WEBP or HEIC</p>
+        {note && <p className="pf-header__note">{note}</p>}
       </div>
       <div className="pf-header__actions">
         <input
@@ -61,9 +76,9 @@ export function ProfileHeaderCard({ name, meta, photoUrl, busy, onUpload, onRemo
         >
           Upload photo
         </Button>
-        {photoUrl && (
+        {canRemove && (
           <Button type="button" variant="ghost" size="sm" loading={busy === 'remove'} disabled={Boolean(busy)} onClick={onRemove}>
-            Remove
+            {removeLabel}
           </Button>
         )}
       </div>

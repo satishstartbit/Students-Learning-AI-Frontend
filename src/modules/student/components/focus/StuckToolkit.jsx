@@ -3,6 +3,7 @@ import { LuChevronRight, LuHeadphones, LuLeaf, LuMusic, LuSparkles, LuWind, LuZa
 import { Modal } from '../../../../components/common';
 import { useApi } from '../../../../hooks/useApi';
 import { useTodayCheckIn } from '../../../checkIn/hooks/useTodayCheckIn';
+import DifficultyPicker from '../../../checkIn/components/DifficultyPicker';
 import regulationToolkitService from '../../services/regulationToolkit.service';
 import RegulationToolkitCard from '../RegulationToolkitCard';
 import ExerciseModal from './ExerciseModal';
@@ -30,6 +31,7 @@ const CATEGORY_ICONS = {
 const slug = (category) => String(category ?? '').toLowerCase().replace(/\s+/g, '-');
 
 export function StuckToolkit({ onExerciseOpenChange }) {
+  const [asking, setAsking] = useState(false);
   const { checkIn } = useTodayCheckIn();
   const categories = useApi(regulationToolkitService.listCategories, { immediate: true });
   const recommendation = useApi(regulationToolkitService.getRecommendation);
@@ -75,10 +77,20 @@ export function StuckToolkit({ onExerciseOpenChange }) {
         <h2 id="fs-stuck-title" className="fs-stuck__title">
           Feeling stuck? Take two minutes.
         </h2>
-        <button type="button" className="fs-link" onClick={() => setOpenAll(true)}>
-          Open the toolkit <LuChevronRight size={14} aria-hidden="true" />
-        </button>
+        <div className="fs-stuck__links">
+          {/* Before reaching for a calming tool, a student can say what is
+              actually in the way - the reasons and the strategies they get
+              back are Super Admin's own lists. */}
+          <button type="button" className="fs-link" onClick={() => setAsking(true)}>
+            What&apos;s making it hard? <LuChevronRight size={14} aria-hidden="true" />
+          </button>
+          <button type="button" className="fs-link" onClick={() => setOpenAll(true)}>
+            Open the toolkit <LuChevronRight size={14} aria-hidden="true" />
+          </button>
+        </div>
       </header>
+
+      <DifficultyPicker isOpen={asking} onClose={() => setAsking(false)} />
 
       {categories.isLoading && !categories.data ? (
         <div className="fs-tools" aria-busy="true">

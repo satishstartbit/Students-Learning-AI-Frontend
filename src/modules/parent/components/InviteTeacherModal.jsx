@@ -12,8 +12,10 @@ import parentService from '../services/parent.service';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Invite a teacher to connect with one child. Nothing is linked until the
- * teacher accepts.
+ * Ask for a teacher to be connected with one child. What the parent sends is
+ * a REQUEST: Growing Focus reviews it, and only on approval is the
+ * client-written invitation emailed to the teacher - who then accepts or
+ * declines. Nothing is linked until the teacher accepts.
  *
  *   1. Subject(s)  a teacher may cover several - e.g. Math and Science
  *   2. Grade       defaults to the child's own grade
@@ -127,8 +129,13 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
         : { teacherId, subjects, grade };
       const { data } = await invitationService.invite(child.id, payload);
       const to = byEmail ? teacherEmail.trim() : picked?.label ?? 'the teacher';
-      if (data?.emailSent === false) toast.warning('Invitation saved, but the email could not be sent. Use "Re-send" to try again.');
-      else toast.success(`Invitation sent to ${to}`);
+      if (data?.awaitingApproval) {
+        toast.success(`Request sent - we'll review it and email the invitation to ${to}`);
+      } else if (data?.emailSent === false) {
+        toast.warning('Invitation saved, but the email could not be sent. Use "Re-send" to try again.');
+      } else {
+        toast.success(`Invitation sent to ${to}`);
+      }
       onInvited?.();
       onClose();
     } catch (err) {
@@ -143,7 +150,7 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
       isOpen={isOpen}
       onClose={onClose}
       title="Invite a teacher"
-      description={`Choose the subject and grade, then the teacher. They get an invitation to connect with ${
+      description={`Choose the subject and grade, then the teacher. We review every request, then email the teacher an invitation to connect with ${
         child ? formatName(child) : 'your child'
       } - nothing is shared until they accept.`}
       size="md"
@@ -153,7 +160,7 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
             Cancel
           </Button>
           <Button type="submit" form="invite-teacher-form" loading={submitting}>
-            Send invitation
+            Send request
           </Button>
         </>
       }

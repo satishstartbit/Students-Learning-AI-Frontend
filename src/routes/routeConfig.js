@@ -21,10 +21,13 @@ import UserDetailPage from '../modules/superAdmin/pages/UserDetailPage';
 import EditUserPage from '../modules/superAdmin/pages/EditUserPage';
 import RelationshipsPage from '../modules/superAdmin/pages/RelationshipsPage';
 import TeacherInvitationsAdminPage from '../modules/superAdmin/pages/TeacherInvitationsAdminPage';
+import TeacherConnectionsPage from '../modules/superAdmin/pages/TeacherConnectionsPage';
+// import InvitationEmailPage from '../modules/superAdmin/pages/InvitationEmailPage';
 
 import ParentChildrenPage from '../modules/parent/pages/ParentChildrenPage';
 import ParentProfilePage from '../modules/parent/pages/ParentProfilePage';
 import ParentProgressPage from '../modules/parent/pages/ParentProgressPage';
+import ParentDashboardPage from '../modules/parent/pages/ParentDashboardPage';
 
 import StudentOnboardingPage from '../modules/onboarding/pages/StudentOnboardingPage';
 import ParentOnboardingPage from '../modules/onboarding/pages/ParentOnboardingPage';
@@ -46,6 +49,7 @@ import StudentAssignmentDetailPage from '../modules/student/pages/AssignmentDeta
 import StudentHomePage from '../modules/student/pages/StudentHomePage';
 import StudentPlanPage from '../modules/student/pages/StudentPlanPage';
 import FocusTimerPage from '../modules/student/pages/FocusTimerPage';
+import BrainBoostersPage from '../modules/student/pages/BrainBoostersPage';
 import RewardsPage from '../modules/student/pages/RewardsPage';
 import NotificationsPage from '../modules/student/pages/NotificationsPage';
 import MakeItYoursPage from '../modules/student/pages/MakeItYoursPage';
@@ -231,6 +235,24 @@ export const SUPER_ADMIN_ROUTES = {
       permissions: [PERMISSIONS.USER_READ],
       component: TeacherInvitationsAdminPage,
     },
+    {
+      // Assisted create / edit / move / approve / remove, each with a
+      // recorded reason - for when a family needs help, not the normal path.
+      path: 'relationships/connections',
+      label: 'Teacher connections',
+      permissions: [PERMISSIONS.USER_READ],
+      component: TeacherConnectionsPage,
+    },
+    // Hidden for now - the client-written invitation is edited in
+    // services/email/copy/teacher-invitation.txt (backend) instead. Uncomment
+    // this and the import above (and the nav item in SuperAdminLayout) to
+    // bring the in-app editor back.
+    // {
+    //   path: 'relationships/invitation-email',
+    //   label: 'Invitation email',
+    //   permissions: [PERMISSIONS.USER_UPDATE],
+    //   component: InvitationEmailPage,
+    // },
 
     /*
      * Master Management. Dedicated masters get their own fixed-shape
@@ -409,6 +431,12 @@ export const STUDENT_ROUTES = {
       guards: [RequireCheckIn],
     },
     {
+      path: 'brain-boosters',
+      label: 'Brain Boosters',
+      component: BrainBoostersPage,
+      guards: [RequireCheckIn],
+    },
+    {
       path: 'focus',
       label: 'Focus',
       permissions: [PERMISSIONS.FOCUS_READ],
@@ -537,7 +565,7 @@ export const PARENT_ROUTES = {
       path: '',
       label: 'Overview',
       permissions: [PERMISSIONS.DASHBOARD_READ],
-      element: null,
+      component: ParentDashboardPage,
     },
     { path: 'dashboard', label: 'Overview', redirectTo: '/parent' },
     { path: 'onboarding', label: 'Onboarding', component: ParentOnboardingPage },

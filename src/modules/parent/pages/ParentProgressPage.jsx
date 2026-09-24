@@ -4,7 +4,7 @@ import { LuCheck } from 'react-icons/lu';
 import { Avatar, Badge, Button, EmptyState, ErrorState, Loader, PageHeader } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { formatName } from '../../../utils/format';
-import { describeMood } from '../../checkIn/moods';
+import { useMoodLookup } from '../../checkIn/hooks/useMoodLookup';
 import StudentProgressDetail from '../../progress/components/StudentProgressDetail';
 import parentService from '../services/parent.service';
 import '../components/parentPanels.css';
@@ -42,6 +42,9 @@ export default function ParentProgressPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const childId = searchParams.get('childId') ?? '';
   const setChildId = (id) => setSearchParams(id ? { childId: id } : {}, { replace: true });
+
+  // Mood names on the picker chips come from the live master list too.
+  const { moodFor } = useMoodLookup();
 
   const children = summaries.data ?? [];
   // First child by default, derived rather than synced from an effect. An id
@@ -119,7 +122,7 @@ export default function ParentProgressPage() {
 
                   <span className="pp-child__chips">
                     {checkIn ? (
-                      <Badge variant="success">Checked in · {describeMood(checkIn.mood).name}</Badge>
+                      <Badge variant="success">Checked in · {moodFor(checkIn.mood)?.name ?? checkIn.mood}</Badge>
                     ) : (
                       <Badge variant="neutral">Not checked in yet</Badge>
                     )}

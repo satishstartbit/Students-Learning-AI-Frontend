@@ -13,7 +13,6 @@ import {
   FileUpload,
   Loader,
   ErrorState,
-  Toast,
 } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useModal } from '../../../hooks/useModal';
@@ -26,6 +25,8 @@ import { ASSIGNMENT_RECIPIENT_STATUS } from '../../../utils/constants';
 import { DOCUMENT_MIME_TYPES, IMAGE_MIME_TYPES } from '../../../utils/file';
 import assignmentService from '../../assignments/services/assignment.service';
 import StandardAssignmentView from '../components/assignment/StandardAssignmentView';
+import { TaskFocusCard } from '../components/focus/TaskFocusCard';
+import { KidTaskFocus } from '../components/kid/KidTaskFocus';
 import { useStudentExperience } from '../hooks/useStudentExperience';
 import QuestionAnswer from '../../assignments/components/QuestionAnswer';
 
@@ -129,7 +130,7 @@ function StudentWork({ item, assignmentId, reload }) {
     setStarting(true);
     try {
       await assignmentService.startAssignment(assignmentId);
-      toast.success("You've started this assignment. Good luck!");
+      toast.success("You've started this assignment - start the focus clock when you're ready.");
       await reload();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -319,6 +320,10 @@ function StudentWork({ item, assignmentId, reload }) {
  * encouraging - young students use this, so language stays plain and buttons
  * stay big. A task's background sound starts on its own while the task is
  * still to do, with pause and mute always visible.
+ *
+ * Once the task is started (Start Assignment), a Focus time clock appears
+ * above the work, already tied to this task - KidTaskFocus for K-5 (the same
+ * card as the Focus time page) and TaskFocusCard for Grade 6+.
  */
 export default function AssignmentDetailPage() {
   const { assignmentId } = useParams();
@@ -342,6 +347,8 @@ export default function AssignmentDetailPage() {
   const audio = a.backgroundAudio;
 
   const work = <StudentWork key={`${item.recipientId}:${item.status}`} item={item} assignmentId={assignmentId} reload={load} />;
+  // Started and not yet handed in - the same statuses that let the student edit their work.
+  const working = item.status === ASSIGNMENT_RECIPIENT_STATUS.IN_PROGRESS || item.status === ASSIGNMENT_RECIPIENT_STATUS.RETURNED;
 
   if (!isJunior) {
     return (
@@ -353,9 +360,9 @@ export default function AssignmentDetailPage() {
               Try to finish it as soon as you can, or ask your teacher for help.
             </Alert>
           )}
+          <TaskFocusCard assignmentId={assignmentId} available={working} />
           {work}
         </StandardAssignmentView>
-        <Toast />
       </>
     );
   }
@@ -422,9 +429,9 @@ export default function AssignmentDetailPage() {
         )}
       </Card>
 
-      <StudentWork key={`${item.recipientId}:${item.status}`} item={item} assignmentId={assignmentId} reload={load} />
+      <KidTaskFocus assignmentId={assignmentId} available={working} />
 
-      <Toast />
+      {work}
     </div>
   );
 }

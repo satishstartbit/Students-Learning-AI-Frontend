@@ -139,6 +139,10 @@ function ProfilePhotoField({ photo }) {
  * @param showFamilyContext  PARENT only - false where the family context is
  *                  edited by its own form instead (Parent My Profile's
  *                  onboarding card), so two forms never overwrite each other.
+ * @param layout    STUDENT only - 'profile' lays the same fields out two to a
+ *                  row in the My Profile grid (profile.css `pf-grid`), as the
+ *                  parent's Edit child dialog does. The default 'stacked'
+ *                  layout is unchanged for every other form.
  */
 export default function RoleProfileFields({
   role,
@@ -147,87 +151,121 @@ export default function RoleProfileFields({
   lookupFetcher,
   photo,
   showFamilyContext = true,
+  layout = 'stacked',
 }) {
   if (role === 'STUDENT') {
+    const grade = includeAdminOnly ? (
+      <MasterSelectField
+        masterType="grade_levels"
+        name="grade"
+        label="Grade"
+        getProps={getProps}
+        lookupFetcher={lookupFetcher}
+      />
+    ) : (
+      <Input label="Grade" placeholder="e.g. Year 9" {...getProps('grade')} />
+    );
+
+    const dateOfBirth = (
+      <DatePicker
+        label="Date of birth"
+        max={new Date().toISOString().slice(0, 10)}
+        {...getProps('date_of_birth')}
+      />
+    );
+    const gender = <Select label="Gender" options={GENDER_OPTIONS} {...getProps('gender')} />;
+
+    const workingStyle = (
+      <Textarea
+        label="Preferred working style"
+        rows={2}
+        hint="How do you like to work? Quiet, music on, short bursts."
+        {...getProps('preferred_working_style')}
+      />
+    );
+    const focusHabits = <Textarea label="Focus habits" rows={2} {...getProps('focus_habits')} />;
+
+    const lists = includeAdminOnly
+      ? [
+          <MasterMultiSelectField
+            key="strengths"
+            masterType="strength_areas"
+            name="strengths"
+            label="Strengths"
+            getProps={getProps}
+            lookupFetcher={lookupFetcher}
+          />,
+          <MasterMultiSelectField
+            key="challenges"
+            masterType="challenge_areas"
+            name="challenges"
+            label="Challenges"
+            getProps={getProps}
+            lookupFetcher={lookupFetcher}
+          />,
+          <MasterMultiSelectField
+            key="interests"
+            masterType="interest_categories"
+            name="interests"
+            label="Interests"
+            getProps={getProps}
+            lookupFetcher={lookupFetcher}
+          />,
+          <MasterMultiSelectField
+            key="subjects"
+            masterType="subjects"
+            name="subjects"
+            label="Subjects"
+            getProps={getProps}
+            lookupFetcher={lookupFetcher}
+          />,
+        ]
+      : [
+          <Textarea key="strengths" label="Strengths" rows={2} {...getProps('strengths')} />,
+          <Textarea key="challenges" label="Challenges" rows={2} {...getProps('challenges')} />,
+          <Textarea key="interests" label="Interests" rows={2} {...getProps('interests')} />,
+          <Textarea key="subjects" label="Subjects" rows={2} {...getProps('subjects')} />,
+        ];
+
+    const notes = includeAdminOnly && (
+      <Textarea
+        label="Profile notes"
+        rows={2}
+        hint="Internal notes - not shown to the student"
+        {...getProps('profile_notes')}
+      />
+    );
+
+    if (layout === 'profile') {
+      // Short fields pair up; free text runs the full width.
+      return (
+        <div className="pf-grid">
+          {photo && (
+            <div className="pf-span-2">
+              <ProfilePhotoField photo={photo} />
+            </div>
+          )}
+          {grade}
+          {dateOfBirth}
+          {gender}
+          <div className="pf-span-2">{workingStyle}</div>
+          <div className="pf-span-2">{focusHabits}</div>
+          {lists}
+          {notes && <div className="pf-span-2">{notes}</div>}
+        </div>
+      );
+    }
+
     return (
       <>
         {photo && <ProfilePhotoField photo={photo} />}
-
-        {includeAdminOnly ? (
-          <MasterSelectField
-            masterType="grade_levels"
-            name="grade"
-            label="Grade"
-            getProps={getProps}
-            lookupFetcher={lookupFetcher}
-          />
-        ) : (
-          <Input label="Grade" placeholder="e.g. Year 9" {...getProps('grade')} />
-        )}
-
-        <DatePicker
-          label="Date of birth"
-          max={new Date().toISOString().slice(0, 10)}
-          {...getProps('date_of_birth')}
-        />
-        <Select label="Gender" options={GENDER_OPTIONS} {...getProps('gender')} />
-
-        <Textarea
-          label="Preferred working style"
-          rows={2}
-          hint="How do you like to work? Quiet, music on, short bursts."
-          {...getProps('preferred_working_style')}
-        />
-        <Textarea label="Focus habits" rows={2} {...getProps('focus_habits')} />
-
-        {includeAdminOnly ? (
-          <>
-            <MasterMultiSelectField
-              masterType="strength_areas"
-              name="strengths"
-              label="Strengths"
-              getProps={getProps}
-              lookupFetcher={lookupFetcher}
-            />
-            <MasterMultiSelectField
-              masterType="challenge_areas"
-              name="challenges"
-              label="Challenges"
-              getProps={getProps}
-              lookupFetcher={lookupFetcher}
-            />
-            <MasterMultiSelectField
-              masterType="interest_categories"
-              name="interests"
-              label="Interests"
-              getProps={getProps}
-              lookupFetcher={lookupFetcher}
-            />
-            <MasterMultiSelectField
-              masterType="subjects"
-              name="subjects"
-              label="Subjects"
-              getProps={getProps}
-              lookupFetcher={lookupFetcher}
-            />
-          </>
-        ) : (
-          <>
-            <Textarea label="Strengths" rows={2} {...getProps('strengths')} />
-            <Textarea label="Challenges" rows={2} {...getProps('challenges')} />
-            <Textarea label="Interests" rows={2} {...getProps('interests')} />
-            <Textarea label="Subjects" rows={2} {...getProps('subjects')} />
-          </>
-        )}
-
-        {includeAdminOnly && (
-          <Textarea
-            label="Profile notes"
-            rows={2}
-            hint="Internal notes - not shown to the student"
-            {...getProps('profile_notes')}
-          />
-        )}
+        {grade}
+        {dateOfBirth}
+        {gender}
+        {workingStyle}
+        {focusHabits}
+        {lists}
+        {notes}
       </>
     );
   }

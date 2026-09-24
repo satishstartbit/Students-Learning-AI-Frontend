@@ -1,4 +1,4 @@
-import { LuPalette } from 'react-icons/lu';
+import { LuGamepad2, LuPalette } from 'react-icons/lu';
 import { CalendarIcon, GearIcon, HomeIcon, LeafIcon, NotebookIcon, SparkleIcon, StarIcon } from './KidIcons';
 
 /**
@@ -15,6 +15,7 @@ export const KID_NAV_ITEMS = [
   { to: '/student/assignments', label: 'Assignments', icon: NotebookIcon },
   { to: '/student/assistant', label: 'Helper', icon: SparkleIcon },
   { to: '/student/focus', label: 'Focus', icon: LeafIcon },
+  { to: '/student/brain-boosters', label: 'Brain Boosters', icon: LuGamepad2 },
   { to: '/student/rewards', label: 'Rewards', icon: StarIcon },
   { to: '/student/make-it-yours', label: 'Make it yours', icon: LuPalette },
 ];

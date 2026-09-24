@@ -1,22 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LuHeadphones } from 'react-icons/lu';
-import { AnimatedCircularProgressBar } from '../../../../components/ui/animated-circular-progress-bar';
 import { BlurFade } from '../../../../components/ui/blur-fade';
-import { Confetti } from '../../../../components/ui/confetti';
-import { cn } from '../../../../lib/utils';
 import { useApi } from '../../../../hooks/useApi';
 import { useTodayCheckIn } from '../../../checkIn/hooks/useTodayCheckIn';
 import regulationToolkitService from '../../services/regulationToolkit.service';
 import { useFocusTimer, formatClock } from '../../hooks/useFocusTimer';
-import { useMotionAllowed } from '../../hooks/useKidPreferences';
 import { useMyTasks } from '../../hooks/useMyTasks';
 import { KidButton } from '../../components/kid/KidButton';
+import { KidDifficultyPicker } from '../../components/kid/KidDifficultyPicker';
+import { KidFocusTimerCard } from '../../components/kid/KidFocusTimerCard';
 import { KidSkeleton } from '../../components/kid/KidStates';
 import { PaperCard } from '../../components/kid/PaperKit';
 import { FOCUS_ACTIVITIES, activitySeconds } from '../../components/kid/focusActivities';
-
-const CONFETTI_COLOURS = ['#f6c445', '#f4b6c1', '#1f7a80', '#7b68d6', '#95c07b'];
 
 // A calm 25 minutes, always - no dropdown, one clear default. K-5 isn't
 // asked "how much time do you have" at check-in, and picking a number isn't
@@ -56,18 +51,19 @@ function ToolTile({ tile, suggested }) {
  * mockup. Grade 6+ gets the fuller FocusTimerPage (task picker, planned
  * length, five categories); this is the same feature, read down to what a
  * young student needs: pick a tool or just start the clock.
+ *
+ * The clock itself is KidFocusTimerCard - the same card a task page shows
+ * once the task is started (KidTaskFocus).
  */
 export default function KidFocusPage() {
   const timer = useFocusTimer();
   const tasks = useMyTasks();
   const { checkIn } = useTodayCheckIn();
-  const motionAllowed = useMotionAllowed();
-  const confettiRef = useRef(null);
 
   const recommendation = useApi(regulationToolkitService.getRecommendation);
   const { run: runRecommendation } = recommendation;
 
-  const [justEnded, setJustEnded] = useState(null);
+  const [askingTricky, setAskingTricky] = useState(false);
 
   // A quiet "try this" nudge from today's check-in (read server-side) - no
   // banner text here, just a badge on the matching tile.
@@ -87,147 +83,38 @@ export default function KidFocusPage() {
     );
   }
 
-  const { session } = timer;
-  const isRunning = session?.status === 'in_progress';
-  const isPaused = session?.status === 'paused';
-  const isActive = isRunning || isPaused;
-
-  const plannedSeconds = PLANNED_MINUTES * 60;
-  const ringValue = isActive ? Math.min(timer.elapsedSeconds, plannedSeconds) : 0;
-  const clockLabel = isActive
-    ? formatClock(Math.max(plannedSeconds - timer.elapsedSeconds, 0))
-    : formatClock(plannedSeconds);
-  const supportLabel = isPaused ? 'Paused - resume when ready' : isRunning ? "You've got this!" : 'Ready when you are';
-
-  const handleStart = () =>
-    timer.start({ plannedMinutes: PLANNED_MINUTES, assignmentId: nextTask?.assignment?.id }).catch(() => {});
-
-  const handleComplete = () =>
-    timer
-      .complete()
-      .then((s) => {
-        setJustEnded({ outcome: 'completed', minutes: s?.actualMinutes ?? 0 });
-        if (motionAllowed) {
-          confettiRef.current?.fire({
-            particleCount: 70,
-            spread: 80,
-            startVelocity: 26,
-            scalar: 0.9,
-            origin: { y: 0.45 },
-            colors: CONFETTI_COLOURS,
-            disableForReducedMotion: true,
-          });
-        }
-      })
-      .catch(() => {});
-
-  const handleAbandon = () =>
-    timer
-      .abandon()
-      .then(() => setJustEnded({ outcome: 'abandoned' }))
-      .catch(() => {});
-
   return (
     <div data-kid-page className="kid-ui min-h-full">
-      <Confetti
-        ref={confettiRef}
-        manualstart
-        globalOptions={{ resize: true, useWorker: false }}
-        className="pointer-events-none fixed inset-0 z-30 size-full"
-      />
-
       <div className="mx-auto max-w-2xl px-4 pb-10 pt-6 sm:px-8">
         <div className="text-center">
           <h1 className="font-kid-display text-4xl font-semibold text-kid-ink sm:text-5xl">Focus time</h1>
           <p className="mt-2 text-lg text-kid-ink-soft">Start the clock and do one thing.</p>
         </div>
 
-        <PaperCard
-          as="section"
-          aria-label="Focus timer"
-          tone="sheet"
-          className="mt-6 flex flex-col items-center gap-5 px-6 py-8 sm:px-10 sm:py-10"
-        >
-          {timer.error && (
-            <p role="alert" className="w-full rounded-2xl bg-kid-coral-soft px-4 py-3 text-center font-kid-body text-kid-coral">
-              {timer.error}
-            </p>
-          )}
+        <KidFocusTimerCard
+          timer={timer}
+          plannedMinutes={PLANNED_MINUTES}
+          assignmentId={nextTask?.assignment?.id}
+          className="mt-6"
+          idleHeader={
+            nextTask && (
+              <div className="text-center">
+                <p className="font-kid-display text-xs font-bold uppercase tracking-wide text-kid-ink-soft">Up next</p>
+                <p className="font-kid-display text-lg font-semibold text-kid-ink">{nextTask.assignment?.title}</p>
+              </div>
+            )
+          }
+        />
 
-          {justEnded && (
-            <p
-              role="status"
-              className={cn(
-                'w-full rounded-2xl px-4 py-3 text-center font-kid-display text-lg font-medium',
-                justEnded.outcome === 'completed' ? 'bg-kid-green text-kid-ink' : 'bg-kid-paper-deep text-kid-ink-soft'
-              )}
-            >
-              {justEnded.outcome === 'completed'
-                ? `Nice work! ${justEnded.minutes} focused ${justEnded.minutes === 1 ? 'minute' : 'minutes'}. 🎉`
-                : "That's okay - every bit of focus counts. Ready to try again?"}
-            </p>
-          )}
+        {/* Saying what is in the way comes before picking a tool - the
+            reasons and what is offered back are Super Admin's lists. */}
+        <div className="mt-6 text-center">
+          <KidButton variant="soft" size="md" onClick={() => setAskingTricky(true)}>
+            Something&apos;s tricky
+          </KidButton>
+        </div>
 
-          {!isActive && nextTask && (
-            <div className="text-center">
-              <p className="font-kid-display text-xs font-bold uppercase tracking-wide text-kid-ink-soft">Up next</p>
-              <p className="font-kid-display text-lg font-semibold text-kid-ink">{nextTask.assignment?.title}</p>
-            </div>
-          )}
-
-          <div className="relative grid size-48 place-items-center sm:size-56">
-            <AnimatedCircularProgressBar
-              value={ringValue}
-              max={plannedSeconds || 1}
-              gaugePrimaryColor="var(--kid-teal)"
-              gaugeSecondaryColor="var(--kid-paper-deep)"
-              className="absolute inset-0 size-full [&_[data-current-value]]:hidden"
-            />
-            <div className="relative flex flex-col items-center">
-              <span className="font-kid-display text-4xl font-bold tabular-nums text-kid-ink sm:text-5xl">
-                {clockLabel}
-              </span>
-              <span className="mt-1 font-kid-body text-base text-kid-ink-soft">{supportLabel}</span>
-            </div>
-          </div>
-
-          <div className="flex w-full max-w-sm flex-col items-center gap-3">
-            {!isActive && (
-              <KidButton className="w-full" onClick={handleStart} disabled={timer.isBusy}>
-                <LuHeadphones className="size-6" aria-hidden="true" />
-                Start focus
-              </KidButton>
-            )}
-
-            {isRunning && (
-              <KidButton variant="soft" className="w-full" onClick={() => timer.pause().catch(() => {})} disabled={timer.isBusy}>
-                Pause
-              </KidButton>
-            )}
-
-            {isPaused && (
-              <KidButton className="w-full" onClick={() => timer.resume().catch(() => {})} disabled={timer.isBusy}>
-                Resume
-              </KidButton>
-            )}
-
-            {isActive && (
-              <>
-                <KidButton variant="soft" className="w-full" onClick={handleComplete} disabled={timer.isBusy}>
-                  All done!
-                </KidButton>
-                <button
-                  type="button"
-                  onClick={handleAbandon}
-                  disabled={timer.isBusy}
-                  className="min-h-11 rounded-full px-4 font-kid-display text-base text-kid-ink-soft underline decoration-dotted hover:text-kid-ink"
-                >
-                  Stop for now
-                </button>
-              </>
-            )}
-          </div>
-        </PaperCard>
+        <KidDifficultyPicker isOpen={askingTricky} onClose={() => setAskingTricky(false)} />
 
         <h2 className="mt-8 text-center font-kid-hand text-[1.75rem] text-kid-ink">Need a minute first?</h2>
 

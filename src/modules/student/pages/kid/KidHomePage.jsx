@@ -3,6 +3,7 @@ import { LuArrowRight } from 'react-icons/lu';
 import { BlurFade } from '../../../../components/ui/blur-fade';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useMyTasks } from '../../hooks/useMyTasks';
+import BrainBoostersTeaser from '../../components/brainBoosters/BrainBoostersTeaser';
 import { CheckInCard } from '../../components/kid/CheckInCard';
 import { FocusTeaserCard } from '../../components/kid/FocusTeaserCard';
 import { HeroScene } from '../../components/kid/HeroScene';
@@ -96,10 +97,11 @@ export default function KidHomePage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 sm:px-8">
+      <div className="mx-auto grid max-w-6xl gap-4 px-4 sm:px-8">
         <BlurFade delay={0.35}>
           <FocusTeaserCard />
         </BlurFade>
+        <BrainBoostersTeaser isJunior />
       </div>
 
       <div className="relative isolate mx-4 mb-4 mt-2 h-40 overflow-hidden rounded-[2rem] shadow-paper sm:mx-8 sm:h-48">

@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { formatDateKey } from '../../../utils/date';
-import { describeMood, ENERGY_LEVELS } from '../../checkIn/moods';
+import { ENERGY_LEVELS } from '../../checkIn/moods';
+import { useMoodLookup } from '../../checkIn/hooks/useMoodLookup';
+import MoodIcon from './MoodIcon';
 
 /** "2026-09-22" minus n days - calendar arithmetic, no timezone involved. */
 function shiftDayKey(dayKey, days) {
@@ -29,6 +31,8 @@ function EnergyDots({ energy }) {
  * returns the days that have a check-in.
  */
 export function CheckInStrip({ history = [], todayKey, days = 14, name }) {
+  // Each day's face is that mood as Master Management publishes it.
+  const { moodFor } = useMoodLookup();
   const byDate = useMemo(() => new Map(history.map((row) => [row.date, row])), [history]);
 
   const columns = useMemo(() => {
@@ -45,13 +49,13 @@ export function CheckInStrip({ history = [], todayKey, days = 14, name }) {
     entries.forEach((e) => tally.set(e.mood, (tally.get(e.mood) ?? 0) + 1));
     const [topMood] = [...tally.entries()].sort((a, b) => b[1] - a[1])[0] ?? [];
     return {
-      mostCommon: topMood ? describeMood(topMood).name : null,
+      mostCommon: topMood ? moodFor(topMood)?.name ?? null : null,
       checkedIn: entries.length,
       // "Low energy" is the bottom two of the five levels - the days worth
       // a parent's or teacher's attention.
       lowEnergy: entries.filter((e) => e.energy <= 2).length,
     };
-  }, [columns]);
+  }, [columns, moodFor]);
 
   return (
     <section className="pg-block">
@@ -62,7 +66,7 @@ export function CheckInStrip({ history = [], todayKey, days = 14, name }) {
 
       <div className="pg-strip">
         {columns.map(({ date, entry }) => {
-          const mood = entry ? describeMood(entry.mood) : null;
+          const mood = entry ? moodFor(entry.mood) : null;
           const weekday = formatDateKey(date, { weekday: 'short', year: undefined, month: undefined, day: undefined });
           const dayNum = formatDateKey(date, { year: undefined, month: undefined, day: 'numeric' });
 
@@ -73,11 +77,10 @@ export function CheckInStrip({ history = [], todayKey, days = 14, name }) {
 
               {entry ? (
                 <span
-                  className="pg-face"
-                  data-mood={entry.mood}
+                  className="pg-face pg-face--art"
                   title={`${formatDateKey(date)}: ${mood.name}, energy ${entry.energy}/${ENERGY_LEVELS.length}`}
                 >
-                  <span aria-hidden="true">{mood.emoji}</span>
+                  <MoodIcon mood={mood} size={28} />
                   <span className="ui-sr-only">
                     {formatDateKey(date)}: {mood.name}, energy {entry.energy} of {ENERGY_LEVELS.length}
                   </span>

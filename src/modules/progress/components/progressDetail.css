@@ -222,3 +222,11 @@
 .pg-task__title {
   font-weight: 600;
 }
+
+/* A day whose face is the mood's own artwork: the tinted circle belongs to
+   MoodIcon, so this one only holds it. */
+.pg-face--art {
+  border: 0;
+  background: none;
+  padding: 0;
+}

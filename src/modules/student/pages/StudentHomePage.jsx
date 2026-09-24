@@ -6,6 +6,7 @@ import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import NoteEditorModal from '../components/NoteEditorModal';
+import BrainBoostersTeaser from '../components/brainBoosters/BrainBoostersTeaser';
 import AddTaskCard from '../components/home/AddTaskCard';
 import HomeHero from '../components/home/HomeHero';
 import NotesBoard from '../components/home/NotesBoard';
@@ -129,6 +130,7 @@ export default function StudentHomePage() {
             isLoading={summary.isLoading && !summary.data}
           />
           <StartFocusCard minutesToday={todayMinutes.data?.minutes ?? 0} />
+          <BrainBoostersTeaser />
           <AddTaskCard onAdd={(mode) => setTaskDialog({ mode })} />
         </div>
       </div>

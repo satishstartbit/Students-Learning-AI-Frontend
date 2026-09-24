@@ -7,6 +7,7 @@ import '@fontsource/poppins/700.css';
 import {
   LuBell,
   LuCalendarDays,
+  LuGamepad2,
   LuHouse,
   LuListChecks,
   LuPalette,
@@ -31,7 +32,7 @@ import '../theme/studentTheme.css';
  * Navigation for the student area (/student/*) - Grade 6 and up. K-5 nav
  * lives in modules/student/components/kid/kidNav.js.
  *
- * Matches the Grade 6+ dashboard mockup: the five primary items at the top,
+ * The primary learning and break activities live at the top,
  * then Notifications / Make it yours / Settings pinned to the bottom above
  * the account tile (`placement: 'bottom'`, see AppSidebar.jsx).
  *
@@ -48,6 +49,7 @@ const NAV_ITEMS = [
       { to: '/student/calendar', label: 'Plan', icon: LuCalendarDays },
       { to: '/student/assignments', label: 'Assignments', icon: LuListChecks },
       { to: '/student/focus', label: 'Focus', icon: LuTimer },
+      { to: '/student/brain-boosters', label: 'Brain Boosters', icon: LuGamepad2 },
       { to: '/student/rewards', label: 'Rewards', icon: LuTrophy },
     ],
   },

@@ -1,4 +1,5 @@
-import { Link, NavLink } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { cn } from '../../../../lib/utils';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useStudentExperience } from '../../hooks/useStudentExperience';
@@ -69,12 +70,12 @@ function ProfileTile() {
 
 export function KidSidebar() {
   return (
-    <aside className="kid-ui relative hidden w-64 shrink-0 flex-col border-r border-kid-edge bg-kid-sidebar px-4 pb-4 pt-6 lg:flex">
-      <div className="px-1">
+    <aside className="kid-ui relative hidden min-h-0 w-64 shrink-0 flex-col border-r border-kid-edge bg-kid-sidebar px-4 pb-4 pt-6 lg:flex">
+      <div className="shrink-0 px-1">
         <Brand />
       </div>
 
-      <nav aria-label="Main" className="mt-8">
+      <nav aria-label="Main" className="my-6 min-h-0 flex-1 overflow-y-auto">
         <ul className="flex flex-col gap-1.5">
           {KID_NAV_ITEMS.map((item) => (
             <li key={item.to}>
@@ -84,7 +85,7 @@ export function KidSidebar() {
         </ul>
       </nav>
 
-      <div className="mt-auto flex flex-col gap-3">
+      <div className="mt-auto flex shrink-0 flex-col gap-3">
         <SidebarLink item={KID_SETTINGS_ITEM} />
         <hr className="m-0 h-0 border-0 border-t border-kid-edge" />
         <ProfileTile />
@@ -107,39 +108,57 @@ export function KidTopBar() {
 }
 
 export function KidTabBar() {
+  const { pathname } = useLocation();
+  const scrollRef = useRef(null);
+
+  // Keep a newly selected destination visible without scrolling the page.
+  useEffect(() => {
+    const nav = scrollRef.current;
+    const active = nav?.querySelector('[aria-current="page"]');
+    if (!active) return;
+    const navBounds = nav.getBoundingClientRect();
+    const activeBounds = active.getBoundingClientRect();
+    nav.scrollBy({
+      left: activeBounds.left - navBounds.left - (nav.clientWidth - activeBounds.width) / 2,
+      behavior: 'auto',
+    });
+  }, [pathname]);
+
   return (
     <nav
       aria-label="Main"
       className="kid-ui fixed inset-x-0 bottom-0 z-40 border-t-2 border-kid-edge bg-kid-sidebar/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm lg:hidden"
     >
-      <ul className="mx-auto grid max-w-xl grid-cols-5">
-        {KID_NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          return (
-            <li key={item.to}>
-              <NavLink
-                to={item.to}
-                end={item.end}
-                className="flex h-[4.25rem] flex-col items-center justify-center gap-0.5 font-kid-display text-[0.8rem] text-kid-navy no-underline"
-              >
-                {({ isActive }) => (
-                  <>
-                    <span
-                      className={cn(
-                        'grid h-9 w-14 place-items-center rounded-full transition-colors',
-                        isActive && 'bg-kid-sky'
-                      )}
-                    >
-                      <Icon className="size-7" />
-                    </span>
-                    <span className={cn(isActive && 'font-semibold')}>{item.label}</span>
-                  </>
-                )}
-              </NavLink>
-            </li>
-          );
-        })}
-      </ul>
+      <div ref={scrollRef} className="overflow-x-auto overscroll-x-contain">
+        <ul className="mx-auto flex w-full min-w-max">
+          {KID_NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.to} className="min-w-24 flex-1">
+                <NavLink
+                  to={item.to}
+                  end={item.end}
+                  className="flex h-[4.25rem] flex-col items-center justify-center gap-0.5 whitespace-nowrap px-2 font-kid-display text-[0.8rem] text-kid-navy no-underline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-kid-teal"
+                >
+                  {({ isActive }) => (
+                    <>
+                      <span
+                        className={cn(
+                          'grid h-9 w-14 place-items-center rounded-full transition-colors',
+                          isActive && 'bg-kid-sky'
+                        )}
+                      >
+                        <Icon className="size-7" />
+                      </span>
+                      <span className={cn(isActive && 'font-semibold')}>{item.label}</span>
+                    </>
+                  )}
+                </NavLink>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </nav>
   );
 }

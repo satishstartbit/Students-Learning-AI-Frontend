@@ -4,7 +4,9 @@ import { formatName } from '../../../utils/format';
 // Subject colours come from the same helper the student's own Home/Plan use,
 // so a subject reads the same for the child, the parent and the teacher.
 import { getSubjectVisual } from '../../student/components/subjectVisual';
-import { ENERGY_LEVELS, describeMood } from '../../checkIn/moods';
+import { ENERGY_LEVELS } from '../../checkIn/moods';
+import { useMoodLookup } from '../../checkIn/hooks/useMoodLookup';
+import MoodIcon from './MoodIcon';
 import { TASK_STAGES } from '../stages';
 import CheckInStrip from './CheckInStrip';
 import './progressDetail.css';
@@ -50,9 +52,11 @@ function EnergyDots({ energy }) {
 
 /** Today's check-in, today's tasks and today's focus time. */
 function TodayCards({ progress }) {
+  // The mood as Master Management publishes it, not a static emoji map.
+  const { moodFor } = useMoodLookup();
   const { today, counts, nextDue, focus } = progress;
   const checkIn = today?.checkIn;
-  const mood = checkIn ? describeMood(checkIn.mood) : null;
+  const mood = checkIn ? moodFor(checkIn.mood) : null;
 
   const done = (counts?.submitted ?? 0) + (counts?.reviewed ?? 0);
   const total = counts?.total ?? 0;
@@ -70,9 +74,7 @@ function TodayCards({ progress }) {
         {checkIn ? (
           <>
             <div className="pg-checkin">
-              <span className="pg-face" data-mood={checkIn.mood} aria-hidden="true">
-                {mood.emoji}
-              </span>
+              <MoodIcon mood={mood} size={44} />
               <span className="pg-checkin__text">
                 <span className="pg-checkin__mood">{mood.name}</span>
                 <span className="pg-checkin__time">Checked in at {formatTime(checkIn.updatedAt)}</span>

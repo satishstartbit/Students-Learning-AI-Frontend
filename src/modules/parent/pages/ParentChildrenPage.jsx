@@ -27,27 +27,50 @@ import InviteTeacherModal from '../components/InviteTeacherModal';
 import SetChildPasswordModal from '../components/SetChildPasswordModal';
 import '../components/parentChildren.css';
 
-/** A connected teacher and an invited one, as the same row shape. */
+/**
+ * A connected teacher and an invited one, as the same row shape.
+ *
+ * A teacher is connected to the child once, covering however many subjects
+ * they teach them ("Ms Lee - Maths, Science"), so the per-subject links the
+ * API returns are folded into one row per teacher and year here, rather than
+ * the same teacher appearing once for every subject.
+ */
 function teacherRows(child) {
-  const connected = (child.teachers ?? []).map((t) => ({
-    key: `rel-${t.id}`,
-    name: formatName(t.owner) || t.owner?.email || 'Teacher',
-    meta: [t.subject, t.academicYear?.name].filter(Boolean).join(' · '),
+  const byTeacher = new Map();
+  (child.teachers ?? []).forEach((t) => {
+    const key = `${t.owner?.id ?? t.id}:${t.academicYear?.id ?? 'none'}`;
+    const entry = byTeacher.get(key) ?? {
+      key: `rel-${key}`,
+      name: formatName(t.owner) || t.owner?.email || 'Teacher',
+      subjects: [],
+      year: t.academicYear?.name ?? null,
+    };
+    if (t.subject && !entry.subjects.includes(t.subject)) entry.subjects.push(t.subject);
+    byTeacher.set(key, entry);
+  });
+
+  const connected = [...byTeacher.values()].map((entry) => ({
+    key: entry.key,
+    name: entry.name,
+    meta: [formatSubjects(entry.subjects), entry.year].filter(Boolean).join(' · '),
     badge: { variant: 'success', label: 'Connected' },
     pending: false,
   }));
 
-  // Only invitations still waiting on the teacher come back from the API
-  // (parent.service#listChildren), so nothing here duplicates a row above:
-  // an accepted invitation has already become a connection.
+  // Only open invitations come back from the API (parent.service#listChildren):
+  // requests still with Growing Focus for review, and invitations waiting on
+  // the teacher. Nothing duplicates a row above - an accepted invitation has
+  // already become a connection.
   const invited = (child.invitations ?? []).map((inv) => ({
     key: `inv-${inv.id}`,
     name: inv.teacher?.name || inv.teacherName || inv.teacherEmail,
     meta: [formatSubjects(inv.subjects), inv.academicYear?.name].filter(Boolean).join(' · '),
     badge:
-      inv.status === 'expired'
-        ? { variant: 'neutral', label: 'Invite expired' }
-        : { variant: 'warning', label: 'Invite sent' },
+      inv.status === 'awaiting_approval'
+        ? { variant: 'info', label: 'Awaiting approval' }
+        : inv.status === 'expired'
+          ? { variant: 'neutral', label: 'Invite expired' }
+          : { variant: 'warning', label: 'Invite sent' },
     pending: true,
   }));
 

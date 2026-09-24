@@ -1,29 +1,20 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { LuArrowRight, LuCheck, LuCloudRain, LuMoon, LuShuffle, LuTarget, LuWaves, LuX, LuZap } from 'react-icons/lu';
+import { LuArrowRight, LuCheck, LuX } from 'react-icons/lu';
 import { Confetti } from '../../../../components/ui/confetti';
 import { cn } from '../../../../lib/utils';
 import { getErrorMessage } from '../../../../utils/errorHandler';
-import { ENERGY_LEVELS, findMood, usesLegacyArt } from '../../../checkIn/moods';
+import { ENERGY_LEVELS, findMood } from '../../../checkIn/moods';
 import { useMotionAllowed } from '../../hooks/useKidPreferences';
-import { AdminMoodTile } from './AdminMoodTile';
+import { MoodArt } from './MoodArt';
 import { KidButton } from './KidButton';
 import { kidCopyFor } from './kidMoodCopy';
+import { MoodCelebration } from './MoodCelebration';
 
 const CONFETTI_COLOURS = ['#f6c445', '#f4b6c1', '#1f7a80', '#7b68d6', '#95c07b'];
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-/** One line-icon and a paper tone per mood, for the picker's colour-coded tiles. */
-const MOOD_TILE = {
-  calm: { icon: LuWaves, tone: 'bg-kid-sky', ink: 'text-kid-navy' },
-  tense: { icon: LuZap, tone: 'bg-kid-orange', ink: 'text-[#7a4a12]' },
-  tired: { icon: LuMoon, tone: 'bg-kid-lavender', ink: 'text-kid-purple' },
-  distracted: { icon: LuShuffle, tone: 'bg-kid-pink', ink: 'text-kid-coral' },
-  overwhelmed: { icon: LuCloudRain, tone: 'bg-[#dbe4ee]', ink: 'text-kid-navy' },
-  ready_to_focus: { icon: LuTarget, tone: 'bg-kid-green', ink: 'text-kid-green-deep' },
-};
 
 const ENERGY_BAR_HEIGHTS = ['h-4', 'h-6', 'h-8', 'h-10', 'h-12'];
 
@@ -144,6 +135,15 @@ export function CheckInModal({ isOpen, onClose, initial, onSave, firstName, mood
     }
   };
 
+  // The reveal replaces the dialog rather than sitting on top of it, so the
+  // mood has the screen to itself.
+  if (step === 'celebrate') {
+    return createPortal(
+      <MoodCelebration mood={mood} moodRow={currentMood} name={firstName} onDone={onClose} />,
+      container
+    );
+  }
+
   return createPortal(
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-kid-ink/45 p-4"
@@ -190,8 +190,6 @@ export function CheckInModal({ isOpen, onClose, initial, onSave, firstName, mood
                 <legend className="sr-only">How are you feeling?</legend>
                 <div className="grid grid-cols-3 gap-2.5">
                   {moods.map((m) => {
-                    const tile = usesLegacyArt(m) ? MOOD_TILE[m.code] : null;
-                    const Icon = tile?.icon;
                     const checked = mood === m.code;
                     return (
                       <label
@@ -206,22 +204,13 @@ export function CheckInModal({ isOpen, onClose, initial, onSave, firstName, mood
                           onChange={() => setMood(m.code)}
                           className="peer sr-only"
                         />
-                        {tile ? (
-                          <span
-                            aria-hidden="true"
-                            className={cn(
-                              'grid size-12 place-items-center rounded-full ring-[3px] ring-transparent transition-transform duration-150 group-hover:scale-105 peer-checked:scale-105 peer-checked:ring-kid-teal peer-focus-visible:outline-[3px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-kid-teal peer-focus-visible:outline-solid',
-                              tile.tone
-                            )}
-                          >
-                            <Icon className={cn('size-6', tile.ink)} strokeWidth={2.2} />
-                          </span>
-                        ) : (
-                          <AdminMoodTile
-                            mood={m}
-                            className="size-12 ring-[3px] ring-transparent transition-transform duration-150 group-hover:scale-105 peer-checked:scale-105 peer-checked:ring-kid-teal peer-focus-visible:outline-[3px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-kid-teal peer-focus-visible:outline-solid"
-                          />
-                        )}
+                        {/* One renderer for the tile, shared with the reveal
+                            that follows (MoodArt), so what a student taps is
+                            exactly what they then see. */}
+                        <MoodArt
+                          mood={m}
+                          className="size-12 ring-[3px] ring-transparent transition-transform duration-150 group-hover:scale-105 peer-checked:scale-105 peer-checked:ring-kid-teal peer-focus-visible:outline-[3px] peer-focus-visible:outline-offset-2 peer-focus-visible:outline-kid-teal peer-focus-visible:outline-solid"
+                        />
                         {checked && (
                           <span
                             aria-hidden="true"
@@ -323,7 +312,9 @@ export function CheckInModal({ isOpen, onClose, initial, onSave, firstName, mood
                 </div>
               </div>
 
-              <KidButton size="md" className="mt-auto w-full" onClick={onClose}>
+              {/* The check-in is already saved (submit, on "I'm ready"), so
+                  this hands over to the mood reveal rather than closing. */}
+              <KidButton size="md" className="mt-auto w-full" onClick={() => setStep('celebrate')}>
                 Let&apos;s go
                 <LuArrowRight className="size-5" aria-hidden="true" />
               </KidButton>

@@ -1,0 +1,64 @@
+.bb-tracking-game { min-width: 0; }
+.bb-tracking-icon { display: grid; place-items: center; flex: 0 0 48px; width: 48px; height: 48px; border-radius: 16px; font-size: 26px; }
+.bb-tracking-icon--finger { background: #fff0ec; }
+.bb-tracking-icon--balloon { background: #e1f4ff; }
+.bb-tracking-paces { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0; }
+.bb-tracking-pace { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 42px; padding: 8px 17px; border: 1px solid var(--bb-border, #dddde8); border-radius: 999px; background: var(--bb-soft, #f7f8fb); color: var(--bb-text, #262244); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.bb-tracking-pace.is-selected { background: #d6f4ef; border-color: #53b9ab; color: #185e53; }
+.bb-tracking-pace:disabled { cursor: default; opacity: .62; }
+.bb-tracking-pace.is-selected:disabled { opacity: 1; }
+.bb-tracking-pace:focus-visible, .bb-tracking-target:focus-visible, .bb-balloon-target:focus-visible { outline: 3px solid var(--bb-accent, #7663c9); outline-offset: 4px; }
+.bb-tracking-stat-total { display: inline !important; font-size: 13px !important; color: var(--bb-muted, #70728a); font-weight: 500; }
+.bb-tracking-status-line { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 14px; margin: 15px 0 9px; font-size: 12px; color: var(--bb-muted, #71768e); }
+.bb-tracking-progress { width: 100%; height: 6px; overflow: hidden; margin: 0 0 13px; border-radius: 20px; background: var(--bb-border, #e4e6ef); }
+.bb-tracking-progress > span { display: block; height: 100%; border-radius: inherit; background: #49c6b7; }
+.bb-tracking-field, .bb-balloon-field { isolation: isolate; position: relative; height: clamp(260px, 35vw, 325px); border-radius: 20px; overflow: hidden; }
+.bb-tracking-field { background: radial-gradient(ellipse at 78% 18%, #41467d 0%, #302857 50%, #231e43 100%); }
+.bb-tracking-grid { position: absolute; inset: 0; opacity: .1; background-image: radial-gradient(circle, #d6cfff 1px, transparent 1px); background-size: 25px 25px; pointer-events: none; }
+.bb-tracking-target { display: grid; place-items: center; position: absolute; z-index: 2; left: var(--bb-target-x, 50%); top: var(--bb-target-y, 50%); width: 56px; height: 56px; padding: 0; transform: translate(-50%, -50%); border: 7px solid #ff9b9580; border-radius: 50%; background: #ff777e; background-clip: padding-box; color: #fff8ec; box-shadow: 0 0 0 8px #ff82881a, 0 5px 25px #f26b7940; font-family: inherit; font-size: 34px; line-height: 1; cursor: pointer; animation-timing-function: linear; animation-fill-mode: forwards; touch-action: manipulation; }
+.bb-tracking-target:disabled { cursor: default; }
+.bb-tracking-target:focus-visible { outline-color: #fff7b7; }
+.bb-tracking-target:hover { box-shadow: 0 0 0 9px #ff82884d, 0 5px 25px #f26b7966; }
+.bb-tracking-placeholder, .bb-balloon-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 28px; text-align: center; }
+.bb-tracking-placeholder { color: #f6f0ff; }
+.bb-tracking-placeholder > strong, .bb-balloon-placeholder > strong { font-size: 18px; font-weight: 650; }
+.bb-tracking-placeholder > span:last-child { max-width: 300px; font-size: 13px; line-height: 1.6; color: #d0cbe7; }
+.bb-tracking-preview-target { display: grid; place-items: center; width: 57px; height: 57px; margin-bottom: 8px; border-radius: 50%; background: #fb7b83; box-shadow: 0 0 0 10px #ff828821; color: #fff9e4; font-size: 38px; }
+.bb-tracking-paused { position: absolute; z-index: 3; top: 15px; left: 50%; transform: translateX(-50%); padding: 7px 19px; border: 1px solid #ffffff80; border-radius: 999px; background: #ffffffeb; color: #393553; font-size: 13px; font-weight: 650; pointer-events: none; }
+.bb-tracking-feedback { min-height: 42px; margin: 14px 0; font-size: 13px; line-height: 1.6; }
+.bb-tracking-controls { display: flex; flex-wrap: wrap; gap: 10px; }
+.bb-tracking-controls .bb-primary-button { flex: 1; }
+.bb-balloon-color-line { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 20px 0 12px; color: var(--bb-muted, #737b90); font-size: 12px; }
+.bb-balloon-color-line > span:first-child { text-transform: uppercase; letter-spacing: .045em; font-weight: 600; }
+.bb-balloon-color-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 999px; font-size: 12px; font-weight: 750; }
+.bb-balloon-counter { margin-left: auto; font-variant-numeric: tabular-nums; }
+.bb-balloon-field { background: linear-gradient(180deg, #91d0e4 0%, #b4e2f6 65%, #dcf2ff 100%); }
+.bb-balloon-cloud { position: absolute; height: 26px; border-radius: 999px; background: #fff9; pointer-events: none; }
+.bb-balloon-cloud--one { width: 78px; top: 31px; left: 6%; }
+.bb-balloon-cloud--two { width: 58px; top: 68px; right: 9%; height: 19px; }
+.bb-balloon-cloud--three { width: 105px; bottom: 41px; right: -25px; opacity: .6; }
+.bb-balloon-target { position: absolute; z-index: 2; left: var(--bb-balloon-x, 50%); top: 72%; width: 74px; height: 111px; padding: 0; transform: translateX(-50%); border: 0; border-radius: 40px; background: transparent; cursor: pointer; touch-action: manipulation; animation-timing-function: linear; animation-fill-mode: forwards; }
+.bb-balloon-target:disabled { cursor: default; }
+.bb-balloon-target:focus-visible { outline-color: #403170; }
+.bb-balloon-body { position: relative; display: block; width: 61px; height: 76px; margin: 0 auto; border-radius: 50% 50% 47% 47%; background: var(--bb-balloon-color); box-shadow: inset -5px -5px 0 #00000008, 0 7px 16px #36556c2b; }
+.bb-balloon-body::after { content: ''; position: absolute; left: calc(50% - 4px); bottom: -5px; width: 8px; height: 8px; border-radius: 1px 1px 4px 4px; background: var(--bb-balloon-color); }
+.bb-balloon-shine { position: absolute; left: 12px; top: 13px; width: 13px; height: 22px; transform: rotate(-28deg); border-radius: 50%; background: #ffffff70; }
+.bb-balloon-mark { position: absolute; right: 11px; bottom: 13px; font-size: 16px; color: var(--bb-balloon-ink); opacity: .7; }
+.bb-balloon-string { display: block; width: 1px; height: 30px; margin: 5px auto 0; background: #749eb3; }
+.bb-balloon-placeholder { color: #28556d; }
+.bb-balloon-placeholder > span:last-child { max-width: 310px; color: #3c6680; font-size: 13px; line-height: 1.6; }
+.bb-balloon-preview { margin-bottom: 4px; font-size: 61px; line-height: 1.2; }
+.bb-balloon-field.is-calm .bb-balloon-target { top: 36%; }
+@media (max-width: 420px) { .bb-tracking-pace { flex: 1; padding: 8px 10px; } .bb-tracking-field, .bb-balloon-field { height: 270px; border-radius: 16px; } .bb-tracking-status-line, .bb-balloon-color-line { font-size: 11px; } }
+/* Positions come from one frame clock, never from a second CSS animation. */
+.bb-tracking-target, .bb-balloon-target { left: 0; top: 0; animation: none; transition: none; will-change: transform; }
+.bb-follow-dot { cursor: default; }
+.bb-tracking-field, .bb-balloon-field { height: 300px; contain: layout paint; }
+.bb-tracking-feedback { min-height: 64px; }
+.bb-tracking-controls { min-height: 48px; }
+.bb-tracking-controls button:disabled { opacity: .5; }
+.bb-game-rules { min-height: 64px; font-size: .8rem; line-height: 1.7; color: var(--bb-muted); margin: 0 0 16px; }
+.bb-paths { display: flex; gap: 6px; flex-wrap: wrap; }
+.bb-paths button { min-height: 40px; padding: 6px 10px; border: 1px solid var(--bb-border); border-radius: 10px; background: var(--bb-soft); color: var(--bb-text); font-size: .75rem; }
+.bb-paths button[aria-pressed='true'] { border-color: var(--bb-accent); box-shadow: inset 0 0 0 1px var(--bb-accent); }
+.bb-paths button:disabled { cursor: default; }

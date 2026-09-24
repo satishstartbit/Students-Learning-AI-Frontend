@@ -1,0 +1,277 @@
+/* =====================================================================
+   Mood reveal after a K-5 check-in (MoodCelebration.jsx). Prefix: mc-.
+
+   The mood's own colour arrives as --mc-color and tints the card, the ring
+   and the percentage; everything else is a kid-theme token, so the overlay
+   sits in the same paper-and-ink world as the dialog it follows.
+
+   Every animation here is switched off under prefers-reduced-motion at the
+   foot of this file - the component also skips straight to 100% so nothing
+   is only conveyed by movement.
+   ===================================================================== */
+
+.mc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(44 38 33 / 0.45);
+  backdrop-filter: blur(3px);
+  animation: mc-fade-in 200ms ease-out both;
+}
+
+.mc-card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  width: min(420px, 100%);
+  padding: 34px 26px 28px;
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--mc-color) 10%, var(--kid-sheet, #fdfaf3));
+  box-shadow: 0 26px 40px -22px rgb(92 70 45 / 0.6);
+  text-align: center;
+  overflow: hidden;
+  animation: mc-card-in 260ms cubic-bezier(0.22, 1.2, 0.4, 1) both;
+}
+
+/* --- Ring + emoji -------------------------------------------------------- */
+.mc-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 190px;
+  height: 190px;
+}
+.mc-ring {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg); /* 0% starts at the top */
+}
+.mc-ring__track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--mc-color) 18%, transparent);
+  stroke-width: 8;
+}
+.mc-ring__fill {
+  fill: none;
+  stroke: var(--mc-color);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+.mc-ring--done {
+  animation: mc-ring-pulse 520ms ease-out 1;
+}
+
+/* A grid box rather than an inline one: an inline span sits on a baseline,
+   so its descender space pushed the art below the centre of the ring. */
+.mc-emoji {
+  display: grid;
+  place-items: center;
+  font-size: 110px;
+  line-height: 1;
+  user-select: none;
+  animation: mc-pop-in 460ms cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+.mc-emoji img {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+}
+/* The mood's own tile at reveal size - the same art the picker draws, so an
+   admin's uploaded icon and background colour carry straight through. */
+.mc-art {
+  width: 118px;
+  height: 118px;
+}
+.mc-art__icon {
+  width: 58px;
+  height: 58px;
+}
+/* The tile crops its icon to fill at 48px, which is right for a small
+   circle. Blown up to 118px inside the ring that crop is what shows, so
+   here the whole icon is fitted inside the circle with a little air around
+   it instead. */
+.mc-art img {
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+}
+/* An admin mood with no image falls back to its emoji, sized off the tile
+   rather than off .mc-emoji's 110px. */
+.mc-art > span {
+  font-size: 62px;
+}
+/* After the pop, energetic moods keep bouncing and heavy ones breathe. */
+.mc-emoji--burst {
+  animation:
+    mc-pop-in 460ms cubic-bezier(0.2, 1.3, 0.4, 1) both,
+    mc-bounce 1.4s ease-in-out 460ms infinite;
+}
+.mc-emoji--soft {
+  animation:
+    mc-pop-in 460ms cubic-bezier(0.2, 1.3, 0.4, 1) both,
+    mc-breathe 3.4s ease-in-out 460ms infinite;
+}
+
+/* --- Particles ----------------------------------------------------------- */
+.mc-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.mc-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 20px;
+  line-height: 1;
+  opacity: 0;
+}
+/* Thrown outward once, in a ring - the angle and distance come from the
+   component as --mc-x / --mc-y. */
+.mc-particle--burst {
+  animation: mc-burst 1.15s ease-out var(--mc-delay, 0ms) both;
+}
+/* Drifts up from wherever it started and repeats, slowly. */
+.mc-particle--soft {
+  animation: mc-drift 3.6s ease-in-out var(--mc-delay, 0ms) infinite;
+}
+
+/* --- Words --------------------------------------------------------------- */
+.mc-percent {
+  font-family: var(--kid-font-display, inherit);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--mc-color);
+}
+.mc-status {
+  margin: 0;
+  font-family: var(--kid-font-body, inherit);
+  font-size: 17px;
+  color: var(--kid-ink-soft, #62584e);
+}
+.mc-headline {
+  margin: 0;
+  font-family: var(--kid-font-hand, inherit);
+  font-size: 30px;
+  line-height: 1.15;
+  color: var(--kid-ink, #2c2621);
+}
+.mc-message {
+  margin: 0;
+  font-family: var(--kid-font-body, inherit);
+  font-size: 17px;
+  color: var(--kid-ink-soft, #62584e);
+}
+.mc-error {
+  margin: 0;
+  font-family: var(--kid-font-body, inherit);
+  font-size: 16px;
+  color: var(--color-danger-fg, #be123c);
+}
+
+.mc-reveal {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  animation: mc-fade-up 320ms ease-out both;
+}
+
+.mc-actions {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  animation: mc-fade-up 320ms ease-out 80ms both;
+}
+
+/* --- Keyframes ----------------------------------------------------------- */
+@keyframes mc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes mc-card-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mc-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mc-pop-in {
+  0% { transform: scale(0) rotate(-12deg); }
+  62% { transform: scale(1.18) rotate(4deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@keyframes mc-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+@keyframes mc-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+}
+@keyframes mc-ring-pulse {
+  0% { transform: rotate(-90deg) scale(1); }
+  45% { transform: rotate(-90deg) scale(1.06); }
+  100% { transform: rotate(-90deg) scale(1); }
+}
+@keyframes mc-burst {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  18% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--mc-x)), calc(-50% + var(--mc-y))) scale(1);
+  }
+}
+@keyframes mc-drift {
+  0% { opacity: 0; transform: translate(calc(-50% + var(--mc-x)), -50%) scale(0.9); }
+  20% { opacity: 0.9; }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--mc-x)), calc(-50% + var(--mc-y))) scale(1.05);
+  }
+}
+
+/* The component already renders the finished state and no particles when
+   motion is off; this covers the entrance animations as well. */
+@media (prefers-reduced-motion: reduce) {
+  .mc-overlay,
+  .mc-card,
+  .mc-emoji,
+  .mc-emoji--burst,
+  .mc-emoji--soft,
+  .mc-reveal,
+  .mc-actions,
+  .mc-ring--done {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .mc-stage {
+    width: 150px;
+    height: 150px;
+  }
+  .mc-emoji {
+    font-size: 84px;
+  }
+  .mc-emoji img {
+    width: 84px;
+    height: 84px;
+  }
+  .mc-art {
+    width: 92px;
+    height: 92px;
+  }
+  .mc-art__icon {
+    width: 46px;
+    height: 46px;
+  }
+  .mc-headline {
+    font-size: 26px;
+  }
+}

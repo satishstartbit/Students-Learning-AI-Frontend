@@ -1,15 +1,19 @@
 import { useCallback, useEffect } from 'react';
-import { Alert, Button, Input, Loader, Modal, SectionHeader } from '../../../components/common';
+import { Alert, Button, Input, Loader, Modal } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
 import { getErrorMessage } from '../../../utils/errorHandler';
+import { formatName } from '../../../utils/format';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import AddressFields from '../../auth/components/AddressFields';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
 import { usePhotoField } from '../../../hooks/usePhotoField';
+import { ProfileHeaderCard, ProfileSection } from '../../profile/components/ProfileParts';
 import parentService from '../services/parent.service';
+import '../../profile/components/profile.css';
+import './parentChildren.css';
 
 /** "Reading, Writing" -> ["Reading", "Writing"] for the master multi-selects. */
 const splitCsv = (v) =>
@@ -47,6 +51,10 @@ function valuesFromChild(child) {
  * Takes only the child's id: the list card doesn't carry the full profile, so
  * this fetches the same detail `parentService.getChild` returns for "View
  * Details" and seeds the form from it once it arrives.
+ *
+ * Laid out like the parent's My Profile page (profile.css): a photo header
+ * card, then titled section cards with fields two to a row, on the page
+ * canvas. Unlike My Profile, the photo is saved with the rest of the form.
  */
 export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) {
   const detail = useApi(parentService.getChild);
@@ -96,12 +104,18 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [child]);
 
+  const meta = child
+    ? [child.username ? `@${child.username}` : null, form.values.grade || child.profile?.grade].filter(Boolean).join(' · ')
+    : '';
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={child ? `Edit ${child.firstName}` : 'Edit child'}
+      description="Nothing changes until you press Save changes."
       size="lg"
+      className="pc-childform"
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={form.isSubmitting}>
@@ -121,29 +135,48 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
       {detail.error && <Alert variant="error">{getErrorMessage(detail.error)}</Alert>}
 
       {form.submitError && (
-        <Alert variant="error" className="ui-field">
+        <Alert variant="error" className="pc-childform__alert">
           {form.submitError}
         </Alert>
       )}
 
       {child && (
         <form onSubmit={form.handleSubmit} noValidate>
-          <Input label="First name" required {...form.getFieldProps('firstName')} />
-          <Input label="Last name" {...form.getFieldProps('lastName')} />
-          <Input label="Email" type="email" required {...form.getFieldProps('email')} />
-          <Input label="Phone" type="tel" {...form.getFieldProps('phone')} />
-
-          <SectionHeader title="Address" as="h3" />
-          <AddressFields values={form.values} getProps={form.getFieldProps} setFieldValue={form.setFieldValue} />
-
-          <SectionHeader title="About your child" as="h3" />
-          <RoleProfileFields
-            role="STUDENT"
-            getProps={form.getFieldProps}
-            photo={photo}
-            includeAdminOnly
-            lookupFetcher={parentService.masterOptionsFetcher}
+          <ProfileHeaderCard
+            name={formatName(child)}
+            meta={meta}
+            photoUrl={photo.previewUrl}
+            onUpload={(file, error) => (file ? photo.onSelect(file) : toast.error(error))}
+            // Only a newly picked photo can be taken back; the saved one stays
+            // until another replaces it.
+            canRemove={Boolean(photo.file)}
+            removeLabel="Undo"
+            onRemove={photo.onRemove}
+            note={photo.file ? 'New photo - saved with your changes' : 'Profile photo · JPG, PNG, WEBP or HEIC'}
           />
+
+          <ProfileSection title="Personal details">
+            <div className="pf-grid">
+              <Input label="First name" required autoComplete="off" {...form.getFieldProps('firstName')} />
+              <Input label="Last name" autoComplete="off" {...form.getFieldProps('lastName')} />
+              <Input label="Email" type="email" required autoComplete="off" {...form.getFieldProps('email')} />
+              <Input label="Phone" type="tel" autoComplete="off" {...form.getFieldProps('phone')} />
+            </div>
+          </ProfileSection>
+
+          <ProfileSection title="Address">
+            <AddressFields layout="profile" values={form.values} getProps={form.getFieldProps} setFieldValue={form.setFieldValue} />
+          </ProfileSection>
+
+          <ProfileSection title={`About ${child.firstName}`} hint="Helps teachers understand how your child learns best.">
+            <RoleProfileFields
+              role="STUDENT"
+              layout="profile"
+              getProps={form.getFieldProps}
+              includeAdminOnly
+              lookupFetcher={parentService.masterOptionsFetcher}
+            />
+          </ProfileSection>
         </form>
       )}
     </Modal>

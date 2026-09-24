@@ -10,6 +10,11 @@ import invitationService from '../../invitations/services/teacherInvitation.serv
 /** One line of context under each invitation: when it was sent / answered / expires. */
 function whenLine(inv) {
   switch (inv.status) {
+    // Requests go to Growing Focus first; the teacher is emailed on approval.
+    case 'awaiting_approval':
+      return `Requested ${formatDate(inv.createdAt)} · we're reviewing it before emailing the teacher`;
+    case 'rejected':
+      return `Not approved ${formatDate(inv.respondedAt)} - the teacher was not contacted`;
     case 'pending':
       return `Sent ${formatDate(inv.lastSentAt)}${inv.sentCount > 1 ? ` (${inv.sentCount} times)` : ''} · expires ${formatDate(inv.expiresAt)}`;
     case 'accepted':
@@ -101,6 +106,11 @@ export default function TeacherInvitationsList({ invitations, onChanged }) {
                 <div className="ui-hint" style={{ margin: '2px 0 0' }}>
                   {whenLine(inv)}
                 </div>
+                {inv.status === 'rejected' && inv.reviewNote && (
+                  <div className="ui-hint" style={{ margin: '4px 0 0', color: 'var(--color-text-primary)' }}>
+                    Our note: &ldquo;{inv.reviewNote}&rdquo; You can send a new request with the details corrected.
+                  </div>
+                )}
                 {inv.status === 'declined' && (
                   <div className="ui-hint" style={{ margin: '4px 0 0', color: 'var(--color-text-primary)' }}>
                     {inv.declineReason ? `Their note: "${inv.declineReason}"` : 'No note left.'} If the email was wrong, send a new
@@ -108,6 +118,13 @@ export default function TeacherInvitationsList({ invitations, onChanged }) {
                   </div>
                 )}
               </div>
+              {inv.sentByMe && inv.status === 'awaiting_approval' && inv.canCancel && (
+                <ButtonGroup>
+                  <Button size="sm" variant="secondary" onClick={() => cancelModal.open(inv)}>
+                    Withdraw request
+                  </Button>
+                </ButtonGroup>
+              )}
               {inv.sentByMe && (inv.status === 'pending' || inv.status === 'expired') && (
                 <ButtonGroup>
                   <Button

@@ -8,6 +8,7 @@ import { formatDuration } from '../../../utils/date';
 import { getSubjectVisual } from '../components/subjectVisual';
 import StepsPanel from '../components/focus/StepsPanel';
 import StuckToolkit from '../components/focus/StuckToolkit';
+import { FOCUS_LENGTHS as LENGTHS } from '../components/focus/focusLengths';
 import '../components/focus/focusSession.css';
 import { formatClock, useFocusTimer } from '../hooks/useFocusTimer';
 import { useFocusSteps } from '../hooks/useFocusSteps';
@@ -25,8 +26,6 @@ import { useTodayTasks } from '../hooks/useTodayTasks';
  * the step done, which earns step points once. Underneath, "Feeling stuck?"
  * offers real, admin-managed toolkit exercises.
  */
-
-const LENGTHS = [15, 20, 25, 30, 45, 60];
 
 const SOUNDS = [
   { value: '', label: 'No sound', file: null },

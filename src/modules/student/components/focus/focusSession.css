@@ -562,3 +562,79 @@
     justify-items: center;
   }
 }
+
+/* Two ways out of being stuck, side by side in the card's header: say what
+   is in the way, or go straight to a calming tool. */
+.fs-stuck__links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+/* ------------------------------------------------------------ a task's Focus card
+   TaskFocusCard, on the Grade 6+ assignment page: the same ring, clock and
+   buttons as the session card above, laid out beside each other so it sits
+   neatly above the student's work. */
+.fs-task {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 22px 24px;
+}
+.fs-task__ring {
+  flex: none;
+  width: 150px;
+  height: 150px;
+}
+.fs-task__clock {
+  font-size: 34px;
+}
+.fs-task__body {
+  flex: 1;
+  min-width: 0;
+}
+.fs-task__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.fs-task__lead {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+}
+.fs-task__state {
+  margin: 8px 0 12px;
+}
+.fs-task__alert {
+  margin-bottom: 12px;
+}
+.fs-task .fs-lengths {
+  margin: 0 0 14px;
+}
+.fs-task__actions {
+  justify-content: flex-start;
+  gap: 10px;
+}
+.fs-task a.fs-btn {
+  text-decoration: none;
+}
+.fs-task__more {
+  margin-top: 10px;
+  font-size: 12.5px;
+}
+.fs-task--elsewhere {
+  justify-content: space-between;
+}
+@media (max-width: 640px) {
+  .fs-task {
+    flex-direction: column;
+    text-align: center;
+  }
+  .fs-task__actions,
+  .fs-task .fs-lengths {
+    justify-content: center;
+  }
+}

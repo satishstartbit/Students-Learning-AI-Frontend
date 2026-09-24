@@ -178,3 +178,37 @@
   background: var(--color-bg-surface-sunken);
   color: var(--color-text-primary);
 }
+
+/* --- Add / Edit child dialogs (AddChildModal, EditChildModal) ---------
+   The My Profile look (profile.css pf-*): white section cards on the page
+   canvas, fields two to a row. Tighter than the page so the dialog scrolls
+   less. */
+.pc-childform .ui-modal__body {
+  background: var(--color-bg-canvas);
+}
+.pc-childform__alert {
+  margin-bottom: 14px;
+}
+.pc-childform .pf-card {
+  margin-bottom: 14px;
+  padding: 18px 18px 0;
+}
+.pc-childform .pf-card:last-child {
+  margin-bottom: 0;
+}
+.pc-childform .pf-header {
+  padding: 14px 18px;
+}
+.pc-childform .pf-avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 19px;
+}
+/* Every field already keeps an (empty) error line under it - FieldHelper's
+   reserved slot - so only a sliver of margin is needed on top of that. */
+.pc-childform .pf-card .ui-field {
+  margin-bottom: 4px;
+}
+.pc-childform .ui-textarea {
+  min-height: 80px;
+}
