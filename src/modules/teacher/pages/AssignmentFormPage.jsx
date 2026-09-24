@@ -26,9 +26,22 @@ import { questionFromApi, questionToPayload, validateQuestions } from '../../ass
 import FormSection from '../components/assignmentForm/FormSection';
 import PublishPanel from '../components/assignmentForm/PublishPanel';
 import RosterPicker from '../components/assignmentForm/RosterPicker';
+import TagListInput from '../components/assignmentForm/TagListInput';
 import '../../assignments/components/assignmentForm.css';
 
 const AUTOSAVE_DELAY_MS = 1500;
+
+/** Kept in step with the API's own whitelists (validators/assignment.validator.js). */
+const PRIORITY_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+];
+
+const WORK_MODE_OPTIONS = [
+  { value: 'independent', label: 'Can work independently' },
+  { value: 'needs_help', label: 'Needs help from an adult' },
+];
 
 /** Form state from a saved assignment (edit) or blank (create). */
 function initialForm(a) {
@@ -44,6 +57,13 @@ function initialForm(a) {
     academicYearId: a?.academicYear?.id ?? '',
     startDate: a?.startDate ?? '',
     dueDate: a?.dueDate ?? '',
+    // The client-spec task fields. dueTime belongs to dueDate ("any time
+    // that day" when empty); materials and links are lists, not blobs.
+    dueTime: a?.dueTime ?? '',
+    priority: a?.priority ?? '',
+    workMode: a?.workMode ?? '',
+    requiredMaterials: a?.requiredMaterials ?? [],
+    links: a?.links ?? [],
     estimatedMinutes: a?.estimatedMinutes ?? '',
   };
 }
@@ -151,6 +171,19 @@ function AssignmentEditor({ initial }) {
   const taskTypeOptions = withSaved(taskTypes.data ?? [], initial?.taskType);
 
   const selectedTaskType = (taskTypes.data ?? []).find((t) => t.id === form.taskTypeId) ?? (initial?.taskType?.id === form.taskTypeId ? initial.taskType : null);
+
+  /*
+   * "Forms or permission slips" and "Materials or supplies to bring" are
+   * checklist items, not work: the Task Type master marks them
+   * flow_type='simple_reminder' and this form becomes the short version -
+   * what it is, when it is due, what to bring, who it is for. No questions,
+   * no background audio, no AI step breakdown.
+   *
+   * The same form rather than a second page, so a teacher who picks the
+   * wrong type doesn't lose what they have typed, and everything already
+   * saved on an assignment stays saved while its sections are hidden.
+   */
+  const isSimpleFlow = (selectedTaskType?.flowType ?? 'full_assignment') === 'simple_reminder';
   const subjectName = subjectOptions.find((o) => o.value === form.subjectId)?.label.replace(/ \(no longer offered\)$/, '') || form.legacySubject;
 
   const setField = (key) => (e) => {
@@ -225,11 +258,21 @@ function AssignmentEditor({ initial }) {
       academicYearId: form.academicYearId || null,
       startDate: form.startDate || null,
       dueDate: form.dueDate || null,
+      // A time with no date means nothing, and the API refuses it.
+      dueTime: form.dueDate ? form.dueTime || null : null,
+      priority: form.priority || null,
+      workMode: form.workMode || null,
+      requiredMaterials: form.requiredMaterials,
+      links: form.links,
       estimatedMinutes: form.estimatedMinutes !== '' && Number(form.estimatedMinutes) > 0 ? Math.round(Number(form.estimatedMinutes)) : null,
       studentIds,
     };
-    if (!partial || questionsValid) body.questions = questions.map(questionToPayload);
-    if (!partial || audioIsComplete(audio)) body.backgroundAudio = backgroundAudioPayload();
+    // A simple reminder has neither, and sending them would clear whatever a
+    // teacher had already built if they switch the task type and back.
+    if (!isSimpleFlow) {
+      if (!partial || questionsValid) body.questions = questions.map(questionToPayload);
+      if (!partial || audioIsComplete(audio)) body.backgroundAudio = backgroundAudioPayload();
+    }
     return body;
   };
 
@@ -428,7 +471,36 @@ function AssignmentEditor({ initial }) {
         <fieldset disabled={isArchived} className="af-sections" style={{ border: 'none', padding: 0, margin: 0 }}>
           <FormSection title="Details" description="Name the assignment and tell students what it is about." chip={chips.details} open={open.details} onToggle={() => toggle('details')}>
             <Input label="Title" required value={form.title} onChange={setField('title')} error={errors.title} maxLength={255} placeholder="e.g. Halves and quarters" />
-            <Textarea label="Description" value={form.description} onChange={setField('description')} rows={4} placeholder="What should students do?" />
+            {/* "Instructions" is the client's term for this field; the stored
+                column stays `description`. */}
+            <Textarea label="Instructions" value={form.description} onChange={setField('description')} rows={4} placeholder="What should students do?" />
+
+            <div className="af-grid af-grid--2">
+              <Select
+                label="Priority"
+                options={PRIORITY_OPTIONS}
+                value={form.priority}
+                onChange={setField('priority')}
+                placeholder="No priority set"
+              />
+              <Select
+                label="Working style"
+                options={WORK_MODE_OPTIONS}
+                value={form.workMode}
+                onChange={setField('workMode')}
+                placeholder="Not specified"
+                hint="Whether students can do this on their own."
+              />
+            </div>
+
+            <TagListInput
+              label="Links"
+              hint="Links students should open for this task - one at a time."
+              value={form.links.map((l) => l.url)}
+              onChange={(urls) => setForm((f) => ({ ...f, links: urls.map((url) => ({ url, label: null }) ) }))}
+              placeholder="https://…"
+              max={20}
+            />
           </FormSection>
 
           <FormSection
@@ -493,7 +565,25 @@ function AssignmentEditor({ initial }) {
               />
               <DatePicker label="Start date" value={form.startDate} onChange={setField('startDate')} />
               <DatePicker label="Due date" value={form.dueDate} onChange={setField('dueDate')} min={form.startDate || undefined} />
+              {/* The time belongs to the due date - without one there is
+                  nothing for it to be a time of. */}
+              <Input
+                type="time"
+                label="Due time"
+                value={form.dueTime}
+                onChange={setField('dueTime')}
+                disabled={!form.dueDate}
+                hint={form.dueDate ? 'Optional - any time that day if left empty.' : 'Set a due date first.'}
+              />
             </div>
+
+            <TagListInput
+              label="Required materials"
+              hint="What students need to have with them - add one at a time."
+              value={form.requiredMaterials}
+              onChange={(requiredMaterials) => setForm((f) => ({ ...f, requiredMaterials }))}
+              placeholder="e.g. ruler"
+            />
           </FormSection>
 
           <FormSection
@@ -514,6 +604,13 @@ function AssignmentEditor({ initial }) {
             />
           </FormSection>
 
+          {isSimpleFlow ? (
+            <p className="af-note">
+              {selectedTaskType?.name} is a reminder rather than work to do, so there are no questions, no
+              background audio and no steps to break down - just what it is, when it is due and what to bring.
+            </p>
+          ) : (
+          <>
           <FormSection title="Questions" description="Optional. Add pictures, then ask a question." chip={chips.questions} open={open.questions} onToggle={() => toggle('questions')}>
             {questionsLocked && (
               <Alert variant="info" className="ui-field">
@@ -530,6 +627,14 @@ function AssignmentEditor({ initial }) {
               errors={questionErrors}
               locked={questionsLocked}
             />
+
+            {/* Subtasks are deliberately not a field here: they are broken
+                out automatically once the work is assigned. Said plainly so
+                a teacher isn't hunting for a box that doesn't exist. */}
+            <p className="af-note">
+              Steps will be created automatically once this is assigned - you don&rsquo;t need to break the work
+              down yourself.
+            </p>
           </FormSection>
 
           <FormSection
@@ -551,6 +656,8 @@ function AssignmentEditor({ initial }) {
               error={errors.audio}
             />
           </FormSection>
+          </>
+          )}
         </fieldset>
 
         <PublishPanel

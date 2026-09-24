@@ -577,3 +577,63 @@
     padding-inline: 10px;
   }
 }
+
+/* --- Tag lists (required materials, links) -------------------------------
+   A short list of short entries, added one at a time - see
+   ../../teacher/components/assignmentForm/TagListInput.jsx for why these are
+   separate entries rather than one free-text field. */
+.af-tags {
+  display: grid;
+  gap: 8px;
+}
+.af-tags__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+.af-tags__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.af-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 11px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 9999px;
+  background: var(--color-bg-surface);
+  font-size: 12px;
+}
+.af-tag__remove {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--color-bg-surface-sunken);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.af-tag__remove:hover:not(:disabled) {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-fg);
+}
+
+/* The note that explains where the steps come from, so a teacher isn't
+   hunting for a subtask field that deliberately doesn't exist. */
+.af-note {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--color-border-default);
+  border-radius: 10px;
+  background: var(--color-bg-surface-sunken);
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+}
