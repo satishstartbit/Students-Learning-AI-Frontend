@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Input, Textarea, Select, MultiSelect, ImageUpload, DatePicker } from '../../../components/common';
 import masterGenericService from '../../masterManagement/services/masterGeneric.service';
+import { getDateKey } from '../../../utils/date';
 
 const GENDER_OPTIONS = [
   { value: 'female', label: 'Female' },
@@ -163,13 +164,14 @@ export default function RoleProfileFields({
         lookupFetcher={lookupFetcher}
       />
     ) : (
-      <Input label="Grade" placeholder="e.g. Year 9" {...getProps('grade')} />
+      <Input label="Grade" placeholder="e.g. Grade 9" {...getProps('grade')} />
     );
 
     const dateOfBirth = (
       <DatePicker
         label="Date of birth"
-        max={new Date().toISOString().slice(0, 10)}
+        // Today on the user's calendar - the UTC date is already tomorrow on a Canadian evening.
+        max={getDateKey()}
         {...getProps('date_of_birth')}
       />
     );
@@ -326,7 +328,7 @@ export default function RoleProfileFields({
           <Input
             label="Subjects taught"
             hint="Comma separated"
-            placeholder="Maths, Science"
+            placeholder="Math, Science"
             {...getProps('subjects')}
           />
         )}

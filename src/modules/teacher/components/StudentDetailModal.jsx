@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { Alert, Avatar, Button, EmptyState, Loader, Modal, SectionHeader, StatusBadge, Table } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { formatDateTime } from '../../../utils/date';
+import { formatPhoneForDisplay } from '../../../utils/phone';
 import { formatName } from '../../../utils/format';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import teacherStudentService from '../services/teacherStudent.service';
@@ -67,7 +68,7 @@ export function StudentDetailModal({ isOpen, studentId, onClose }) {
             </div>
             <div>
               <span className="ui-hint">Phone</span>
-              <div>{student.phone || '—'}</div>
+              <div>{formatPhoneForDisplay(student.phone) || '—'}</div>
             </div>
           </div>
 

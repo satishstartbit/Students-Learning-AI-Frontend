@@ -18,6 +18,7 @@ import { useModal } from '../../../hooks/useModal';
 import { toast } from '../../../hooks/useToast';
 import { formatDateTime } from '../../../utils/date';
 import { formatName, titleCase } from '../../../utils/format';
+import { formatPhoneForDisplay } from '../../../utils/phone';
 import { ROLE_LABELS, USER_ROLES, USER_STATUS, listPathForRole } from '../../../utils/constants';
 import { getErrorMessage, parseApiError } from '../../../utils/errorHandler';
 import adminUserService from '../services/adminUser.service';
@@ -170,7 +171,7 @@ export default function UserDetailPage() {
               </Badge>
             )}
           </Field>
-          <Field label="Phone">{user.phone}</Field>
+          <Field label="Phone">{formatPhoneForDisplay(user.phone)}</Field>
           <Field label="Last login">
             {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Never'}
           </Field>

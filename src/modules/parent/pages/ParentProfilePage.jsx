@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import AccentPicker from '../../../components/appearance/AccentPicker';
 import { useAppSettings } from '../../../components/appearance/useAppSettings';
-import { Alert, Button, Input, Loader } from '../../../components/common';
+import { Alert, Button, Input, Loader, Select } from '../../../components/common';
+import { timezoneOptions } from '../../../utils/locale';
+import { formatPhoneForDisplay } from '../../../utils/phone';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
 import { useForm } from '../../../hooks/useForm';
@@ -15,7 +17,7 @@ import { buildProfilePayload } from '../../auth/components/profilePayload';
 import authService from '../../auth/services/auth.service';
 import ParentFamilyForm from '../../onboarding/components/ParentFamilyForm';
 import onboardingService from '../../onboarding/services/onboarding.service';
-import { ProfileHeaderCard, ProfileSection } from '../../profile/components/ProfileParts';
+import { ProfileHeaderCard, ProfilePageLayout, ProfileSection } from '../../profile/components/ProfileParts';
 import '../../profile/components/profile.css';
 import { useProfilePhoto } from '../../profile/useProfilePhoto';
 
@@ -24,7 +26,9 @@ function valuesFromMe(me) {
     firstName: me?.firstName ?? '',
     lastName: me?.lastName ?? '',
     email: me?.email ?? '',
-    phone: me?.phone ?? '',
+    // Shown the Canadian way, (416) 555-1234; the API stores E.164 either way.
+    phone: formatPhoneForDisplay(me?.phone),
+    timezone: me?.timezone ?? '',
     address: me?.address ?? '',
     city: me?.city ?? '',
     state: me?.state ?? '',
@@ -72,6 +76,7 @@ export default function ParentProfilePage() {
         lastName: values.lastName || null,
         email: values.email,
         phone: values.phone || null,
+        timezone: values.timezone || undefined,
         address: values.address || null,
         city: values.city || null,
         state: values.state || null,
@@ -79,7 +84,7 @@ export default function ParentProfilePage() {
         postalCode: values.postalCode || null,
         profile: buildProfilePayload('PARENT', values),
       });
-      setUser({ ...user, firstName: data.firstName, lastName: data.lastName, email: data.email, phone: data.phone });
+      setUser({ ...user, firstName: data.firstName, lastName: data.lastName, email: data.email, phone: data.phone, timezone: data.timezone });
       toast.success('Profile saved');
       window.dispatchEvent(new Event('profile:updated'));
       reload();
@@ -95,72 +100,29 @@ export default function ParentProfilePage() {
 
   const emailChanged = record && form.values.email.trim().toLowerCase() !== String(record.email ?? '').toLowerCase();
 
+  if (!record) {
+    return (
+      <ProfilePageLayout description="Your details, your family, and your password.">
+        {error && <Alert variant="error">{getErrorMessage(error)}</Alert>}
+      </ProfilePageLayout>
+    );
+  }
+
   return (
-    <div className="pf-page td-page">
-      <h1 className="pf-title">My Profile</h1>
-      <p className="pf-subtitle">Your details, your family, and your password.</p>
-
-      {error && !record && <Alert variant="error">{getErrorMessage(error)}</Alert>}
-
-      {record && (
+    <ProfilePageLayout
+      description="Your details, your family, and your password."
+      head={
+        <ProfileHeaderCard
+          name={formatName(record)}
+          meta={metaLine(record)}
+          photoUrl={record.profile?.profileImageUrl ?? null}
+          busy={photo.busy}
+          onUpload={photo.upload}
+          onRemove={photo.remove}
+        />
+      }
+      extra={
         <>
-          <ProfileHeaderCard
-            name={formatName(record)}
-            meta={metaLine(record)}
-            photoUrl={record.profile?.profileImageUrl ?? null}
-            busy={photo.busy}
-            onUpload={photo.upload}
-            onRemove={photo.remove}
-          />
-
-          <form onSubmit={form.handleSubmit} noValidate data-testid="parent-profile-form">
-            {form.submitError && (
-              <Alert variant="error" className="ui-field">
-                {form.submitError}
-              </Alert>
-            )}
-
-            <ProfileSection title="Personal details">
-              <div className="pf-grid">
-                <Input label="First name" required autoComplete="given-name" {...form.getFieldProps('firstName')} />
-                <Input label="Last name" autoComplete="family-name" {...form.getFieldProps('lastName')} />
-                <Input
-                  label="Email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  hint={emailChanged ? "Saving signs you out - we'll email a link to confirm the new address." : undefined}
-                  {...form.getFieldProps('email')}
-                />
-                <Input label="Phone" type="tel" autoComplete="tel" {...form.getFieldProps('phone')} />
-              </div>
-            </ProfileSection>
-
-            <ProfileSection title="Address">
-              <AddressFields layout="profile" values={form.values} getProps={form.getFieldProps} setFieldValue={form.setFieldValue} />
-              <div className="pf-actions">
-                <Button type="submit" loading={form.isSubmitting}>
-                  Save changes
-                </Button>
-              </div>
-            </ProfileSection>
-          </form>
-
-          <ProfileSection title="About your family" hint="The answers from when you first signed in - change them any time.">
-            {familyContext.data ? (
-              <ParentFamilyForm
-                key={familyContext.data.completedAt ?? 'new'}
-                answers={familyContext.data.answers}
-                submitLabel="Save family details"
-                onSaved={() => toast.success('Family details saved')}
-              />
-            ) : familyContext.error ? (
-              <Alert variant="error">{getErrorMessage(familyContext.error)}</Alert>
-            ) : (
-              <Loader message="Loading…" />
-            )}
-          </ProfileSection>
-
           <ProfileSection title="Colour theme" hint="Changes the accent colour across your whole dashboard.">
             <AccentPicker
               value={appSettings.accent}
@@ -177,7 +139,56 @@ export default function ParentProfilePage() {
             <ChangePasswordForm compact />
           </ProfileSection>
         </>
-      )}
-    </div>
+      }
+    >
+      <form onSubmit={form.handleSubmit} noValidate data-testid="parent-profile-form">
+        {form.submitError && (
+          <Alert variant="error" className="ui-field">
+            {form.submitError}
+          </Alert>
+        )}
+
+        <ProfileSection title="Personal details">
+          <div className="pf-grid">
+            <Input label="First name" required autoComplete="given-name" {...form.getFieldProps('firstName')} />
+            <Input label="Last name" autoComplete="family-name" {...form.getFieldProps('lastName')} />
+            <Input
+              label="Email"
+              type="email"
+              required
+              autoComplete="email"
+              hint={emailChanged ? "Saving signs you out - we'll email a link to confirm the new address." : undefined}
+              {...form.getFieldProps('email')}
+            />
+            <Input label="Phone" type="tel" autoComplete="tel" {...form.getFieldProps('phone')} />
+            <Select label="Time zone" hint="Dates, 'today' and reminders follow this." options={timezoneOptions(form.values.timezone)} {...form.getFieldProps('timezone')} />
+          </div>
+        </ProfileSection>
+
+        <ProfileSection title="Address">
+          <AddressFields layout="profile" values={form.values} getProps={form.getFieldProps} setFieldValue={form.setFieldValue} />
+          <div className="pf-actions">
+            <Button type="submit" loading={form.isSubmitting}>
+              Save changes
+            </Button>
+          </div>
+        </ProfileSection>
+      </form>
+
+      <ProfileSection title="About your family" hint="The answers from when you first signed in - change them any time.">
+        {familyContext.data ? (
+          <ParentFamilyForm
+            key={familyContext.data.completedAt ?? 'new'}
+            answers={familyContext.data.answers}
+            submitLabel="Save family details"
+            onSaved={() => toast.success('Family details saved')}
+          />
+        ) : familyContext.error ? (
+          <Alert variant="error">{getErrorMessage(familyContext.error)}</Alert>
+        ) : (
+          <Loader message="Loading…" />
+        )}
+      </ProfileSection>
+    </ProfilePageLayout>
   );
 }

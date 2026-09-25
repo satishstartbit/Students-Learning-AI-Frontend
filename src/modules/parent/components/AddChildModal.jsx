@@ -1,4 +1,5 @@
-import { Alert, Button, Input, Modal } from '../../../components/common';
+import { Alert, Button, Input, Modal, Select } from '../../../components/common';
+import { getActiveTimezone, timezoneOptions } from '../../../utils/locale';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
@@ -11,7 +12,7 @@ import parentService from '../services/parent.service';
 import '../../profile/components/profile.css';
 import './parentChildren.css';
 
-const INITIAL_VALUES = { firstName: '', lastName: '', email: '', phone: '' };
+const INITIAL_VALUES = { firstName: '', lastName: '', email: '', phone: '', timezone: '' };
 
 /**
  * "+ Add Child" - creates the student account and links it to the signed-in
@@ -38,6 +39,8 @@ export default function AddChildModal({ isOpen, onClose, onCreated }) {
         lastName: values.lastName || null,
         email: values.email,
         phone: values.phone || null,
+        // Empty = the parent's own zone (parent.service#addChild).
+        timezone: values.timezone || undefined,
         profile: buildProfilePayload('STUDENT', values),
         photoFile: photo.file,
       });
@@ -103,6 +106,13 @@ export default function AddChildModal({ isOpen, onClose, onCreated }) {
             <Input label="Last name" autoComplete="off" {...form.getFieldProps('lastName')} />
             <Input label="Email" type="email" required autoComplete="off" {...form.getFieldProps('email')} />
             <Input label="Phone" type="tel" autoComplete="off" {...form.getFieldProps('phone')} />
+            <Select
+              label="Time zone"
+              hint="Leave as yours unless your child lives somewhere else."
+              options={timezoneOptions(form.values.timezone || getActiveTimezone())}
+              {...form.getFieldProps('timezone')}
+              value={form.values.timezone || getActiveTimezone()}
+            />
           </div>
         </ProfileSection>
 

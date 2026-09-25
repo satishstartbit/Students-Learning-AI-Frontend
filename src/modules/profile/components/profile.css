@@ -4,32 +4,90 @@
  * the portal accent and dark mode apply.
  */
 
+/* Same width, header and type as every other page (.td-page = 1120px,
+   PageHeader = the portal's 26px Poppins title). */
 .pf-page {
-  max-width: 720px;
   padding-bottom: 32px;
 }
 
-.pf-title {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  color: var(--color-text-primary);
+/* Forms on the left; photo card, then colour theme and password, on the right. */
+.pf-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-areas:
+    'main head'
+    'main extra';
+  grid-template-rows: auto 1fr;
+  gap: 0 20px;
+  align-items: start;
 }
-.pf-subtitle {
-  margin: 6px 0 20px;
-  font-size: 14px;
-  color: var(--color-text-secondary);
+.pf-layout__head {
+  grid-area: head;
+}
+.pf-layout__main {
+  grid-area: main;
+  min-width: 0;
+}
+.pf-layout__extra {
+  grid-area: extra;
+}
+
+/* The photo card, stacked for the narrow column. */
+.pf-layout__head .pf-header {
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 20px;
+  text-align: center;
+}
+.pf-layout__head .pf-avatar {
+  width: 84px;
+  height: 84px;
+  font-size: 26px;
+}
+.pf-layout__head .pf-header__text {
+  flex: none;
+  width: 100%;
+}
+.pf-layout__head .pf-header__actions {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1080px) {
+  .pf-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'head'
+      'main'
+      'extra';
+    grid-template-rows: auto;
+  }
+  /* Back to the wide, horizontal photo card when it spans the page. */
+  .pf-layout__head .pf-header {
+    flex-direction: row;
+    text-align: left;
+    padding: 16px 20px;
+  }
+  .pf-layout__head .pf-header__text {
+    flex: 1;
+    width: auto;
+  }
 }
 
 /* ------------------------------------------------------------------ section card */
 .pf-card {
   margin-bottom: 16px;
-  padding: 20px 20px 22px;
+  padding: 20px 20px 14px;
   border: 1px solid var(--color-border-default);
-  border-radius: 14px;
+  border-radius: var(--portal-card-radius, 14px);
   background: var(--color-bg-surface);
+  box-shadow: var(--portal-card-shadow, none);
+}
+/* Every field keeps an (empty) error line under it (FieldHelper's reserved
+   slot), so only a little margin is needed on top - the page read as a
+   column of big gaps before. */
+.pf-card .ui-field {
+  margin-bottom: 6px;
 }
 .pf-card__title {
   margin: 0 0 14px;
@@ -55,6 +113,27 @@
 }
 .pf-half {
   max-width: calc(50% - 7px);
+}
+/* Label / value rows (Super Admin "Account" card). */
+.pf-facts {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 6px;
+}
+.pf-facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+}
+.pf-facts dt {
+  color: var(--color-text-secondary);
+}
+.pf-facts dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  color: var(--color-text-primary);
 }
 .pf-actions {
   display: flex;

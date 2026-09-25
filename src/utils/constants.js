@@ -4,6 +4,9 @@
  * constraints - keep the three in sync.
  */
 
+/** The product name families see (sign-in page, emails use the backend's env.appName). */
+export const APP_NAME = import.meta.env?.VITE_APP_NAME || 'Growing Focus';
+
 export const USER_ROLES = Object.freeze({
   SUPER_ADMIN: 'SUPER_ADMIN',
   STUDENT: 'STUDENT',

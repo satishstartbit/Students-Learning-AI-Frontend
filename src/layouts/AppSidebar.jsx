@@ -35,12 +35,14 @@ import { formatName, getInitials } from '../utils/format';
 /**
  * Where the "Account" item in the account menu sends each role. Students
  * (Grade 6+ - K-5 has its own shell) land on Settings, where their onboarding
- * answers are edited. Super Admin keeps the placeholder disabled.
+ * answers are edited. Super Admin has its own My Profile (name, phone, time
+ * zone, password).
  */
 const PROFILE_PATH_BY_ROLE = {
   [USER_ROLES.STUDENT]: '/student/settings',
   [USER_ROLES.TEACHER]: '/teacher/profile',
   [USER_ROLES.PARENT]: '/parent/profile',
+  [USER_ROLES.SUPER_ADMIN]: '/admin/profile',
 };
 
 /**

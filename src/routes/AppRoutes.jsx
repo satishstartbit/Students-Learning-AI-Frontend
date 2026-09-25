@@ -71,9 +71,21 @@ export function AppRoutes() {
           </PublicRoutes>
         }
       >
-        {PUBLIC_ROUTES.routes.map((route) => (
-          <Route key={route.path} path={route.path} element={renderRouteElement(route)} />
-        ))}
+        {PUBLIC_ROUTES.routes
+          .filter((route) => !route.fullPage)
+          .map((route) => (
+            <Route key={route.path} path={route.path} element={renderRouteElement(route)} />
+          ))}
+      </Route>
+
+      {/* Public pages that draw the whole screen themselves (the sign-in page's
+          split hero layout) - same signed-in redirect, no centred column. */}
+      <Route element={<PublicRoutes />}>
+        {PUBLIC_ROUTES.routes
+          .filter((route) => route.fullPage)
+          .map((route) => (
+            <Route key={route.path} path={route.path} element={renderRouteElement(route)} />
+          ))}
       </Route>
 
       {/* ------------------------------------------ open (signed in or out) */}

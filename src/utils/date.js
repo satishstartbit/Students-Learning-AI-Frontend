@@ -18,7 +18,16 @@ export function toDate(value) {
 
 export const isValidDate = (value) => toDate(value) !== null;
 
+/**
+ * True for a calendar-day key ("2026-09-30") - what DATE columns (due dates,
+ * birthdays, check-in days) come back as. A day is not an instant: parsing
+ * one as a timestamp lands on the previous evening anywhere in Canada (every
+ * Canadian zone is behind UTC), so the helpers below never do.
+ */
+export const isDateKey = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+
 export function formatDate(value, { locale, timeZone, ...options } = {}) {
+  if (isDateKey(value)) return formatDateKey(value, { locale, ...options });
   const d = toDate(value);
   if (!d) return '';
   return new Intl.DateTimeFormat(locale ?? getActiveLocale(), {
@@ -165,6 +174,9 @@ export function formatLongDate(value, options = {}) {
  * `formatDateKey` above for the same class of bug on calendar-day keys).
  */
 export function toDateInputValue(value, { timeZone } = {}) {
+  // Already a calendar day (a DATE column) - converting it through a
+  // timezone would move it back a day, and saving would store that.
+  if (isDateKey(value)) return value;
   const parts = zonedParts(value, timeZone);
   if (!parts) return '';
   return `${parts.year}-${parts.month}-${parts.day}`;
@@ -193,12 +205,16 @@ export const addDays = (value, days) => {
   return copy;
 };
 
-/** Whole days from today to `value`. Negative means overdue. */
-export function daysUntil(value) {
-  const target = startOfDay(value);
-  if (!target) return null;
-  const today = startOfDay(new Date());
-  return Math.round((target - today) / 86400000);
+/**
+ * Whole days from today to `value`, counted in the user's timezone (not the
+ * browser's). Negative means overdue. A calendar-day key ("2026-09-30", e.g.
+ * a due date) is compared as a day; an instant is first placed on the user's
+ * calendar.
+ */
+export function daysUntil(value, { timeZone } = {}) {
+  if (isDateKey(value)) return daysUntilDateKey(value, { timeZone });
+  if (!toDate(value)) return null;
+  return daysUntilDateKey(getDateKey(value, { timeZone }), { timeZone });
 }
 
 export const isPast = (value) => {

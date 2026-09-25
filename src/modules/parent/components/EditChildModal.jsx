@@ -1,5 +1,7 @@
 import { useCallback, useEffect } from 'react';
-import { Alert, Button, Input, Loader, Modal } from '../../../components/common';
+import { Alert, Button, Input, Loader, Modal, Select } from '../../../components/common';
+import { timezoneOptions } from '../../../utils/locale';
+import { formatPhoneForDisplay } from '../../../utils/phone';
 import { useApi } from '../../../hooks/useApi';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
@@ -24,7 +26,8 @@ function valuesFromChild(child) {
     firstName: child?.firstName ?? '',
     lastName: child?.lastName ?? '',
     email: child?.email ?? '',
-    phone: child?.phone ?? '',
+    phone: formatPhoneForDisplay(child?.phone),
+    timezone: child?.timezone ?? '',
     address: child?.address ?? '',
     city: child?.city ?? '',
     state: child?.state ?? '',
@@ -83,6 +86,7 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
         lastName: values.lastName || null,
         email: values.email,
         phone: values.phone || null,
+        timezone: values.timezone || undefined,
         address: values.address || null,
         city: values.city || null,
         state: values.state || null,
@@ -161,6 +165,7 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
               <Input label="Last name" autoComplete="off" {...form.getFieldProps('lastName')} />
               <Input label="Email" type="email" required autoComplete="off" {...form.getFieldProps('email')} />
               <Input label="Phone" type="tel" autoComplete="off" {...form.getFieldProps('phone')} />
+              <Select label="Time zone" hint="Dates, 'today' and reminders follow this." options={timezoneOptions(form.values.timezone)} {...form.getFieldProps('timezone')} />
             </div>
           </ProfileSection>
 

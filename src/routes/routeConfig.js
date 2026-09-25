@@ -23,6 +23,7 @@ import RelationshipsPage from '../modules/superAdmin/pages/RelationshipsPage';
 import TeacherInvitationsAdminPage from '../modules/superAdmin/pages/TeacherInvitationsAdminPage';
 import TeacherConnectionsPage from '../modules/superAdmin/pages/TeacherConnectionsPage';
 // import InvitationEmailPage from '../modules/superAdmin/pages/InvitationEmailPage';
+import AdminProfilePage from '../modules/superAdmin/pages/AdminProfilePage';
 
 import ParentChildrenPage from '../modules/parent/pages/ParentChildrenPage';
 import ParentProfilePage from '../modules/parent/pages/ParentProfilePage';
@@ -134,12 +135,13 @@ export const PUBLIC_ROUTES = {
   layout: PublicLayout,
   requiresAuth: false,
   routes: [
-    { path: '/login', label: 'Sign in', component: LoginPage },
+    // fullPage: draws its own split hero layout instead of PublicLayout's column.
+    { path: '/login', label: 'Sign in', component: LoginPage, fullPage: true },
     // Separate page AND separate API endpoint - only SUPER_ADMIN is admitted.
     { path: '/admin/login', label: 'Admin sign in', component: AdminLoginPage },
-    { path: '/register', label: 'Create account', component: RegisterPage },
-    { path: '/forgot-password', label: 'Forgot password', component: ForgotPasswordPage },
-    { path: '/reset-password', label: 'Reset password', component: ResetPasswordPage },
+    { path: '/register', label: 'Create account', component: RegisterPage, fullPage: true },
+    { path: '/forgot-password', label: 'Forgot password', component: ForgotPasswordPage, fullPage: true },
+    { path: '/reset-password', label: 'Reset password', component: ResetPasswordPage, fullPage: true },
     { path: '/verify-email', label: 'Verify email', component: VerifyEmailPage },
   ],
 };
@@ -170,6 +172,8 @@ export const SUPER_ADMIN_ROUTES = {
       component: AdminDashboardPage,
     },
     { path: 'dashboard', label: 'Dashboard', redirectTo: '/admin' },
+    // The Super Admin's own account (account menu > Account).
+    { path: 'profile', label: 'My Profile', permissions: [PERMISSIONS.PROFILE_READ], component: AdminProfilePage },
     /*
      * There is no combined user list - the console is organised by role.
      * The bare path only forwards, so an old bookmark does not dead-end.

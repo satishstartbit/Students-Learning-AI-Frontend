@@ -19,6 +19,7 @@ import { usePhotoField } from '../../../hooks/usePhotoField';
 import { toast } from '../../../hooks/useToast';
 import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
 import { CANADIAN_TIMEZONES } from '../../../utils/locale';
+import { formatPhoneForDisplay } from '../../../utils/phone';
 import { ROLE_LABELS, listPathForRole } from '../../../utils/constants';
 import adminUserService from '../services/adminUser.service';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
@@ -95,7 +96,7 @@ export default function EditUserPage() {
       firstName: user.firstName ?? '',
       lastName: user.lastName ?? '',
       email: user.email ?? '',
-      phone: user.phone ?? '',
+      phone: formatPhoneForDisplay(user.phone),
       timezone: user.timezone ?? '',
       grade: profile.grade ?? '',
       date_of_birth: isStudent ? profile.date_of_birth ?? '' : '',

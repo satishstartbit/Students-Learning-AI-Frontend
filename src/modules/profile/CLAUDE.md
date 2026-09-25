@@ -1,12 +1,14 @@
 # profile module
 
-The shared "My Profile" UI kit. There are no pages here. The Teacher and Parent profile pages (`teacher/TeacherProfilePage`, `parent/ParentProfilePage`) and the parent's Add/Edit child dialogs are built from it, so they all look the same.
+The shared "My Profile" UI kit. There are no pages here. The Teacher, Parent and Super Admin profile pages (`teacher/TeacherProfilePage`, `parent/ParentProfilePage`, `superAdmin/AdminProfilePage` at `/admin/profile`) and the parent's Add/Edit child dialogs are built from it, so they all look the same.
+
+**Page frame:** `ProfilePageLayout` gives the standard `PageHeader` ("My Profile" plus a description) and the full `.td-page` width (1120px, like every other page). Below that are two columns: the forms go in `children` (left), and `head` (photo card) plus `extra` (colour theme, change password) go on the right (340px). Under 1080px it stacks as head, forms, extra. Don't reintroduce a narrow `max-width` or a custom title.
 
 ## Where it lives
 | File | Purpose |
 |---|---|
 | `components/ProfileParts.jsx` | `ProfileSection` (titled card), `ProfileHeaderCard` (photo or initials, name, meta line, Upload/Remove), `ChipMultiSelect` (removable chips + "+ Add" searchable list) |
-| `components/profile.css` (`pf-`) | `.pf-page` (720px), `.pf-card`, `.pf-card__title/__hint`, **`.pf-grid`** (two columns, one under 640px), `.pf-span-2`, `.pf-half`, `.pf-actions`, header and chip styles |
+| `components/profile.css` (`pf-`) | `.pf-layout` (two-column page grid), `.pf-card` (6px field spacing on top of the reserved error line), `.pf-card__title/__hint`, **`.pf-grid`** (two columns, one under 640px), `.pf-span-2`, `.pf-half`, `.pf-actions`, `.pf-facts` (label/value rows), header and chip styles |
 | `useProfilePhoto.js` | My Profile photo: upload/remove **save immediately** through `PATCH /auth/me` (`removePhoto: true` to clear) |
 
 Used with `auth/components/AddressFields layout="profile"` and `RoleProfileFields layout="profile"` (STUDENT) for two-column field layouts.

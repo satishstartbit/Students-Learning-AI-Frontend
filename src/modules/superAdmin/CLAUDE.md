@@ -6,6 +6,7 @@ Super Admin's console: dashboard, users, relationships, and the teacher-connecti
 | Frontend | Purpose |
 |---|---|
 | `pages/AdminDashboardPage.jsx` (`/admin`) | Overview |
+| `pages/AdminProfilePage.jsx` (`/admin/profile`, account menu > Account) | The Super Admin's own profile: name, phone, time zone, password (`profile` kit). No photo (no profile table). The email is **read-only**: changing it would sign every session out until verification, which could lock the admin out. `PATCH /auth/me` allows a Super Admin to edit only their own account (`user.service#updateUser`, `{ self: true }` from `auth.controller#updateMe`), and it drops photo, profile and email for them. User management still refuses to edit any Super Admin. |
 | `pages/UsersListPage.jsx` (`/admin/users/students|parents|teachers`), `CreateUserPage`, `EditUserPage`, `UserDetailPage` | User CRUD, suspend/reactivate, reset password. Forms use `auth/components/RoleProfileFields` (`includeAdminOnly`). |
 | `components/ParentChildrenPanel.jsx` | A parent's children on the user page (add child for a family) |
 | `pages/RelationshipsPage.jsx` (`/admin/relationships`, "Assignments") | Teacher↔student links by Subject + Grade + Academic Year (view/edit) |

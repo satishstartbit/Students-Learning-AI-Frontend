@@ -1,0 +1,684 @@
+/* =====================================================================
+   Signed-out pages built to the sign-in mockups (/login, /register,
+   /forgot-password, /reset-password) - AuthSplitLayout. Prefix: lg-.
+
+   A photo hero on the left (600px, the mockup's frame) and the form on the
+   right; under 900px the hero becomes a banner above the form. The page
+   carries data-accent="forest", so every var(--accent-*) here - the brand
+   mark, Sign in, links - is the mockup's green without touching anyone's own
+   colour theme. Poppins for headings, Nunito for text, like the portal.
+   ===================================================================== */
+
+.lg-page {
+  --font-family-base: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-heading: 'Poppins', 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --lg-text-on-dark: #ffffff;
+  --lg-alpha-white-12: rgba(255, 255, 255, 0.12);
+  --lg-alpha-white-24: rgba(255, 255, 255, 0.24);
+  --field-height: 44px;
+
+  display: grid;
+  grid-template-columns: minmax(420px, 600px) minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+}
+
+/* ------------------------------------------------------------------ hero */
+.lg-hero {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
+  min-height: 640px;
+  padding: 48px 56px;
+  background:
+    linear-gradient(180deg, rgba(28, 34, 24, 0.5) 0%, rgba(28, 34, 24, 0.42) 45%, rgba(28, 34, 24, 0.62) 100%),
+    var(--lg-hero-image) center / cover no-repeat;
+  color: var(--lg-text-on-dark);
+  overflow: hidden;
+}
+
+.lg-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-family-heading);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--lg-text-on-dark);
+}
+.lg-brand__mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent-base);
+  color: var(--accent-on);
+  font-size: 16px;
+}
+.lg-brand__mark svg {
+  fill: currentColor;
+}
+
+.lg-hero__body {
+  max-width: 488px;
+}
+.lg-hero__title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.015em;
+  color: var(--lg-text-on-dark);
+}
+.lg-hero__lead {
+  margin: 16px 0 32px;
+  font-family: var(--font-family-base);
+  font-size: 18px; /* font-size/lg */
+  font-weight: 400;
+  line-height: 1.6; /* line-height/lg */
+  letter-spacing: normal;
+  color: var(--lg-text-on-dark);
+}
+
+/* Glass cards - a glimpse of the app (illustration, not live data). */
+.lg-glass-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 230px);
+  grid-template-rows: auto auto;
+  gap: 12px;
+  align-items: start;
+}
+.lg-glass {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 230px;
+  padding: 14px 16px;
+  border: 1px solid var(--lg-alpha-white-24);
+  border-radius: 16px;
+  background: var(--lg-alpha-white-12);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--lg-text-on-dark);
+}
+.lg-glass p {
+  margin: 0;
+}
+.lg-glass--checkin {
+  min-height: 86px;
+}
+.lg-glass--step {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  margin-top: 22px;
+}
+.lg-glass--focus {
+  grid-column: 1;
+  grid-row: 2;
+  padding-block: 12px;
+}
+.lg-glass__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.lg-glass__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.lg-glass__face {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e3f3f6;
+  color: #0e7490;
+  font-size: 16px;
+}
+.lg-glass__icon {
+  flex: none;
+  font-size: 17px;
+}
+.lg-glass__title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.lg-glass__bar {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--lg-alpha-white-24);
+}
+.lg-glass__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #34c07c;
+}
+.lg-glass__meta {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.lg-hero__foot {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* ------------------------------------------------------------------ form side */
+.lg-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 48px 32px;
+}
+.lg-panel {
+  width: 100%;
+  max-width: 400px;
+}
+.lg-head {
+  margin-bottom: 22px;
+}
+.lg-title {
+  margin: 0;
+  font-family: var(--font-family-heading);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+.lg-lead {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.lg-form .ui-field {
+  margin-bottom: 8px;
+}
+.lg-page .ui-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.lg-page .ui-input {
+  border-radius: 10px;
+  font-size: 14px;
+}
+.lg-page .ui-input:disabled {
+  background: var(--color-bg-canvas);
+  color: var(--color-text-secondary);
+  opacity: 1;
+}
+.lg-page .ui-input-affix {
+  color: var(--color-text-secondary);
+}
+
+.lg-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 2px 0 20px;
+}
+.lg-row .ui-checkbox,
+.lg-row label {
+  font-size: 14px;
+}
+.lg-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+.lg-link:hover {
+  color: var(--accent-base);
+  text-decoration: underline;
+}
+
+.lg-page .lg-submit,
+.lg-page .lg-outline {
+  height: 48px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.lg-page .lg-submit--paused:disabled {
+  border-color: transparent;
+  background: var(--color-bg-canvas);
+  color: var(--color-text-secondary);
+  opacity: 1;
+}
+.lg-page .lg-outline {
+  margin-top: 0;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+.lg-page .lg-outline:hover {
+  border-color: var(--accent-base);
+  background: var(--accent-soft);
+}
+.lg-form + .lg-outline {
+  margin-top: 16px;
+}
+
+/* "Signing in for school?" */
+.lg-note {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--color-bg-canvas);
+}
+.lg-note p {
+  margin: 0;
+}
+.lg-note__icon {
+  flex: none;
+  margin-top: 2px;
+  font-size: 16px;
+  color: var(--accent-base);
+}
+.lg-note__title {
+  font-size: 13px;
+  font-weight: 700;
+}
+.lg-note__text {
+  margin-top: 2px !important;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.lg-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0 14px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.lg-divider::before,
+.lg-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border-default);
+}
+
+/* "That didn't match" / "Sign-in is paused" */
+.lg-alert {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid;
+  border-radius: 10px;
+}
+.lg-alert p {
+  margin: 0;
+}
+.lg-alert__icon {
+  flex: none;
+  margin-top: 2px;
+  font-size: 17px;
+}
+.lg-alert__title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.lg-alert__text {
+  margin-top: 2px !important;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+}
+.lg-alert--error {
+  border-color: var(--color-danger-border, #fca5a5);
+  background: var(--color-danger-bg, #fef2f2);
+}
+.lg-alert--error .lg-alert__icon,
+.lg-alert--error .lg-alert__title {
+  color: var(--color-danger-fg, #b91c1c);
+}
+.lg-alert--paused {
+  /* The theme's warning border is a dark amber; the mockup's is light. */
+  border-color: color-mix(in srgb, var(--color-warning-border, #a5610a) 45%, #ffffff);
+  background: var(--color-warning-bg, #fffbeb);
+}
+.lg-alert--paused .lg-alert__icon,
+.lg-alert--paused .lg-alert__title {
+  color: var(--color-warning-fg, #b45309);
+}
+
+/* ------------------------------------------------------------------ phones */
+.lg-banner {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .lg-page {
+    display: block;
+  }
+  .lg-hero {
+    display: none;
+  }
+  .lg-main {
+    display: block;
+    padding: 0;
+  }
+  .lg-banner {
+    display: block;
+    padding: 18px 16px 22px;
+    background:
+      linear-gradient(180deg, rgba(28, 34, 24, 0.45) 0%, rgba(28, 34, 24, 0.6) 100%),
+      var(--lg-hero-image) center 35% / cover no-repeat;
+    color: var(--lg-text-on-dark);
+  }
+  .lg-banner__title {
+    margin: 18px 0 0;
+    font-family: var(--font-family-heading);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--lg-text-on-dark);
+  }
+  .lg-banner__lead {
+    margin: 6px 0 0;
+    font-size: 14px;
+    opacity: 0.92;
+  }
+  .lg-head {
+    display: none;
+  }
+  .lg-panel {
+    max-width: none;
+    padding: 20px 16px 32px;
+  }
+}
+
+/* ------------------------------------------------------------------ shared bits (register, verify) */
+.lg-panel--wide {
+  max-width: 440px;
+}
+.lg-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 0 14px -4px;
+  padding: 2px 4px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+.lg-back:hover {
+  color: var(--accent-base);
+}
+.lg-back--banner {
+  display: none;
+}
+
+/* "I'm signing up as" - two radio cards */
+.lg-roles {
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+}
+.lg-roles__legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.lg-roles__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.lg-role {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-bg-surface);
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.lg-role:hover {
+  border-color: var(--accent-border);
+}
+.lg-role[data-selected='true'] {
+  border: 1.5px solid var(--accent-base);
+  background: var(--accent-soft);
+}
+.lg-role__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.lg-role__dot {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-bg-surface);
+}
+.lg-role[data-selected='true'] .lg-role__dot {
+  border-color: var(--accent-base);
+}
+.lg-role[data-selected='true'] .lg-role__dot::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent-base);
+}
+.lg-role__input:focus-visible + .lg-role__dot {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+.lg-role__title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+.lg-role__desc {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.lg-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 12px;
+}
+.lg-terms {
+  margin: 4px 0 18px;
+}
+.lg-foot {
+  margin: 18px 0 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+.lg-foot a,
+.lg-foot button {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+.lg-foot a:hover,
+.lg-foot button:hover:not(:disabled) {
+  color: var(--accent-base);
+  text-decoration: underline;
+}
+.lg-foot button:disabled {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: default;
+}
+
+/* 6-digit code */
+.lg-code__label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.lg-code {
+  display: flex;
+  gap: 10px;
+}
+.lg-code__box {
+  box-sizing: border-box;
+  width: 48px;
+  height: 52px;
+  padding: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 10px;
+  background: var(--color-bg-surface);
+  font-family: var(--font-family-heading);
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--color-text-primary);
+  caret-color: var(--accent-base);
+}
+.lg-code__box:focus {
+  border: 1.5px solid var(--accent-base);
+  outline: 3px solid var(--accent-soft);
+}
+.lg-code[data-error='true'] .lg-code__box {
+  border-color: var(--color-danger-fg, #b91c1c);
+}
+.lg-code__box:disabled {
+  background: var(--color-bg-canvas);
+}
+.lg-code__hint {
+  margin: 8px 0 20px;
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+}
+.lg-code__hint[data-error='true'] {
+  color: var(--color-danger-fg, #b91c1c);
+}
+
+/* "Forgot your password?" - the Students note sits between the field and Send code */
+.lg-note--form {
+  margin: 4px 0 20px;
+}
+
+/* A long title that should stay on one line in the 400px panel, as in the
+   mockup ("Choose a new password 🔒" would leave the emoji alone at 30px). */
+.lg-head .lg-title-fit {
+  font-size: 28px;
+}
+
+/* "Choose a new password" - the live checklist under New password */
+.lg-rules {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.lg-rules__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+.lg-rules__dot {
+  display: grid;
+  place-items: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-bg-surface);
+  color: var(--accent-on);
+  font-size: 11px;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.lg-rules__item[data-met] .lg-rules__dot {
+  border-color: var(--accent-base);
+  background: var(--accent-base);
+}
+.lg-rules__dot svg {
+  stroke-width: 3.5;
+}
+
+@media (max-width: 900px) {
+  /* Brand on its own line, then "< Back" under it (the mockup's banner). */
+  .lg-banner .lg-brand {
+    display: flex;
+  }
+  .lg-back--banner {
+    display: flex;
+    width: fit-content;
+    margin: 14px 0 0 -4px;
+    color: var(--lg-text-on-dark);
+  }
+  .lg-back:not(.lg-back--banner) {
+    display: none;
+  }
+}
+@media (max-width: 420px) {
+  .lg-code {
+    gap: 8px;
+  }
+  .lg-code__box {
+    width: 44px;
+    height: 50px;
+  }
+}

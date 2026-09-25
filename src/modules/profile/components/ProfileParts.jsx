@@ -1,8 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LuPlus, LuUpload, LuX } from 'react-icons/lu';
-import { Button } from '../../../components/common';
+import { Button, PageHeader } from '../../../components/common';
 import { IMAGE_ACCEPT, validateImage } from '../../../utils/file';
 import { getInitials } from '../../../utils/format';
+
+/**
+ * The frame every My Profile page shares (parent, teacher, Super Admin): the
+ * standard page header and the full page width, like every other page, then
+ * two columns - the forms (`children`) on the left, `head` (the photo card)
+ * and `extra` (colour theme, password) on the right. Under 1080px it stacks
+ * as head, forms, extra.
+ */
+export function ProfilePageLayout({ description, notice, head, extra, children }) {
+  return (
+    <div className="pf-page td-page">
+      <PageHeader title="My Profile" description={description} />
+      {notice}
+      <div className="pf-layout">
+        {head && <div className="pf-layout__head">{head}</div>}
+        <div className="pf-layout__main">{children}</div>
+        {extra && <div className="pf-layout__extra">{extra}</div>}
+      </div>
+    </div>
+  );
+}
 
 /** A titled card - one section of the profile page. */
 export function ProfileSection({ title, hint, children, className = '', ...rest }) {
@@ -23,6 +44,7 @@ export function ProfileSection({ title, hint, children, className = '', ...rest 
  * A form that saves the photo with the rest of its fields (the parent's Add /
  * Edit child dialogs) passes `canRemove`/`removeLabel`/`note` to say so
  * instead, and `placeholderName` for while no name has been typed yet.
+ * Without `onUpload` (Super Admin, who has no photo) it shows initials only.
  */
 export function ProfileHeaderCard({
   name,
@@ -50,6 +72,7 @@ export function ProfileHeaderCard({
         {meta && <p className="pf-header__meta">{meta}</p>}
         {note && <p className="pf-header__note">{note}</p>}
       </div>
+      {onUpload && (
       <div className="pf-header__actions">
         <input
           ref={inputRef}
@@ -82,6 +105,7 @@ export function ProfileHeaderCard({
           </Button>
         )}
       </div>
+      )}
     </section>
   );
 }

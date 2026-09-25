@@ -1,4 +1,5 @@
 import { forwardRef, useState } from 'react';
+import { LuEye, LuEyeOff } from 'react-icons/lu';
 import Input from './Input';
 
 /**
@@ -29,7 +30,7 @@ export const PasswordInput = forwardRef(function PasswordInput(
             aria-label={visible ? 'Hide password' : 'Show password'}
             tabIndex={0}
           >
-            <span aria-hidden="true">{visible ? '🙈' : '👁'}</span>
+            {visible ? <LuEyeOff size={17} aria-hidden="true" /> : <LuEye size={17} aria-hidden="true" />}
           </button>
         ) : null
       }

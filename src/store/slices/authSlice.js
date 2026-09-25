@@ -50,7 +50,13 @@ export const login = createAsyncThunk(
       persistSession(session);
       return { user: session.user, token: session.accessToken };
     } catch (error) {
-      return rejectWithValue({ message: error?.message ?? 'Sign in failed' });
+      // status + errors let the login page tell "wrong password, N tries left"
+      // from "sign-in is paused" (backend auth.service "sign-in pause").
+      return rejectWithValue({
+        message: error?.message ?? 'Sign in failed',
+        status: error?.status ?? 0,
+        errors: Array.isArray(error?.errors) ? error.errors : [],
+      });
     }
   }
 );

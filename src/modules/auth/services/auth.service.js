@@ -43,8 +43,13 @@ export const updateMe = (payload) => api.patch('/auth/me', buildProfileBody(payl
 
 export const verifyEmail = (token) => api.post('/auth/verify-email', { token });
 export const resendVerification = (email) => api.post('/auth/resend-verification', { email });
+/** The 6-digit code from the sign-up 'Check your email' step. */
+export const verifyEmailCode = (email, code) => api.post('/auth/verify-email-code', { email, code });
 
-export const forgotPassword = (email) => api.post('/auth/forgot-password', { email });
+/** "Forgot your password?" - a username or email; a 6-digit code goes out (a student's to their parent). */
+export const forgotPassword = (identifier) => api.post('/auth/forgot-password', { identifier });
+/** The 6-digit reset code; a right one comes back as `data.resetToken` for resetPassword. */
+export const verifyResetCode = (identifier, code) => api.post('/auth/verify-reset-code', { identifier, code });
 
 export const resetPassword = ({ token, password, confirmPassword }) =>
   api.post('/auth/reset-password', { token, password, confirmPassword });
@@ -82,7 +87,9 @@ export default {
   updateMe,
   verifyEmail,
   resendVerification,
+  verifyEmailCode,
   forgotPassword,
+  verifyResetCode,
   resetPassword,
   changePassword,
   listPublicLookup,
