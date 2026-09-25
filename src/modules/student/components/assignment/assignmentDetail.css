@@ -486,3 +486,12 @@
     gap: 4px;
   }
 }
+
+/* The due line keeps its calendar icon beside the text when it wraps on a phone. */
+.ad-due {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+.ad-due > svg {
+  margin-top: 3px;
+}

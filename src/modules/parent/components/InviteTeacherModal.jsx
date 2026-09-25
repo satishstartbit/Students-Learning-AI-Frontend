@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Input, Modal, MultiSelect } from '../../../components/common';
+import { useEffect, useId, useMemo, useState } from 'react';
+import { Alert, Button, Input, Modal } from '../../../components/common';
+import FieldHelper from '../../../components/common/FieldHelper';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { useApi } from '../../../hooks/useApi';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -10,6 +11,57 @@ import invitationService from '../../invitations/services/teacherInvitation.serv
 import parentService from '../services/parent.service';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_SUBJECTS = 10;
+
+/** "Math", "Math or Science", "Math, English or Science" - for the teacher hint. */
+const orList = (items) =>
+  items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} or ${items[items.length - 1]}`;
+
+/**
+ * "1. Subjects they teach Sam" as tap-to-toggle chips (the Invite a teacher
+ * mobile mockup) rather than a dropdown: every option is visible, and a
+ * chosen one is a soft accent pill. Up to MAX_SUBJECTS.
+ */
+function SubjectChipPicker({ label, options, value, onChange, loading, error }) {
+  const id = useId();
+  const full = value.length >= MAX_SUBJECTS;
+  const toggle = (subject) =>
+    onChange(value.includes(subject) ? value.filter((s) => s !== subject) : [...value, subject]);
+
+  return (
+    <fieldset className="ui-field pc-chipfield" aria-describedby={`${id}-help`}>
+      <legend className="ui-label">
+        {label}
+        <span className="ui-label__required" aria-hidden="true">
+          *
+        </span>
+        <span className="ui-sr-only">(required)</span>
+      </legend>
+      {loading ? (
+        <p className="pc-chipfield__loading">Loading subjects…</p>
+      ) : (
+        <div className="pc-chips-picker">
+          {options.map((o) => {
+            const on = value.includes(o.value);
+            return (
+              <button
+                key={o.value}
+                type="button"
+                className="pc-pick"
+                aria-pressed={on}
+                disabled={!on && full}
+                onClick={() => toggle(o.value)}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <FieldHelper id={`${id}-help`} hint={`Choose every subject this teacher covers, up to ${MAX_SUBJECTS}.`} error={error} />
+    </fieldset>
+  );
+}
 
 /**
  * Ask for a teacher to be connected with one child. What the parent sends is
@@ -145,14 +197,15 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
     }
   };
 
+  const first = child?.firstName || formatName(child) || 'your child';
+  const whose = child?.firstName ? `${child.firstName}'s` : "your child's";
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Invite a teacher"
-      description={`Choose the subject and grade, then the teacher. We review every request, then email the teacher an invitation to connect with ${
-        child ? formatName(child) : 'your child'
-      } - nothing is shared until they accept.`}
+      title={`Invite a teacher for ${first}`}
+      description={`Pick the subjects they teach ${first}, then the teacher. We check the request, then they get an invitation to connect. Nothing is shared until they accept.`}
       size="md"
       footer={
         <>
@@ -165,25 +218,19 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
         </>
       }
     >
-      <form id="invite-teacher-form" onSubmit={handleSubmit} noValidate>
+      <form id="invite-teacher-form" className="pc-inviteform" onSubmit={handleSubmit} noValidate>
         {error && (
           <Alert variant="error" className="ui-field">
             {error}
           </Alert>
         )}
 
-        <MultiSelect
-          name="subjects"
-          label="1. Subjects they teach your child"
-          hint={lookupsLoading ? 'Loading…' : 'Choose every subject this teacher covers.'}
+        <SubjectChipPicker
+          label={`1. Subjects they teach ${first}`}
           options={subjectOptions}
           value={subjects}
           onChange={changeSubjects}
-          searchable
           loading={lookupsLoading}
-          disabled={lookupsLoading}
-          maxSelected={10}
-          required
           error={attempted ? errors.subjects : undefined}
         />
 
@@ -198,7 +245,7 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
             loading={lookupsLoading}
             placeholder="Select grade"
             searchPlaceholder="Search grades…"
-            hint={childGrade ? `${formatName(child)} is in ${childGrade}` : undefined}
+            hint={childGrade ? `Set from ${whose} profile.` : undefined}
             error={attempted ? errors.grade : undefined}
           />
         </div>
@@ -219,6 +266,7 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
               placeholder={readyForTeachers ? 'Search by name or email' : 'Choose the subject and grade first'}
               searchPlaceholder="Search teachers by name or email…"
               emptyMessage="No teacher on the platform teaches that - try another search, or invite by email below"
+              hint={readyForTeachers ? `Showing ${grade} teachers who teach ${orList(subjects)}.` : undefined}
               error={attempted ? errors.teacherId : undefined}
             />
             {/* <Button type="button" variant="ghost" size="sm" style={{ marginTop: 'var(--spacing-xs)' }} onClick={() => setByEmail(true)}>

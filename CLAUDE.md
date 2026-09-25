@@ -27,7 +27,11 @@ React 19 + Vite, Tailwind v4 (`@layer utilities`), shadcn primitives in `src/com
 - **Admin-managed lists** (subjects, grades, moods, task types, difficulty reasons, body areas, available time, …) come from the API. Never hardcode them.
 - **Confirmations and messages:** `ConfirmationModal` (`variant="danger"` for destructive actions) and `toast.*`. Never `window.confirm`/`alert`.
 - **Lint:** `react-hooks/set-state-in-effect` (use derived state or a keyed remount) and `react-refresh/only-export-components` (put hooks and constants in their own files, e.g. `useX.js`, `xConfig.js`). On Windows, file names that differ only by case collide.
-- **Phone width:** 390px with no horizontal scroll.
+- **Phone width:** 390px (and 360px) with no horizontal scroll.
+- **Phones and tablets (the mobile mockups):** below 1024px Teacher, Parent and Grade 6+ Student get a top bar (brand, bell, avatar → "More" sheet with the non-tab pages and Log out) and a five-tab bar instead of the sidebar: `layouts/MobileChrome.jsx` + `mobileChrome.css` (`am-`), tabs in each layout's `MOBILE_TABS`, shared helpers in `layouts/navConfig.js`. Super Admin (no tabs) keeps the sidebar, which is a drawer below 768px. K-5 has its own tab bar (`KidChrome`).
+- **Shared phone rules** live in `components/common/responsive.css` (loaded after `common.css`): dialogs are bottom sheets at ≤640px (primary button on top, full width); page-header actions go full width; every `Table` becomes "label · value" cards below 768px (the column header is the label; `mobileLabel`, `hideOnMobile`, `mobileCards={false}` to opt out). A page with its own card design passes `DataTable renderCard={row => …}`, and `cardsBelow={1024|1280}` when its table is too wide for a tablet or a laptop with the sidebar open. Stat rows use `.ui-statgrid`. Grids with a fixed minimum use `minmax(min(Npx, 100%), 1fr)`.
+- **Visually hidden text** (`.ui-sr-only`) is pinned top-left of its container (responsive.css); before that, a hidden label inside a sideways-scrolling box made the whole page scroll.
+- **Check a layout change** with `.claude/testing/functional/responsive-sweep.mjs` (every Teacher/Parent/Student page at 360, 390, 820, 1024, 1440, real private backend, zz accounts, contact sheets for review).
 
 ## Module docs (index)
 | Module | Owns |

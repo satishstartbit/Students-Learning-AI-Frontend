@@ -1,10 +1,10 @@
 # Brain Boosters: rules and behaviour review
 
-Reviewed 24 September 2026, following reports of jumping and flickering.
+Reviewed 24 September 2026, following reports of jumping and flickering. Finger Follow updated 25 September 2026 to the requested hold-and-steer rules.
 
 ## Research and rule decisions
 
-- **Finger Follow:** steady visual tracking, with the head comfortably still, is described in [Mersey Care NHS guidance](https://www.merseycare.nhs.uk/patient-leaflets/balance-and-gait). The portal uses a gentle recreational adaptation: one continuously moving dot, selectable path and pace, three 20-second rounds. It does not measure eye movements or claim clinical results. Calm play keeps the dot still and advances rounds manually.
+- **Finger Follow (current rules):** adapted from the developer-published [Finger on the Line description](https://apps.apple.com/us/app/finger-on-the-line-fast-action-music-games/id882053458) (hold the circle, stay in the path, accelerate, release to pause, hold the same point to resume, endless play). [The On the Line review](https://www.idownloadblog.com/2014/02/07/on-the-line-review/) describes a three-second start/resume hold. The portal now shows that countdown. Its landscape corridor is an adaptation; it does not claim to reproduce the commercial game's complete obstacle set. Per the user's explicit rule, pressing outside the circle sets points to zero. Wall contact also ends this portal run at zero. A failed course remains frozen at the contact location until Try again. Younger students have a wider, slower corridor; calm play remains a labelled stationary course with a manual finish. No camera or eye measurement is involved.
 - **Simon Says / colour memory:** [Hasbro's Simon instructions](https://instructions.hasbro.com/en-us/instruction/simon-game-for-kids-ages-8-and-up) describe remembering and repeating a growing colour sequence. This portal's tab is the visual, Simon-style memory activity suggested by the reference, not the playground command game. It starts with one colour, repeats the existing order and adds one item. Four labelled pads prevent reliance on colour alone. The portal explicitly uses practice rules: retries and untimed recall, rather than claiming the original commercial game's loss and time-limit rules.
 - **Clap Pattern:** Harvard's [executive-function activity guide](https://developingchild.harvard.edu/resources/handouts-tools/activities-guide-enhancing-and-practicing-executive-function-skills/) includes copying actions and clapping rhythms. The portal demonstrates evenly spaced Clap/Snap/Stomp cues, hides the sequence, then accepts button presses in order. Each round presents a new, longer pattern. Physical clapping and timing accuracy are not detected; only the entered order is scored.
 - **Memory Chain:** the [Belmont Primary School memory games guide](https://www.belmontprimary.com/memory-games) describes repeating an existing shopping list and adding another item. This solo adaptation begins with one item; after recalling the full list, the student chooses the next item to append. Repeated items are allowed and must be recalled separately.
@@ -16,7 +16,7 @@ Memory activities award 10 session points per item only after the full round is 
 
 | Finding | Change |
 | --- | --- |
-| Finger Follow was a timed target-catching game; each tap changed its coordinates immediately. Browser reproduction measured an approximately 86px jump after one tap. | Replaced with continuous horizontal, vertical, and figure-eight paths. No tap, hit, or streak claim is attached to eye tracking. |
+| Finger Follow previously jumped to new targets, then used an eye-follow adaptation that did not match the newly requested steering mechanic. | Replaced with an absolute-position hub and continuous scrolling corridor. One animation clock drives the drawn grid and collision geometry. Release freezes immediately; re-hold resumes at the same position and distance. |
 | A JavaScript interval and CSS keyframes independently controlled expiry and position. Timed re-renders occurred about every 80ms. | One requestAnimationFrame clock now drives position and completion. Transforms update directly; React only updates relevant status. Pause retains elapsed time. Stalled frames are bounded and hidden tabs pause. |
 | Balloons respawned in the same instant as the pop, changing colour and position without a separation. | A 650ms result phase separates balloons; a new balloon begins only after that phase. Duplicate clicks and stale callbacks cannot score it. |
 | Reset could reuse target zero while an old timer event still referred to it. | Session versions guard all balloon completion events across reset, replay, and target changes. |
@@ -30,9 +30,27 @@ Memory activities award 10 session points per item only after the full round is 
 
 ## Verification
 
-Result: **20/20 logic tests and 74/74 Chrome checks passed**, with zero browser errors in both grade bands. In the captured follow runs, the maximum movement between consecutive frames was 1.37px for kids and 1.65px for older students. Production build and targeted ESLint passed. The build still reports the app's large-chunk warning.
+Earlier review result (before the steering change): **20/20 logic tests and 74/74 Chrome checks passed**, with zero browser errors in both grade bands. In the captured follow runs, the maximum movement between consecutive frames was 1.37px for kids and 1.65px for older students. Production build and targeted ESLint passed. The build still reports the app's large-chunk warning.
 
-- `npm test`: pure-rule regressions for path continuity and boundaries, pause/reset, stale callbacks, score integrity, ten-balloon completion, age settings, cue gaps, manual recall, pattern growth and chosen chain items.
+- `npm test`: pure-rule regressions for corridor continuity, circular hit testing, walls, absolute steering, bounded frame delays, completion and boundaries, pause/reset, stale callbacks, score integrity, ten-balloon completion, age settings, cue gaps, manual recall, pattern growth and chosen chain items.
 - `npx eslint src/modules/student/components/brainBoosters src/modules/student/pages/BrainBoostersPage.jsx` and `npm run build`.
 - `.claude/testing/scenarios/brain-boosters.mjs`: isolated Chrome checks with mocked API data for both student bands, real keyboard/button actions, frame-to-frame movement, pause/resume, background tabs, misses, all three memory modes, phone layouts, dark appearance, exercises and saved reduced-motion preferences.
 - No backend or shared student data changes are needed. No sound, microphone or camera access is required.
+
+## Finger Follow steering verification (25 September 2026)
+
+- 29/29 current frontend unit tests pass, including eight steering rule tests. Targeted ESLint and production build pass (existing large-chunk warning remains).
+- `.claude/testing/scenarios/finger-follow.mjs`: 36/36 mocked Chrome checks pass for both age bands, mouse and touch holds/drags, circular hit boundaries, outside-click zeroing, release/resume, tab interruption, pointer cancellation, keyboard steering, mobile overflow and calm completion. No browser errors.
+- Updated `.claude/testing/scenarios/brain-boosters.mjs`: 64/64 regression checks pass across balloons, all memory modes, exercises, both age bands, and calm mode. Combined current browser coverage: 100/100 checks.
+
+## Follow-up research and defects (25 September 2026)
+
+The previous short browser checks proved input handling but did not prove sustained play. Reviewing the implementation found that collision checks used the full vertical radius at the circle's left/right edges, effectively testing invisible square corners. A sweep found 1,405 valid circular placements that the old geometry rejected. Wall failure then replaced the entire state with a new start state, causing a visible teleport. The earlier 300-point completion rule was also an invented limit rather than the documented endless survival rule.
+
+Corrections: test circular cross-sections, retain the course and contact location on failure, require an explicit retry, show a cancellable three-second hold countdown before start/resume, and remove the normal-mode score cap. Corridor turns begin sooner, scroll speed is clearer, generated routes vary on retry, and curvature and speed remain bounded for phone play. A resize notification with unchanged dimensions no longer interrupts a hold. The reduced-motion explanation explicitly says why a calm course stays still.
+
+The updated browser test follows the rendered canvas boundaries through a long run, rather than reusing the game engine's expected coordinates or checking only the first second.
+
+Follow-up verification: **33/33 frontend unit tests and 37/37 focused Chrome checks passed**, including a 27-second active run that follows the rendered canvas boundaries and reaches 435 points without collision or forced completion. Targeted ESLint and production build pass; the existing bundle-size warning remains.
+
+The full Brain Boosters regression suite also passed 64/64 checks (101/101 combined Chrome checks). Replaced the large disabled Pause button with a direct start-on-circle instruction; release is the pause control and Try again is explicit after failure.

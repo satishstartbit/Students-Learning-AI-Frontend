@@ -8,6 +8,8 @@
  * shared component gets consistent styling.
  */
 import './common.css';
+// Phones and small tablets: bottom-sheet dialogs, tables as cards, full-width page actions.
+import './responsive.css';
 
 // --- Form ---------------------------------------------------------------
 export { default as Input } from './Input';

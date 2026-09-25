@@ -370,3 +370,32 @@ body.portal-theme .ui-badge {
 body.portal-theme .ui-tabs__tab {
   font-size: 14px;
 }
+
+/* --------------------------------------------------------------------
+   Phones (the mobile mockups). responsive.css does the layout; these are
+   the portal rules above that would otherwise outrank it.
+   -------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  body.portal-theme .ui-pageheader {
+    align-items: stretch;
+    margin-bottom: 4px;
+  }
+
+  body.portal-theme .ui-pageheader__title {
+    font-size: 24px;
+  }
+
+  /* Bottom sheet: rounded top corners, white footer under the stacked buttons. */
+  body.portal-theme .ui-modal {
+    border-radius: 20px 20px 0 0;
+  }
+
+  body.portal-theme .ui-modal__title {
+    font-size: 19px;
+  }
+
+  body.portal-theme .ui-modal__footer {
+    border-top: 0;
+    background: var(--color-bg-surface);
+  }
+}

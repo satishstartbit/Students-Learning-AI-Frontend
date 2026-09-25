@@ -13,7 +13,7 @@ Everything a signed-in student sees, in **two experiences**: the K-5 kid UI ("My
 |---|---|---|---|
 | Home | `/student` | `KidHomePage` / `StudentHomePage` | `components/home/*` (`sh-`), `components/kid/*` |
 | Onboarding | `/student/onboarding` | `KidOnboardingPage` / `onboarding/StudentOnboardingPage` | first-login questionnaire (gate in StudentLayout) |
-| Assignments | `/student/assignments` | `KidAssignmentsPage` / `MyAssignmentsPage` | `components/assignments/*` (`sa-`), `components/kid/TaskCard.jsx` |
+| Assignments | `/student/assignments` | `KidAssignmentsPage` / `MyAssignmentsPage` | `components/assignments/*` (`sa-`), `components/kid/TaskCard.jsx`. Grade 6+ to the mobile mockup: "Assignments" + **Add assignment** (own task, `OwnTaskModal`), one empty card when there is nothing at all, phone cards (`sa-mcard`). The page owns the own-task list and dialog. |
 | Assignment detail | `/student/assignments/:id` | `AssignmentDetailPage` (both; `isJunior` → simple page, else `components/assignment/StandardAssignmentView`, `ad-`) | answers via `assignments/components/QuestionAnswer` |
 | Focus | `/student/focus`, `/focus/:activityKey` | `KidFocusPage` + `KidFocusActivityPage` / `FocusTimerPage` | `hooks/useFocusTimer.js`, `useFocusSteps.js`, `components/focus/*` (`fs-`), `components/kid/KidFocusTimerCard.jsx` |
 | Plan | `/student/calendar` | `KidMyWeekPage` / `StudentPlanPage` | `components/plan/*` (`sp-`), `hooks/useWeekPlan`, `useTodayTasks` |

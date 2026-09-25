@@ -78,14 +78,7 @@ export default function TeacherProgressPage() {
     <div className="td-page">
       <PageHeader title="Progress" description="Today's check-ins and progress on the tasks you've assigned." />
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: 'var(--spacing-md)',
-          marginBottom: 'var(--spacing-lg)',
-        }}
-      >
+      <div className="ui-statgrid" style={{ marginBottom: 'var(--spacing-lg)' }}>
         <StatCard label="Checked in today" value={loading ? '—' : `${checkedIn} / ${rows.length}`} icon="🙂" loading={loading} />
         <StatCard label="Waiting for your review" value={toReview} icon="📥" loading={loading} />
         <StatCard label="Overdue tasks" value={overdue} icon="⏰" loading={loading} />

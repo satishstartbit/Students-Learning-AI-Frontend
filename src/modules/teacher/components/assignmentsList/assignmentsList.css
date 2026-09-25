@@ -84,7 +84,8 @@
   color: var(--color-text-tertiary);
 }
 .al-select {
-  flex: 0 1 150px;
+  /* 140 + a 200px search leaves room for Clear on one row at tablet width. */
+  flex: 0 1 140px;
   width: auto;
   min-width: 130px;
   padding: 0 34px 0 12px;
@@ -251,8 +252,141 @@
   color: var(--color-text-secondary);
 }
 
+/* Search box + (phones only) the filter button that opens the selects. */
+.al-searchrow {
+  position: relative;
+  display: flex;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.al-searchrow .al-search {
+  flex: 1 1 auto;
+}
+.al-filtertoggle {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .al-select {
     flex: 1 1 140px;
   }
+}
+
+/* --- Phones (the My Students mobile mockup) ---------------------------
+   Tabs scroll sideways in one row; the selects fold behind the filter
+   button inside the search box. */
+@media (max-width: 767px) {
+  .al-tabs {
+    flex-wrap: nowrap;
+    margin-inline: -16px;
+    padding: 2px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .al-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .al-tabs > li {
+    flex: none;
+  }
+  .al-tab {
+    height: 34px;
+    white-space: nowrap;
+  }
+
+  .al-searchrow {
+    flex-basis: 100%;
+  }
+  .al-searchrow .al-search input {
+    height: 44px;
+    padding-right: 48px;
+  }
+  .al-filtertoggle {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transform: translateY(-50%);
+  }
+  .al-filtertoggle:hover,
+  .al-filtertoggle[aria-expanded='true'] {
+    background: var(--color-bg-surface-sunken);
+  }
+  .al-filtertoggle:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+  /* A dot when a filter is set, so a folded filter is never a surprise. */
+  .al-filtertoggle[data-active]::after {
+    content: '';
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    background: var(--accent-base);
+  }
+
+  .al-filters:has(.al-filtertoggle) > :not(.al-searchrow) {
+    display: none;
+  }
+  .al-filters--open:has(.al-filtertoggle) > :not(.al-searchrow) {
+    display: block;
+  }
+  .al-filters--open .al-select {
+    flex: 1 1 calc(50% - 4px);
+    height: 44px;
+  }
+}
+
+/* --- Phone card (DataTable renderCard) -------------------------------- */
+.al-mcard {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-bg-surface);
+}
+.al-mcard__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.al-mcard__head .al-title {
+  min-width: 0;
+}
+.al-mcard__head .al-title a {
+  overflow-wrap: anywhere;
+}
+.al-mcard__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+.al-mcard .al-progress {
+  max-width: none;
+}
+.al-mcard__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.al-mcard__foot .ui-btn {
+  min-height: 36px;
+  padding: 0 16px;
 }

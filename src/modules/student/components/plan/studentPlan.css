@@ -370,7 +370,7 @@
 }
 .sp-day[data-layout='day'] .sp-day__tasks {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr));
 }
 .sp-day[data-layout='day'] .sp-day__foot {
   flex-direction: row;
@@ -666,7 +666,7 @@ button.sp-rest:hover {
   }
   .sp-side {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
     align-items: start;
   }
 }

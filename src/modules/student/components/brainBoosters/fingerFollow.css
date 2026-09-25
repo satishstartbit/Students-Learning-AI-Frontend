@@ -1,0 +1,14 @@
+.bb-steering-field { height: 300px; touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair; background: radial-gradient(ellipse at 85% 5%, #424276, #2b2248 80%); }
+.bb-steering-field canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.bb-steering-hub { position: absolute; left: 0; top: 0; z-index: 2; display: grid; place-items: center; width: 56px; height: 56px; padding: 0; border: 0; border-radius: 50%; background: #ff879b; color: #fff; box-shadow: 0 0 0 8px #ff8da43b, 0 0 0 15px #ff8da422; touch-action: none; cursor: grab; transition: none; will-change: transform; }
+.bb-steering-game[data-phase='playing'] .bb-steering-hub { cursor: grabbing; }
+.bb-steering-hub > span { display: grid; place-items: center; width: 27px; height: 27px; border: 3px solid #fff7f5; border-radius: 50%; pointer-events: none; }
+.bb-steering-hub i { width: 14px; height: 14px; border: 2px solid #fff7f5; border-radius: 50%; }
+.bb-page .bb-steering-hub:focus-visible { outline: 3px solid #fff5be; outline-offset: 17px; }
+.bb-steering-game .bb-game-rules { min-height: 88px; }
+.bb-steering-game .bb-tracking-feedback { min-height: 88px; }
+.bb-steering-game .bb-stat strong { font-size: clamp(.95rem, 2vw, 1.3rem); }
+
+.bb-steering-game[data-phase="failed"] .bb-steering-hub { background: #e45466; cursor: default; }
+.bb-steering-field .bb-tracking-paused { white-space: nowrap; font-size: 12px; }
+.bb-steering-control-hint { flex: 1 1 180px; align-self: center; font-size: .8rem; line-height: 1.6; color: var(--bb-muted); }

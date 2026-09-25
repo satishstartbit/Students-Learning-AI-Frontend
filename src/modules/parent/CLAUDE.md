@@ -6,10 +6,10 @@ The parent's side of the portal: an overview, their children, asking for teacher
 | Frontend | Purpose |
 |---|---|
 | `pages/ParentDashboardPage.jsx` (`/parent`, "Overview") | Family overview (`GET /parent/dashboard`). CSS `components/dashboard/parentDashboard.css` (`pd-`) |
-| `pages/ParentChildrenPage.jsx` (`/parent/children`) | One card per child: subjects, teachers (grouped per teacher), invitations, actions. CSS `parentChildren.css` (`pc-`) |
+| `pages/ParentChildrenPage.jsx` (`/parent/children`) | One card per child: subjects (coloured per subject, teacher `SubjectChips`), teachers (grouped per teacher), invitations, actions. Card foot per the mobile mockup: **View details** (outlined), Edit, Set password; ⋮ menu: View progress, Invite a teacher, Remove child. CSS `parentChildren.css` (`pc-`) |
 | `components/AddChildModal.jsx`, `EditChildModal.jsx` | Create/edit a child account. Laid out like My Profile (`ProfileHeaderCard`, `ProfileSection`, `pf-grid`), dialog class `pc-childform`. The photo saves with the form. |
 | `components/ChildDetailsModal.jsx` | "View details": profile, teachers, invitations |
-| `components/InviteTeacherModal.jsx`, `TeacherInvitationsList.jsx` | Request a teacher for a child (subjects → grade → teacher picker, or email). Shows request/invitation status. |
+| `components/InviteTeacherModal.jsx`, `TeacherInvitationsList.jsx` | "Invite a teacher for Sam" (the mobile mockup, a bottom sheet on phones): subjects as tap-to-toggle chips (up to 10) → grade (set from the child's profile) → teacher picker ("Showing Grade 1 teachers who teach Math or Science"), or email. The button stays **Send request**, since Super Admin approves before any invitation goes out. Shows request/invitation status. |
 | `components/SetChildPasswordModal.jsx` | Parent sets the child's password |
 | `pages/ParentProgressPage.jsx` (`/parent/progress`) | Progress per child using `progress/StudentProgressDetail`. CSS `parentPanels.css` (`pp-`) |
 | `pages/ParentProfilePage.jsx` (`/parent/profile`) | My Profile: details, address, family form, colour theme, password |

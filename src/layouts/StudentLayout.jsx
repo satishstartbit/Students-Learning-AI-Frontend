@@ -65,6 +65,19 @@ const NAV_ITEMS = [
 ];
 
 /**
+ * The phone tab bar (the Assignments mobile mockup). Brain Boosters,
+ * Notifications, Make it yours and Settings are in the avatar's "More"
+ * sheet, and the top bar's bell opens Notifications.
+ */
+const MOBILE_TABS = [
+  { to: '/student', label: 'Home', icon: LuHouse, end: true },
+  { to: '/student/calendar', label: 'Plan', icon: LuCalendarDays },
+  { to: '/student/assignments', label: 'Work', icon: LuListChecks },
+  { to: '/student/focus', label: 'Focus', icon: LuTimer },
+  { to: '/student/rewards', label: 'Rewards', icon: LuTrophy },
+];
+
+/**
  * Reachable before onboarding is finished: the questionnaire itself, and
  * Settings - where a K-5 student on a shared device finds Log out.
  */
@@ -166,6 +179,8 @@ export function StudentLayout({ children }) {
     <StudentSettingsProvider>
       <AuthenticatedLayout
         navItems={NAV_ITEMS}
+        mobileTabs={MOBILE_TABS}
+        notificationsPath="/student/notifications"
         title="My Learning"
         subtitle="Student"
         brand="ML"

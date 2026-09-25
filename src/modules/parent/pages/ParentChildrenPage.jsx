@@ -19,6 +19,7 @@ import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import { formatSubjects } from '../../invitations/invitationStatus';
+import { SubjectChips } from '../../teacher/components/students/StudentBits';
 import parentService from '../services/parent.service';
 import AddChildModal from '../components/AddChildModal';
 import EditChildModal from '../components/EditChildModal';
@@ -111,7 +112,7 @@ function ChildCard({ child, onProgress, onEdit, onSetPassword, onInvite, onView,
             </button>
           }
           items={[
-            { key: 'view', label: 'View details', onClick: () => onView(child) },
+            { key: 'progress', label: 'View progress', onClick: () => onProgress(child) },
             { key: 'invite', label: 'Invite a teacher', onClick: () => onInvite(child) },
             { key: 'divider', divider: true },
             { key: 'remove', label: 'Remove child', danger: true, onClick: () => onRemove(child) },
@@ -138,11 +139,8 @@ function ChildCard({ child, onProgress, onEdit, onSetPassword, onInvite, onView,
         <p className="pc-section__label">Subjects</p>
         {subjects.length ? (
           <div className="pc-subjects">
-            {subjects.map((s) => (
-              <Badge key={s} variant="primary">
-                {s}
-              </Badge>
-            ))}
+            {/* Each subject in its own colour - the same tint as the teacher's lists. */}
+            <SubjectChips subjects={subjects} />
           </div>
         ) : (
           <p className="pc-section__empty">Added by the teacher once they connect.</p>
@@ -174,9 +172,11 @@ function ChildCard({ child, onProgress, onEdit, onSetPassword, onInvite, onView,
         </button>
       </section>
 
+      {/* The mobile mockup's three: View details (outlined), Edit, Set password.
+          View progress is in the ⋮ menu and on the Progress tab. */}
       <div className="pc-foot">
-        <Button size="sm" variant="ghost" onClick={() => onProgress(child)}>
-          View progress
+        <Button size="sm" variant="secondary" onClick={() => onView(child)}>
+          View details
         </Button>
         <Button size="sm" variant="ghost" onClick={() => onEdit(child)}>
           Edit

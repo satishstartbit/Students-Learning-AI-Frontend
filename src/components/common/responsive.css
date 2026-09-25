@@ -1,0 +1,306 @@
+/* =====================================================================
+   Phones and small tablets, for every shared component (the mobile
+   mockups). Loaded straight after common.css, so at equal specificity
+   these win. Breakpoints match the shell: below 768px is a phone (tab bar,
+   tables as cards), and at 640px and below dialogs become bottom sheets
+   and page actions go full width.
+
+   Theme files (portalTheme.css, studentTheme.css) repeat the few rules
+   they would otherwise outrank.
+   ===================================================================== */
+
+/* --- Page frame -------------------------------------------------------- */
+/* Every width: the page grid's one column may shrink below its content, so a
+   wide table scrolls inside its own box (.ui-table-wrap) and a filter row
+   wraps, instead of the whole page growing past the screen. A bare grid
+   track is `auto`, which is sized to the widest child - at 1024px with the
+   sidebar open that pushed My Students' last column and filters off-screen. */
+.td-page {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Every width: a visually hidden label sits at the top-left of its
+   positioned ancestor instead of where it would have flowed. It is
+   position:absolute, so inside a sideways-scrolling box (a table's
+   .ui-table-wrap, the progress check-in strip) its static position lies
+   past the box's visible edge, and - being positioned against <main>, not
+   the box - it escaped the box's clipping and made the whole page scroll
+   sideways (teacher Assignments at tablet width, parent Progress on a
+   phone). Screen readers read it the same wherever it sits. */
+.ui-sr-only {
+  top: 0;
+  left: 0;
+}
+.ui-table-wrap {
+  position: relative;
+}
+/* Table.jsx wraps each cell's content; only the phone card lays it out. */
+.ui-table__value {
+  display: contents;
+}
+
+@media (max-width: 767px) {
+  .ui-shell__main.ui-shell__main--phone {
+    padding: 16px 16px 24px;
+  }
+}
+
+/* --- Page header: title, description, then the action full width ------- */
+@media (max-width: 640px) {
+  .ui-pageheader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .ui-pageheader__title {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+  .ui-pageheader__actions {
+    width: 100%;
+  }
+  .ui-pageheader__actions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+/* --- Dialogs become bottom sheets -------------------------------------- */
+@keyframes ui-sheet-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0.6;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .ui-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .ui-modal,
+  .ui-modal--sm,
+  .ui-modal--md,
+  .ui-modal--lg,
+  .ui-modal--full {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 32px);
+    border-radius: 20px 20px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation: ui-sheet-in 0.2s ease-out;
+  }
+  /* The grab handle. */
+  .ui-modal::before {
+    content: '';
+    flex: none;
+    align-self: center;
+    width: 40px;
+    height: 4px;
+    margin-top: 8px;
+    border-radius: 9999px;
+    background: var(--color-border-strong);
+  }
+  .ui-modal__header {
+    padding: 10px 16px 4px;
+    border-bottom: 0;
+  }
+  .ui-modal__body {
+    padding: 12px 16px 16px;
+  }
+  /* Primary action on top, full width, then Cancel - the footer lists
+     Cancel first for the desktop's right-aligned row. */
+  .ui-modal__footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px 16px 16px;
+  }
+  .ui-modal__footer > .ui-btn,
+  .ui-modal__footer > a {
+    width: 100%;
+    min-height: 48px;
+    justify-content: center;
+  }
+  .ui-drawer {
+    width: 100vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-modal {
+    animation: none;
+  }
+}
+
+/* --- Tables become cards ----------------------------------------------- *
+   The first column is the card's title; every other cell is a line with
+   its column label (td[data-label], set by Table.jsx) on the left. The
+   !important on padding/border/alignment is deliberate: page stylesheets
+   size table cells for desktop with higher specificity, and on a phone the
+   card layout has to win over all of them. */
+@media (max-width: 767px) {
+  .ui-table-wrap--cards {
+    overflow: visible;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .ui-table-wrap--cards .ui-table,
+  .ui-table-wrap--cards .ui-table tbody {
+    display: block;
+    width: 100%;
+  }
+  .ui-table-wrap--cards .ui-table thead {
+    display: none;
+  }
+  .ui-table-wrap--cards .ui-table tbody {
+    display: grid;
+    gap: 10px;
+  }
+  .ui-table-wrap--cards .ui-table tbody tr {
+    display: block;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border-default);
+    border-radius: 14px;
+    background: var(--color-bg-surface);
+  }
+  .ui-table-wrap--cards .ui-table tbody tr:hover {
+    background: var(--color-bg-surface);
+  }
+  .ui-table-wrap--cards .ui-table td:not(.hidden) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+    padding: 5px 0 !important;
+    border: 0 !important;
+    text-align: right !important;
+    overflow-wrap: anywhere;
+  }
+  .ui-table-wrap--cards .ui-table td::before {
+    content: attr(data-label);
+    flex: none;
+    max-width: 45%;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+  }
+  /* The value side: its pieces stacked and right-aligned (a date over a
+     title, a row of chips, a badge). */
+  .ui-table-wrap--cards .ui-table td > .ui-table__value {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    min-width: 0;
+  }
+  .ui-table-wrap--cards .ui-table td:first-child > .ui-table__value {
+    align-items: stretch;
+  }
+  .ui-table-wrap--cards .ui-table td:not([data-label])::before,
+  .ui-table-wrap--cards .ui-table td[data-label='']::before {
+    content: none;
+  }
+  /* The title line. */
+  .ui-table-wrap--cards .ui-table td:first-child:not(.hidden) {
+    display: block;
+    padding: 0 0 6px !important;
+    text-align: left !important;
+    font-weight: 600;
+  }
+  .ui-table-wrap--cards .ui-table td:first-child::before {
+    content: none;
+  }
+  .ui-table-wrap--cards .ui-table .ui-table__cell--nomobile {
+    display: none !important;
+  }
+  /* The empty state keeps its own centred layout. */
+  .ui-table-wrap--cards .ui-table tr.ui-table__empty {
+    padding: 0;
+  }
+  .ui-table-wrap--cards .ui-table tr.ui-table__empty td {
+    display: block;
+    text-align: center !important;
+  }
+
+  .ui-pagination {
+    justify-content: center;
+  }
+}
+
+/* --- A row of StatCards ------------------------------------------------ *
+   As many as fit on a wide screen; two to a row on a phone (an odd last one
+   takes the full row), one only on the narrowest. */
+.ui-statgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: var(--spacing-md);
+}
+@media (max-width: 560px) {
+  .ui-statgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .ui-statgrid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 340px) {
+  .ui-statgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* --- A page's own mobile cards (DataTable renderCard) ------------------ */
+.ui-cardlist {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ui-cardlist__item {
+  min-width: 0;
+}
+/* Tablet and laptop widths (a page's cardsBelow): cards two or more to a row. */
+@media (min-width: 640px) {
+  .ui-cardlist {
+    grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+    align-items: start;
+  }
+  .ui-cardlist__item,
+  .ui-cardlist__item > * {
+    height: 100%;
+  }
+}
+.ui-cardlist__empty {
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-bg-surface);
+}
+
+/* --- Small bits -------------------------------------------------------- */
+@media (max-width: 640px) {
+  /* Menus anchored near the right edge never run off the screen. */
+  .ui-dropdown__menu {
+    max-width: calc(100vw - 24px);
+  }
+  .ui-dropdown__menu--end {
+    right: 0;
+  }
+  /* Toasts span the width instead of hugging a corner. */
+  .ui-toast-region {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+}

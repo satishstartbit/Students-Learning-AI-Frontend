@@ -11,13 +11,13 @@ import ExerciseBreak from '../components/brainBoosters/ExerciseBreak';
 import '../components/brainBoosters/brainBoosters.css';
 
 const GAMES = [
-  { id: 'finger', label: 'Finger Follow', icon: '👆', hint: 'Follow with your eyes', component: FingerFollow },
+  { id: 'finger', label: 'Finger Follow', icon: '👆', hint: 'Hold & steer', component: FingerFollow },
   { id: 'balloon', label: 'Balloon Eyes', icon: '🎈', hint: 'Spot & pop', component: BalloonEyes },
   { id: 'memory', label: 'Memory Games', icon: '🧠', hint: 'Watch & remember', component: MemoryGames },
 ];
 
 const INSTRUCTIONS = {
-  finger: ['Choose a comfortable speed and a movement path.', 'Keep your head comfortably still and follow the dot with your eyes. No tapping is needed.', 'Complete three 20-second rounds, or use untimed calm play. Pause whenever you like.'],
+  finger: ['Hold the pink circle through the 3-second countdown to start or resume.', 'Drag to steer inside the scrolling corridor. Releasing your mouse or finger pauses the course and keeps your points.', 'Stay inside the path as long as you can. A wall hit or an outside-circle press ends the run with 0 points. Select Try again to restart.'],
   balloon: ['Start a set of ten balloons.', 'Notice the colour and pop the balloon before it leaves the sky. Calm play has no time limit.', 'Each balloon counts once. Three pops unlock a slightly quicker level.'],
   memory: ['Choose an action pattern, Simon-style colour sequence, or a shopping list.', 'Watch first. When it is your turn, repeat the full sequence in order.', 'Read the practice rules for scoring and retries. Step-by-step playback lets you set the pace.'],
   exercises: ['Choose a short exercise and get comfortable.', 'Follow each gentle prompt at your own pace.', 'Pause or skip a step whenever you need to.'],
@@ -83,7 +83,7 @@ export default function BrainBoostersPage() {
             <div className="bb-pace">
               <LuSparkles aria-hidden="true" />
               <div><h3>Your pace, your space</h3><p>{isJunior ? 'Start small. There is no rush to get it right.' : 'Longer patterns and a quicker starting pace keep things interesting.'}</p>
-                {reducedMotion && <p>Calm play is on. Moving targets stay still.</p>}
+                {reducedMotion && <p>Calm play is on. Courses and targets stay still; you control the pace.</p>}
                 <p className="bb-session-note">Scores are just for this session. Changing games starts a new session.</p>
               </div>
             </div>

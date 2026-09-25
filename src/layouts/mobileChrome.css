@@ -1,0 +1,236 @@
+/* =====================================================================
+   Phone shell for Teacher, Parent and Grade 6+ Student (MobileChrome.jsx,
+   the mobile mockups). Prefix: am-.
+
+   Top bar: brand, bell, avatar. Tab bar: five destinations, the current
+   one on a soft accent pill. Both sit in the shell's flex column around
+   the scrolling <main>, so nothing is fixed over the page and no padding
+   has to guess the bar's height. Colours are tokens only, so the accent
+   switcher and dark mode keep working.
+   ===================================================================== */
+
+.am-topbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 56px;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--color-border-default);
+  background: var(--color-bg-surface);
+}
+
+.am-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+.am-brand__mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent-base);
+  color: var(--accent-on);
+  font-size: 16px;
+}
+.am-brand__mark svg {
+  fill: currentColor;
+}
+.am-brand__name {
+  overflow: hidden;
+  font-family: var(--font-family-heading, var(--font-family-base));
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.am-topbar__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+
+/* The bell: a link (students) or the shared dropdown bell (teacher, parent). */
+.am-iconbtn,
+.am-topbar__actions .ui-iconbtn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--color-text-primary);
+  font-size: 20px;
+  cursor: pointer;
+}
+.am-iconbtn:hover,
+.am-topbar__actions .ui-iconbtn:hover {
+  background: var(--color-bg-surface-sunken);
+}
+.am-badge {
+  position: absolute;
+  top: 4px;
+  right: 3px;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  background: var(--color-danger-fg);
+  color: var(--color-text-inverse, #fff);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.am-avatarbtn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  cursor: pointer;
+}
+.am-avatarbtn:focus-visible,
+.am-iconbtn:focus-visible,
+.am-tab:focus-visible,
+.am-more__link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.am-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--accent-soft);
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* --- Tab bar ----------------------------------------------------------- */
+.am-tabbar {
+  flex: none;
+  padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--color-border-default);
+  background: var(--color-bg-surface);
+}
+.am-tabbar__list {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 4px;
+  /* On a tablet the five tabs stay a thumb's reach apart, not spread wide. */
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+.am-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 52px;
+  padding: 6px 2px;
+  border-radius: 12px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.1;
+  text-align: center;
+  text-decoration: none;
+}
+.am-tab__icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.am-tab__label {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.am-tab:hover {
+  color: var(--color-text-primary);
+}
+.am-tab[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+/* --- "More" sheet ------------------------------------------------------ */
+.am-sheet .ui-modal__body {
+  padding-top: 8px;
+}
+.am-more {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+.am-more__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.am-more__link:hover {
+  background: var(--color-bg-surface-sunken);
+}
+.am-more__link[aria-current='page'] {
+  background: var(--accent-soft);
+}
+.am-more__icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--color-text-secondary);
+}
+.am-more__label {
+  flex: 1;
+  min-width: 0;
+}
+.am-more__chevron {
+  flex: none;
+  color: var(--color-text-tertiary);
+}
+.am-more__link--danger {
+  border-top: 1px solid var(--color-border-default);
+  border-radius: 0 0 12px 12px;
+  color: var(--color-danger-fg);
+}
+.am-more__link--danger .am-more__icon {
+  color: var(--color-danger-fg);
+}

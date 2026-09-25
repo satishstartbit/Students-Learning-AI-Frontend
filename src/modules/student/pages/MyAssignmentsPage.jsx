@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LuPlus } from 'react-icons/lu';
+import { Link, useNavigate } from 'react-router-dom';
+import { LuListChecks, LuPlus } from 'react-icons/lu';
 import { Button, DataTable, StatusBadge, Select } from '../../../components/common';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { useApi } from '../../../hooks/useApi';
@@ -23,12 +23,8 @@ function ownDueLabel(dueDate) {
   return `Due in ${days} days`;
 }
 
-/** Tasks the student added for themselves (Home's "Add assignment"), with add/edit through the same dialog. */
-function MyOwnTasksSection() {
-  const own = useApi(studentTaskService.list, { immediate: true });
-  const [dialog, setDialog] = useState(null);
-  const reload = () => own.run().catch(() => {});
-
+/** Tasks the student added for themselves (Home's "Add assignment"); the page owns the list and the dialog. */
+function MyOwnTasksSection({ own, onAdd, onEdit, onRetry }) {
   const columns = [
     {
       key: 'title',
@@ -56,39 +52,45 @@ function MyOwnTasksSection() {
   ];
 
   return (
-    <>
-      <section className="sa-section">
-        <div className="sa-section__head">
-          <div>
-            <h2 className="sa-section__title">My own tasks</h2>
-            <p className="sa-section__subtitle">Things you added for yourself - only you can see these.</p>
-          </div>
-          <Button size="sm" startIcon={<LuPlus aria-hidden="true" />} onClick={() => setDialog({ mode: 'type' })}>
-            Add a task
-          </Button>
+    <section className="sa-section">
+      <div className="sa-section__head">
+        <div>
+          <h2 className="sa-section__title">My own tasks</h2>
+          <p className="sa-section__subtitle">Things you added for yourself - only you can see these.</p>
         </div>
+        <Button size="sm" variant="secondary" startIcon={<LuPlus aria-hidden="true" />} onClick={onAdd}>
+          Add a task
+        </Button>
+      </div>
 
-        <DataTable
-          columns={columns}
-          data={own.data ?? []}
-          rowKey="id"
-          isLoading={own.isLoading}
-          error={own.error}
-          onRetry={reload}
-          onRowClick={(row) => setDialog({ mode: 'edit', task: row })}
-          emptyTitle="No tasks of your own yet"
-          emptyDescription="Add anything you need to remember - it shows up on your Home too."
-          caption="My own tasks"
-        />
-      </section>
-
-      <OwnTaskModal mode={dialog?.mode ?? null} task={dialog?.task ?? null} onClose={() => setDialog(null)} onChanged={reload} />
-    </>
+      <DataTable
+        columns={columns}
+        data={own.data ?? []}
+        rowKey="id"
+        isLoading={own.isLoading}
+        error={own.error}
+        onRetry={onRetry}
+        onRowClick={onEdit}
+        renderCard={(row) => (
+          <button type="button" className="sa-mcard" onClick={() => onEdit(row)}>
+            <SubjectIcon subject={row.subject} size="sm" />
+            <span className="sa-mcard__body">
+              <span className="sa-mcard__title">{row.title}</span>
+              <span className="sa-mcard__meta">{[row.subject, ownDueLabel(row.dueDate)].filter(Boolean).join(' · ')}</span>
+            </span>
+            <StatusBadge status={row.status === 'completed' ? 'completed' : 'assigned'} label={row.status === 'completed' ? 'Done' : 'To do'} />
+          </button>
+        )}
+        emptyTitle="No tasks of your own yet"
+        emptyDescription="Add anything you need to remember - it shows up on your Home too."
+        caption="My own tasks"
+      />
+    </section>
   );
 }
 
+// No '' entry: Select draws its own blank option, shown here as "All statuses".
 const STATUS_FILTER_OPTIONS = [
-  { value: '', label: 'All' },
   { value: ASSIGNMENT_RECIPIENT_STATUS.ASSIGNED, label: 'Assigned' },
   { value: ASSIGNMENT_RECIPIENT_STATUS.IN_PROGRESS, label: 'In progress' },
   { value: ASSIGNMENT_RECIPIENT_STATUS.SUBMITTED, label: 'Submitted' },
@@ -115,6 +117,11 @@ export default function MyAssignmentsPage() {
   const [status, setStatus] = useState('');
   const [subject, setSubject] = useState(null);
 
+  // The student's own tasks and the add/edit dialog - the header's Add assignment opens it too.
+  const own = useApi(studentTaskService.list, { immediate: true });
+  const reloadOwn = () => own.run().catch(() => {});
+  const [dialog, setDialog] = useState(null);
+
   const list = useApi(assignmentService.listAssignments);
   const { run, meta } = list;
 
@@ -132,7 +139,7 @@ export default function MyAssignmentsPage() {
     if (meta?.total !== undefined) applyMeta(meta);
   }, [meta, applyMeta]);
 
-  const items = list.data ?? [];
+  const items = useMemo(() => list.data ?? [], [list.data]);
 
   // No dedicated student-facing subjects lookup exists; this page's own data
   // is small enough that deriving the filter options locally is enough.
@@ -174,6 +181,16 @@ export default function MyAssignmentsPage() {
   ];
 
   const hasActiveFilters = Boolean(status) || Boolean(subject);
+  const ownTasks = own.data ?? [];
+  // Nothing at all yet (the mockup's empty page): one card and one button, not
+  // a filter box over two empty tables.
+  const nothingYet =
+    !hasActiveFilters && !list.isLoading && !own.isLoading && !list.error && !own.error && items.length === 0 && ownTasks.length === 0;
+  const addButton = (
+    <Button startIcon={<LuPlus aria-hidden="true" />} onClick={() => setDialog({ mode: 'type' })}>
+      Add assignment
+    </Button>
+  );
 
   return (
     // The page's own header and type scale, matching Home/Plan/Notifications/
@@ -182,67 +199,107 @@ export default function MyAssignmentsPage() {
     <div className="sa-page td-page">
       <header className="sa-head">
         <div>
-          <h1 className="sa-title">My Assignments</h1>
-          <p className="sa-subtitle">Everything your teachers have given you to do.</p>
+          <h1 className="sa-title">Assignments</h1>
+          <p className="sa-subtitle">Everything you have on, and how far along it is.</p>
         </div>
+        <div className="sa-head__actions">{addButton}</div>
       </header>
 
-      <section className="sa-section">
-        <p className="sa-eyebrow">Filter</p>
-        <div className="sa-card">
-          <div className="sa-filters">
-            <Select
-              label="Status"
-              value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
-                goToPage(1);
-              }}
-              options={STATUS_FILTER_OPTIONS}
-            />
-            <SearchableSelect
-              label="Subject"
-              options={subjectOptions}
-              value={subject}
-              onChange={(v) => {
-                setSubject(v);
-                goToPage(1);
-              }}
-              placeholder="All subjects"
-            />
+      {nothingYet ? (
+        <section className="sa-section">
+          <div className="sa-card sa-empty">
+            <span className="sa-empty__icon" aria-hidden="true">
+              <LuListChecks />
+            </span>
+            <h2 className="sa-empty__title">No assignments yet</h2>
+            <p className="sa-empty__text">Add your first one and we will break it into small steps you can actually start.</p>
+            <Button onClick={() => setDialog({ mode: 'type' })}>Add assignment</Button>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : (
+        <>
+          <section className="sa-section">
+            <p className="sa-eyebrow">Filter</p>
+            <div className="sa-card">
+              <div className="sa-filters">
+                <Select
+                  label="Status"
+                  value={status}
+                  onChange={(e) => {
+                    setStatus(e.target.value);
+                    goToPage(1);
+                  }}
+                  options={STATUS_FILTER_OPTIONS}
+                  placeholder="All statuses"
+                  reserveHelper={false}
+                />
+                <SearchableSelect
+                  label="Subject"
+                  options={subjectOptions}
+                  value={subject}
+                  onChange={(v) => {
+                    setSubject(v);
+                    goToPage(1);
+                  }}
+                  placeholder="All subjects"
+                />
+              </div>
+            </div>
+          </section>
 
-      <section className="sa-section">
-        <div className="sa-section__head">
-          <div>
-            <h2 className="sa-section__title">From your teachers</h2>
-            <p className="sa-section__subtitle">Open one to see what to do and hand it in.</p>
-          </div>
-        </div>
+          <section className="sa-section">
+            <div className="sa-section__head">
+              <div>
+                <h2 className="sa-section__title">From your teachers</h2>
+                <p className="sa-section__subtitle">Open one to see what to do and hand it in.</p>
+              </div>
+            </div>
 
-        <DataTable
-          columns={columns}
-          data={items}
-          rowKey="recipientId"
-          isLoading={list.isLoading}
-          error={list.error}
-          onRetry={load}
-          onRowClick={(row) => navigate(`/student/assignments/${row.assignment.id}`)}
-          pagination={pagination}
-          onPageChange={goToPage}
-          emptyTitle="No assignments yet"
-          emptyDescription={
-            hasActiveFilters
-              ? 'Try a different filter.'
-              : 'When your teacher gives you an assignment, it will show up here.'
-          }
-          caption="My assignments"
-        />
-      </section>
+            <DataTable
+              columns={columns}
+              data={items}
+              rowKey="recipientId"
+              isLoading={list.isLoading}
+              error={list.error}
+              onRetry={load}
+              onRowClick={(row) => navigate(`/student/assignments/${row.assignment.id}`)}
+              renderCard={(row) => {
+                const { status: derivedStatus, label } = displayStatus(row);
+                return (
+                  <Link to={`/student/assignments/${row.assignment.id}`} className="sa-mcard">
+                    <SubjectIcon subject={row.assignment?.subject} size="sm" />
+                    <span className="sa-mcard__body">
+                      <span className="sa-mcard__title">{row.assignment?.title}</span>
+                      <span className="sa-mcard__meta">
+                        {[row.assignment?.subject, formatDueDate(row.assignment?.dueDate)].filter(Boolean).join(' · ')}
+                      </span>
+                    </span>
+                    <StatusBadge status={derivedStatus} label={label} />
+                  </Link>
+                );
+              }}
+              pagination={pagination}
+              onPageChange={goToPage}
+              emptyTitle="No assignments yet"
+              emptyDescription={
+                hasActiveFilters
+                  ? 'Try a different filter.'
+                  : 'When your teacher gives you an assignment, it will show up here.'
+              }
+              caption="My assignments"
+            />
+          </section>
 
-      <MyOwnTasksSection />
+          <MyOwnTasksSection
+            own={own}
+            onAdd={() => setDialog({ mode: 'type' })}
+            onEdit={(task) => setDialog({ mode: 'edit', task })}
+            onRetry={reloadOwn}
+          />
+        </>
+      )}
+
+      <OwnTaskModal mode={dialog?.mode ?? null} task={dialog?.task ?? null} onClose={() => setDialog(null)} onChanged={reloadOwn} />
     </div>
   );
 }

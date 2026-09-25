@@ -42,6 +42,19 @@ export function lastActiveLabel(value) {
   return formatDate(value);
 }
 
+/**
+ * The phone card's short line (the My Students mobile mockup): "Active
+ * today" / "Active yesterday" / "Active Sep 16", or "Invited, not signed in".
+ */
+export function activeDayLabel(student) {
+  if (student?.state === 'invited' || !student?.lastActiveAt) return 'Invited, not signed in';
+  const key = getDateKey(new Date(student.lastActiveAt));
+  const days = daysUntilDateKey(key);
+  if (days === 0) return 'Active today';
+  if (days === -1) return 'Active yesterday';
+  return `Active ${formatDateKey(key, { year: undefined })}`;
+}
+
 /** "Today, 8:52 am" / "Thu, 8:40 am" (this week) / "Sep 12, 8:40 am" for a check-in time. */
 export function checkInWhen(value) {
   if (!value) return '';

@@ -1,7 +1,10 @@
 import {
+  LuActivity,
   LuChartLine,
   LuFileText,
+  LuHouse,
   LuLayoutDashboard,
+  LuListChecks,
   LuMailOpen,
   LuSparkles,
   LuUser,
@@ -31,6 +34,18 @@ const NAV_ITEMS = [
   },
 ];
 
+/**
+ * The phone tab bar (the My Students mobile mockup). Invitations and My
+ * Profile are one tap away in the avatar's "More" sheet.
+ */
+const MOBILE_TABS = [
+  { to: '/teacher', label: 'Home', icon: LuHouse, end: true },
+  { to: '/teacher/students', label: 'Students', icon: LuUsers },
+  { to: '/teacher/assignments', label: 'Work', icon: LuListChecks },
+  { to: '/teacher/progress', label: 'Progress', icon: LuChartLine },
+  { to: '/teacher/learning-activity', label: 'Activity', icon: LuActivity },
+];
+
 export function TeacherLayout({ children }) {
   usePortalTheme();
 
@@ -50,7 +65,7 @@ export function TeacherLayout({ children }) {
     // they are in this area - the same picker and the same stored setting the
     // student and parent areas use (components/appearance/).
     <AppSettingsProvider>
-      <AuthenticatedLayout navItems={NAV_ITEMS} title="Teacher Portal" subtitle="Teacher" brand="TP" accountSubtitle={school}>
+      <AuthenticatedLayout navItems={NAV_ITEMS} mobileTabs={MOBILE_TABS} title="Teacher Portal" subtitle="Teacher" brand="TP" accountSubtitle={school}>
         {children}
       </AuthenticatedLayout>
     </AppSettingsProvider>

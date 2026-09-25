@@ -34,7 +34,10 @@ export function HeroScene({ firstName }) {
       <Landscape className="absolute inset-0 -z-10 size-full" />
 
       <div className="mx-auto flex min-h-[15rem] max-w-6xl flex-col px-5 pb-16 pt-8 sm:min-h-[17rem] sm:px-8 lg:min-h-[19.5rem] lg:pt-10">
-        <div className="flex max-w-[40rem] items-start gap-3">
+        {/* From md the signpost and bear stand at the right (about 19rem, 24rem
+            from lg), so the greeting keeps clear of them and wraps instead of
+            running under the sign on a tablet. */}
+        <div className="flex max-w-[40rem] items-start gap-3 md:max-w-[min(40rem,calc(100%-19rem))] lg:max-w-[min(40rem,calc(100%-24rem))]">
           <TextAnimate
             as="h1"
             id="kid-greeting"

@@ -6,9 +6,9 @@ The teacher's portal: dashboard, My Students, assignments, progress, invitations
 | Route | Page | Notes |
 |---|---|---|
 | `/teacher` | `pages/TeacherDashboardPage.jsx` | "Three things need you today". CSS `components/dashboard/teacherDashboard.css` (`td-`) |
-| `/teacher/dashboard` | `pages/MyStudentsPage.jsx` | Roster with filters, check-in alert flags. `components/students/*` (`ts-`), `StudentDetailModal` |
+| `/teacher/students` | `pages/MyStudentsPage.jsx` | Roster with filters, check-in alert flags. `components/students/*` (`ts-`), `StudentDetailModal`. **Below 1024px:** cards (`StudentCard`: avatar, "Grade 3 · Active today", subject chips, alert, mood face; `activeDayLabel`), tabs scroll in one row, filters fold behind the search box's filter button (below 768px). Grade and Last active columns hide below 1280px. |
 | `/teacher/students/:id` | `pages/TeacherStudentPage.jsx` | One student: overview, focus time this week, alerts (mark seen) |
-| `/teacher/assignments` | `pages/AssignmentsListPage.jsx` | Status tabs with counts (`?view=`), filters, table. `components/assignmentsList/*` (`al-`) |
+| `/teacher/assignments` | `pages/AssignmentsListPage.jsx` | Status tabs with counts (`?view=`), filters, table. `components/assignmentsList/*` (`al-`). Cards below 1280px (`al-mcard`: title + ⋮ menu, subject, due, submitted bar, status, Edit); same folding filters as My Students. |
 | `/teacher/assignments/new`, `/:id/edit` | `pages/AssignmentFormPage.jsx` | Collapsible `FormSection`s, `PublishPanel`, `RosterPicker`, `TagListInput`. Uses `assignments/*` components. |
 | `/teacher/assignments/:id` | `pages/AssignmentDetailsPage.jsx` | Submissions and review (`assignments/ReviewSubmissionModal`) |
 | `/teacher/progress` | `pages/TeacherProgressPage.jsx` | Uses `progress/StudentProgressDetail` |

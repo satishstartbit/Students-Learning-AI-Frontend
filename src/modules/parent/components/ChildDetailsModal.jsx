@@ -110,6 +110,7 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
         onClose={onClose}
         title={child ? formatName(child) : 'Child details'}
         size="lg"
+        className="pc-details"
         footer={<Button onClick={onClose}>Close</Button>}
       >
         {detail.isLoading && !child && <Loader message="Loading child…" />}
@@ -129,7 +130,7 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
             </div>
 
             <SectionHeader title="Child information" as="h3" className="ui-field" />
-            <div className="grid gap-2 md:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <span className="ui-hint">Grade</span>
                 <div>{child.profile?.grade || '—'}</div>

@@ -95,7 +95,7 @@
 
 .sa-filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: 12px;
 }
 
@@ -130,4 +130,119 @@
 }
 .sa-muted {
   color: var(--color-text-secondary);
+}
+
+/* --- Header action, the empty page, phone cards (the Assignments mobile
+   mockup) ---------------------------------------------------------------- */
+.sa-head__actions {
+  flex: none;
+}
+.sa-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 36px 20px;
+  border-style: dashed;
+  text-align: center;
+}
+.sa-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 4px;
+  border-radius: 9999px;
+  background: var(--color-bg-surface-sunken);
+  color: var(--color-text-primary);
+  font-size: 22px;
+}
+.sa-empty__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+.sa-empty__text {
+  max-width: 300px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.sa-mcard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sa-mcard:hover {
+  border-color: var(--accent-border);
+}
+.sa-mcard:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.sa-mcard__body {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+.sa-mcard__title {
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.sa-mcard__meta {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 640px) {
+  .sa-page {
+    padding-inline: 0;
+  }
+  .sa-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .sa-title {
+    font-size: 24px;
+  }
+  .sa-head__actions .ui-btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .sa-section__head {
+    flex-wrap: wrap;
+  }
+}
+
+/* Filters never show errors, so they drop the empty helper line and the
+   field margin; on a phone the two sit side by side. */
+.sa-filters .ui-field {
+  margin-bottom: 0;
+}
+.sa-filters .ui-helper {
+  display: none;
+}
+@media (max-width: 640px) {
+  .sa-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .sa-card {
+    padding: 12px;
+  }
 }

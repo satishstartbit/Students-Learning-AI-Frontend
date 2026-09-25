@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { LuCheck, LuSearch, LuUsers } from 'react-icons/lu';
+import { LuCheck, LuFilter, LuSearch, LuUsers } from 'react-icons/lu';
 import { PageHeader, DataTable, EmptyState, Toast } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
 import { useDebounce } from '../../../hooks/useDebounce';
 import teacherStudentService from '../services/teacherStudent.service';
 import { MoodFace, StudentAvatar, SubjectChips } from '../components/students/StudentBits';
-import { fullName, lastActiveLabel, relativeDay } from '../components/students/studentFormat';
+import { activeDayLabel, fullName, lastActiveLabel, relativeDay } from '../components/students/studentFormat';
 import '../components/assignmentsList/assignmentsList.css';
 import '../components/students/teacherStudents.css';
 
@@ -59,9 +59,36 @@ function WellbeingCell({ student }) {
 }
 
 /**
+ * A phone card (the My Students mobile mockup): avatar, name, "Grade 3 ·
+ * Active today", subject chips and a check-in alert, and today's mood face.
+ * The whole card opens the student's page.
+ */
+function StudentCard({ student }) {
+  const c = student.latestCheckIn;
+  return (
+    <Link to={`/teacher/students/${student.id}`} className="ts-mcard">
+      <StudentAvatar student={student} />
+      <span className="ts-mcard__body">
+        <span className="ts-mcard__name">{fullName(student)}</span>
+        <span className="ts-mcard__meta">{[student.grade, activeDayLabel(student)].filter(Boolean).join(' · ')}</span>
+        {(student.subjects?.length > 0 || student.alert) && (
+          <span className="ts-mcard__chips">
+            {student.subjects?.length > 0 && <SubjectChips subjects={student.subjects} />}
+            {student.alert && <span className="ts-pill ts-pill--danger">Check-in alert</span>}
+          </span>
+        )}
+      </span>
+      <MoodFace checkIn={c} size="lg" label={c ? `${c.moodName}, ${relativeDay(c.date)}` : 'No check-ins yet'} />
+    </Link>
+  );
+}
+
+/**
  * My Students - everyone this teacher teaches, how they're doing today and
  * who needs a look: tabs (All / Needs attention / No check-in today /
  * Invited), search and filters, and a row per student linking to their page.
+ * On a phone the rows are cards and the filters fold behind the search box's
+ * filter button.
  */
 export default function MyStudentsPage() {
   const navigate = useNavigate();
@@ -75,6 +102,8 @@ export default function MyStudentsPage() {
   const [subject, setSubject] = useState('');
   const [grade, setGrade] = useState('');
   const [wellbeing, setWellbeing] = useState('');
+  // Phones only: the subject/grade/wellbeing filters open under the search box.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 350);
 
   const subjects = useApi(teacherStudentService.listLookupSubjects, { immediate: true });
@@ -139,7 +168,13 @@ export default function MyStudentsPage() {
         </span>
       ),
     },
-    { key: 'grade', header: 'Grade', render: (s) => (s.grade ? <span className="ts-nowrap">{s.grade}</span> : <span className="ts-muted">—</span>) },
+    // Grade and Last active give way below 1280px (a laptop with the sidebar open), so the table fits.
+    {
+      key: 'grade',
+      header: 'Grade',
+      className: 'hidden xl:table-cell',
+      render: (s) => (s.grade ? <span className="ts-nowrap">{s.grade}</span> : <span className="ts-muted">—</span>),
+    },
     { key: 'subjects', header: 'Subjects', render: (s) => <SubjectChips subjects={s.subjects} /> },
     { key: 'wellbeing', header: 'Wellbeing', render: (s) => <WellbeingCell student={s} /> },
     {
@@ -154,7 +189,12 @@ export default function MyStudentsPage() {
         );
       },
     },
-    { key: 'lastActive', header: 'Last active', render: (s) => <span className="ts-nowrap">{lastActiveLabel(s.lastActiveAt)}</span> },
+    {
+      key: 'lastActive',
+      header: 'Last active',
+      className: 'hidden xl:table-cell',
+      render: (s) => <span className="ts-nowrap">{lastActiveLabel(s.lastActiveAt)}</span>,
+    },
   ];
 
   const rows = Array.isArray(list.data) ? list.data : [];
@@ -196,12 +236,24 @@ export default function MyStudentsPage() {
             })}
           </ul>
 
-          <div className="al-filters" role="search">
-            <label className="al-search">
-              <span className="ui-sr-only">Search by name or email</span>
-              <LuSearch size={16} aria-hidden="true" />
-              <input type="search" placeholder="Search by name or email" value={search} onChange={(e) => withReset(setSearch)(e.target.value)} />
-            </label>
+          <div className={`al-filters${filtersOpen ? ' al-filters--open' : ''}`} role="search">
+            <div className="al-searchrow">
+              <label className="al-search">
+                <span className="ui-sr-only">Search by name or email</span>
+                <LuSearch size={16} aria-hidden="true" />
+                <input type="search" placeholder="Search by name or email" value={search} onChange={(e) => withReset(setSearch)(e.target.value)} />
+              </label>
+              <button
+                type="button"
+                className="al-filtertoggle"
+                aria-expanded={filtersOpen}
+                aria-label={filtersOpen ? 'Hide filters' : 'Show filters'}
+                data-active={subject || grade || wellbeing ? true : undefined}
+                onClick={() => setFiltersOpen((v) => !v)}
+              >
+                <LuFilter size={16} aria-hidden="true" />
+              </button>
+            </div>
             <select className={`al-select ${subject ? '' : 'al-select--placeholder'}`.trim()} aria-label="Subject" value={subject} onChange={(e) => withReset(setSubject)(e.target.value)}>
               <option value="">All subjects</option>
               {(subjects.data ?? []).map((s) => (
@@ -242,6 +294,8 @@ export default function MyStudentsPage() {
             error={list.error}
             onRetry={load}
             onRowClick={(s) => navigate(`/teacher/students/${s.id}`)}
+            renderCard={(s) => <StudentCard student={s} />}
+            cardsBelow={1024}
             pagination={pagination}
             onPageChange={goToPage}
             emptyTitle="No students match"

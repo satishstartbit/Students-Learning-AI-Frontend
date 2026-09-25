@@ -5,6 +5,7 @@ import {
   LuChartLine,
   LuCreditCard,
   LuLayoutDashboard,
+  LuLayoutGrid,
   LuSparkles,
   LuUser,
   LuUsersRound,
@@ -38,6 +39,18 @@ const NAV_ITEMS = [
       { to: '/parent/notifications', label: 'Notifications', icon: LuBell },
     ],
   },
+];
+
+/**
+ * The phone tab bar (the My Children mobile mockup). My Profile and
+ * Notifications are in the avatar's "More" sheet.
+ */
+const MOBILE_TABS = [
+  { to: '/parent', label: 'Overview', icon: LuLayoutGrid, end: true },
+  { to: '/parent/children', label: 'Children', icon: LuUsersRound },
+  { to: '/parent/progress', label: 'Progress', icon: LuChartLine },
+  { to: '/parent/learning-summary', label: 'Learning', icon: LuSparkles },
+  { to: '/parent/subscription', label: 'Plan', icon: LuCreditCard },
 ];
 
 const ONBOARDING_PATH = '/parent/onboarding';
@@ -92,7 +105,7 @@ export function ParentLayout({ children }) {
             stored setting the teacher and student areas use. Inside the
             gates, so it applies on the locked screen too. */}
         <AppSettingsProvider>
-          <AuthenticatedLayout navItems={NAV_ITEMS} title="Parent Portal" subtitle="Parent" brand="FP">
+          <AuthenticatedLayout navItems={NAV_ITEMS} mobileTabs={MOBILE_TABS} title="Parent Portal" subtitle="Parent" brand="FP">
             {content}
           </AuthenticatedLayout>
         </AppSettingsProvider>

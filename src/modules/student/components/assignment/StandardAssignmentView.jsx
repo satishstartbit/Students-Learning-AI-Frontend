@@ -106,7 +106,9 @@ export function StandardAssignmentView({ item, assignmentId, reload, children })
               <div style={{ minWidth: 0 }}>
                 <h1 className="ad-title">{a.title}</h1>
                 <p className="ad-due" data-overdue={due.overdue || undefined}>
-                  <LuCalendar size={13} aria-hidden="true" /> Due {due.text}
+                  {/* The text in its own span, so on a phone it wraps beside the icon instead of under it. */}
+                  <LuCalendar size={13} aria-hidden="true" style={{ flex: 'none' }} />
+                  <span>Due {due.text}</span>
                 </p>
               </div>
             </div>

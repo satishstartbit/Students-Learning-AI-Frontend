@@ -283,7 +283,8 @@ export default function AssignmentDetailsPage() {
       )}
 
       <Card title="Assignment info" className="ui-field">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Two to a row even on a phone, so the facts read as a grid, not a long list. */}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <div>
             <span className="ui-hint">Status</span>
             <div>

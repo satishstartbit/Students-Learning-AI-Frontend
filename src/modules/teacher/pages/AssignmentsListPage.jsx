@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { LuCheck, LuEllipsisVertical, LuEye, LuPlus, LuSearch, LuSend, LuArchive, LuTrash2, LuUndo2 } from 'react-icons/lu';
+import { LuCheck, LuEllipsisVertical, LuEye, LuFilter, LuPlus, LuSearch, LuSend, LuArchive, LuTrash2, LuUndo2 } from 'react-icons/lu';
 import { PageHeader, DataTable, Button, ConfirmationModal, Dropdown, Toast } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
@@ -124,6 +124,8 @@ export default function AssignmentsListPage() {
   const [subject, setSubject] = useState('');
   const [grade, setGrade] = useState('');
   const [due, setDue] = useState('');
+  // Phones only: the subject/grade/due filters open under the search box.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 350);
   const today = getDateKey();
 
@@ -280,6 +282,43 @@ export default function AssignmentsListPage() {
     },
   ];
 
+  /** A phone card: title + meta and the ⋮ menu, subject and due, submitted, status, Edit. */
+  const renderCard = (row) => {
+    const state = rowState(row, today);
+    const archived = state.key === 'archived';
+    const meta = [row.questionCount ? plural(row.questionCount, 'question') : 'No questions', row.estimatedMinutes ? `${row.estimatedMinutes} min` : null].filter(Boolean).join(' · ');
+    return (
+      <article className="al-mcard">
+        <div className="al-mcard__head">
+          <div className="al-title">
+            <Link to={`/teacher/assignments/${row.id}`}>{row.title}</Link>
+            <span className="al-meta">{meta}</span>
+          </div>
+          <Dropdown
+            align="end"
+            trigger={
+              <button type="button" className="al-kebab" aria-label={`More actions for ${row.title}`} disabled={busyId === row.id}>
+                <LuEllipsisVertical size={16} aria-hidden="true" />
+              </button>
+            }
+            items={menuItems(row, state)}
+          />
+        </div>
+        <div className="al-mcard__row">
+          <SubjectCell subject={row.subject} />
+          <span className="al-meta">{[row.grade, row.dueDate ? `Due ${dueLabel(row.dueDate)}` : 'No due date'].filter(Boolean).join(' · ')}</span>
+        </div>
+        <SubmittedCell row={row} state={state} />
+        <div className="al-mcard__foot">
+          <span className={`al-status al-status--${state.key}`}>{state.label}</span>
+          <Button size="sm" variant="secondary" as={Link} to={archived ? `/teacher/assignments/${row.id}` : `/teacher/assignments/${row.id}/edit`}>
+            {archived ? 'View' : 'Edit'}
+          </Button>
+        </div>
+      </article>
+    );
+  };
+
   const rows = Array.isArray(list.data) ? list.data : [];
   const tabCounts = counts.data ?? {};
   const total = pagination.total;
@@ -323,12 +362,24 @@ export default function AssignmentsListPage() {
         })}
       </ul>
 
-      <div className="al-filters" role="search">
-        <label className="al-search">
-          <span className="ui-sr-only">Search by title</span>
-          <LuSearch size={16} aria-hidden="true" />
-          <input type="search" placeholder="Search by title" value={search} onChange={(e) => withReset(setSearch)(e.target.value)} />
-        </label>
+      <div className={`al-filters${filtersOpen ? ' al-filters--open' : ''}`} role="search">
+        <div className="al-searchrow">
+          <label className="al-search">
+            <span className="ui-sr-only">Search by title</span>
+            <LuSearch size={16} aria-hidden="true" />
+            <input type="search" placeholder="Search by title" value={search} onChange={(e) => withReset(setSearch)(e.target.value)} />
+          </label>
+          <button
+            type="button"
+            className="al-filtertoggle"
+            aria-expanded={filtersOpen}
+            aria-label={filtersOpen ? 'Hide filters' : 'Show filters'}
+            data-active={subject || grade || due ? true : undefined}
+            onClick={() => setFiltersOpen((v) => !v)}
+          >
+            <LuFilter size={16} aria-hidden="true" />
+          </button>
+        </div>
         <select
           className={`al-select ${subject ? '' : 'al-select--placeholder'}`.trim()}
           aria-label="Subject"
@@ -368,6 +419,9 @@ export default function AssignmentsListPage() {
         isLoading={list.isLoading}
         error={list.error}
         onRetry={load}
+        renderCard={renderCard}
+        // Eight columns need about 1000px: cards on tablets and on a laptop with the sidebar open.
+        cardsBelow={1280}
         pagination={pagination}
         onPageChange={goToPage}
         emptyTitle={emptyTitle}

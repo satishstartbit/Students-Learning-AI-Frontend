@@ -29,21 +29,9 @@ import BrandMark from '../components/common/BrandMark';
 import { useAuth } from '../hooks/useAuth';
 import { AvatarPicture } from '../modules/student/components/personalize/AvatarPicture';
 import { useStudentSettings } from '../modules/student/hooks/useStudentSettings';
-import { ROLE_LABELS, USER_ROLES } from '../utils/constants';
+import { APP_NAME, ROLE_LABELS } from '../utils/constants';
 import { formatName, getInitials } from '../utils/format';
-
-/**
- * Where the "Account" item in the account menu sends each role. Students
- * (Grade 6+ - K-5 has its own shell) land on Settings, where their onboarding
- * answers are edited. Super Admin has its own My Profile (name, phone, time
- * zone, password).
- */
-const PROFILE_PATH_BY_ROLE = {
-  [USER_ROLES.STUDENT]: '/student/settings',
-  [USER_ROLES.TEACHER]: '/teacher/profile',
-  [USER_ROLES.PARENT]: '/parent/profile',
-  [USER_ROLES.SUPER_ADMIN]: '/admin/profile',
-};
+import { PROFILE_PATH_BY_ROLE } from './navConfig';
 
 /**
  * The application sidebar.
@@ -356,7 +344,7 @@ export default function AppSidebar({ subtitle, navItems = [], accountSubtitle })
                 Portal", "FP"/"Family Portal") - subtitle still carries the
                 role label underneath it. */}
             <SidebarMenuButton as={NavLink} to="/" size="lg" tooltip="Home">
-              <BrandMark size="sm" className="min-w-0 flex-1" />
+              <BrandMark name={APP_NAME} size="sm" className="min-w-0 flex-1" />
               {subtitle && (
                 <span className="truncate text-xs opacity-70">{subtitle}</span>
               )}
