@@ -2,6 +2,7 @@ import axios from 'axios';
 import { getAccessToken, getRefreshToken, setTokens, clearAuthStorage } from './storage';
 import { parseApiError } from './errorHandler';
 import { SUBSCRIPTION_REQUIRED_EVENT } from './constants';
+import { setServerReachable } from './connectivity';
 
 /**
  * The single HTTP entry point for the app.
@@ -53,9 +54,42 @@ async function refreshAccessToken() {
   return tokens.accessToken;
 }
 
+/**
+ * Keeps utils/connectivity.js current: any HTTP answer means the server is
+ * up; no answer at all while the device is online means it isn't (the
+ * connection banner then says so, and polls /health until it's back). A
+ * request the app cancelled itself says nothing either way.
+ */
+function noteReachability(error) {
+  if (!error) return setServerReachable(true);
+  if (error.response) return setServerReachable(true);
+  if (axios.isCancel?.(error) || error.code === 'ERR_CANCELED') return undefined;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return undefined;
+  return setServerReachable(false);
+}
+
+/** The API server's health check (`/health`, outside the /api/v1 prefix). */
+export const HEALTH_URL = `${BASE_URL.replace(/\/api\/v\d+\/?$/, '')}/health`;
+
+/** Asks /health whether the server is back; updates the connection store. Never throws. */
+export async function checkServer() {
+  try {
+    await axios.get(HEALTH_URL, { timeout: 8000, headers: { 'Cache-Control': 'no-cache' } });
+    setServerReachable(true);
+    return true;
+  } catch (error) {
+    noteReachability(error);
+    return Boolean(error?.response);
+  }
+}
+
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    noteReachability(null);
+    return response;
+  },
   async (error) => {
+    noteReachability(error);
     const original = error.config;
     const status = error.response?.status;
 

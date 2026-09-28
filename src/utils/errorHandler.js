@@ -4,7 +4,10 @@
  *
  *   { status, message, errors, fieldErrors, isNetworkError, isValidationError }
  */
+import { APP_NAME } from './constants.js';
+
 const DEFAULT_MESSAGE = 'Something went wrong. Please try again.';
+const OFFLINE_MESSAGE = 'You’re offline. Check your internet connection and try again.';
 
 const STATUS_MESSAGES = {
   400: 'The request could not be processed.',
@@ -15,8 +18,10 @@ const STATUS_MESSAGES = {
   413: 'That file is too large.',
   422: 'Please correct the highlighted fields.',
   429: 'Too many requests. Please slow down and try again.',
-  500: DEFAULT_MESSAGE,
-  503: 'The service is temporarily unavailable.',
+  500: 'Something went wrong on our side. Please try again in a moment.',
+  502: 'Something went wrong on our side. Please try again in a moment.',
+  503: `${APP_NAME} is being updated. Please try again in a few minutes.`,
+  504: 'The server took too long to answer. Please try again.',
 };
 
 export function parseApiError(error) {
@@ -28,14 +33,23 @@ export function parseApiError(error) {
     return error;
   }
 
-  // Network failure / request never reached the server.
+  // Network failure / request never reached the server - three different
+  // stories for the person: their internet is down, it took too long, or
+  // our server isn't answering (utils/errorKind.js picks the view).
   if (error?.isNetworkError || (!error?.response && error?.request)) {
+    const isTimeout = error?.code === 'ECONNABORTED' || error?.code === 'ETIMEDOUT';
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
     return {
       status: 0,
-      message: 'Cannot reach the server. Check your connection and try again.',
+      message: offline
+        ? OFFLINE_MESSAGE
+        : isTimeout
+          ? 'The server took too long to answer. Please try again.'
+          : 'We can’t reach the server right now. Please try again in a moment.',
       errors: [],
       fieldErrors: {},
       isNetworkError: true,
+      isTimeout,
       isValidationError: false,
     };
   }
@@ -51,9 +65,15 @@ export function parseApiError(error) {
     }
   }
 
+  // A 5xx body is an internal message ("Something went wrong", or a stack
+  // outside production) - never what a person should read.
+  const serverFault = status >= 500;
+
   return {
     status,
-    message: body.message || STATUS_MESSAGES[status] || error?.message || DEFAULT_MESSAGE,
+    message: serverFault
+      ? STATUS_MESSAGES[status] || DEFAULT_MESSAGE
+      : body.message || STATUS_MESSAGES[status] || error?.message || DEFAULT_MESSAGE,
     errors,
     fieldErrors,
     isNetworkError: false,

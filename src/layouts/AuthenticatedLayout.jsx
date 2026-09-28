@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { LuPanelLeft } from 'react-icons/lu';
 import { Toast } from '../components/common';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
@@ -8,6 +8,7 @@ import { useSyncUserLocale } from '../hooks/useSyncUserLocale';
 import NotificationBell from '../modules/notifications/components/NotificationBell';
 import AppSidebar from './AppSidebar';
 import { MobileTabBar, MobileTopBar } from './MobileChrome';
+import AppErrorBoundary from '../components/status/AppErrorBoundary';
 
 const COMPACT_BREAKPOINT = 1024;
 
@@ -49,6 +50,7 @@ export function AuthenticatedLayout({
   // the tab bar too - the same split the K-5 shell (KidLayout) uses.
   const isCompact = useIsMobile(COMPACT_BREAKPOINT);
   const phoneShell = isCompact && mobileTabs?.length > 0;
+  const { pathname } = useLocation();
 
   // Every date/currency formatted anywhere in the app (utils/date.js,
   // utils/format.js) reads the active timezone/locale rather than the
@@ -99,7 +101,11 @@ export function AuthenticatedLayout({
           same gap and reading width and a new page cannot forget it.
         */}
         <main className={`ui-shell__main min-w-0 flex-1 overflow-y-auto${phoneShell ? ' ui-shell__main--phone' : ''}`}>
-          {children ?? <Outlet />}
+          {/* A page that throws shows "This page ran into a problem" here, with
+              the navigation still working; moving to another page clears it. */}
+          <AppErrorBoundary inShell resetKey={pathname}>
+            {children ?? <Outlet />}
+          </AppErrorBoundary>
         </main>
 
         {phoneShell && <MobileTabBar items={mobileTabs} />}

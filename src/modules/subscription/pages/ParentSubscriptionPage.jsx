@@ -15,6 +15,7 @@ import {
   ConfirmationModal,
   Textarea,
   EmptyState,
+  ErrorState,
   Checkbox,
   Toast,
 } from '../../../components/common';
@@ -330,7 +331,9 @@ export default function ParentSubscriptionPage() {
         }
       />
 
-      {overview.error && <Alert variant="error">{getErrorMessage(overview.error)}</Alert>}
+      {overview.error && (
+        <ErrorState variant="compact" title="We couldn't load your subscription" error={overview.error} onRetry={load} />
+      )}
 
       {lockMessage(access, latest) && (
         <Alert variant="warning" className="ui-field">

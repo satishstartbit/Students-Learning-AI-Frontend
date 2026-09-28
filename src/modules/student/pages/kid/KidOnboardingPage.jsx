@@ -222,7 +222,7 @@ export default function KidOnboardingPage() {
       <div className="mx-auto max-w-3xl px-4 pb-10 pt-6 sm:px-8">
         {onboarding.isLoading && !onboarding.data && <KidSkeleton className="h-80" />}
         {onboarding.error && !onboarding.data && (
-          <KidOops message="We couldn't load your questions." onRetry={() => onboarding.run().catch(() => {})} />
+          <KidOops message="We couldn't load your questions." onRetry={() => onboarding.run().catch(() => {})} error={onboarding.error} />
         )}
         {onboarding.data && <KidOnboardingFlow onboarding={onboarding.data} onSaved={handleSaved} />}
       </div>

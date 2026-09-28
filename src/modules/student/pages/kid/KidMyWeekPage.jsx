@@ -64,7 +64,7 @@ export default function KidMyWeekPage() {
 
         {error ? (
           <div className="mt-6">
-            <KidOops onRetry={reload} />
+            <KidOops onRetry={reload} error={error} />
           </div>
         ) : (
           <div className="mt-6 grid gap-4 sm:grid-cols-5">

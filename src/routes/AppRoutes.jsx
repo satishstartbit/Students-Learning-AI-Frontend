@@ -5,7 +5,8 @@ import RoleRoutes from './RoleRoutes';
 import RoutePlaceholder from './RoutePlaceholder';
 import { OPEN_ROUTES, PUBLIC_ROUTES, ROLE_ROUTE_GROUPS } from './routeConfig';
 import { useAuth } from '../hooks/useAuth';
-import { EmptyState, RoleGuard } from '../components/common';
+import { RoleGuard } from '../components/common';
+import NotFoundPage from '../pages/status/NotFoundPage';
 
 /**
  * Builds the router from routeConfig.
@@ -111,21 +112,14 @@ export function AppRoutes() {
                 element={renderRouteElement(route)}
               />
             ))}
+            {/* An unknown address inside the area: the 404, inside the role's own layout. */}
+            <Route path="*" element={<NotFoundPage inShell />} />
           </Route>
         ))}
       </Route>
 
       {/* ------------------------------------------------------- not found */}
-      <Route
-        path="*"
-        element={
-          <EmptyState
-            icon="🧭"
-            title="Page not found"
-            description="The page you were looking for does not exist."
-          />
-        }
-      />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

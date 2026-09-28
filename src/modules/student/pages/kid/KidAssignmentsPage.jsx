@@ -136,7 +136,7 @@ export default function KidAssignmentsPage() {
             ))}
           </ul>
         ) : tasks.error ? (
-          <KidOops message="We couldn't load your tasks." onRetry={tasks.reload} />
+          <KidOops message="We couldn't load your tasks." onRetry={tasks.reload} error={tasks.error} />
         ) : items.length === 0 ? (
           <KidEmpty icon={activeTab.emptyIcon} title={activeTab.emptyTitle}>
             {activeTab.emptyText}

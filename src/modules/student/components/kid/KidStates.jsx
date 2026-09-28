@@ -1,5 +1,7 @@
 import { LuRotateCcw } from 'react-icons/lu';
+import { useOnlineStatus, useRetryWhenReconnected } from '../../../../hooks/useConnection';
 import { cn } from '../../../../lib/utils';
+import { classifyError, ERROR_KINDS } from '../../../../utils/errorKind';
 import { KidButton } from './KidButton';
 import { MoodFace } from './MoodFace';
 
@@ -8,8 +10,24 @@ export function KidSkeleton({ className }) {
   return <div aria-hidden="true" className={cn('animate-pulse rounded-3xl bg-kid-paper-deep/80', className)} />;
 }
 
-/** Something didn't load. Gentle wording, and one clear way to try again. */
-export function KidOops({ message = "We couldn't load this right now.", onRetry, className }) {
+/**
+ * Something didn't load. Gentle wording, and one clear way to try again.
+ * With no internet (or `error` saying our server is down) it says so in
+ * kid words and loads again by itself once the connection is back.
+ */
+export function KidOops({ message = "We couldn't load this right now.", onRetry, className, error }) {
+  const online = useOnlineStatus();
+  const kind = classifyError(error, { online });
+  const waiting = kind === ERROR_KINDS.OFFLINE || kind === ERROR_KINDS.UNREACHABLE;
+  useRetryWhenReconnected(waiting, onRetry);
+
+  const words =
+    kind === ERROR_KINDS.OFFLINE
+      ? { connection: true, title: 'No internet right now', text: 'Ask a grown-up to check the Wi-Fi. This will come back by itself when it works again.' }
+      : kind === ERROR_KINDS.UNREACHABLE || kind === ERROR_KINDS.SERVER || kind === ERROR_KINDS.MAINTENANCE || kind === ERROR_KINDS.TIMEOUT
+        ? { connection: true, title: 'Our side needs a minute', text: 'It isn’t anything you did. Let’s try again in a little while.' }
+        : { title: 'Oops!', text: message };
+
   return (
     <div
       role="alert"
@@ -18,9 +36,10 @@ export function KidOops({ message = "We couldn't load this right now.", onRetry,
         className
       )}
     >
-      <MoodFace mood="tense" className="size-14" />
-      <p className="mt-1 font-kid-display text-2xl font-semibold text-kid-ink">Oops!</p>
-      <p className="text-lg text-kid-ink-soft">{message}</p>
+      {/* A sleepy face for "wait for the connection", not a cross one. */}
+      <MoodFace mood={words.connection ? 'tired' : 'tense'} className="size-14" />
+      <p className="mt-1 font-kid-display text-2xl font-semibold text-kid-ink">{words.title}</p>
+      <p className="text-lg text-kid-ink-soft">{words.text}</p>
       {onRetry && (
         <KidButton variant="soft" size="md" className="mt-3" onClick={onRetry}>
           <LuRotateCcw className="size-5" aria-hidden="true" />

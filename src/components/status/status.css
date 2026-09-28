@@ -1,0 +1,346 @@
+/* =====================================================================
+   Status views: offline, can't reach the server, server error, 404, a page
+   that crashed (StatusView.jsx, NetworkStatusBanner.jsx, pages/status/*).
+   Prefix: st-. Colours are theme tokens only, so every accent theme, dark
+   mode and the K-5 shell draw them in their own colours.
+   ===================================================================== */
+
+.st-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 20px;
+  text-align: center;
+  font-family: var(--font-family-base);
+  color: var(--color-text-secondary);
+}
+.st-view--compact {
+  gap: 8px;
+  padding: 18px 12px;
+}
+/* Inside a role's shell (a 404 under /teacher, a crashed page): centred in
+   the space the page would have used. */
+.st-view--shell {
+  justify-content: center;
+  min-height: min(70vh, 640px);
+}
+.st-view--page {
+  /* The whole screen is ours here (no portal/student theme on <body>), so
+     it brings the portal's faces itself - Nunito text, Poppins headings. */
+  --font-family-base: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-heading: 'Poppins', 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 88px 20px 48px;
+  background:
+    radial-gradient(60% 45% at 50% 38%, var(--accent-soft) 0%, transparent 70%),
+    var(--color-bg-canvas);
+}
+
+/* --- Picture ----------------------------------------------------------- */
+.st-ill {
+  width: 136px;
+  height: auto;
+  margin-bottom: 4px;
+  animation: st-float 4.5s ease-in-out infinite;
+}
+.st-view--compact .st-ill {
+  width: 92px;
+}
+.st-view--page .st-ill,
+.st-view--shell .st-ill {
+  width: min(210px, 56vw);
+}
+@keyframes st-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .st-ill {
+    animation: none;
+  }
+}
+[data-calm] .st-ill {
+  animation: none;
+}
+
+.st-ill__disc {
+  fill: var(--accent-soft);
+}
+.st-ill__panel {
+  fill: var(--color-bg-surface);
+  stroke: var(--accent-base);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.st-ill__line {
+  fill: none;
+  stroke: var(--accent-base);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.st-ill__line--thin {
+  stroke-width: 3;
+}
+.st-ill__line--soft {
+  opacity: 0.4;
+}
+.st-ill__dot {
+  fill: var(--accent-base);
+}
+.st-ill__dot--warn {
+  fill: var(--color-warning-fg);
+}
+.st-ill__slash,
+.st-ill__crack {
+  fill: none;
+  stroke: var(--color-danger-fg);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.st-ill__slash {
+  stroke-width: 6;
+}
+.st-ill__crack {
+  stroke-width: 3.5;
+}
+.st-ill__needle {
+  fill: var(--color-danger-fg);
+}
+.st-ill__mark {
+  fill: var(--accent-base);
+  font-family: var(--font-family-heading, var(--font-family-base));
+  font-size: 30px;
+  font-weight: 700;
+}
+
+/* --- Words ------------------------------------------------------------- */
+.st-eyebrow {
+  margin: 0;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: var(--accent-soft);
+  color: var(--color-text-primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.st-title {
+  margin: 0;
+  font-family: var(--font-family-heading, var(--font-family-base));
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--color-text-primary);
+}
+.st-view--compact .st-title {
+  font-size: 16px;
+}
+.st-view--page .st-title,
+.st-view--shell .st-title {
+  font-size: clamp(24px, 3.4vw, 34px);
+  letter-spacing: -0.01em;
+}
+.st-desc {
+  max-width: 46ch;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.st-view--page .st-desc,
+.st-view--shell .st-desc {
+  font-size: 15px;
+}
+
+.st-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+@media (max-width: 640px) {
+  .st-view--page .st-actions,
+  .st-view--shell .st-actions {
+    flex-direction: column;
+    align-self: stretch;
+    max-width: 360px;
+    margin-inline: auto;
+    width: 100%;
+  }
+  .st-view--page .st-actions > *,
+  .st-view--shell .st-actions > * {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* The address that wasn't found, on the 404 page. */
+.st-path {
+  max-width: 100%;
+  margin: 2px 0 0;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--color-bg-surface-sunken);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* Technical detail, development builds only. */
+.st-details {
+  max-width: min(640px, 100%);
+  margin-top: 10px;
+  text-align: left;
+  font-size: 12px;
+}
+.st-details pre {
+  max-height: 200px;
+  overflow: auto;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--color-bg-surface-sunken);
+  white-space: pre-wrap;
+}
+
+/* --- Brand on the full-screen pages ----------------------------------- */
+.st-brand {
+  position: absolute;
+  top: 22px;
+  left: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text-primary);
+  font-family: var(--font-family-heading, var(--font-family-base));
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.st-brand__mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent-base);
+  color: var(--accent-on);
+}
+.st-brand__mark svg {
+  fill: currentColor;
+}
+
+/* --- Connection banner (NetworkStatusBanner.jsx) ----------------------- */
+.st-banner {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: var(--z-toast, 1100);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  padding: 10px 12px 10px 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-bg-surface);
+  box-shadow: var(--elevation-3);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-size: 13px;
+  transform: translateX(-50%);
+  animation: st-banner-in 0.2s ease-out;
+}
+.st-banner[data-tone='offline'] {
+  border-color: var(--color-danger-border, var(--color-border-default));
+}
+.st-banner[data-tone='back'] {
+  border-color: var(--color-success-border, var(--color-border-default));
+}
+.st-banner__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-fg);
+  font-size: 17px;
+}
+.st-banner[data-tone='unreachable'] .st-banner__icon {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-fg);
+}
+.st-banner[data-tone='back'] .st-banner__icon {
+  background: var(--color-success-bg);
+  color: var(--color-success-fg);
+}
+.st-banner__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.st-banner__title {
+  font-weight: 700;
+}
+.st-banner__sub {
+  color: var(--color-text-secondary);
+}
+.st-banner__action {
+  flex: none;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 9999px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.st-banner__action:hover:not(:disabled) {
+  background: var(--color-bg-surface-sunken);
+}
+.st-banner__action:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+@keyframes st-banner-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .st-banner {
+    animation: none;
+  }
+}
+/* Phones and tablets: sit above the tab bar, not over it. */
+@media (max-width: 1023px) {
+  body:has(.am-tabbar) .st-banner,
+  body:has(nav.kid-ui) .st-banner {
+    bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+}
+@media (max-width: 480px) {
+  .st-banner {
+    width: calc(100vw - 24px);
+  }
+}

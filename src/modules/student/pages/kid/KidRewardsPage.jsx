@@ -184,7 +184,7 @@ export default function KidRewardsPage() {
         {/* Progress */}
         <BlurFade delay={0.05}>
           {rewards.error ? (
-            <KidOops message="We couldn't load your rewards right now." onRetry={rewards.reload} />
+            <KidOops message="We couldn't load your rewards right now." onRetry={rewards.reload} error={rewards.error} />
           ) : rewards.isLoading ? (
             <KidSkeleton className="h-36" />
           ) : (

@@ -1,14 +1,40 @@
-.bb-steering-field { height: 300px; touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair; background: radial-gradient(ellipse at 85% 5%, #424276, #2b2248 80%); }
-.bb-steering-field canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.bb-steering-hub { position: absolute; left: 0; top: 0; z-index: 2; display: grid; place-items: center; width: 56px; height: 56px; padding: 0; border: 0; border-radius: 50%; background: #ff879b; color: #fff; box-shadow: 0 0 0 8px #ff8da43b, 0 0 0 15px #ff8da422; touch-action: none; cursor: grab; transition: none; will-change: transform; }
-.bb-steering-game[data-phase='playing'] .bb-steering-hub { cursor: grabbing; }
-.bb-steering-hub > span { display: grid; place-items: center; width: 27px; height: 27px; border: 3px solid #fff7f5; border-radius: 50%; pointer-events: none; }
-.bb-steering-hub i { width: 14px; height: 14px; border: 2px solid #fff7f5; border-radius: 50%; }
-.bb-page .bb-steering-hub:focus-visible { outline: 3px solid #fff5be; outline-offset: 17px; }
-.bb-steering-game .bb-game-rules { min-height: 88px; }
-.bb-steering-game .bb-tracking-feedback { min-height: 88px; }
-.bb-steering-game .bb-stat strong { font-size: clamp(.95rem, 2vw, 1.3rem); }
-
-.bb-steering-game[data-phase="failed"] .bb-steering-hub { background: #e45466; cursor: default; }
-.bb-steering-field .bb-tracking-paused { white-space: nowrap; font-size: 12px; }
-.bb-steering-control-hint { flex: 1 1 180px; align-self: center; font-size: .8rem; line-height: 1.6; color: var(--bb-muted); }
+/* Game illustration colours and proportions follow the supplied recording. */
+.bb-video-follow { --follow-ink: #111b50; --follow-muted: #8496bb; --follow-soft: #f7f8fb; --follow-coral: #ff656b; --follow-teal: #49c9c2; }
+[data-theme='dark'] .bb-video-follow { --follow-ink: var(--bb-text); --follow-muted: var(--bb-muted); --follow-soft: var(--bb-soft); }
+.bb-follow-heading h2 { margin: 0; color: var(--follow-ink); font-size: 16px; font-weight: 700; }
+.bb-follow-heading p { margin: 5px 0 0; color: var(--follow-muted); font-size: 12px; }
+.bb-follow-paces { display: flex; gap: 8px; margin: 16px 0; }
+.bb-follow-pace { min-height: 34px; padding: 5px 13px; border: 2px solid var(--follow-teal); border-radius: 999px; background: transparent; color: var(--follow-ink); font-size: 12px; }
+.bb-follow-pace--medium { border-color: #eda828; }
+.bb-follow-pace--fast { border-color: var(--follow-coral); }
+.bb-follow-pace[aria-pressed='true'] { background: var(--follow-teal); border-color: var(--follow-teal); color: #fff; font-weight: 700; }
+.bb-follow-pace--medium[aria-pressed='true'] { background: #eda828; border-color: #eda828; color: #382700; }
+.bb-follow-pace--fast[aria-pressed='true'] { background: var(--follow-coral); border-color: var(--follow-coral); color: #32131c; }
+.bb-follow-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.bb-follow-stats > div { padding: 10px 4px; border-radius: 12px; text-align: center; background: var(--follow-soft); }
+.bb-follow-stats strong { display: block; color: var(--follow-ink); font-size: 20px; line-height: 1.25; }
+.bb-follow-stats span { display: block; margin-top: 3px; color: var(--follow-muted); font-size: 11px; text-transform: uppercase; }
+.bb-follow-progress { height: 7px; margin: 13px 0; border-radius: 20px; overflow: hidden; background: var(--follow-soft); }
+.bb-follow-progress > span { display: block; height: 100%; background: var(--follow-teal); transform-origin: left; }
+.bb-follow-field { position: relative; isolation: isolate; height: 290px; overflow: hidden; border-radius: 15px; background: #211d4e; touch-action: manipulation; user-select: none; contain: layout paint; }
+.bb-follow-overlay { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: #211d4e; color: #e0dffc; }
+.bb-follow-eye { font-size: 30px; line-height: 1; }
+.bb-follow-overlay p { margin: 19px 0 12px; font-size: 12px; line-height: 1.5; }
+.bb-follow-start { border: 0; border-radius: 999px; min-height: 36px; padding: 8px 22px; color: #fff; background: var(--follow-coral); font-size: 13px; font-weight: 700; }
+.bb-video-follow .bb-follow-dot { position: absolute; left: 0; top: 0; width: 52px; height: 52px; border: 0; padding: 0; border-radius: 50%; background: var(--follow-coral); color: #fff; box-shadow: 0 0 0 8px #ff656b30; cursor: pointer; transition: none; animation: none; will-change: transform; touch-action: manipulation; }
+.bb-follow-dot span { font-size: 25px; pointer-events: none; }
+.bb-follow-dot[data-glowing='true'] { background: #ffda66; box-shadow: 0 0 0 8px #ffda6655, 0 0 23px #ffda6680; }
+.bb-follow-dot:disabled { visibility: hidden; }
+.bb-follow-tools { position: absolute; right: 10px; top: 10px; z-index: 3; display: flex; gap: 6px; }
+.bb-follow-tools button { border: 1px solid #ffffff40; border-radius: 999px; color: #f1efff; background: #211d4e; padding: 6px 12px; min-height: 32px; font-size: 11px; }
+.bb-follow-cue { position: absolute; bottom: 12px; left: 8px; right: 8px; min-height: 20px; text-align: center; pointer-events: none; font-size: 12px; color: #e0dffc; }
+.bb-follow-tip { margin: 14px 0 0; color: var(--follow-muted); font-size: 11px; line-height: 1.5; text-align: center; }
+.bb-follow-calm { font-size: 12px; line-height: 1.5; color: var(--bb-muted); margin: 12px 0 0; }
+.bb-page--finger .bb-panel { padding: 16px; border-radius: 24px; min-height: 0; background: #fff; border-color: #edf1f8; }
+[data-theme='dark'] .bb-page--finger .bb-panel { background: var(--bb-surface); border-color: var(--bb-border); }
+@media (min-width: 901px) { .bb-page--finger .bb-layout { grid-template-columns: minmax(0, 520px) minmax(210px, 280px); } }
+.bb-page--finger .bb-game-switch small { display: none; }
+.bb-page--finger .bb-game-switch button { min-height: 48px; flex-direction: row; gap: 5px; padding: 10px 3px; }
+.bb-page--finger .bb-game-switch__icon { font-size: .95rem; }
+.bb-page--finger .bb-game-switch button[aria-pressed='true'] { background: transparent; border-bottom-color: #ff656b; }
+@media (max-width: 420px) { .bb-follow-pace { min-height: 40px; padding-inline: 10px; } }

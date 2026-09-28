@@ -1,67 +1,41 @@
-import assert from 'node:assert/strict';
 import test from 'node:test';
-import { advanceFollow, corridorAt, createFollowState, followSpeed, insideCourse, insideHub, moveFollow, pauseFollow, pressFollow, resetFollow, HOLD_MS } from './followGameLogic.js';
-const bounds = { width: 640, height: 300 };
-function start(options) { let s = createFollowState(options); s = pressFollow(s,s,bounds); for(let ms=0;ms<HOLD_MS;ms+=40) s=advanceFollow(s,40,bounds); return s; }
-function earned() { let s=start();for(let i=0;i<100;i++)s=advanceFollow(s,16,bounds);return s; }
-test('countdown requires a continuous hold and never scrolls or scores early',()=>{
- let s=createFollowState();s=pressFollow(s,s,bounds);assert.equal(s.phase,'countdown');
- for(let i=0;i<74;i++)s=advanceFollow(s,40,bounds);
- assert.equal(s.phase,'countdown');assert.equal(s.score,0);assert.equal(s.distance,0);
- s=pauseFollow(s);assert.equal(s.holdMs,0);s=pressFollow(s,s,bounds);assert.equal(s.holdMs,0);
- for(let i=0;i<75;i++)s=advanceFollow(s,40,bounds);assert.equal(s.phase,'playing');
+import assert from 'node:assert/strict';
+import { advanceFollow, changeFollowPace, createFollowState, FOLLOW_PACES, FOLLOW_ROUND_MS, followCue, followPosition, pauseFollow, resetFollow, resumeFollow, startFollow, tapFollow } from './followGameLogic.js';
+function advance(s,ms){for(let t=0;t<ms;t+=20)s=advanceFollow(s,Math.min(20,ms-t));return s;}
+test('reference starts ready at zero and Let’s go starts without a hold countdown',()=>{
+ const s=createFollowState();assert.equal(s.phase,'ready');assert.equal(s.taps,0);assert.equal(s.streak,0);assert.equal(s.rounds,0);assert.equal(s.pace,'slow');assert.equal(startFollow(s).phase,'playing');
 });
-test('moving away while preparing pauses instead of silently starting',()=>{
- const s=createFollowState();assert.equal(moveFollow(pressFollow(s,s,bounds),{x:.5,y:.5},bounds).phase,'paused');
-});
-test('outside-circle presses end the run at zero without teleporting',()=>{
- const s=earned();assert.ok(s.score>0);
- assert.equal(insideHub(s,{x:s.x+25/bounds.width,y:s.y+25/bounds.height},bounds),false);
- const failed=pressFollow(pauseFollow(s),{x:.8,y:.5},bounds);
- assert.equal(failed.score,0);assert.equal(failed.phase,'failed');assert.equal(failed.distance,s.distance);
- assert.equal(failed.x,s.x);assert.equal(pressFollow(failed,failed,bounds),failed);
- assert.equal(resetFollow(failed).phase,'paused');
-});
-test('release freezes position, distance and points; countdown resume preserves them',()=>{
- const s=earned(), paused=pauseFollow(s);
- assert.equal(advanceFollow(paused,5000,bounds),paused);
- const resumed=pressFollow(paused,paused,bounds);
- assert.equal(resumed.phase,'countdown');assert.equal(resumed.distance,s.distance);assert.equal(resumed.score,s.score);
-});
-test('absolute steering and swept wall collision retain the failure position',()=>{
- const s=moveFollow(earned(),{x:.4,y:.52},bounds);assert.equal(s.x,.4);assert.equal(s.y,.52);
- const failed=moveFollow(s,{x:.4,y:.01},bounds);
- assert.equal(failed.reason,'wall');assert.equal(failed.score,0);assert.equal(failed.x,.4);assert.ok(failed.y>.01 && failed.y<.52);
- assert.equal(advanceFollow(failed,40,bounds),failed);
- const outside=moveFollow(s,{x:-1,y:.5},bounds);assert.equal(outside.phase,'paused');assert.equal(outside.score,s.score);
-});
-test('circle clearance does not use invisible square corners',()=>{
- const b={width:320,height:300}; let verified=0;
- for(let d=0;d<2;d+=.1)for(let y=.25;y<.75;y+=.01){
-  const s={...createFollowState(),distance:d,x:.4,y};
-  const exact=Array.from({length:720},(_,i)=>{const a=i*Math.PI/360;const x=s.x+28*Math.cos(a)/b.width;const py=s.y+28*Math.sin(a)/b.height;const c=corridorAt(d+x);return Math.abs(py-c.centre)<c.half-.0001;}).every(Boolean);
-  if(exact){assert.equal(insideCourse(s,s,b),true);verified++;}
+test('all paces have continuous bounded paths across rounds and cycle boundaries',()=>{
+ for(const pace of Object.keys(FOLLOW_PACES))for(const width of [260,488]){
+  let previous=followPosition(createFollowState({pace}),width,290);
+  for(let ms=16;ms<61000;ms+=16){const p=followPosition({...createFollowState({pace}),elapsedMs:ms},width,290);assert.ok(p.x>=44&&p.x<=width-44&&p.y>=72&&p.y<=218);assert.ok(Math.hypot(p.x-previous.x,p.y-previous.y)<5);previous=p;}
  }
- assert.ok(verified>100);
 });
-test('long frames are bounded and stationary play eventually hits a moving wall',()=>{
- assert.deepEqual(advanceFollow(start(),5000,bounds),advanceFollow(start(),40,bounds));
- let s=start();for(let i=0;i<5000&&s.phase==='playing';i++)s=advanceFollow(s,40,bounds);
- assert.equal(s.phase,'failed');assert.equal(s.reason,'wall');assert.ok(s.distance>0);
+test('only a glowing hit scores and each glow can score once',()=>{
+ let s=startFollow(createFollowState());s=tapFollow(s,true);assert.equal(s.taps,0);
+ s=advance(s,1300);assert.equal(followCue(s).glowing,true);s=tapFollow(s,true);assert.equal(s.taps,1);assert.equal(s.streak,1);assert.equal(tapFollow(s,true),s);
+ s=advance(s,4000);s=tapFollow(s,true);assert.equal(s.taps,2);assert.equal(s.streak,2);
 });
-test('endless course remains playable beyond 300 on phone and desktop in both bands',()=>{
- for(const isJunior of [false,true])for(const width of [260,640]){
-  const b={width,height:300};let s=start({isJunior});
-  for(let i=0;i<3500;i++){
-   s=moveFollow(s,{x:s.x,y:corridorAt(s.distance+s.x,isJunior,s.seed).centre},b);
-   s=advanceFollow(s,40,b);assert.equal(s.phase,'playing');
-  }
-  assert.ok(s.score>1000);
- }
- assert.ok(followSpeed(5)>followSpeed(0));assert.ok(followSpeed(0,true)<followSpeed(0));
+test('outside-circle taps zero points without teleporting or restarting the clock',()=>{
+ let s=tapFollow(advance(startFollow(createFollowState()),1300),true);const before=followPosition(s,488,290);const time=s.elapsedMs;
+ s=tapFollow(s,false);assert.equal(s.taps,0);assert.equal(s.streak,0);assert.equal(s.elapsedMs,time);assert.deepEqual(followPosition(s,488,290),before);assert.equal(tapFollow(s,true).taps,0);
 });
-test('calm course is stationary and can be completed without timed points',()=>{
- let s=start({calm:true});assert.equal(advanceFollow(s,1000,bounds),s);
- for(let x=.18;x<.96 && s.phase==='playing';x+=.005)s=moveFollow(s,{x,y:corridorAt(x).centre},bounds);
- assert.equal(s.phase,'complete');assert.ok(s.score>0);assert.equal(s.distance,0);
+test('missed glow clears streak but retains earlier successful taps',()=>{
+ let s=tapFollow(advance(startFollow(createFollowState()),1300),true);s=advance(s,5100);assert.equal(s.taps,1);assert.equal(s.streak,0);
+});
+test('pause freezes position, glow and round time; resume keeps progress',()=>{
+ let s=advance(startFollow(createFollowState()),1400);s=pauseFollow(s);assert.equal(advanceFollow(s,10000),s);assert.equal(tapFollow(s,true),s);const resumed=resumeFollow(s);assert.equal(resumed.elapsedMs,1400);assert.equal(followCue(resumed).glowing,true);
+});
+test('three rounds complete a session and changing speed clears progress',()=>{
+ let s=advance(startFollow(createFollowState()),FOLLOW_ROUND_MS*3);assert.equal(s.phase,'complete');assert.equal(s.rounds,3);assert.equal(advanceFollow(s,20),s);
+ s=changeFollowPace(s,'fast');assert.equal(s.pace,'fast');assert.equal(s.phase,'ready');assert.equal(s.rounds,0);assert.equal(resetFollow(s).pace,'fast');
+});
+test('calm play stays still, uses manual rounds, and works without a timer',()=>{
+ let s=startFollow(createFollowState({calm:true}));assert.equal(advanceFollow(s,10000),s);
+ const p=followPosition(s,488,290);for(let i=0;i<15;i++)s=tapFollow(s,true);
+ assert.equal(s.phase,'complete');assert.equal(s.rounds,3);assert.equal(s.taps,15);assert.deepEqual(followPosition(s,488,290),p);
+});
+test('stalled frames cannot jump the target; younger students get a longer cue',()=>{
+ const s=startFollow(createFollowState());assert.deepEqual(advanceFollow(s,5000),advanceFollow(s,40));
+ assert.equal(followCue(advance(s,2500)).glowing,false);assert.equal(followCue(advance(startFollow(createFollowState({isJunior:true})),2500)).glowing,true);
 });

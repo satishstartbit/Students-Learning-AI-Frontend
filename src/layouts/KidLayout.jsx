@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { MotionConfig } from 'motion/react';
 import '@fontsource-variable/fredoka';
 import '@fontsource/andika/400.css';
@@ -12,6 +12,7 @@ import { useSyncUserLocale } from '../hooks/useSyncUserLocale';
 import { KidPreferencesContext, useCalmPreference } from '../modules/student/hooks/useKidPreferences';
 import { StudentSettingsProvider } from '../modules/student/components/StudentSettingsProvider';
 import { KidSidebar, KidTabBar, KidTopBar } from '../modules/student/components/kid/KidChrome';
+import AppErrorBoundary from '../components/status/AppErrorBoundary';
 
 /**
  * The K-5 student shell - "My Learning Space".
@@ -28,6 +29,7 @@ import { KidSidebar, KidTabBar, KidTopBar } from '../modules/student/components/
  */
 export function KidLayout({ children }) {
   const { user } = useAuth();
+  const { pathname } = useLocation();
   useSyncUserLocale(user);
 
   const [calm, setCalm] = useCalmPreference(user?.id);
@@ -55,7 +57,9 @@ export function KidLayout({ children }) {
                 id="kid-main"
                 className="min-w-0 flex-1 overflow-y-auto p-4 pb-28 sm:p-6 sm:pb-28 lg:p-8 has-[[data-kid-page]]:p-0 has-[[data-kid-page]]:pb-24 lg:has-[[data-kid-page]]:pb-0"
               >
-                {children ?? <Outlet />}
+                <AppErrorBoundary inShell resetKey={pathname}>
+                  {children ?? <Outlet />}
+                </AppErrorBoundary>
               </main>
             </div>
 

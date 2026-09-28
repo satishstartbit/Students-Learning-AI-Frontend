@@ -1,93 +1,60 @@
-export const HUB_RADIUS = 28;
-export const HOLD_MS = 3000;
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+export const FOLLOW_ROUND_MS = 20000;
+export const FOLLOW_ROUNDS = 3;
+export const FOLLOW_RADIUS = 26;
+export const FOLLOW_PACES = {
+  slow: { label: 'Slow', icon: '🐢', cycleMs: 11000, glowEveryMs: 4000 },
+  medium: { label: 'Medium', icon: '🌪️', cycleMs: 8000, glowEveryMs: 3400 },
+  fast: { label: 'Fast', icon: '🚀', cycleMs: 5500, glowEveryMs: 2800 },
+};
 
-// One continuous world shared by rendering and collisions. Frequency has a ceiling
-// so an endless run never generates an impossibly tight corridor on a phone.
-export function corridorAt(worldX, isJunior = false, seed = 0) {
-  const ramp = clamp((worldX - .25) / .9, 0, 1);
-  const turn = 2.8 * worldX + .18 * worldX * Math.min(worldX, 4);
-  return {
-    centre: .5 + ramp * (.16 * Math.sin(turn + seed * .8) + .025 * Math.sin(4 * worldX + seed)),
-    half: (isJunior ? .32 : .29) - Math.min(.025, Math.max(0, worldX - 1) * .006),
-  };
+export function createFollowState({ isJunior = false, calm = false, pace = 'slow' } = {}) {
+  return { phase: 'ready', isJunior, calm, pace, elapsedMs: 0, taps: 0, streak: 0, rounds: 0, claimed: -1, notice: '', noticeUntil: 0 };
 }
 
-export function followSpeed(distance, isJunior = false) {
-  return (isJunior ? .10 : .13) * (1 + Math.min(1, distance * .12));
+export function followPosition(state, width, height) {
+  const angle = state.calm ? 0 : state.elapsedMs / FOLLOW_PACES[state.pace].cycleMs * Math.PI * 2;
+  const margin = FOLLOW_RADIUS + 18;
+  return { x: width / 2 + Math.max(0, width / 2 - margin) * Math.sin(angle), y: height / 2 + Math.max(0, height / 2 - 72) * Math.sin(angle * .5) };
 }
 
-export function createFollowState({ isJunior = false, calm = false, seed = 0 } = {}) {
-  return { phase: 'paused', reason: 'ready', x: .17, y: .5, distance: 0, score: 0, level: 1, isJunior, calm, seed, furthestX: .17, holdMs: 0 };
+export function followCue(state) {
+  if (state.calm) return { window: state.taps, glowing: state.phase === 'playing' };
+  const period = FOLLOW_PACES[state.pace].glowEveryMs;
+  const offset = state.elapsedMs % period;
+  const duration = state.isJunior ? 1500 : 1150;
+  const window = Math.floor(state.elapsedMs / period);
+  return { window, glowing: state.phase === 'playing' && offset >= 1200 && offset < 1200 + duration && state.claimed !== window };
 }
 
-export function insideHub(state, point, bounds) {
-  return Math.hypot((point.x - state.x) * bounds.width, (point.y - state.y) * bounds.height) <= HUB_RADIUS;
+export function startFollow(state) {
+  return state.phase === 'ready' || state.phase === 'complete' ? { ...createFollowState(state), phase: 'playing' } : state;
 }
+export function pauseFollow(state) { return state.phase === 'playing' ? { ...state, phase: 'paused' } : state; }
+export function resumeFollow(state) { return state.phase === 'paused' ? { ...state, phase: 'playing' } : state; }
+export function resetFollow(state) { return createFollowState(state); }
+export function changeFollowPace(state, pace) { return FOLLOW_PACES[pace] ? { ...createFollowState({ ...state, pace }) } : state; }
 
-export function insideCourse(state, point, bounds) {
-  if (bounds.width <= 0 || bounds.height <= 0) return false;
-  const horizontalRadius = HUB_RADIUS / bounds.width;
-  const verticalRadius = HUB_RADIUS / bounds.height;
-  if (point.x < horizontalRadius || point.x > 1 - horizontalRadius || point.y < verticalRadius || point.y > 1 - verticalRadius) return false;
-  // Test the circle's curved footprint, not a square around it. The old full
-  // vertical radius at +/- horizontalRadius caused invisible corner collisions.
-  for (let dx = -HUB_RADIUS; dx <= HUB_RADIUS; dx += 1) {
-    const extent = Math.sqrt(HUB_RADIUS * HUB_RADIUS - dx * dx) / bounds.height;
-    const corridor = corridorAt(state.distance + point.x + dx / bounds.width, state.isJunior, state.seed);
-    if (Math.abs(point.y - corridor.centre) + extent > corridor.half) return false;
-  }
-  return true;
-}
-
-export function resetFollow(state) {
-  return createFollowState({ ...state, seed: state.seed + 1 });
-}
-
-function failFollow(state, reason) {
-  // Keep the scene at the failure location. Only an explicit retry resets it.
-  return { ...state, phase: 'failed', reason, score: 0, holdMs: 0 };
-}
-
-export function pressFollow(state, point, bounds) {
-  if (!insideHub(state, point, bounds)) return failFollow(state, 'outside');
-  if (state.phase === 'complete' || state.phase === 'failed') return state;
-  return { ...state, phase: 'countdown', reason: 'holding', holdMs: 0 };
-}
-
-export function pauseFollow(state, reason = 'released') {
-  return state.phase === 'playing' || state.phase === 'countdown' ? { ...state, phase: 'paused', reason, holdMs: 0 } : state;
-}
-
-export function moveFollow(state, point, bounds) {
-  if (state.phase === 'countdown') return insideHub(state, point, bounds) ? state : pauseFollow(state, 'reposition');
-  if (state.phase !== 'playing') return state;
-  if (point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1) return pauseFollow(state, 'left-board');
-  const pixels = Math.hypot((point.x - state.x) * bounds.width, (point.y - state.y) * bounds.height);
-  const steps = Math.max(1, Math.ceil(pixels / 3));
-  let lastSafe = state;
-  for (let index = 1; index <= steps; index += 1) {
-    const progress = index / steps;
-    const sample = { x: state.x + (point.x - state.x) * progress, y: state.y + (point.y - state.y) * progress };
-    if (!insideCourse(state, sample, bounds)) return failFollow(lastSafe, 'wall');
-    lastSafe = { ...state, ...sample };
-  }
-  const furthestX = Math.max(state.furthestX, point.x);
-  const score = state.calm ? Math.floor((furthestX - .17) * 100) : state.score;
-  const complete = state.calm && point.x >= 1 - (HUB_RADIUS + 16) / bounds.width;
-  return { ...state, x: point.x, y: point.y, furthestX, score, phase: complete ? 'complete' : 'playing', reason: complete ? 'finished' : 'holding' };
-}
-
-export function advanceFollow(state, elapsedMs, bounds) {
-  const elapsed = clamp(elapsedMs, 0, 40);
-  if (state.phase === 'countdown') {
-    const holdMs = Math.min(HOLD_MS, state.holdMs + elapsed);
-    return { ...state, holdMs, phase: holdMs === HOLD_MS ? 'playing' : 'countdown' };
-  }
+export function advanceFollow(state, elapsedMs) {
   if (state.phase !== 'playing' || state.calm) return state;
-  const distance = state.distance + followSpeed(state.distance, state.isJunior) * elapsed / 1000;
-  const next = { ...state, distance };
-  if (!insideCourse(next, next, bounds)) return failFollow(state, 'wall');
-  const score = Math.floor(distance * 100);
-  return { ...next, score, level: Math.floor(score / 50) + 1, reason: 'holding' };
+  const elapsed = Math.min(FOLLOW_ROUND_MS * FOLLOW_ROUNDS, state.elapsedMs + Math.max(0, Math.min(40, elapsedMs)));
+  const period = FOLLOW_PACES[state.pace].glowEveryMs;
+  const glowEnd = 1200 + (state.isJunior ? 1500 : 1150);
+  const oldWindow = Math.floor(state.elapsedMs / period);
+  const missed = state.elapsedMs % period < glowEnd && elapsed >= oldWindow * period + glowEnd && state.claimed !== oldWindow;
+  return { ...state, elapsedMs: elapsed, rounds: Math.floor(elapsed / FOLLOW_ROUND_MS), streak: missed ? 0 : state.streak,
+    phase: elapsed === FOLLOW_ROUND_MS * FOLLOW_ROUNDS ? 'complete' : 'playing',
+    notice: elapsed >= state.noticeUntil ? '' : state.notice };
+}
+
+export function tapFollow(state, inside) {
+  if (state.phase !== 'playing') return state;
+  if (!inside) return { ...state, taps: 0, streak: 0, notice: 'Outside the circle — points reset to 0.', noticeUntil: state.elapsedMs + 1800 };
+  const cue = followCue(state);
+  if (!cue.glowing) return state.claimed === cue.window ? state : { ...state, streak: 0, notice: 'Watch the dot. Tap when it glows!', noticeUntil: state.elapsedMs + 1400 };
+  const taps = state.taps + 1;
+  // Calm play has no moving target or timed cue: five deliberate taps per round.
+  const rounds = state.calm ? Math.floor(taps / 5) : state.rounds;
+  return { ...state, taps, streak: state.streak + 1, claimed: cue.window, rounds,
+    phase: state.calm && rounds === FOLLOW_ROUNDS ? 'complete' : state.phase,
+    notice: 'Nice tap! +1', noticeUntil: state.elapsedMs + 1000 };
 }

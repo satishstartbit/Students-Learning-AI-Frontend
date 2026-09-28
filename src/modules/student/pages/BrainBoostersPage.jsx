@@ -11,13 +11,13 @@ import ExerciseBreak from '../components/brainBoosters/ExerciseBreak';
 import '../components/brainBoosters/brainBoosters.css';
 
 const GAMES = [
-  { id: 'finger', label: 'Finger Follow', icon: '👆', hint: 'Hold & steer', component: FingerFollow },
+  { id: 'finger', label: 'Finger Follow', icon: '👆', hint: 'Follow & tap', component: FingerFollow },
   { id: 'balloon', label: 'Balloon Eyes', icon: '🎈', hint: 'Spot & pop', component: BalloonEyes },
   { id: 'memory', label: 'Memory Games', icon: '🧠', hint: 'Watch & remember', component: MemoryGames },
 ];
 
 const INSTRUCTIONS = {
-  finger: ['Hold the pink circle through the 3-second countdown to start or resume.', 'Drag to steer inside the scrolling corridor. Releasing your mouse or finger pauses the course and keeps your points.', 'Stay inside the path as long as you can. A wall hit or an outside-circle press ends the run with 0 points. Select Try again to restart.'],
+  finger: ['Choose Slow, Medium or Fast, then select Let?s go!', 'Follow the moving dot with your eyes. Tap it once when it glows gold; each successful glow earns one tap point.', 'Complete three 20-second rounds. A missed glow breaks your streak; tapping outside the circle resets taps and streak to 0. Changing speed starts a fresh game.'],
   balloon: ['Start a set of ten balloons.', 'Notice the colour and pop the balloon before it leaves the sky. Calm play has no time limit.', 'Each balloon counts once. Three pops unlock a slightly quicker level.'],
   memory: ['Choose an action pattern, Simon-style colour sequence, or a shopping list.', 'Watch first. When it is your turn, repeat the full sequence in order.', 'Read the practice rules for scoring and retries. Step-by-step playback lets you set the pace.'],
   exercises: ['Choose a short exercise and get comfortable.', 'Follow each gentle prompt at your own pace.', 'Pause or skip a step whenever you need to.'],
@@ -35,7 +35,7 @@ export default function BrainBoostersPage() {
   const instructions = INSTRUCTIONS[section === 'exercises' ? 'exercises' : game];
 
   return (
-    <div className={`bb-page${isJunior ? ' bb-page--junior kid-ui' : ''}`} data-kid-page={isJunior || undefined} data-reduced-motion={reducedMotion || undefined}>
+    <div className={`bb-page${section === 'games' && game === 'finger' ? ' bb-page--finger' : ''}${isJunior ? ' bb-page--junior kid-ui' : ''}`} data-kid-page={isJunior || undefined} data-reduced-motion={reducedMotion || undefined}>
       <div className="bb-page__inner">
         <Link to="/student" className="bb-back"><LuArrowLeft aria-hidden="true" /> Back to my day</Link>
         <header className="bb-hero">
@@ -83,7 +83,7 @@ export default function BrainBoostersPage() {
             <div className="bb-pace">
               <LuSparkles aria-hidden="true" />
               <div><h3>Your pace, your space</h3><p>{isJunior ? 'Start small. There is no rush to get it right.' : 'Longer patterns and a quicker starting pace keep things interesting.'}</p>
-                {reducedMotion && <p>Calm play is on. Courses and targets stay still; you control the pace.</p>}
+                {reducedMotion && <p>Calm play is on. Targets stay still; you control the pace.</p>}
                 <p className="bb-session-note">Scores are just for this session. Changing games starts a new session.</p>
               </div>
             </div>

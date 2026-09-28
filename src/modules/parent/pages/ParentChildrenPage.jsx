@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LuEllipsisVertical, LuPlus } from 'react-icons/lu';
 import {
-  Alert,
   Avatar,
   Badge,
   Button,
   ConfirmationModal,
   Dropdown,
   EmptyState,
+  ErrorState,
   Loader,
   PageHeader,
   StatusBadge,
@@ -237,7 +237,9 @@ export default function ParentChildrenPage() {
 
       {children.isLoading && rows.length === 0 && <Loader message="Loading your children…" />}
 
-      {children.error && <Alert variant="error">{getErrorMessage(children.error)}</Alert>}
+      {children.error && rows.length === 0 && (
+        <ErrorState title="We couldn't load your children" error={children.error} onRetry={() => load().catch(() => {})} />
+      )}
 
       {!children.isLoading && rows.length === 0 && !children.error && (
         <EmptyState

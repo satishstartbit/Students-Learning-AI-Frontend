@@ -303,7 +303,8 @@ export default function MyStudentsPage() {
             caption="My students"
           />
 
-          {pagination.totalPages <= 1 && total > 0 && (
+          {/* Not under an error view: the count would be from before it failed. */}
+          {!list.error && pagination.totalPages <= 1 && total > 0 && (
             <p className="al-footer" role="status">
               Showing {rows.length} of {plural(tabCounts.all ?? total, 'student')}
             </p>

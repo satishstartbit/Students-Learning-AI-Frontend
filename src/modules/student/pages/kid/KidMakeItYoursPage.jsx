@@ -84,7 +84,7 @@ export default function KidMakeItYoursPage() {
     });
 
   if (isLoading && !settings) return <KidSkeleton className="mx-4 my-6 h-96 sm:mx-8" />;
-  if (!settings) return <KidOops className="m-4 sm:m-8" onRetry={reload} message={getErrorMessage(error) || undefined} />;
+  if (!settings) return <KidOops className="m-4 sm:m-8" onRetry={reload} message={getErrorMessage(error) || undefined} error={error} />;
 
   const cardStyle = settings.cardStyle ?? 'taped';
   const accent = settings.accent ?? DEFAULT_ACCENT;

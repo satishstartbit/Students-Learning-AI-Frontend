@@ -41,7 +41,7 @@ export function RequireCheckIn({ children }) {
   if (error) {
     return isJunior ? (
       <div data-kid-page className="kid-ui mx-auto max-w-2xl px-4 py-10">
-        <KidOops message="We couldn't check your check-in." onRetry={refresh} />
+        <KidOops message="We couldn't check your check-in." onRetry={refresh} error={error} />
       </div>
     ) : (
       <ErrorState title="We couldn't load your check-in" error={error} onRetry={refresh} />

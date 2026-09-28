@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Alert, Badge, Button, ButtonGroup, Card, EmptyState, Loader, Modal, PageHeader, Textarea } from '../../../components/common';
+import { Badge, Button, ButtonGroup, Card, EmptyState, ErrorState, Loader, Modal, PageHeader, Textarea } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
 import { formatDate } from '../../../utils/date';
@@ -110,7 +110,7 @@ export default function TeacherInvitationsPage() {
       {list.isLoading && !list.data ? (
         <Loader message="Loading invitations…" />
       ) : list.error && !list.data ? (
-        <Alert variant="error">{getErrorMessage(list.error)}</Alert>
+        <ErrorState title="We couldn't load your invitations" error={list.error} onRetry={reload} />
       ) : items.length === 0 ? (
         <Card>
           <EmptyState

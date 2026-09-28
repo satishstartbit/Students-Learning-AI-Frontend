@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en-CA">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>You're offline</title>
+    <!--
+      Shown by public/sw.js when the site is opened (or reloaded) with no
+      internet - the app itself can't load then, so this page is fully
+      self-contained: no scripts or fonts from the network. It mirrors the
+      in-app offline view (src/components/status/StatusView.jsx) and reloads
+      itself the moment the connection returns.
+
+      The colours below repeat the default theme tokens (theme/variables.css,
+      the Ocean accent in theme/accent.css) because this page can't load the
+      app's stylesheets. Keep them in step if the defaults change.
+    -->
+    <style>
+      :root {
+        --canvas: #fbf9f7;
+        --surface: #ffffff;
+        --text: #2a2521;
+        --text-2: #67605b;
+        --border: #e8e1da;
+        --accent: #0b7285;
+        --accent-hover: #095f70;
+        --accent-soft: #e3f2f6;
+        --danger: #be123c;
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --canvas: #17191c;
+          --surface: #1f2226;
+          --text: #efeae6;
+          --text-2: #aca49d;
+          --border: #33302c;
+          --accent: #0d7f9c;
+          --accent-hover: #09596d;
+          --accent-soft: #123138;
+          --danger: #f5949a;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+        padding: 88px 20px 48px;
+        background: radial-gradient(60% 45% at 50% 38%, var(--accent-soft) 0%, transparent 70%), var(--canvas);
+        color: var(--text-2);
+        font-family: Nunito, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        text-align: center;
+      }
+      .brand {
+        position: absolute;
+        top: 22px;
+        left: 24px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text);
+        font-family: Poppins, Nunito, system-ui, sans-serif;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .brand__mark {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--accent);
+      }
+      main { display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 460px; }
+      svg.ill { width: min(210px, 56vw); height: auto; margin-bottom: 4px; animation: float 4.5s ease-in-out infinite; }
+      @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+      @media (prefers-reduced-motion: reduce) { svg.ill { animation: none; } }
+      .eyebrow {
+        margin: 0;
+        padding: 3px 10px;
+        border-radius: 9999px;
+        background: var(--accent-soft);
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 0;
+        color: var(--text);
+        font-family: Poppins, Nunito, system-ui, sans-serif;
+        font-size: clamp(24px, 5vw, 34px);
+        font-weight: 600;
+        line-height: 1.25;
+      }
+      p.desc { margin: 0; max-width: 46ch; font-size: 15px; line-height: 1.6; }
+      ul.tips { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; }
+      ul.tips li::before { content: '•'; margin-right: 8px; color: var(--accent); }
+      button {
+        margin-top: 10px;
+        min-height: 44px;
+        padding: 0 24px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--accent);
+        color: #fff;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button:hover { background: var(--accent-hover); }
+      button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 2px; }
+      .status { min-height: 1.4em; margin: 4px 0 0; font-size: 13px; }
+      @media (max-width: 640px) { button { width: 100%; max-width: 360px; } }
+    </style>
+  </head>
+  <body>
+    <span class="brand">
+      <span class="brand__mark" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z" /></svg>
+      </span>
+      <span data-app-name>Growing Focus</span>
+    </span>
+
+    <main>
+      <svg class="ill" viewBox="0 0 160 124" aria-hidden="true">
+        <circle cx="80" cy="62" r="56" fill="var(--accent-soft)" />
+        <g fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round">
+          <path d="M42 56a54 54 0 0 1 76 0" opacity="0.4" />
+          <path d="M53 68a38 38 0 0 1 54 0" />
+          <path d="M64 80a22 22 0 0 1 32 0" />
+        </g>
+        <circle cx="80" cy="92" r="5" fill="var(--accent)" />
+        <path d="M50 40l60 62" stroke="var(--danger)" stroke-width="6" stroke-linecap="round" />
+      </svg>
+      <p class="eyebrow">No internet</p>
+      <h1>You’re offline</h1>
+      <p class="desc">We can’t load <span data-app-name>Growing Focus</span> without an internet connection. This page will open by itself as soon as you’re back online.</p>
+      <ul class="tips">
+        <li>Check that Wi-Fi or mobile data is on</li>
+        <li>Move closer to your router, or turn airplane mode off</li>
+      </ul>
+      <button type="button" id="retry">Try again</button>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <script>
+      (function () {
+        // The configured product name (VITE_APP_NAME), saved by src/main.jsx.
+        try {
+          var name = localStorage.getItem('eflp.appName');
+          if (name) document.querySelectorAll('[data-app-name]').forEach(function (el) { el.textContent = name; });
+        } catch (e) { /* storage blocked: keep the default */ }
+        var status = document.getElementById('status');
+        function tryAgain() {
+          if (navigator.onLine === false) {
+            status.textContent = 'Still offline - we’ll reload the moment the connection is back.';
+            return;
+          }
+          status.textContent = 'Reconnecting…';
+          location.reload();
+        }
+        document.getElementById('retry').addEventListener('click', tryAgain);
+        window.addEventListener('online', function () {
+          status.textContent = 'Back online - loading…';
+          location.reload();
+        });
+      })();
+    </script>
+  </body>
+</html>
