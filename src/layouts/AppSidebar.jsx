@@ -43,6 +43,9 @@ import { PROFILE_PATH_BY_ROLE } from './navConfig';
  *   { label, icon, items: [...] }         a collapsible parent with a submenu
  *
  * Optionally wrapped in { group, items } to render a labelled section.
+ * A section may also carry `className` (styles that one SidebarGroup) and
+ * `withExtra: true`, which renders the layout's `sidebarExtra` inside that
+ * section, above its links (the parent's VIEWING card + child pages).
  * `icon` is a component (from react-icons), not a string.
  */
 
@@ -326,13 +329,15 @@ function UserMenu({ accountSubtitle }) {
   );
 }
 
-export default function AppSidebar({ subtitle, navItems = [], accountSubtitle }) {
+export default function AppSidebar({ subtitle, navItems = [], accountSubtitle, sidebarExtra }) {
   const isPathActive = useIsPathActive();
 
   // Accepts both a flat list and { group, items } sections.
   const sections = navItems.some((entry) => Array.isArray(entry.items) && ('group' in entry || 'placement' in entry))
     ? navItems
     : [{ group: null, items: navItems }];
+  // sidebarExtra goes inside the section that asks for it, else above them all.
+  const extraInSection = sections.some((section) => section.withExtra);
 
   return (
     <Sidebar collapsible="icon">
@@ -354,10 +359,18 @@ export default function AppSidebar({ subtitle, navItems = [], accountSubtitle })
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Role-specific extra content (e.g. the parent's VIEWING child picker)
+            sits above the nav sections but below the brand header. */}
+        {!extraInSection && sidebarExtra}
+
         {sections.map((section, index) => (
           // placement: 'bottom' pins a section to the foot of the nav, just above the account tile.
-          <SidebarGroup key={section.group ?? index} className={section.placement === 'bottom' ? 'mt-auto' : undefined}>
+          <SidebarGroup
+            key={section.group ?? index}
+            className={[section.placement === 'bottom' ? 'mt-auto' : '', section.className ?? ''].join(' ').trim() || undefined}
+          >
             {section.group && <SidebarGroupLabel>{section.group}</SidebarGroupLabel>}
+            {section.withExtra && sidebarExtra}
             <SidebarGroupContent>
               <SidebarMenu>
                 {section.items.map((entry) => (

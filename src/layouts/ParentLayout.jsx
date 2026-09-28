@@ -1,10 +1,9 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import {
   LuBell,
   LuChartLine,
   LuCreditCard,
-  LuLayoutDashboard,
   LuLayoutGrid,
   LuSparkles,
   LuUser,
@@ -15,26 +14,41 @@ import { Loader } from '../components/common';
 import { useApi } from '../hooks/useApi';
 import onboardingService from '../modules/onboarding/services/onboarding.service';
 import { ParentOnboardingContext } from '../modules/parent/hooks/useParentOnboarding';
+import ViewingChildPicker from '../modules/parent/components/ViewingChildPicker';
+import { ViewingChildContext } from '../modules/parent/hooks/useViewingChild';
+import parentService from '../modules/parent/services/parent.service';
 import { SubscriptionAccessContext, useAccessStatus } from '../modules/subscription/hooks/useSubscriptionAccess';
 import AuthenticatedLayout from './AuthenticatedLayout';
 import usePortalTheme from './usePortalTheme';
 
+const VIEWING_CHILD_KEY = 'eflp.viewingChildId';
+
 /**
  * Navigation for the parent area (/parent/*).
  *
- * "My Profile" (the parent's own details) and "My Children" are kept as two
- * distinct entries on purpose - editing yourself and editing a child are
- * different operations with different ownership rules.
+ * Matches the sidebar mockup: the VIEWING child card and the child-specific
+ * pages (Overview, Progress, Learning Summary) share one outlined box
+ * (`withExtra` puts the picker inside it; styles `vc-frame`), then the
+ * family-level pages (My Children - children and parents on one page -
+ * My Profile, Subscription, Notifications) in a labelled "Family" group.
  */
 const NAV_ITEMS = [
   {
-    group: 'Family',
+    group: null,
+    withExtra: true,
+    className: 'vc-frame',
     items: [
-      { to: '/parent', label: 'Overview', icon: LuLayoutDashboard, end: true },
-      { to: '/parent/profile', label: 'My Profile', icon: LuUser },
-      { to: '/parent/children', label: 'My Children', icon: LuUsersRound },
+      { to: '/parent', label: 'Overview', icon: LuLayoutGrid, end: true },
       { to: '/parent/progress', label: 'Progress', icon: LuChartLine },
       { to: '/parent/learning-summary', label: 'Learning Summary', icon: LuSparkles },
+    ],
+  },
+  {
+    group: 'Family',
+    className: 'vc-section',
+    items: [
+      { to: '/parent/children', label: 'My Children', icon: LuUsersRound },
+      { to: '/parent/profile', label: 'My Profile', icon: LuUser },
       { to: '/parent/subscription', label: 'Subscription', icon: LuCreditCard },
       { to: '/parent/notifications', label: 'Notifications', icon: LuBell },
     ],
@@ -78,7 +92,48 @@ export function ParentLayout({ children }) {
   const { run } = onboarding;
   const accessStatus = useAccessStatus();
 
+  // --- Viewing child (sidebar picker) -----------------------------------
+  const childrenApi = useApi(parentService.listChildren);
+  const { run: runChildren } = childrenApi;
+  const [viewingChildId, setViewingChildIdRaw] = useState(() => {
+    try { return localStorage.getItem(VIEWING_CHILD_KEY) || ''; } catch { return ''; }
+  });
+
   const completed = Boolean(onboarding.data?.completed);
+
+  // Fetch the children list once onboarding is complete.
+  useEffect(() => {
+    if (completed) runChildren({ limit: 100 }).catch(() => {});
+  }, [completed, runChildren]);
+
+  const childrenList = useMemo(() => childrenApi.data ?? [], [childrenApi.data]);
+
+  const viewingChild = useMemo(() => {
+    if (!childrenList.length) return null;
+    return childrenList.find((c) => c.id === viewingChildId) || childrenList[0];
+  }, [childrenList, viewingChildId]);
+
+  const setViewingChildId = useCallback((id) => {
+    setViewingChildIdRaw(id);
+    try { localStorage.setItem(VIEWING_CHILD_KEY, id); } catch { /* private browsing */ }
+  }, []);
+
+  // Stable on purpose: pages put it in effect deps (My Children's load), and a
+  // new function per fetch re-ran their effect, which refetched, forever.
+  const refreshChildren = useCallback(() => runChildren({ limit: 100 }).catch(() => {}), [runChildren]);
+
+  const viewingContext = useMemo(
+    () => ({
+      viewingChild,
+      children: childrenList,
+      setViewingChildId,
+      isLoading: childrenApi.isLoading && !childrenApi.data,
+      refresh: refreshChildren,
+    }),
+    [viewingChild, childrenList, setViewingChildId, childrenApi.isLoading, childrenApi.data, refreshChildren],
+  );
+
+  // --- Onboarding + subscription gates ----------------------------------
   const refresh = useCallback(() => run().catch(() => {}), [run]);
   const context = useMemo(() => ({ completed, refresh }), [completed, refresh]);
 
@@ -89,7 +144,6 @@ export function ParentLayout({ children }) {
   );
 
   const { pathname } = location;
-  // If a status couldn't be loaded we can't tell - don't trap the parent.
   const needsOnboarding = Boolean(onboarding.data) && !completed && pathname !== ONBOARDING_PATH;
   const needsSubscription = access.loaded && !access.hasAccess && !SUBSCRIPTION_EXEMPT_PATHS.includes(pathname);
 
@@ -101,14 +155,20 @@ export function ParentLayout({ children }) {
   return (
     <ParentOnboardingContext.Provider value={context}>
       <SubscriptionAccessContext.Provider value={access}>
-        {/* The parent's own colour theme and light/dark - the same picker and
-            stored setting the teacher and student areas use. Inside the
-            gates, so it applies on the locked screen too. */}
-        <AppSettingsProvider>
-          <AuthenticatedLayout navItems={NAV_ITEMS} mobileTabs={MOBILE_TABS} title="Parent Portal" subtitle="Parent" brand="FP">
-            {content}
-          </AuthenticatedLayout>
-        </AppSettingsProvider>
+        <ViewingChildContext.Provider value={viewingContext}>
+          <AppSettingsProvider>
+            <AuthenticatedLayout
+              navItems={NAV_ITEMS}
+              mobileTabs={MOBILE_TABS}
+              title="Parent Portal"
+              subtitle="Parent"
+              brand="FP"
+              sidebarExtra={<ViewingChildPicker />}
+            >
+              {content}
+            </AuthenticatedLayout>
+          </AppSettingsProvider>
+        </ViewingChildContext.Provider>
       </SubscriptionAccessContext.Provider>
     </ParentOnboardingContext.Provider>
   );

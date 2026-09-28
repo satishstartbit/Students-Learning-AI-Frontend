@@ -574,11 +574,14 @@ export const PARENT_ROUTES = {
     { path: 'dashboard', label: 'Overview', redirectTo: '/parent' },
     { path: 'onboarding', label: 'Onboarding', component: ParentOnboardingPage },
     {
+      // "My Children": children, teachers, plan usage and the family's parents.
       path: 'children',
       label: 'My Children',
       permissions: [PERMISSIONS.USER_READ],
       component: ParentChildrenPage,
     },
+    // The old Family Members page is now part of My Children.
+    { path: 'family', label: 'My Children', redirectTo: '/parent/children' },
     {
       path: 'profile',
       label: 'My Profile',

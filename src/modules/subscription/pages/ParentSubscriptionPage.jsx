@@ -22,21 +22,25 @@ import {
 import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
 import { formatDate } from '../../../utils/date';
-import { formatCurrency } from '../../../utils/format';
+import { formatCurrency, formatName } from '../../../utils/format';
 import { getErrorMessage } from '../../../utils/errorHandler';
+import { planFitReason } from '../../parent/familyLimits';
 import PaymentMethodCard from '../components/PaymentMethodCard';
 import { useSubscriptionAccess } from '../hooks/useSubscriptionAccess';
 import subscriptionService from '../services/subscription.service';
 import { describeCard } from '../stripe';
 
-/** One selectable plan. */
-function PlanCard({ plan, selected, onSelect }) {
+/** One selectable plan. `fitReason` = why it can't hold the family as it is now (it can't be chosen). */
+function PlanCard({ plan, selected, onSelect, fitReason }) {
   const childLimit =
     plan.minChildren && plan.maxChildren && plan.minChildren !== plan.maxChildren
       ? `${plan.minChildren}–${plan.maxChildren} children`
       : plan.maxChildren
         ? `Up to ${plan.maxChildren} ${plan.maxChildren === 1 ? 'child' : 'children'}`
         : 'Unlimited children';
+  const parentLimit = plan.maxParents
+    ? `Up to ${plan.maxParents} ${plan.maxParents === 1 ? 'parent' : 'parents'}`
+    : 'Unlimited parents';
 
   return (
     <Card
@@ -59,12 +63,21 @@ function PlanCard({ plan, selected, onSelect }) {
         </span>
       </div>
 
-      <Badge variant="neutral">{childLimit}</Badge>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <Badge variant="neutral">{childLimit}</Badge>
+        <Badge variant="neutral">{parentLimit}</Badge>
+      </div>
 
       <div style={{ marginTop: 'var(--spacing-lg)' }}>
-        <Button fullWidth variant={selected ? 'primary' : 'secondary'} onClick={() => onSelect(plan)}>
-          {selected ? 'Selected' : 'Choose this plan'}
+        <Button
+          fullWidth
+          variant={selected ? 'primary' : 'secondary'}
+          disabled={Boolean(fitReason)}
+          onClick={() => onSelect(plan)}
+        >
+          {selected ? 'Selected' : fitReason ? 'Too small for your family' : 'Choose this plan'}
         </Button>
+        {fitReason && <p className="ui-hint">{fitReason}</p>}
       </div>
     </Card>
   );
@@ -193,6 +206,17 @@ export default function ParentSubscriptionPage() {
   const access = overview.data?.access ?? null;
   const card = paymentMethod.data?.card ?? null;
   const hasSubscription = Boolean(current);
+
+  // Extra parents share the account holder's plan, read-only: no plan picker,
+  // renewal, cancel, card or billing history.
+  const familyInfo = overview.data?.family ?? null;
+  const isAccountHolder = familyInfo?.isAccountHolder !== false;
+  const holderName = formatName(familyInfo?.accountHolder, { fallback: 'the account holder' });
+  const lock = isAccountHolder
+    ? lockMessage(access, latest)
+    : access && !access.hasAccess
+      ? `Your family's plan is not active. Ask ${holderName}, the account holder, to renew it.`
+      : null;
 
   const applyCoupon = async () => {
     if (!selectedPlan) return;
@@ -325,9 +349,11 @@ export default function ParentSubscriptionPage() {
       <PageHeader
         title="Subscription"
         description={
-          hasSubscription
-            ? 'Your plan, auto-renewal, payment method and billing history.'
-            : 'Choose a plan to get started.'
+          !isAccountHolder
+            ? "Your family's plan, shared with you."
+            : hasSubscription
+              ? 'Your plan, auto-renewal, payment method and billing history.'
+              : 'Choose a plan to get started.'
         }
       />
 
@@ -335,9 +361,15 @@ export default function ParentSubscriptionPage() {
         <ErrorState variant="compact" title="We couldn't load your subscription" error={overview.error} onRetry={load} />
       )}
 
-      {lockMessage(access, latest) && (
+      {lock && (
         <Alert variant="warning" className="ui-field">
-          {lockMessage(access, latest)}
+          {lock}
+        </Alert>
+      )}
+
+      {!isAccountHolder && (
+        <Alert variant="info" className="ui-field">
+          {holderName} manages your family's plan. You share it, but only they can change or cancel it.
         </Alert>
       )}
 
@@ -374,18 +406,20 @@ export default function ParentSubscriptionPage() {
             </Alert>
           )}
 
-          <div style={{ marginTop: 'var(--spacing-lg)' }}>
-            <Checkbox
-              name="autoRenew"
-              label="Auto-renewal"
-              description={autoRenewDescription}
-              checked={current.autoRenew}
-              disabled={Boolean(current.cancelledAt) || togglingAutoRenew}
-              onChange={(event) => (event.target.checked ? changeAutoRenew(true) : setAutoRenewOffOpen(true))}
-            />
-          </div>
+          {isAccountHolder && (
+            <div style={{ marginTop: 'var(--spacing-lg)' }}>
+              <Checkbox
+                name="autoRenew"
+                label="Auto-renewal"
+                description={autoRenewDescription}
+                checked={current.autoRenew}
+                disabled={Boolean(current.cancelledAt) || togglingAutoRenew}
+                onChange={(event) => (event.target.checked ? changeAutoRenew(true) : setAutoRenewOffOpen(true))}
+              />
+            </div>
+          )}
 
-          {!current.cancelledAt && (
+          {isAccountHolder && !current.cancelledAt && (
             <div style={{ marginTop: 'var(--spacing-md)' }}>
               <Button variant="secondary" onClick={() => setCancelOpen(true)}>
                 Cancel subscription
@@ -395,11 +429,11 @@ export default function ParentSubscriptionPage() {
         </Card>
       )}
 
-      {hasSubscription && (
+      {hasSubscription && isAccountHolder && (
         <PaymentMethodCard card={card} autoRenewing={Boolean(current.autoRenew)} onChanged={reload} className="ui-field" />
       )}
 
-      {!hasSubscription && (
+      {!hasSubscription && isAccountHolder && (
         <>
           <SectionHeader title="Choose a plan" as="h2" />
           {(plans.data ?? []).length === 0 ? (
@@ -422,6 +456,7 @@ export default function ParentSubscriptionPage() {
                   plan={plan}
                   selected={selectedPlan?.id === plan.id}
                   onSelect={selectPlan}
+                  fitReason={planFitReason(plan, familyInfo)}
                 />
               ))}
             </div>
@@ -508,7 +543,7 @@ export default function ParentSubscriptionPage() {
         </>
       )}
 
-      {(hasSubscription || allPayments.length > 0) && (
+      {isAccountHolder && (hasSubscription || allPayments.length > 0) && (
         <Card>
           <SectionHeader title="Billing history" as="h3" />
           <Table

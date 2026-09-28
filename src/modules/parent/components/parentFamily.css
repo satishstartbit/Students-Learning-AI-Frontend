@@ -1,0 +1,118 @@
+/* =====================================================================
+   Parent "My Children" (/parent/children; /parent/family redirects there).
+   Prefix: pm-.
+
+   The plan's room (children, parents), the page's two sections (Children,
+   Parents) and one card per parent in the family. Shared tokens only, so
+   accent themes and dark mode still apply.
+   ===================================================================== */
+
+/* --- Page sections: Children, Parents --------------------------------- */
+.pm-block + .pm-block {
+  margin-top: 32px;
+}
+.pm-sectionhead {
+  align-items: center;
+}
+/* Title above its action on phones; responsive.css already makes the
+   action (.ui-pageheader__actions) full width. */
+@media (max-width: 640px) {
+  .pm-sectionhead {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+}
+
+.pm-usage {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  padding: 18px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-bg-surface);
+}
+.pm-usage__plan {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.pm-usage__plan strong {
+  color: var(--color-text-primary);
+}
+.pm-usage__label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.pm-usage__value {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+/* The row above already says it; the bar keeps its label as aria-label. */
+.pm-usage .ui-progress__meta {
+  display: none;
+}
+
+.pm-notice {
+  margin-bottom: var(--spacing-lg);
+}
+
+.pm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: var(--spacing-lg);
+  align-items: start;
+}
+
+.pm-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 14px;
+  background: var(--color-bg-surface);
+}
+.pm-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.pm-head__body {
+  flex: 1;
+  min-width: 0;
+}
+.pm-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+.pm-meta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+.pm-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pm-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-default);
+}

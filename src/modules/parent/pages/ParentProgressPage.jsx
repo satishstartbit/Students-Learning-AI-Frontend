@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { LuCheck } from 'react-icons/lu';
-import { Avatar, Badge, Button, EmptyState, ErrorState, Loader, PageHeader } from '../../../components/common';
+import { Avatar, Button, EmptyState, ErrorState, Loader, PageHeader } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { formatName } from '../../../utils/format';
 import { useMoodLookup } from '../../checkIn/hooks/useMoodLookup';
 import StudentProgressDetail from '../../progress/components/StudentProgressDetail';
+import { useViewingChild } from '../hooks/useViewingChild';
 import parentService from '../services/parent.service';
 import '../components/parentPanels.css';
 
@@ -24,48 +24,39 @@ const PARENT_STAGE_LABEL = {
 };
 
 /**
- * /parent/progress - pick a child, then see how they are arriving each day and
- * how their work is going.
+ * /parent/progress - shows the sidebar-selected child's check-in and task
+ * progress.
  *
- * The detail itself is the shared StudentProgressDetail (today's cards, the
- * check-in strip, the task table) that the Teacher Progress modal also
- * renders; this page adds the child picker and the panel around it.
+ * The child picker that was on this page has moved to the sidebar (the
+ * VIEWING section); this page reads the selection from ViewingChildContext.
+ * Deep links with ?childId= (from the Overview dashboard) sync to the
+ * context on mount and then strip the param.
  */
 export default function ParentProgressPage() {
-  const summaries = useApi(parentService.getProgress, { immediate: true });
+  const { viewingChild, setViewingChildId, children } = useViewingChild();
   const detail = useApi(parentService.getChildProgress);
   const { run: runDetail } = detail;
 
-  // Which child is shown lives in the URL (?childId=), so "View progress" on
-  // a My Children card opens on that child and the choice survives a reload
-  // or a shared link.
+  // Mood names on the check-in strip come from the live master list.
+  useMoodLookup();
+
+  // Backward compat: ?childId= from Overview links syncs to the sidebar.
   const [searchParams, setSearchParams] = useSearchParams();
-  const childId = searchParams.get('childId') ?? '';
-  const setChildId = (id) => setSearchParams(id ? { childId: id } : {}, { replace: true });
-
-  // Mood names on the picker chips come from the live master list too.
-  const { moodFor } = useMoodLookup();
-
-  const children = summaries.data ?? [];
-  // First child by default, derived rather than synced from an effect. An id
-  // that isn't one of this parent's children falls back the same way.
-  const known = children.some((c) => c.student.id === childId);
-  const selectedId = (known ? childId : '') || children[0]?.student.id || '';
-
+  const urlChildId = searchParams.get('childId');
   useEffect(() => {
-    if (selectedId) runDetail(selectedId).catch(() => {});
-  }, [selectedId, runDetail]);
+    if (urlChildId && children.some((c) => c.id === urlChildId)) {
+      setViewingChildId(urlChildId);
+      setSearchParams({}, { replace: true });
+    } else if (urlChildId) {
+      // Unknown id (stale link) - just strip it.
+      setSearchParams({}, { replace: true });
+    }
+  }, [urlChildId, children, setViewingChildId, setSearchParams]);
 
-  if (summaries.isLoading && !summaries.data) return <Loader message="Loading progress…" />;
-
-  if (summaries.error && !summaries.data) {
-    return (
-      <div className="td-page">
-        <PageHeader title="Progress" />
-        <ErrorState title="We couldn't load progress" error={summaries.error} onRetry={() => summaries.run().catch(() => {})} />
-      </div>
-    );
-  }
+  const childId = viewingChild?.id;
+  useEffect(() => {
+    if (childId) runDetail(childId).catch(() => {});
+  }, [childId, runDetail]);
 
   if (!children.length) {
     return (
@@ -85,71 +76,23 @@ export default function ParentProgressPage() {
     );
   }
 
-  const selected = children.find((c) => c.student.id === selectedId);
-  const selectedName = selected ? formatName(selected.student) : '';
-  const firstName = selected?.student?.firstName ?? selectedName;
-  const ready = !detail.isLoading && !detail.error && detail.data?.student?.id === selectedId;
+  if (!viewingChild) return <Loader message="Loading progress…" />;
+
+  const name = formatName(viewingChild);
+  const firstName = viewingChild.firstName ?? name;
+  const ready = !detail.isLoading && !detail.error && detail.data?.student?.id === childId;
 
   return (
     <div className="td-page">
       <PageHeader title="Progress" description="How each child is arriving each day, and how their work is going." />
 
-      <section>
-        <p className="pp-picker__label" id="pp-choose-child">
-          Choose a child
-        </p>
-        <div className="pp-picker" role="group" aria-labelledby="pp-choose-child">
-          {children.map((child) => {
-            const active = child.student.id === selectedId;
-            const name = formatName(child.student);
-            const checkIn = child.today?.checkIn;
-            const counts = child.counts ?? {};
-            const done = (counts.submitted ?? 0) + (counts.reviewed ?? 0);
-
-            return (
-              <button
-                key={child.student.id}
-                type="button"
-                className="pp-child"
-                aria-pressed={active}
-                onClick={() => setChildId(child.student.id)}
-              >
-                <Avatar name={name} size="md" />
-
-                <span className="pp-child__body">
-                  <span className="pp-child__name">{name}</span>
-                  {child.student.grade && <span className="pp-child__grade">{child.student.grade}</span>}
-
-                  <span className="pp-child__chips">
-                    {checkIn ? (
-                      <Badge variant="success">Checked in · {moodFor(checkIn.mood)?.name ?? checkIn.mood}</Badge>
-                    ) : (
-                      <Badge variant="neutral">Not checked in yet</Badge>
-                    )}
-                    <Badge variant="neutral">
-                      {counts.total ? `${done} of ${counts.total} tasks today` : 'No tasks yet'}
-                    </Badge>
-                  </span>
-                </span>
-
-                {active && (
-                  <span className="pp-child__tick" aria-hidden="true">
-                    <LuCheck size={13} />
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
       <section className="pp-panel">
         <div className="pp-panel__head">
-          <Avatar name={selectedName} size="md" />
+          <Avatar name={name} size="md" />
           <div>
-            <h2 className="pp-panel__title">{selectedName}&rsquo;s progress</h2>
+            <h2 className="pp-panel__title">{name}&rsquo;s progress</h2>
             <p className="pp-panel__sub">
-              {[selected?.student?.grade, `Everything below is about ${firstName}.`].filter(Boolean).join(' · ')}
+              {[viewingChild.grade, `Everything below is about ${firstName}.`].filter(Boolean).join(' · ')}
             </p>
           </div>
         </div>
@@ -160,7 +103,7 @@ export default function ParentProgressPage() {
           <ErrorState
             title="We couldn't load this child's progress"
             error={detail.error}
-            onRetry={() => runDetail(selectedId).catch(() => {})}
+            onRetry={() => runDetail(childId).catch(() => {})}
           />
         )}
 

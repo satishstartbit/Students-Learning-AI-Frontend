@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LuEllipsisVertical, LuPlus } from 'react-icons/lu';
 import {
+  Alert,
   Avatar,
   Badge,
   Button,
@@ -11,16 +12,21 @@ import {
   ErrorState,
   Loader,
   PageHeader,
+  SectionHeader,
   StatusBadge,
 } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
+import { useAuth } from '../../../hooks/useAuth';
 import { useModal } from '../../../hooks/useModal';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import { formatSubjects } from '../../invitations/invitationStatus';
 import { SubjectChips } from '../../teacher/components/students/StudentBits';
+import { useViewingChild } from '../hooks/useViewingChild';
 import parentService from '../services/parent.service';
+import { childLimitReason } from '../familyLimits';
+import { ParentsSection, PlanUsage } from '../components/FamilyParents';
 import AddChildModal from '../components/AddChildModal';
 import EditChildModal from '../components/EditChildModal';
 import ChildDetailsModal from '../components/ChildDetailsModal';
@@ -79,7 +85,7 @@ function teacherRows(child) {
 }
 
 /** One child: who they are, what they're learning, and who teaches them. */
-function ChildCard({ child, onProgress, onEdit, onSetPassword, onInvite, onView, onRemove }) {
+function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvite, onView, onViewAs, onRemove }) {
   const rows = useMemo(() => teacherRows(child), [child]);
 
   // Subjects follow the teachers - the ones already teaching this child plus
@@ -121,6 +127,7 @@ function ChildCard({ child, onProgress, onEdit, onSetPassword, onInvite, onView,
       </div>
 
       <div className="pc-chips">
+        {isViewing && <Badge variant="primary">Viewing now</Badge>}
         <StatusBadge status={child.status} />
         {child.emailVerified ? (
           <Badge variant="success" dot>
@@ -172,9 +179,12 @@ function ChildCard({ child, onProgress, onEdit, onSetPassword, onInvite, onView,
         </button>
       </section>
 
-      {/* The mobile mockup's three: View details (outlined), Edit, Set password.
-          View progress is in the ⋮ menu and on the Progress tab. */}
       <div className="pc-foot">
+        {!isViewing && (
+          <Button size="sm" variant="primary" onClick={() => onViewAs(child)}>
+            View as {child.firstName || name}
+          </Button>
+        )}
         <Button size="sm" variant="secondary" onClick={() => onView(child)}>
           View details
         </Button>
@@ -189,11 +199,21 @@ function ChildCard({ child, onProgress, onEdit, onSetPassword, onInvite, onView,
   );
 }
 
-/** /parent/children - the parent's "My Children" hub. */
+/**
+ * /parent/children - "My Children": the plan's room, the children (subjects,
+ * teachers, invitations) and the parents who share the plan. Replaces the
+ * separate Family Members page; /parent/family redirects here.
+ */
 export default function ParentChildrenPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { viewingChild, setViewingChildId, refresh: refreshViewing } = useViewingChild();
   const children = useApi(parentService.listChildren);
   const { run: runChildren } = children;
+  // Plan usage, the Add child limit (max_students) and the family's parents.
+  const family = useApi(parentService.getFamily);
+  const { run: runFamily } = family;
+  const reloadFamily = useCallback(() => runFamily().catch(() => {}), [runFamily]);
 
   const addModal = useModal();
   const editModal = useModal();
@@ -202,7 +222,11 @@ export default function ParentChildrenPage() {
   const inviteModal = useModal();
   const removeModal = useModal();
 
-  const load = useCallback(() => runChildren({ limit: 100 }), [runChildren]);
+  const load = useCallback(() => {
+    refreshViewing(); // keep the sidebar picker in sync
+    reloadFamily(); // the children count in the plan usage
+    return runChildren({ limit: 100 });
+  }, [runChildren, refreshViewing, reloadFamily]);
 
   useEffect(() => {
     load().catch(() => {});
@@ -220,8 +244,9 @@ export default function ParentChildrenPage() {
   };
 
   const rows = children.data ?? [];
+  const limitReason = childLimitReason(family.data);
   const addButton = (
-    <Button onClick={addModal.open}>
+    <Button onClick={addModal.open} disabled={Boolean(limitReason)}>
       <LuPlus aria-hidden="true" />
       Add child
     </Button>
@@ -231,42 +256,64 @@ export default function ParentChildrenPage() {
     <div className="td-page">
       <PageHeader
         title="My Children"
-        description="Your children, their subjects and the teachers they are connected to."
-        actions={addButton}
+        description="Your children, the teachers they are connected to, and the parents who share your plan."
       />
 
-      {children.isLoading && rows.length === 0 && <Loader message="Loading your children…" />}
+      <PlanUsage family={family.data} />
 
-      {children.error && rows.length === 0 && (
-        <ErrorState title="We couldn't load your children" error={children.error} onRetry={() => load().catch(() => {})} />
-      )}
-
-      {!children.isLoading && rows.length === 0 && !children.error && (
-        <EmptyState
-          icon="👨‍👩‍👧"
-          title="No children added yet"
-          description="Add your first child to get started - you'll be able to invite their teachers and track their subjects right away."
-          action={addButton}
+      <section className="pm-block" aria-label="Children">
+        <SectionHeader
+          className="pm-sectionhead"
+          title="Children"
+          description="Their subjects and the teachers they are connected to."
+          actions={addButton}
         />
-      )}
 
-      {rows.length > 0 && (
-        <div className="pc-grid">
-          {rows.map((child) => (
-            <ChildCard
-              key={child.id}
-              child={child}
-              // The Progress page opens on this child rather than its own first one.
-              onProgress={(c) => navigate(`/parent/progress?childId=${encodeURIComponent(c.id)}`)}
-              onEdit={(c) => editModal.open(c.id)}
-              onSetPassword={(c) => passwordModal.open(c)}
-              onInvite={(c) => inviteModal.open(c)}
-              onView={(c) => detailsModal.open(c.id)}
-              onRemove={(c) => removeModal.open(c)}
-            />
-          ))}
-        </div>
-      )}
+        {limitReason && (
+          <Alert variant="warning" className="pm-notice">
+            {limitReason}
+          </Alert>
+        )}
+
+        {children.isLoading && rows.length === 0 && <Loader message="Loading your children…" />}
+
+        {children.error && rows.length === 0 && (
+          <ErrorState title="We couldn't load your children" error={children.error} onRetry={() => load().catch(() => {})} />
+        )}
+
+        {!children.isLoading && rows.length === 0 && !children.error && (
+          <EmptyState
+            icon="👨‍👩‍👧"
+            title="No children added yet"
+            description="Add your first child to get started - you'll be able to invite their teachers and track their subjects right away."
+            action={addButton}
+          />
+        )}
+
+        {rows.length > 0 && (
+          <div className="pc-grid">
+            {rows.map((child) => (
+              <ChildCard
+                key={child.id}
+                child={child}
+                isViewing={viewingChild?.id === child.id}
+                onProgress={(c) => {
+                  setViewingChildId(c.id);
+                  navigate('/parent/progress');
+                }}
+                onViewAs={(c) => setViewingChildId(c.id)}
+                onEdit={(c) => editModal.open(c.id)}
+                onSetPassword={(c) => passwordModal.open(c)}
+                onInvite={(c) => inviteModal.open(c)}
+                onView={(c) => detailsModal.open(c.id)}
+                onRemove={(c) => removeModal.open(c)}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <ParentsSection family={family} currentUserId={user?.id} onChanged={reloadFamily} />
 
       <AddChildModal isOpen={addModal.isOpen} onClose={addModal.close} onCreated={load} />
 

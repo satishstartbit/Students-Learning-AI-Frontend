@@ -18,6 +18,11 @@ const BILLING_CYCLE_OPTIONS = [
   { value: 'yearly', label: 'Yearly' },
 ];
 
+const wholeNumberOrBlank = (value) =>
+  value === '' || value == null || (Number.isInteger(Number(value)) && Number(value) >= 1)
+    ? null
+    : 'Enter a whole number of 1 or more, or leave blank for no limit';
+
 /** Simple key/value editor for the plan's `features` JSON. */
 function FeaturesEditor({ features, onChange }) {
   const entries = Object.entries(features ?? {});
@@ -69,6 +74,8 @@ export default function SubscriptionPlanFormPage() {
     validationSchema: {
       name: [required('Enter a plan name')],
       price: [required('Enter a price')],
+      maxStudents: [wholeNumberOrBlank],
+      maxParents: [wholeNumberOrBlank],
     },
     async onSubmit(values) {
       const payload = {
@@ -78,8 +85,9 @@ export default function SubscriptionPlanFormPage() {
         price: Number(values.price) || 0,
         currency: values.currency || DEFAULT_CURRENCY,
         trialDays: values.trialDays === '' ? undefined : Number(values.trialDays),
-        maxStudents: values.maxStudents === '' ? undefined : Number(values.maxStudents),
-        maxParents: values.maxParents === '' ? undefined : Number(values.maxParents),
+        // Blank = no limit (null), so clearing a limit on edit really clears it.
+        maxStudents: values.maxStudents === '' ? null : Number(values.maxStudents),
+        maxParents: values.maxParents === '' ? null : Number(values.maxParents),
         description: values.description || null,
         features,
         displayOrder: Number(values.displayOrder) || 0,
@@ -137,8 +145,20 @@ export default function SubscriptionPlanFormPage() {
           <Select label="Billing cycle" options={BILLING_CYCLE_OPTIONS} required {...form.getFieldProps('billingCycle')} />
           <Input label={`Price (${DEFAULT_CURRENCY})`} type="number" required {...form.getFieldProps('price')} />
           <Input label="Trial days" type="number" {...form.getFieldProps('trialDays')} />
-          <Input label="Number of students" type="number" {...form.getFieldProps('maxStudents')} />
-          <Input label="Number of parents" type="number" {...form.getFieldProps('maxParents')} />
+          <Input
+            label="Number of students"
+            type="number"
+            min={1}
+            hint="Most children a family can add on this plan. Blank = no limit."
+            {...form.getFieldProps('maxStudents')}
+          />
+          <Input
+            label="Number of parents"
+            type="number"
+            min={1}
+            hint="Most parent accounts in the family, the account holder included. Blank = no limit."
+            {...form.getFieldProps('maxParents')}
+          />
           <Textarea label="Description" {...form.getFieldProps('description')} />
 
           <SectionHeader title="Features" as="h3" />

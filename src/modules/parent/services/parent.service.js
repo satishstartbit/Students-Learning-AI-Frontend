@@ -72,6 +72,19 @@ export const getChildProgress = (id) => api.get(`/parent/children/${id}/progress
 export const removeChild = (id, { permanent = false } = {}) =>
   api.delete(`/parent/children/${id}`, { params: { permanent } });
 
+// --- family -----------------------------------------------------------------
+// The family's parents and the plan's limits: { isAccountHolder, accountHolder,
+// plan, children: { used, max, canAdd }, parents: { used, max, canAdd }, members }.
+// A null `max` means the plan sets no limit.
+
+export const getFamily = () => api.get('/parent/family');
+
+/** Account holder only: creates the parent's account and links them to every child. */
+export const addFamilyParent = (payload) => api.post('/parent/family/parents', payload);
+
+/** Account holder only: the parent loses the family's children and plan; their account is kept. */
+export const removeFamilyParent = (id) => api.delete(`/parent/family/parents/${id}`);
+
 // --- teachers ---------------------------------------------------------------
 // Teachers are connected by invitation (modules/invitations - the teacher has
 // to accept); a parent can remove a connected teacher here.
@@ -118,6 +131,9 @@ export default {
   getProgress,
   getChildProgress,
   removeChild,
+  getFamily,
+  addFamilyParent,
+  removeFamilyParent,
   removeTeacherAssignment,
   listMasterOptions,
   masterOptionsFetcher,

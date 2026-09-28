@@ -42,6 +42,9 @@ export function AuthenticatedLayout({
   showNotificationBell = true,
   // Where the phone top bar's bell leads when there's no dropdown bell (students).
   notificationsPath,
+  // Extra content rendered at the top of the sidebar's content area, before
+  // the nav sections. The parent layout uses this for the VIEWING child picker.
+  sidebarExtra,
   children,
 }) {
   const { user } = useAuth();
@@ -61,7 +64,7 @@ export function AuthenticatedLayout({
   return (
     <SidebarProvider>
       {!phoneShell && (
-        <AppSidebar title={title} subtitle={subtitle} brand={brand} navItems={navItems} accountSubtitle={accountSubtitle} />
+        <AppSidebar title={title} subtitle={subtitle} brand={brand} navItems={navItems} accountSubtitle={accountSubtitle} sidebarExtra={sidebarExtra} />
       )}
 
       <SidebarInset>

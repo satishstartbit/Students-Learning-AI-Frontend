@@ -52,7 +52,7 @@ React 19 + Vite, Tailwind v4 (`@layer utilities`), shadcn primitives in `src/com
 | [masterManagement](src/modules/masterManagement/CLAUDE.md) | Super Admin master data (generic engine + dedicated masters) |
 | [notifications](src/modules/notifications/CLAUDE.md) | Bell, unread count, per-role routing of notifications |
 | [onboarding](src/modules/onboarding/CLAUDE.md) | Student first-login questionnaire, parent family form |
-| [parent](src/modules/parent/CLAUDE.md) | Parent overview, My Children, invite-teacher requests, progress, profile |
+| [parent](src/modules/parent/CLAUDE.md) | Parent overview, My Children (children + parents), sidebar, invite-teacher requests, progress, profile |
 | [profile](src/modules/profile/CLAUDE.md) | Shared "My Profile" UI kit (cards, photo header, chips) |
 | [progress](src/modules/progress/CLAUDE.md) | Shared student progress detail used by the parent and teacher Progress pages |
 | [student](src/modules/student/CLAUDE.md) | Everything a student sees: home, plan, assignments, focus, rewards, notes, settings, K-5 kid UI |
