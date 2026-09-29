@@ -41,6 +41,9 @@ function buildProfileBody({ profile, photoFile, ...rest }) {
 
 export const updateMe = (payload) => api.patch('/auth/me', buildProfileBody(payload));
 
+/** The signed-in user's own time zone, from their device (hooks/useDeviceTimezone.js). Any role. */
+export const updateMyTimezone = (timezone) => api.patch('/auth/me/timezone', { timezone });
+
 export const verifyEmail = (token) => api.post('/auth/verify-email', { token });
 export const resendVerification = (email) => api.post('/auth/resend-verification', { email });
 /** The 6-digit code from the sign-up 'Check your email' step. */
@@ -85,6 +88,7 @@ export default {
   logoutAll,
   getMe,
   updateMe,
+  updateMyTimezone,
   verifyEmail,
   resendVerification,
   verifyEmailCode,

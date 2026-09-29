@@ -144,8 +144,8 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
                 <div>{child.profile?.gender ? titleCase(child.profile.gender) : '—'}</div>
               </div>
               <div>
-                <span className="ui-hint">Email</span>
-                <div>{child.email}</div>
+                <span className="ui-hint">Signs in with username</span>
+                <div>{child.username || '—'}</div>
               </div>
             </div>
 

@@ -3,7 +3,6 @@ import {
   PageHeader,
   Card,
   Input,
-  Select,
   Button,
   Alert,
   Radio,
@@ -13,7 +12,6 @@ import {
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
-import { CANADIAN_TIMEZONES, DEFAULT_TIMEZONE } from '../../../utils/locale';
 import {
   ADMIN_CREATABLE_ROLES,
   ROLE_LABELS,
@@ -46,11 +44,11 @@ const ROLE_OPTIONS = ADMIN_CREATABLE_ROLES.map((r) => ({
   label: ROLE_LABELS[r],
 }));
 
-const TIMEZONE_OPTIONS = CANADIAN_TIMEZONES.map((tz) => ({
-  value: tz.value,
-  label: `${tz.label} (${tz.value})`,
-}));
-
+/*
+ * No time zone field: the new account gets the app default (backend
+ * user.service#createUser), then its owner's device sets theirs on first
+ * sign-in (hooks/useDeviceTimezone.js).
+ */
 export default function CreateUserPage() {
   const navigate = useNavigate();
 
@@ -61,7 +59,6 @@ export default function CreateUserPage() {
       lastName: '',
       email: '',
       phone: '',
-      timezone: DEFAULT_TIMEZONE,
     },
     validationSchema: {
       role: [required('Choose a role')],
@@ -76,7 +73,6 @@ export default function CreateUserPage() {
         lastName: values.lastName || null,
         email: values.email,
         phone: values.phone || null,
-        timezone: values.timezone || undefined,
         profile: buildProfilePayload(values.role, values),
       });
 
@@ -131,12 +127,6 @@ export default function CreateUserPage() {
             type="tel"
             hint="e.g. (416) 555-1234"
             {...form.getFieldProps('phone')}
-          />
-          <Select
-            label="Timezone"
-            options={TIMEZONE_OPTIONS}
-            hint="Used to display dates and times to this user"
-            {...form.getFieldProps('timezone')}
           />
 
           <SectionHeader title={`${ROLE_LABELS[role]} profile`} as="h3" />

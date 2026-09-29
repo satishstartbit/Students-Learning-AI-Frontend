@@ -15,7 +15,7 @@ React 19 + Vite, Tailwind v4 (`@layer utilities`), shadcn primitives in `src/com
 | `layouts/` | `SuperAdminLayout`, `TeacherLayout`, `ParentLayout` (onboarding + subscription gates), `StudentLayout` (grade band, check-in gate, subscription lock; K-5 → `KidLayout`, Grade 6+ → `AuthenticatedLayout`). The layouts render `<Toast />`, so pages must not render another. |
 | `components/common/` | Button, Input, Select, MultiSelect, Modal, ConfirmationModal, DataTable, FilterBar, Tabs (`items` prop), Alert, Badge, StatusBadge, PageHeader, … Use these before writing new ones. |
 | `hooks/` | `useApi` (loading/error/data + `run`), `useForm` (values, validation, `getFieldProps`), `useToast`, `useModal`, `usePhotoField`, `usePagination`, `useDebounce` |
-| `utils/` | `date.js` (all date display), `format.js` (currency, names, initials), `locale.js` (active timezone/locale, `CANADIAN_TIMEZONES`), `phone.js`, `postalCode.js`, `gradeBand.js`, `permissions.js`, `constants.js` (roles and statuses), `errorHandler.js` |
+| `utils/` | `date.js` (all date display), `format.js` (currency, names, initials), `locale.js` (active timezone/locale, `detectBrowserTimezone`), `canadianTimezone.js` (device zone → Canadian zone; there is no time zone picker), `phone.js`, `postalCode.js`, `gradeBand.js`, `permissions.js`, `constants.js` (roles and statuses), `errorHandler.js` |
 | `theme/` | `variables.css` (tokens), `accent.css` (`data-accent` colour themes), `portalTheme.css` (`body.portal-theme` - Admin/Teacher/Parent), `studentTheme.css` (Grade 6+) · `styles/kid-theme.css` (`.kid-theme` - K-5) |
 | `store/` | Redux: `authSlice` (token and user from localStorage `eflp.accessToken` / `eflp.user`), `themeSlice`, `uiSlice` |
 

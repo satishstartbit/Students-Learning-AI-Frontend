@@ -1,8 +1,7 @@
-import { Alert, Button, Input, Modal, Select } from '../../../components/common';
-import { getActiveTimezone, timezoneOptions } from '../../../utils/locale';
+import { Alert, Button, Input, Modal, PasswordInput } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
-import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
+import { required, password as passwordRule, matches } from '../../../utils/validation';
 import { formatName } from '../../../utils/format';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
@@ -12,7 +11,11 @@ import parentService from '../services/parent.service';
 import '../../profile/components/profile.css';
 import './parentChildren.css';
 
-const INITIAL_VALUES = { firstName: '', lastName: '', email: '', phone: '', timezone: '' };
+// No time zone field: the child gets the parent's (parent.service#addChild),
+// then their own device's once they sign in (hooks/useDeviceTimezone.js).
+// No email or phone either: a child signs in with their username and the
+// password set here, never an email or phone number.
+const INITIAL_VALUES = { firstName: '', lastName: '', password: '', confirmPassword: '' };
 
 /**
  * "+ Add Child" - creates the student account and links it to the signed-in
@@ -30,22 +33,20 @@ export default function AddChildModal({ isOpen, onClose, onCreated }) {
     initialValues: INITIAL_VALUES,
     validationSchema: {
       firstName: [required('Enter a first name')],
-      email: [required('Enter an email address'), emailRule()],
-      phone: [phoneRule()],
+      password: [required('Choose a password for your child'), passwordRule()],
+      confirmPassword: [required('Type the password again'), matches('password')],
     },
     async onSubmit(values) {
       const { data } = await parentService.addChild({
         firstName: values.firstName,
         lastName: values.lastName || null,
-        email: values.email,
-        phone: values.phone || null,
-        // Empty = the parent's own zone (parent.service#addChild).
-        timezone: values.timezone || undefined,
+        password: values.password,
+        confirmPassword: values.confirmPassword,
         profile: buildProfilePayload('STUDENT', values),
         photoFile: photo.file,
       });
 
-      toast.success(`Child added - username "${data.username}"`);
+      toast.success(`Child added. They sign in with the username "${data.username}" and the password you chose.`);
       handleClose();
       onCreated?.();
     },
@@ -83,8 +84,9 @@ export default function AddChildModal({ isOpen, onClose, onCreated }) {
       )}
 
       <Alert variant="info" className="pc-childform__alert">
-        Your child's account is created right away. They'll be emailed a link to set their own
-        password, and you'll see their username as soon as they're added.
+        Your child's account is ready as soon as you add them. They sign in with a username, which
+        you'll see once they're added, and the password you choose below. No email or phone number
+        is needed.
       </Alert>
 
       <form onSubmit={form.handleSubmit} noValidate>
@@ -104,14 +106,23 @@ export default function AddChildModal({ isOpen, onClose, onCreated }) {
           <div className="pf-grid">
             <Input label="First name" required autoComplete="off" {...form.getFieldProps('firstName')} />
             <Input label="Last name" autoComplete="off" {...form.getFieldProps('lastName')} />
-            <Input label="Email" type="email" required autoComplete="off" {...form.getFieldProps('email')} />
-            <Input label="Phone" type="tel" autoComplete="off" {...form.getFieldProps('phone')} />
-            <Select
-              label="Time zone"
-              hint="Leave as yours unless your child lives somewhere else."
-              options={timezoneOptions(form.values.timezone || getActiveTimezone())}
-              {...form.getFieldProps('timezone')}
-              value={form.values.timezone || getActiveTimezone()}
+          </div>
+        </ProfileSection>
+
+        <ProfileSection title="Sign-in" hint="Your child signs in with their username and this password.">
+          <div className="pf-grid">
+            <PasswordInput
+              label="Password"
+              required
+              autoComplete="new-password"
+              hint="8+ characters with upper case, lower case and a number"
+              {...form.getFieldProps('password')}
+            />
+            <PasswordInput
+              label="Confirm password"
+              required
+              autoComplete="new-password"
+              {...form.getFieldProps('confirmPassword')}
             />
           </div>
         </ProfileSection>

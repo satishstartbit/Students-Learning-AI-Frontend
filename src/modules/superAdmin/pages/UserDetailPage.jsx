@@ -10,19 +10,19 @@ import {
   ErrorState,
   ConfirmationModal,
   Alert,
-  EmptyState,
   Toast,
 } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useModal } from '../../../hooks/useModal';
 import { toast } from '../../../hooks/useToast';
 import { formatDateTime } from '../../../utils/date';
-import { formatName, titleCase } from '../../../utils/format';
+import { formatName } from '../../../utils/format';
 import { formatPhoneForDisplay } from '../../../utils/phone';
 import { ROLE_LABELS, USER_ROLES, USER_STATUS, listPathForRole } from '../../../utils/constants';
 import { getErrorMessage, parseApiError } from '../../../utils/errorHandler';
 import adminUserService from '../services/adminUser.service';
 import ParentChildrenPanel from '../components/ParentChildrenPanel';
+import SetChildPasswordModal from '../../parent/components/SetChildPasswordModal';
 
 /** One labelled value in the detail grid. */
 function Field({ label, children }) {
@@ -57,6 +57,7 @@ export default function UserDetailPage() {
   const suspendModal = useModal();
   const deleteModal = useModal();
   const resetModal = useModal();
+  const passwordModal = useModal();
 
   const [busy, setBusy] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState('');
@@ -110,12 +111,32 @@ export default function UserDetailPage() {
   if (!user) return null;
 
   const isSuspended = user.status === USER_STATUS.SUSPENDED;
+  // Students have no email or phone: they sign in with their username, and
+  // their password is set here rather than by an emailed link.
+  const isStudent = user.role === USER_ROLES.STUDENT;
+  const needsVerification =
+    !user.emailVerified && (user.role === USER_ROLES.TEACHER || user.role === USER_ROLES.PARENT);
+  // What the delete dialog asks the admin to type.
+  const confirmValue = user.email ?? user.username ?? '';
+
+  const resendVerification = async () => {
+    setBusy(true);
+    try {
+      const { data } = await adminUserService.resendVerification(id);
+      if (data?.emailSent) toast.success(`Verification email sent to ${user.email}`);
+      else toast.error('The email could not be sent. Check the email settings on the server, or mark the address as verified.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="td-page">
       <PageHeader
         title={formatName(user)}
-        description={user.email}
+        description={isStudent ? `@${user.username} · signs in with username` : user.email}
         breadcrumbs={[
           // Back to the list this account actually belongs to.
           { label: `${ROLE_LABELS[user.role] ?? 'User'}s`, to: listPathForRole(user.role) },
@@ -126,9 +147,15 @@ export default function UserDetailPage() {
             <Button as={Link} to={`/admin/users/${id}/edit`} variant="secondary">
               Edit
             </Button>
-            <Button variant="secondary" onClick={resetModal.open}>
-              Reset password
-            </Button>
+            {isStudent ? (
+              <Button variant="secondary" onClick={passwordModal.open}>
+                Set password
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={resetModal.open}>
+                Reset password
+              </Button>
+            )}
             {isSuspended ? (
               <Button onClick={() => act(() => adminUserService.reactivateUser(id), 'User reactivated')}>
                 Reactivate
@@ -151,6 +178,27 @@ export default function UserDetailPage() {
         </Alert>
       )}
 
+      {needsVerification && (
+        <Alert variant="warning" title="Email not verified" className="ui-field">
+          <p style={{ margin: '0 0 var(--spacing-sm)' }}>
+            {formatName(user)} can&apos;t sign in until they enter the code emailed to {user.email}. If it
+            never arrived, send a new one, or mark the address as verified if you know it&apos;s theirs.
+          </p>
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap' }}>
+            <Button size="sm" variant="secondary" onClick={resendVerification} disabled={busy}>
+              Resend verification email
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => act(() => adminUserService.markEmailVerified(id), 'Email marked as verified')}
+              disabled={busy}
+            >
+              Mark as verified
+            </Button>
+          </div>
+        </Alert>
+      )}
+
       <Card title="Account" className="ui-field">
         <div style={GRID}>
           <Field label="Username">{user.username}</Field>
@@ -160,18 +208,20 @@ export default function UserDetailPage() {
           <Field label="Status">
             <StatusBadge status={user.status} />
           </Field>
-          <Field label="Email verified">
-            {user.emailVerified ? (
-              <Badge variant="success" dot>
-                {formatDateTime(user.emailVerifiedAt)}
-              </Badge>
-            ) : (
-              <Badge variant="warning" dot>
-                Not verified
-              </Badge>
-            )}
-          </Field>
-          <Field label="Phone">{formatPhoneForDisplay(user.phone)}</Field>
+          {!isStudent && (
+            <Field label="Email verified">
+              {user.emailVerified ? (
+                <Badge variant="success" dot>
+                  {formatDateTime(user.emailVerifiedAt)}
+                </Badge>
+              ) : (
+                <Badge variant="warning" dot>
+                  Not verified
+                </Badge>
+              )}
+            </Field>
+          )}
+          {!isStudent && <Field label="Phone">{formatPhoneForDisplay(user.phone)}</Field>}
           <Field label="Last login">
             {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Never'}
           </Field>
@@ -223,6 +273,15 @@ export default function UserDetailPage() {
         loading={busy}
       />
 
+      {/* --- Student password (no email to send a link to) ---------------- */}
+      <SetChildPasswordModal
+        isOpen={passwordModal.isOpen}
+        child={isStudent ? user : null}
+        onClose={passwordModal.close}
+        onUpdated={() => load().catch(() => {})}
+        save={adminUserService.setStudentPassword}
+      />
+
       {/* --- Permanent delete --------------------------------------------- */}
       <ConfirmationModal
         isOpen={deleteModal.isOpen}
@@ -237,7 +296,7 @@ export default function UserDetailPage() {
         variant="danger"
         loading={busy}
         // Typing the exact email is the guard against an accidental delete.
-        confirmDisabled={confirmEmail.trim().toLowerCase() !== user.email.toLowerCase()}
+        confirmDisabled={!confirmValue || confirmEmail.trim().toLowerCase() !== confirmValue.toLowerCase()}
       >
         <Alert variant="error" title="This cannot be undone" className="ui-field">
           The account, its profile, relationships, sessions and consent records will be removed.
@@ -254,7 +313,7 @@ export default function UserDetailPage() {
         )}
 
         <label className="ui-label" htmlFor="confirm-email">
-          Type <strong>{user.email}</strong> to confirm
+          Type <strong>{confirmValue}</strong> to confirm
         </label>
         <input
           id="confirm-email"

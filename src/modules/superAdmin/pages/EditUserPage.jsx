@@ -4,7 +4,6 @@ import {
   PageHeader,
   Card,
   Input,
-  Select,
   Button,
   ButtonGroup,
   Alert,
@@ -18,7 +17,6 @@ import { useForm } from '../../../hooks/useForm';
 import { usePhotoField } from '../../../hooks/usePhotoField';
 import { toast } from '../../../hooks/useToast';
 import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
-import { CANADIAN_TIMEZONES } from '../../../utils/locale';
 import { formatPhoneForDisplay } from '../../../utils/phone';
 import { ROLE_LABELS, listPathForRole } from '../../../utils/constants';
 import adminUserService from '../services/adminUser.service';
@@ -34,11 +32,12 @@ import { buildProfilePayload } from '../../auth/components/profilePayload';
  *
  * Changing the email clears verification server-side and re-sends a link, so
  * the form warns before that happens.
+ *
+ * No time zone field: each user's own device sets it (hooks/useDeviceTimezone.js).
+ *
+ * Students have no email or phone - they sign in with their username - so
+ * neither field is shown or sent for them (the API ignores both anyway).
  */
-const TIMEZONE_OPTIONS = CANADIAN_TIMEZONES.map((tz) => ({
-  value: tz.value,
-  label: `${tz.label} (${tz.value})`,
-}));
 
 export default function EditUserPage() {
   const { id } = useParams();
@@ -53,20 +52,21 @@ export default function EditUserPage() {
     });
   }, [run, id]);
 
+  const isStudent = user?.role === 'STUDENT';
+
   const form = useForm({
     initialValues: {},
     validationSchema: {
       firstName: [required('Enter a first name')],
-      email: [required('Enter an email address'), emailRule()],
-      phone: [phoneRule()],
+      ...(isStudent
+        ? {}
+        : { email: [required('Enter an email address'), emailRule()], phone: [phoneRule()] }),
     },
     async onSubmit(values) {
       const payload = {
         firstName: values.firstName,
         lastName: values.lastName || null,
-        email: values.email,
-        phone: values.phone || null,
-        timezone: values.timezone || undefined,
+        ...(isStudent ? {} : { email: values.email, phone: values.phone || null }),
         profile: buildProfilePayload(user.role, values),
         photoFile: photo.file,
       };
@@ -97,7 +97,6 @@ export default function EditUserPage() {
       lastName: user.lastName ?? '',
       email: user.email ?? '',
       phone: formatPhoneForDisplay(user.phone),
-      timezone: user.timezone ?? '',
       grade: profile.grade ?? '',
       date_of_birth: isStudent ? profile.date_of_birth ?? '' : '',
       gender: isStudent ? profile.gender ?? '' : '',
@@ -123,13 +122,13 @@ export default function EditUserPage() {
   if (!user) return null;
 
   const emailChanged =
-    form.values.email && form.values.email.toLowerCase() !== user.email.toLowerCase();
+    !isStudent && form.values.email && form.values.email.toLowerCase() !== String(user.email ?? '').toLowerCase();
 
   return (
     <div className="td-page">
       <PageHeader
         title={`Edit ${user.firstName ?? 'user'}`}
-        description={`${ROLE_LABELS[user.role] ?? user.role} · ${user.email}`}
+        description={`${ROLE_LABELS[user.role] ?? user.role} · ${user.email ?? `@${user.username}`}`}
         breadcrumbs={[
           { label: `${ROLE_LABELS[user.role] ?? 'User'}s`, to: listPathForRole(user.role) },
           { label: user.firstName ?? 'User', to: `/admin/users/${id}` },
@@ -156,19 +155,17 @@ export default function EditUserPage() {
 
           <Input label="First name" required {...form.getFieldProps('firstName')} />
           <Input label="Last name" {...form.getFieldProps('lastName')} />
-          <Input label="Email" type="email" required {...form.getFieldProps('email')} />
-          <Input
-            label="Phone"
-            type="tel"
-            hint="e.g. (416) 555-1234"
-            {...form.getFieldProps('phone')}
-          />
-          <Select
-            label="Timezone"
-            options={TIMEZONE_OPTIONS}
-            hint="Used to display dates and times to this user"
-            {...form.getFieldProps('timezone')}
-          />
+          {!isStudent && (
+            <>
+              <Input label="Email" type="email" required {...form.getFieldProps('email')} />
+              <Input
+                label="Phone"
+                type="tel"
+                hint="e.g. (416) 555-1234"
+                {...form.getFieldProps('phone')}
+              />
+            </>
+          )}
 
           <SectionHeader title={`${ROLE_LABELS[user.role]} profile`} as="h3" />
 

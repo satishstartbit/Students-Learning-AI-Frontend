@@ -1,3 +1,7 @@
+import { CANADIAN_TIMEZONES, isValidTimezone, toCanadianTimezone } from './canadianTimezone.js';
+
+export { CANADIAN_TIMEZONES, isValidTimezone };
+
 /**
  * Central locale/timezone/currency/country configuration.
  *
@@ -7,6 +11,10 @@
  * signed-in user's own preference (users.timezone / users.locale from the
  * API) override the default for every date/currency formatted afterwards,
  * without every call site needing to pass it explicitly.
+ *
+ * Nobody is asked for a time zone: it comes from the device, matched to a
+ * Canadian zone (`detectBrowserTimezone`), at sign-up and on every visit
+ * (hooks/useDeviceTimezone.js).
  */
 export const DEFAULT_LOCALE = import.meta.env.VITE_DEFAULT_LOCALE || 'en-CA';
 export const DEFAULT_TIMEZONE = import.meta.env.VITE_DEFAULT_TIMEZONE || 'America/Toronto';
@@ -14,43 +22,20 @@ export const DEFAULT_CURRENCY = import.meta.env.VITE_DEFAULT_CURRENCY || 'CAD';
 export const DEFAULT_COUNTRY = import.meta.env.VITE_DEFAULT_COUNTRY || 'CA';
 
 /**
- * Canada's time zones, offered in every timezone picker. The six standard
- * zones plus the two places that never change their clocks: most of
- * Saskatchewan (Central Standard all year) and Yukon (UTC-7 all year since
- * 2020) - picking "Central" or "Pacific" there would be an hour off for half
- * the year. Keep in step with backend utils/timezone.js.
- */
-export const CANADIAN_TIMEZONES = [
-  { value: 'America/St_Johns', label: 'Newfoundland Time', region: 'Newfoundland' },
-  { value: 'America/Halifax', label: 'Atlantic Time', region: 'Atlantic' },
-  { value: 'America/Toronto', label: 'Eastern Time', region: 'Eastern' },
-  { value: 'America/Winnipeg', label: 'Central Time', region: 'Central' },
-  { value: 'America/Regina', label: 'Saskatchewan (Central, no daylight time)', region: 'Saskatchewan' },
-  { value: 'America/Edmonton', label: 'Mountain Time', region: 'Mountain' },
-  { value: 'America/Whitehorse', label: 'Yukon (no daylight time)', region: 'Yukon' },
-  { value: 'America/Vancouver', label: 'Pacific Time', region: 'Pacific' },
-];
-
-/**
- * The browser's own IANA zone when it is a real one, else the app default.
- * Used to give a new account a sensible timezone at sign-up instead of
- * silently putting everyone on Toronto time; the user can change it on
- * My Profile.
+ * This device's Canadian time zone: its own zone when it is one of Canada's,
+ * the Canadian zone with the same clock when it isn't (a Windows PC in
+ * Vancouver may report America/Los_Angeles), else the app default (a device
+ * set outside North America). Used at sign-up and to keep the signed-in
+ * user's zone current - there is no time zone picker anywhere.
  */
 export function detectBrowserTimezone() {
+  let zone;
   try {
-    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return zone && isValidTimezone(zone) ? zone : DEFAULT_TIMEZONE;
+    zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   } catch {
-    return DEFAULT_TIMEZONE;
+    zone = undefined;
   }
-}
-
-/** Picker options: the Canadian zones, plus `current` first if it is some other valid zone. */
-export function timezoneOptions(current) {
-  const options = CANADIAN_TIMEZONES.map((tz) => ({ value: tz.value, label: tz.label }));
-  if (current && !CANADIAN_TIMEZONES.some((tz) => tz.value === current)) options.unshift({ value: current, label: current });
-  return options;
+  return toCanadianTimezone(zone, DEFAULT_TIMEZONE);
 }
 
 /** Canadian provinces and territories - use instead of a free-text or US-states "State" field. */
@@ -95,20 +80,6 @@ export function setActiveLocale(locale) {
 
 export const getActiveTimezone = () => activeTimezone;
 export const getActiveLocale = () => activeLocale;
-
-/** True for any IANA timezone name the browser's Intl implementation recognises. */
-export function isValidTimezone(timezone) {
-  if (typeof timezone !== 'string' || !timezone) return false;
-  // Region/City names only (plus UTC) - "EST"/"PST" are fixed offsets with no
-  // daylight time. Same rule as backend utils/timezone.js.
-  if (timezone !== 'UTC' && !/^[A-Za-z]+(?:[_-][A-Za-z]+)*(?:\/[A-Za-z0-9_+-]+)+$/.test(timezone)) return false;
-  try {
-    Intl.DateTimeFormat(undefined, { timeZone: timezone });
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 export default {
   DEFAULT_LOCALE,

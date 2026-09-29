@@ -1,5 +1,4 @@
-import { Alert, Button, Input, Modal, Select } from '../../../components/common';
-import { getActiveTimezone, timezoneOptions } from '../../../utils/locale';
+import { Alert, Button, Input, Modal } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
@@ -9,7 +8,9 @@ import parentService from '../services/parent.service';
 import '../../profile/components/profile.css';
 import './parentChildren.css';
 
-const INITIAL_VALUES = { firstName: '', lastName: '', email: '', phone: '', timezone: '' };
+// No time zone field: they get the account holder's (family.service#addParent),
+// then their own device's once they sign in (hooks/useDeviceTimezone.js).
+const INITIAL_VALUES = { firstName: '', lastName: '', email: '', phone: '' };
 
 /**
  * "Add parent" (account holder only): creates another parent account in the
@@ -29,8 +30,6 @@ export default function AddParentModal({ isOpen, onClose, onCreated }) {
         lastName: values.lastName || null,
         email: values.email,
         phone: values.phone || null,
-        // Empty = the account holder's own zone (family.service#addParent).
-        timezone: values.timezone || undefined,
       });
 
       toast.success(`${formatName(data)} added to your family`);
@@ -81,13 +80,6 @@ export default function AddParentModal({ isOpen, onClose, onCreated }) {
             <Input label="Last name" autoComplete="off" {...form.getFieldProps('lastName')} />
             <Input label="Email" type="email" required autoComplete="off" {...form.getFieldProps('email')} />
             <Input label="Phone" type="tel" autoComplete="off" {...form.getFieldProps('phone')} />
-            <Select
-              label="Time zone"
-              hint="Leave as yours unless they live somewhere else."
-              options={timezoneOptions(form.values.timezone || getActiveTimezone())}
-              {...form.getFieldProps('timezone')}
-              value={form.values.timezone || getActiveTimezone()}
-            />
           </div>
         </ProfileSection>
       </form>

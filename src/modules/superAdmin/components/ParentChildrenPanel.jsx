@@ -7,6 +7,7 @@ import {
   ButtonGroup,
   IconButton,
   Input,
+  PasswordInput,
   Select,
   SearchInput,
   Badge,
@@ -24,7 +25,7 @@ import { useForm } from '../../../hooks/useForm';
 import { useModal } from '../../../hooks/useModal';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { toast } from '../../../hooks/useToast';
-import { required, email as emailRule } from '../../../utils/validation';
+import { required, password as passwordRule, matches } from '../../../utils/validation';
 import { formatName } from '../../../utils/format';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import adminUserService from '../services/adminUser.service';
@@ -66,27 +67,31 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
   }, [load]);
 
   // --- create a new child -------------------------------------------------
+  // No email or phone: a student signs in with their username and the
+  // password set here (backend user.service#createUser).
   const createPhoto = usePhotoField();
+  const EMPTY_CHILD = { firstName: '', lastName: '', password: '', confirmPassword: '' };
 
   const createForm = useForm({
-    initialValues: { firstName: '', lastName: '', email: '', phone: '' },
+    initialValues: EMPTY_CHILD,
     validationSchema: {
       firstName: [required('Enter a first name')],
-      email: [required('Enter an email address'), emailRule()],
+      password: [required('Choose a password for the student'), passwordRule()],
+      confirmPassword: [required('Type the password again'), matches('password')],
     },
     async onSubmit(values) {
       const { data } = await adminUserService.createParentChild(parentId, {
         firstName: values.firstName,
         lastName: values.lastName || null,
-        email: values.email,
-        phone: values.phone || null,
+        password: values.password,
+        confirmPassword: values.confirmPassword,
         profile: buildProfilePayload('STUDENT', values),
         photoFile: createPhoto.file,
       });
 
-      toast.success(`Child created and linked to this parent - username "${data.username}"`);
+      toast.success(`Child created and linked. They sign in with the username "${data.username}".`);
       createModal.close();
-      createForm.reset({ firstName: '', lastName: '', email: '', phone: '' });
+      createForm.reset(EMPTY_CHILD);
       createPhoto.reset();
       await load();
     },
@@ -119,7 +124,7 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
     () =>
       (candidates.data ?? []).map((s) => ({
         value: s.id,
-        label: `${formatName(s)} · ${s.email}`,
+        label: [formatName(s), s.username ? `@${s.username}` : s.email].filter(Boolean).join(' · '),
       })),
     [candidates.data]
   );
@@ -211,19 +216,14 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
                   <Link to={`/admin/users/${child.id}`} style={{ fontWeight: 600 }}>
                     {formatName(child)}
                   </Link>
-                  <div className="ui-hint">
-                    {child.username} · {child.email}
-                  </div>
+                  <div className="ui-hint">@{child.username}</div>
                 </div>
 
                 <StatusBadge status={child.status} />
-                {child.emailVerified ? (
-                  <Badge variant="success" dot>
-                    Verified
-                  </Badge>
-                ) : (
+                {/* Students have no email to verify - show whether they've signed in. */}
+                {!child.lastLoginAt && (
                   <Badge variant="warning" dot>
-                    Pending
+                    Not signed in yet
                   </Badge>
                 )}
 
@@ -286,15 +286,27 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
         )}
 
         <Alert variant="info" className="ui-field">
-          The student account and its link to {parentName} are created together. They will be
-          emailed a link to set their own password.
+          The student account and its link to {parentName} are created together. Students have no
+          email or phone: they sign in with their username, shown once created, and the password
+          you set here.
         </Alert>
 
         <form onSubmit={createForm.handleSubmit} noValidate>
           <Input label="First name" required {...createForm.getFieldProps('firstName')} />
           <Input label="Last name" {...createForm.getFieldProps('lastName')} />
-          <Input label="Email" type="email" required {...createForm.getFieldProps('email')} />
-          <Input label="Phone" type="tel" {...createForm.getFieldProps('phone')} />
+          <PasswordInput
+            label="Password"
+            required
+            autoComplete="new-password"
+            hint="8+ characters with upper case, lower case and a number"
+            {...createForm.getFieldProps('password')}
+          />
+          <PasswordInput
+            label="Confirm password"
+            required
+            autoComplete="new-password"
+            {...createForm.getFieldProps('confirmPassword')}
+          />
 
           <SectionHeader title="Student profile" as="h3" />
           <RoleProfileFields
@@ -330,7 +342,7 @@ export default function ParentChildrenPanel({ parentId, parentName }) {
 
         <SearchInput
           label="Find a student"
-          placeholder="Name or email"
+          placeholder="Name or username"
           value={studentSearch}
           onChange={(e) => setStudentSearch(e.target.value)}
           onClear={() => setStudentSearch('')}

@@ -14,8 +14,12 @@ const INITIAL_VALUES = { password: '', confirmPassword: '' };
  * on the backend for why: a child's account is guardian-managed, and a
  * young student can't be expected to complete an email reset link
  * unsupervised. The child is signed out of every session immediately.
+ *
+ * `save` swaps the endpoint - the Super Admin user page passes
+ * adminUserService.setStudentPassword, since students have no email to
+ * receive a reset link.
  */
-export default function SetChildPasswordModal({ isOpen, child, onClose, onUpdated }) {
+export default function SetChildPasswordModal({ isOpen, child, onClose, onUpdated, save = parentService.setChildPassword }) {
   const form = useForm({
     initialValues: INITIAL_VALUES,
     validationSchema: {
@@ -23,14 +27,13 @@ export default function SetChildPasswordModal({ isOpen, child, onClose, onUpdate
       confirmPassword: [required('Confirm the new password'), matches('password')],
     },
     async onSubmit(values) {
-      await parentService.setChildPassword(child.id, {
+      await save(child.id, {
         password: values.password,
         confirmPassword: values.confirmPassword,
       });
 
       toast.success(`Password updated for ${formatName(child)}`);
       handleClose();
-      // The backend also marks the child's email verified - refresh so the card's badge follows.
       onUpdated?.();
     },
   });

@@ -47,8 +47,18 @@ export const reactivateUser = (id) => api.post(`/admin/users/${id}/reactivate`);
 /** Permanent and irreversible. */
 export const deleteUser = (id) => api.delete(`/admin/users/${id}`);
 
-/** Emails the user a reset link; the admin never sees a password. */
+/** Emails the user a reset link; the admin never sees a password. Not for students (no email). */
 export const resetUserPassword = (id) => api.post(`/admin/users/${id}/reset-password`);
+
+/** Students only: they have no email, so the password is set directly. Signs them out everywhere. */
+export const setStudentPassword = (id, { password, confirmPassword }) =>
+  api.patch(`/admin/users/${id}/password`, { password, confirmPassword });
+
+/** Teacher/parent whose code never arrived: a fresh code + link. `data.emailSent` says if it went out. */
+export const resendVerification = (id) => api.post(`/admin/users/${id}/resend-verification`);
+
+/** Teacher/parent: the Super Admin vouches for the address (audited). */
+export const markEmailVerified = (id) => api.post(`/admin/users/${id}/mark-email-verified`);
 
 export const listRoles = () => api.get('/admin/roles');
 
@@ -112,6 +122,9 @@ export default {
   reactivateUser,
   deleteUser,
   resetUserPassword,
+  setStudentPassword,
+  resendVerification,
+  markEmailVerified,
   listRoles,
   listSubjects,
   listParentChildren,

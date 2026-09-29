@@ -129,13 +129,10 @@ function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvi
       <div className="pc-chips">
         {isViewing && <Badge variant="primary">Viewing now</Badge>}
         <StatusBadge status={child.status} />
-        {child.emailVerified ? (
-          <Badge variant="success" dot>
-            Email verified
-          </Badge>
-        ) : (
+        {/* Children have no email to verify; what matters is whether they've signed in. */}
+        {!child.lastLoginAt && (
           <Badge variant="warning" dot>
-            Invite pending
+            Not signed in yet
           </Badge>
         )}
       </div>

@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
 import AccentPicker from '../../../components/appearance/AccentPicker';
 import { useAppSettings } from '../../../components/appearance/useAppSettings';
-import { Alert, Button, Input, Loader, Select } from '../../../components/common';
-import { timezoneOptions } from '../../../utils/locale';
+import { Alert, Button, Input, Loader } from '../../../components/common';
 import { formatPhoneForDisplay } from '../../../utils/phone';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
@@ -28,7 +27,7 @@ function valuesFromMe(me) {
     email: me?.email ?? '',
     // Shown the Canadian way, (416) 555-1234; the API stores E.164 either way.
     phone: formatPhoneForDisplay(me?.phone),
-    timezone: me?.timezone ?? '',
+    // No time zone field: it follows this device (hooks/useDeviceTimezone.js).
     address: me?.address ?? '',
     city: me?.city ?? '',
     state: me?.state ?? '',
@@ -76,7 +75,6 @@ export default function ParentProfilePage() {
         lastName: values.lastName || null,
         email: values.email,
         phone: values.phone || null,
-        timezone: values.timezone || undefined,
         address: values.address || null,
         city: values.city || null,
         state: values.state || null,
@@ -161,7 +159,6 @@ export default function ParentProfilePage() {
               {...form.getFieldProps('email')}
             />
             <Input label="Phone" type="tel" autoComplete="tel" {...form.getFieldProps('phone')} />
-            <Select label="Time zone" hint="Dates, 'today' and reminders follow this." options={timezoneOptions(form.values.timezone)} {...form.getFieldProps('timezone')} />
           </div>
         </ProfileSection>
 

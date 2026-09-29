@@ -7,6 +7,7 @@ import { useForm } from '../../../hooks/useForm';
 import { APP_NAME } from '../../../utils/constants';
 import { required } from '../../../utils/validation';
 import { AuthSplitLayout } from '../components/AuthSplitLayout';
+import { VerifyEmailStep } from '../components/VerifyEmailStep';
 import authService from '../services/auth.service';
 
 /** "9:42" */
@@ -18,10 +19,14 @@ const clock = (ms) => {
 /**
  * What went wrong with the last try, from the API error (backend
  * auth.service "sign-in pause"): a wrong password with N tries left, a
- * paused account with the time it opens again, or anything else.
+ * paused account with the time it opens again, a teacher/parent whose email
+ * isn't verified yet (right password), or anything else.
  */
 function toProblem(error) {
   const detail = (error?.errors ?? [])[0] ?? {};
+  if (detail.code === 'EMAIL_NOT_VERIFIED' && detail.email) {
+    return { kind: 'unverified', email: detail.email };
+  }
   if (detail.code === 'SIGNIN_PAUSED' || error?.status === 429) {
     const until = detail.lockedUntil ? new Date(detail.lockedUntil).getTime() : Date.now() + 10 * 60 * 1000;
     return { kind: 'paused', until, minutes: detail.pauseMinutes ?? 10 };
@@ -41,6 +46,10 @@ function toProblem(error) {
  * a selector. Wrong passwords show how many tries are left; after too many
  * the backend pauses sign-in and this page counts down to when it reopens,
  * with the fields locked and a way to reset the password.
+ *
+ * A teacher or parent who never verified their email (the code didn't
+ * arrive, or they left the sign-up page) gets "Check your email" here with a
+ * fresh code, and is signed in as soon as it's entered.
  */
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -79,6 +88,26 @@ export default function LoginPage() {
       }
     },
   });
+
+  if (problem?.kind === 'unverified') {
+    return (
+      <VerifyEmailStep
+        email={problem.email}
+        sendOnOpen
+        lead={`Your email isn't verified yet. We've sent a new 6-digit code to ${problem.email}. Enter it to finish signing in.`}
+        onBack={() => setProblem(null)}
+        onVerified={async () => {
+          try {
+            await signIn({ ...form.values, rememberMe }, authService.login);
+            navigate(location.state?.from?.pathname ?? '/', { replace: true });
+            return true;
+          } catch {
+            return false;
+          }
+        }}
+      />
+    );
+  }
 
   const passwordProps = form.getFieldProps('password');
   const mismatch = problem?.kind === 'mismatch';

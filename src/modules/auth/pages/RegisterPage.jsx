@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { LuInfo, LuLock, LuMail, LuTriangleAlert } from 'react-icons/lu';
+import { LuInfo, LuLock, LuMail } from 'react-icons/lu';
 import { Button, Checkbox, Input, Loader, PasswordInput } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
@@ -12,7 +12,7 @@ import { required, email as emailRule, password as passwordRule } from '../../..
 import { formatSubjects } from '../../invitations/invitationStatus';
 import invitationService from '../../invitations/services/teacherInvitation.service';
 import { AuthSplitLayout } from '../components/AuthSplitLayout';
-import { CodeInput } from '../components/CodeInput';
+import { ErrorAlert, VerifyEmailStep } from '../components/VerifyEmailStep';
 import authService from '../services/auth.service';
 
 /**
@@ -26,7 +26,6 @@ const ROLE_OPTIONS = [
 ];
 
 const PASSWORD_HINT = 'At least 8 characters, with an upper case letter, a lower case letter and a number.';
-const EMPTY_CODE = ['', '', '', '', '', ''];
 
 /** "Ms. Jane Rivera" -> { firstName: "Jane", lastName: "Rivera" } - a starting point the teacher can edit. */
 function splitName(name) {
@@ -36,24 +35,6 @@ function splitName(name) {
     .split(/\s+/)
     .filter(Boolean);
   return { firstName: parts[0] ?? '', lastName: parts.slice(1).join(' ') };
-}
-
-/** "0:45" */
-const clock = (ms) => {
-  const total = Math.max(0, Math.ceil(ms / 1000));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
-};
-
-function ErrorAlert({ title, children }) {
-  return (
-    <div className="lg-alert lg-alert--error" role="alert">
-      <LuTriangleAlert className="lg-alert__icon" aria-hidden="true" />
-      <div>
-        <p className="lg-alert__title">{title}</p>
-        {children && <p className="lg-alert__text">{children}</p>}
-      </div>
-    </div>
-  );
 }
 
 /**
@@ -178,7 +159,10 @@ function SignUp({ inviteToken, invite }) {
         setStep('verify');
         return result;
       } catch (error) {
-        setProblem(error?.message || 'We couldn’t create your account. Please try again.');
+        // Already signed up (perhaps the code never arrived): signing in
+        // leads to "Check your email" with a fresh code.
+        if (error?.status === 409) setProblem({ conflict: true });
+        else setProblem({ message: error?.message || 'We couldn’t create your account. Please try again.' });
         return null;
       }
     },
@@ -212,7 +196,13 @@ function SignUp({ inviteToken, invite }) {
           : 'For parents and teachers. Once you’re in, you can add your children or students.'
       }
     >
-      {problem && <ErrorAlert title="We couldn’t create your account">{problem}</ErrorAlert>}
+      {problem?.conflict && (
+        <ErrorAlert title="You already have an account">
+          This email is already signed up. <Link to="/login">Sign in</Link> with your password. If you never
+          verified your email, we&apos;ll send you a new code there.
+        </ErrorAlert>
+      )}
+      {problem?.message && <ErrorAlert title="We couldn’t create your account">{problem.message}</ErrorAlert>}
 
       {invite && (
         <div className="lg-note" style={{ marginTop: 0, marginBottom: 16 }} data-testid="register-invite-banner">
@@ -297,137 +287,6 @@ function SignUp({ inviteToken, invite }) {
       <p className="lg-foot">
         Already have an account?
         <Link to="/login">Sign in</Link>
-      </p>
-    </AuthSplitLayout>
-  );
-}
-
-/**
- * "Check your email" - the 6-digit code. Verifies as soon as the last digit
- * is typed (or on the button), counts down to "Send a new code", and says
- * plainly when a code is wrong or has run out.
- */
-function VerifyEmailStep({ email, verification, onBack, onVerified }) {
-  const minutes = verification.expiresInMinutes ?? 10;
-  const cooldownMs = (verification.resendAfterSeconds ?? 45) * 1000;
-
-  const [code, setCode] = useState(EMPTY_CODE);
-  const [status, setStatus] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [resendAt, setResendAt] = useState(() => Date.now() + cooldownMs);
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const verify = async (full) => {
-    if (busy) return;
-    if (full.length !== 6) {
-      setStatus({ kind: 'incomplete' });
-      return;
-    }
-    setBusy(true);
-    setStatus(null);
-    try {
-      await authService.verifyEmailCode(email, full);
-      setStatus({ kind: 'verified' });
-      if (!(await onVerified())) setStatus({ kind: 'verified-signin' });
-    } catch (error) {
-      const detail = (error?.errors ?? [])[0] ?? {};
-      if (detail.code === 'CODE_EXPIRED') setStatus({ kind: 'expired' });
-      else if (detail.code === 'INVALID_CODE' || error?.status === 400) setStatus({ kind: 'invalid' });
-      else setStatus({ kind: 'other', message: error?.message });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const resend = async () => {
-    setStatus(null);
-    try {
-      const result = await authService.resendVerification(email);
-      const seconds = result?.data?.resendAfterSeconds ?? cooldownMs / 1000;
-      setResendAt(Date.now() + seconds * 1000);
-      setNow(Date.now());
-      setCode(EMPTY_CODE);
-      setStatus({ kind: 'sent' });
-    } catch (error) {
-      setStatus({ kind: 'other', message: error?.message });
-    }
-  };
-
-  const wrong = status?.kind === 'invalid' || status?.kind === 'expired' || status?.kind === 'incomplete';
-  const waitMs = resendAt - now;
-
-  if (status?.kind === 'verified-signin') {
-    return (
-      <AuthSplitLayout title="You're verified ✅" lead="Your email is confirmed. Sign in to get started.">
-        <Button as={Link} to="/login" fullWidth size="lg" className="lg-submit">
-          Sign in
-        </Button>
-      </AuthSplitLayout>
-    );
-  }
-
-  return (
-    <AuthSplitLayout
-      back={{ onClick: onBack }}
-      title={
-        <>
-          Check your email <span aria-hidden="true">📬</span>
-        </>
-      }
-      lead={`We sent a 6-digit code to ${email}. Enter it below to verify your account.`}
-    >
-      {status?.kind === 'other' && <ErrorAlert title="Something went wrong">{status.message}</ErrorAlert>}
-
-      <form
-        noValidate
-        onSubmit={(e) => {
-          e.preventDefault();
-          verify(code.join(''));
-        }}
-      >
-        <CodeInput
-          value={code}
-          onChange={(next) => {
-            setCode(next);
-            if (wrong) setStatus(null);
-          }}
-          onComplete={verify}
-          error={wrong}
-          disabled={busy || status?.kind === 'verified'}
-        />
-        <p className="lg-code__hint" data-error={wrong || undefined} role={wrong ? 'alert' : undefined}>
-          {status?.kind === 'incomplete'
-            ? 'Enter all 6 digits from the email.'
-            : status?.kind === 'invalid'
-            ? 'That code isn’t right. Check the email and try again.'
-            : status?.kind === 'expired'
-              ? 'That code has run out. Send a new code and use the newest one.'
-              : status?.kind === 'sent'
-                ? `We sent a new code. It works for ${minutes} minutes.`
-                : `The code works for ${minutes} minutes.`}
-        </p>
-
-        <Button
-          type="submit"
-          fullWidth
-          size="lg"
-          loading={busy || status?.kind === 'verified'}
-          className="lg-submit"
-        >
-          Verify email
-        </Button>
-      </form>
-
-      <p className="lg-foot">
-        Didn&apos;t get it?{wrong ? '' : ' Check spam, or'}
-        <button type="button" onClick={resend} disabled={waitMs > 0}>
-          {waitMs > 0 ? `Resend in ${clock(waitMs)}` : 'Send a new code'}
-        </button>
       </p>
     </AuthSplitLayout>
   );

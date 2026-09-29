@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Alert, Button, Input, Loader, Select } from '../../../components/common';
+import { Alert, Button, Input, Loader } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
 import { useForm } from '../../../hooks/useForm';
@@ -7,7 +7,6 @@ import { toast } from '../../../hooks/useToast';
 import { formatDate, formatDateTime } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
-import { timezoneOptions } from '../../../utils/locale';
 import { formatPhoneForDisplay } from '../../../utils/phone';
 import { phone as phoneRule, required } from '../../../utils/validation';
 import ChangePasswordForm from '../../auth/components/ChangePasswordForm';
@@ -20,14 +19,14 @@ function valuesFromMe(me) {
     firstName: me?.firstName ?? '',
     lastName: me?.lastName ?? '',
     phone: formatPhoneForDisplay(me?.phone),
-    timezone: me?.timezone ?? '',
   };
 }
 
 /**
  * /admin/profile - the Super Admin's own account, on the same frame as the
- * teacher and parent My Profile pages (ProfilePageLayout): name, phone and
- * time zone, plus Change password.
+ * teacher and parent My Profile pages (ProfilePageLayout): name and phone,
+ * plus Change password. No time zone field: it follows this device
+ * (hooks/useDeviceTimezone.js).
  *
  * Deliberately narrower than the other roles: Super Admin has no profile
  * table (so no photo), and the sign-in email is read-only here - changing it
@@ -52,7 +51,6 @@ export default function AdminProfilePage() {
         firstName: values.firstName,
         lastName: values.lastName || null,
         phone: values.phone || null,
-        timezone: values.timezone || undefined,
       });
       setUser({ ...user, firstName: data.firstName, lastName: data.lastName, phone: data.phone, timezone: data.timezone });
       toast.success('Profile saved');
@@ -68,7 +66,7 @@ export default function AdminProfilePage() {
 
   if (isLoading && !record) return <Loader message="Loading your profile…" />;
 
-  const description = 'Your details, time zone and password.';
+  const description = 'Your details and password.';
   if (!record) {
     return (
       <ProfilePageLayout description={description}>
@@ -128,12 +126,6 @@ export default function AdminProfilePage() {
             <Input label="Last name" autoComplete="family-name" {...form.getFieldProps('lastName')} />
             <Input label="Email" type="email" value={record.email} readOnly disabled hint="Your sign-in email - it can't be changed here." />
             <Input label="Phone" type="tel" autoComplete="tel" {...form.getFieldProps('phone')} />
-            <Select
-              label="Time zone"
-              hint="Dates, 'today' and reports follow this."
-              options={timezoneOptions(form.values.timezone)}
-              {...form.getFieldProps('timezone')}
-            />
           </div>
           <div className="pf-actions">
             <Button type="submit" loading={form.isSubmitting}>

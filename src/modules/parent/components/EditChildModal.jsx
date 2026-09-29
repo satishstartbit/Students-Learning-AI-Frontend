@@ -1,11 +1,9 @@
 import { useCallback, useEffect } from 'react';
-import { Alert, Button, Input, Loader, Modal, Select } from '../../../components/common';
-import { timezoneOptions } from '../../../utils/locale';
-import { formatPhoneForDisplay } from '../../../utils/phone';
+import { Alert, Button, Input, Loader, Modal } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
-import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
+import { required } from '../../../utils/validation';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
@@ -25,9 +23,8 @@ function valuesFromChild(child) {
   return {
     firstName: child?.firstName ?? '',
     lastName: child?.lastName ?? '',
-    email: child?.email ?? '',
-    phone: formatPhoneForDisplay(child?.phone),
-    timezone: child?.timezone ?? '',
+    // No email or phone: a child signs in with their username (backend strips both).
+    // No time zone field: the child's own device sets it (hooks/useDeviceTimezone.js).
     address: child?.address ?? '',
     city: child?.city ?? '',
     state: child?.state ?? '',
@@ -77,16 +74,11 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
     initialValues: valuesFromChild(null),
     validationSchema: {
       firstName: [required('Enter a first name')],
-      email: [required('Enter an email address'), emailRule()],
-      phone: [phoneRule()],
     },
     async onSubmit(values) {
       await parentService.updateChild(childId, {
         firstName: values.firstName,
         lastName: values.lastName || null,
-        email: values.email,
-        phone: values.phone || null,
-        timezone: values.timezone || undefined,
         address: values.address || null,
         city: values.city || null,
         state: values.state || null,
@@ -163,9 +155,6 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
             <div className="pf-grid">
               <Input label="First name" required autoComplete="off" {...form.getFieldProps('firstName')} />
               <Input label="Last name" autoComplete="off" {...form.getFieldProps('lastName')} />
-              <Input label="Email" type="email" required autoComplete="off" {...form.getFieldProps('email')} />
-              <Input label="Phone" type="tel" autoComplete="off" {...form.getFieldProps('phone')} />
-              <Select label="Time zone" hint="Dates, 'today' and reminders follow this." options={timezoneOptions(form.values.timezone)} {...form.getFieldProps('timezone')} />
             </div>
           </ProfileSection>
 
