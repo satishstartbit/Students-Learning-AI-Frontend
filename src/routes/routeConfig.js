@@ -217,12 +217,26 @@ export const SUPER_ADMIN_ROUTES = {
       props: { fixedRole: USER_ROLES.TEACHER },
     },
 
+    /*
+     * Create pages, one per role Super Admin can add (utils/constants
+     * ROLE_CREATE_PATH). One component, `role` fixes the form. The old combined
+     * page redirects to the teacher form, which was its default role.
+     */
     {
-      path: 'users/create',
-      label: 'Create user',
+      path: 'users/teachers/create',
+      label: 'Create teacher',
       permissions: [PERMISSIONS.USER_CREATE],
       component: CreateUserPage,
+      props: { role: USER_ROLES.TEACHER },
     },
+    {
+      path: 'users/parents/create',
+      label: 'Create parent',
+      permissions: [PERMISSIONS.USER_CREATE],
+      component: CreateUserPage,
+      props: { role: USER_ROLES.PARENT },
+    },
+    { path: 'users/create', label: 'Create user', redirectTo: '/admin/users/teachers/create' },
     {
       path: 'users/:id',
       label: 'User details',

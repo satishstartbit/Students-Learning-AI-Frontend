@@ -19,7 +19,7 @@ import { usePagination } from '../../../hooks/usePagination';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatDateTime, formatRelative } from '../../../utils/date';
 import { formatName } from '../../../utils/format';
-import { USER_ROLES, USER_STATUS, ROLE_LABELS } from '../../../utils/constants';
+import { USER_ROLES, USER_STATUS, ROLE_LABELS, ROLE_CREATE_PATH } from '../../../utils/constants';
 import adminUserService from '../services/adminUser.service';
 
 /**
@@ -181,8 +181,9 @@ export default function UsersListPage({ fixedRole = null }) {
     },
   ];
 
-  // Students are added by their parent, so there is no "create" here for them.
-  const canCreateHere = fixedRole !== USER_ROLES.STUDENT;
+  // Teachers and parents each have their own create page. Students are added
+  // by their parent, so there is no "create" here for them.
+  const createPath = ROLE_CREATE_PATH[fixedRole];
 
   // Distinguishes "nothing here yet" from "nothing matched your filters".
   const hasFilters = Boolean(search || status || emailVerified || (!fixedRole && role));
@@ -207,9 +208,9 @@ export default function UsersListPage({ fixedRole = null }) {
         title={heading.title}
         description={heading.description}
         actions={
-          canCreateHere ? (
-            <Button as={Link} to="/admin/users/create">
-              Create user
+          createPath ? (
+            <Button as={Link} to={createPath}>
+              Create {ROLE_LABELS[fixedRole].toLowerCase()}
             </Button>
           ) : null
         }
