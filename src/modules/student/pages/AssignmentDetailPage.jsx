@@ -1,32 +1,23 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  PageHeader,
-  Card,
-  Textarea,
-  Button,
-  Alert,
-  AudioPlayer,
-  Badge,
-  StatusBadge,
-  ConfirmationModal,
-  FileUpload,
-  Loader,
-  ErrorState,
-} from '../../../components/common';
+import { Card, Textarea, Button, Alert, AudioPlayer, ConfirmationModal, FileUpload, Loader, ErrorState } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useModal } from '../../../hooks/useModal';
 import { useFileUpload } from '../../../hooks/useFileUpload';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
-import { formatDateTime, formatDuration, formatDueDate, isOverdue } from '../../../utils/date';
+import { isOverdue } from '../../../utils/date';
 import { formatFileSize } from '../../../utils/format';
 import { ASSIGNMENT_RECIPIENT_STATUS } from '../../../utils/constants';
 import { DOCUMENT_MIME_TYPES, IMAGE_MIME_TYPES } from '../../../utils/file';
 import assignmentService from '../../assignments/services/assignment.service';
+import AnswerReviewCard from '../components/assignment/AnswerReviewCard';
+import ReviewBanner from '../components/assignment/ReviewBanner';
 import StandardAssignmentView from '../components/assignment/StandardAssignmentView';
+import { reviewAnswers } from '../components/assignment/answerReview';
+import { HANDED_IN_STATUSES } from '../components/assignment/assignmentLabels';
 import { TaskFocusCard } from '../components/focus/TaskFocusCard';
-import { KidTaskFocus } from '../components/kid/KidTaskFocus';
+import { KidAssignmentView } from '../components/kid/KidAssignmentView';
 import { useStudentExperience } from '../hooks/useStudentExperience';
 import QuestionAnswer from '../../assignments/components/QuestionAnswer';
 
@@ -39,29 +30,6 @@ const isAnswered = (question, answer) => {
   if (question.answerType === 'matching') return Boolean(answer?.matchedPairs?.length);
   return Boolean(answer?.textAnswer?.trim());
 };
-
-/** "You got 4 of 5 right!" plus how many are partly right or still waiting on the teacher. */
-function QuizResult({ quiz }) {
-  if (!quiz || quiz.correct === null) return null;
-  // A skippable question left unanswered isn't counted here at all - it neither helped nor hurt the score.
-  const gradedCount = quiz.correct + quiz.incorrect + (quiz.partiallyCorrect ?? 0) + quiz.pendingReview;
-  const allRight = gradedCount > 0 && quiz.correct === gradedCount;
-  return (
-    <div role="status" style={{ fontSize: '1.4rem', fontWeight: 700, margin: 'var(--spacing-sm) 0' }}>
-      {allRight ? '🎉 ' : '⭐ '}You got {quiz.correct} of {gradedCount} right{allRight ? '!' : '.'}
-      {quiz.partiallyCorrect > 0 && (
-        <div className="ui-hint" style={{ fontSize: '1rem', fontWeight: 400 }}>
-          {quiz.partiallyCorrect} {quiz.partiallyCorrect === 1 ? 'question was' : 'questions were'} partly right.
-        </div>
-      )}
-      {quiz.pendingReview > 0 && (
-        <div className="ui-hint" style={{ fontSize: '1rem', fontWeight: 400 }}>
-          Your teacher will check {quiz.pendingReview} written {quiz.pendingReview === 1 ? 'answer' : 'answers'}.
-        </div>
-      )}
-    </div>
-  );
-}
 
 /**
  * The task's background sound. Both the link and the autoplay decision are
@@ -76,12 +44,17 @@ function TaskAudio({ audio, autoPlay }) {
   return <AudioPlayer src={src} title={audio.name} autoPlay={startOnOpen} className="ui-field" />;
 }
 
-/** The student's own work on the task. Mounted fresh when the status changes, so it starts from the saved answers. */
+/**
+ * The student's own work while the task is still theirs to do (assigned,
+ * started, or sent back): Start, the answers, Save Progress and Submit.
+ * Mounted fresh when the status changes, so it starts from the saved
+ * answers. Once handed in, each band shows the review instead
+ * (ReviewBanner + AnswerReviewCard, or KidAssignmentView's review).
+ */
 function StudentWork({ item, assignmentId, reload }) {
   const a = item.assignment;
   const questions = a.questions ?? [];
   const canEdit = item.status === ASSIGNMENT_RECIPIENT_STATUS.IN_PROGRESS || item.status === ASSIGNMENT_RECIPIENT_STATUS.RETURNED;
-  const handedIn = !ACTIVE_STATUSES.includes(item.status);
 
   const [content, setContent] = useState(item.submission?.content ?? '');
   const [answers, setAnswers] = useState(() =>
@@ -181,28 +154,7 @@ function StudentWork({ item, assignmentId, reload }) {
     setMissing((prev) => (prev.includes(questionId) ? prev.filter((id) => id !== questionId) : prev));
   };
 
-  const resultFor = (questionId) => {
-    if (!handedIn) return undefined;
-    const ans = (item.submission?.answers ?? []).find((x) => x.questionId === questionId);
-    return { isCorrect: ans?.isCorrect ?? null, partialScore: ans?.partialScore ?? null };
-  };
-
-  const questionList = (readOnly) => (
-    <div style={{ display: 'grid', gap: 'var(--spacing-md)' }}>
-      {questions.map((q, index) => (
-        <QuestionAnswer
-          key={q.id}
-          question={q}
-          number={index + 1}
-          answer={answers[q.id]}
-          onChange={(value) => setAnswer(q.id, value)}
-          readOnly={readOnly}
-          result={readOnly ? resultFor(q.id) : undefined}
-          error={missing.includes(q.id) ? 'Pick an answer for this one' : undefined}
-        />
-      ))}
-    </div>
-  );
+  if (!ACTIVE_STATUSES.includes(item.status)) return null;
 
   return (
     <>
@@ -223,7 +175,20 @@ function StudentWork({ item, assignmentId, reload }) {
 
       {canEdit && (
         <Card title="Your work" className="ui-field">
-          {questions.length > 0 && <div className="ui-field">{questionList(false)}</div>}
+          {questions.length > 0 && (
+            <div className="ui-field" style={{ display: 'grid', gap: 'var(--spacing-md)' }}>
+              {questions.map((q, index) => (
+                <QuestionAnswer
+                  key={q.id}
+                  question={q}
+                  number={index + 1}
+                  answer={answers[q.id]}
+                  onChange={(value) => setAnswer(q.id, value)}
+                  error={missing.includes(q.id) ? 'Pick an answer for this one' : undefined}
+                />
+              ))}
+            </div>
+          )}
 
           {(questions.length === 0 || content) && (
             <Textarea
@@ -264,37 +229,6 @@ function StudentWork({ item, assignmentId, reload }) {
         </Card>
       )}
 
-      {item.status === ASSIGNMENT_RECIPIENT_STATUS.SUBMITTED && (
-        <Card className="ui-field">
-          <Badge variant="warning" dot>
-            Submitted, waiting for your teacher to review
-          </Badge>
-          <p className="ui-hint" style={{ marginTop: 8 }}>
-            Submitted {item.submission?.submittedAt ? formatDateTime(item.submission.submittedAt) : ''}
-          </p>
-          <QuizResult quiz={item.submission?.quiz} />
-          {item.submission?.content && <p style={{ whiteSpace: 'pre-wrap', marginTop: 8 }}>{item.submission.content}</p>}
-        </Card>
-      )}
-
-      {(item.status === ASSIGNMENT_RECIPIENT_STATUS.REVIEWED || item.status === ASSIGNMENT_RECIPIENT_STATUS.COMPLETED) && (
-        <Card className="ui-field">
-          <Alert variant="success" title="Great job! Your teacher reviewed your work. 🎉">
-            <QuizResult quiz={item.submission?.quiz} />
-            {item.submission?.score != null && (
-              <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: '8px 0' }}>Score: {item.submission.score}/100</p>
-            )}
-            {item.submission?.feedback && <p style={{ margin: 0 }}>{item.submission.feedback}</p>}
-          </Alert>
-        </Card>
-      )}
-
-      {handedIn && questions.length > 0 && (
-        <Card title="Your answers" className="ui-field">
-          {questionList(true)}
-        </Card>
-      )}
-
       <ConfirmationModal
         isOpen={submitModal.isOpen}
         onClose={submitModal.close}
@@ -309,21 +243,23 @@ function StudentWork({ item, assignmentId, reload }) {
 }
 
 /**
- * Student-facing assignment page.
+ * Student-facing assignment page, one per band, both built to the mockups:
  *
- * Grade 6+ gets the mockup layout (StandardAssignmentView): header with
- * overall progress, the student's own task breakdown, their work, and a rail
- * with overview / next step / resources / notes / details. K-5 keeps the
- * simpler single-column page below - same data, plainer language.
+ *   Grade 6+  StandardAssignmentView - header with overall progress, the
+ *             student's own task breakdown, their work, and a rail with
+ *             overview / next step / resources / notes / details. Handed in:
+ *             ReviewBanner ("You got 4 of 6 right", score, what the teacher
+ *             said) and AnswerReviewCard (All / Look again), "Status" in the rail.
+ *   K-5       KidAssignmentView - the "Busy Bee quiz" page: paper header,
+ *             what to do and the work while it's open; once handed in,
+ *             "How did you do?", stars, "Your answers" with "This one!", and
+ *             the reading scene.
  *
- * Kept simple and
- * encouraging - young students use this, so language stays plain and buttons
- * stay big. A task's background sound starts on its own while the task is
- * still to do, with pause and mute always visible.
- *
- * Once the task is started (Start Assignment), a Focus time clock appears
- * above the work, already tied to this task - KidTaskFocus for K-5 (the same
- * card as the Focus time page) and TaskFocusCard for Grade 6+.
+ * A task's background sound starts on its own while the task is still to do,
+ * with pause and mute always visible. Once the task is started (Start
+ * Assignment), a Focus time clock appears above the work, already tied to
+ * this task - KidTaskFocus for K-5 (the same card as the Focus time page) and
+ * TaskFocusCard for Grade 6+.
  */
 export default function AssignmentDetailPage() {
   const { assignmentId } = useParams();
@@ -345,93 +281,57 @@ export default function AssignmentDetailPage() {
   const a = item.assignment;
   const overdue = ['assigned', 'in_progress'].includes(item.status) && a.dueDate && isOverdue(a.dueDate);
   const audio = a.backgroundAudio;
+  const handedIn = HANDED_IN_STATUSES.includes(item.status);
 
   const work = <StudentWork key={`${item.recipientId}:${item.status}`} item={item} assignmentId={assignmentId} reload={load} />;
   // Started and not yet handed in - the same statuses that let the student edit their work.
   const working = item.status === ASSIGNMENT_RECIPIENT_STATUS.IN_PROGRESS || item.status === ASSIGNMENT_RECIPIENT_STATUS.RETURNED;
+  // The sound belongs to doing the task; a handed-in task has no player.
+  const sound = !handedIn && audio?.url && (
+    <TaskAudio key={`${a.id}:${audio.type}:${audio.name}`} audio={audio} autoPlay={ACTIVE_STATUSES.includes(item.status)} />
+  );
+  const overdueNote = overdue && (
+    <Alert variant="danger" title="This one is overdue" className={isJunior ? undefined : 'ui-field'}>
+      Try to finish it as soon as you can, or ask your teacher for help.
+    </Alert>
+  );
 
   if (!isJunior) {
+    const review = handedIn ? reviewAnswers(a.questions ?? [], item.submission) : null;
     return (
       <>
-        {audio?.url && <TaskAudio key={`${a.id}:${audio.type}:${audio.name}`} audio={audio} autoPlay={ACTIVE_STATUSES.includes(item.status)} />}
+        {sound}
         <StandardAssignmentView item={item} assignmentId={assignmentId} reload={load}>
-          {overdue && (
-            <Alert variant="danger" title="This one is overdue">
-              Try to finish it as soon as you can, or ask your teacher for help.
-            </Alert>
-          )}
+          {overdueNote}
           <TaskFocusCard assignmentId={assignmentId} available={working} />
-          {work}
+          {handedIn ? (
+            <>
+              <ReviewBanner item={item} review={review} />
+              <AnswerReviewCard review={review} content={item.submission?.content} />
+            </>
+          ) : (
+            work
+          )}
         </StandardAssignmentView>
       </>
     );
   }
 
   return (
-    <div className="td-page">
-      <PageHeader
-        title={a.title}
-        description={[a.subject || 'No subject', a.topic?.name, a.grade || 'No grade'].filter(Boolean).join(' · ')}
-        breadcrumbs={[{ label: 'Assignments', to: '/student/assignments' }, { label: a.title }]}
-      />
-
-      {audio?.url && <TaskAudio key={`${a.id}:${audio.type}:${audio.name}`} audio={audio} autoPlay={ACTIVE_STATUSES.includes(item.status)} />}
-
-      {overdue && (
-        <Alert variant="danger" title="This one is overdue" className="ui-field">
-          Try to finish it as soon as you can, or ask your teacher for help.
-        </Alert>
-      )}
-
-      <Card className="ui-field">
-        <div className="grid gap-4 md:grid-cols-3">
-          <div>
-            <span className="ui-hint">Due</span>
-            <div style={{ fontWeight: 600 }}>{formatDueDate(a.dueDate)}</div>
-          </div>
-          <div>
-            <span className="ui-hint">Estimated time</span>
-            <div>{a.estimatedMinutes ? formatDuration(a.estimatedMinutes) : '—'}</div>
-          </div>
-          <div>
-            <span className="ui-hint">Status</span>
-            <div>
-              <StatusBadge status={overdue ? 'overdue' : item.status} label={overdue ? 'Overdue' : undefined} />
-            </div>
-          </div>
-        </div>
-
-        {a.description && (
+    <KidAssignmentView
+      item={item}
+      assignmentId={assignmentId}
+      working={working}
+      notices={
+        (sound || overdueNote) && (
           <>
-            <p className="ui-statcard__label" style={{ marginTop: 'var(--spacing-md)' }}>
-              Instructions
-            </p>
-            <p style={{ whiteSpace: 'pre-wrap' }}>{a.description}</p>
+            {sound}
+            {overdueNote}
           </>
-        )}
-
-        {a.files?.length > 0 && (
-          <>
-            <p className="ui-statcard__label" style={{ marginTop: 'var(--spacing-md)' }}>
-              Resources
-            </p>
-            <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-              {a.files.map((f) => (
-                <li key={f.id}>
-                  <a href={f.url} target="_blank" rel="noopener noreferrer">
-                    📎 {f.originalFilename}
-                  </a>{' '}
-                  <span className="ui-hint">({formatFileSize(f.fileSize)})</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </Card>
-
-      <KidTaskFocus assignmentId={assignmentId} available={working} />
-
+        )
+      }
+    >
       {work}
-    </div>
+    </KidAssignmentView>
   );
 }

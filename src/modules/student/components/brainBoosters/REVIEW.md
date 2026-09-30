@@ -1,5 +1,7 @@
 # Brain Boosters: rules and behaviour review
 
+**Current layout: 30 September 2026.** Brain Boosters are part of the Focus page now (both bands), and each game or exercise has its own page. See "Folded into Focus" at the end; the sections before it are history.
+
 **Current Finger Follow update: 28 September 2026.** The local video reference replaces the earlier corridor design. Historical research and checks below are retained as history; the video-reference section describes the current implementation.
 
 Reviewed 24 September 2026, following reports of jumping and flickering. Finger Follow updated 25 September 2026 to the requested hold-and-steer rules.
@@ -35,8 +37,8 @@ Memory activities award 10 session points per item only after the full round is 
 Earlier review result (before the steering change): **20/20 logic tests and 74/74 Chrome checks passed**, with zero browser errors in both grade bands. In the captured follow runs, the maximum movement between consecutive frames was 1.37px for kids and 1.65px for older students. Production build and targeted ESLint passed. The build still reports the app's large-chunk warning.
 
 - `npm test`: pure-rule regressions for corridor continuity, circular hit testing, walls, absolute steering, bounded frame delays, completion and boundaries, pause/reset, stale callbacks, score integrity, ten-balloon completion, age settings, cue gaps, manual recall, pattern growth and chosen chain items.
-- `npx eslint src/modules/student/components/brainBoosters src/modules/student/pages/BrainBoostersPage.jsx` and `npm run build`.
-- `.claude/testing/scenarios/brain-boosters.mjs`: isolated Chrome checks with mocked API data for both student bands, real keyboard/button actions, frame-to-frame movement, pause/resume, background tabs, misses, all three memory modes, phone layouts, dark appearance, exercises and saved reduced-motion preferences.
+- `npx eslint src/modules/student/components/brainBoosters src/modules/student/pages/BoosterPage.jsx src/modules/student/pages/kid/KidBoosterPage.jsx` and `npm run build` (the old `BrainBoostersPage.jsx` was removed on 30 September 2026).
+- `.claude/testing/scenarios/brain-boosters.mjs` (now opening each game's own page): isolated Chrome checks with mocked API data for both student bands, real keyboard/button actions, frame-to-frame movement, pause/resume, background tabs, misses, all three memory modes, phone layouts, dark appearance, exercises and saved reduced-motion preferences.
 - No backend or shared student data changes are needed. No sound, microphone or camera access is required.
 
 ## Finger Follow steering verification (25 September 2026)
@@ -65,3 +67,17 @@ The full Brain Boosters regression suite also passed 64/64 checks (101/101 combi
 - Verification: 39/39 current frontend unit tests, targeted ESLint, production build, 27/27 focused Chrome checks and 64/64 other game regression checks. Build retains the pre-existing large-chunk warning.
 
 Final full-session verification: `finger-follow-full-session.mjs` passed all three real-time rounds, completion, replay, accessible progress, compact 520 x 561 desktop card, phone/dark layouts, and no browser errors. Final screenshots: `.claude/testing/screenshots/follow-video-final-{desktop,phone,dark}.png`.
+
+## Folded into Focus (30 September 2026)
+
+Built to five mockups: Kids Focus (Calm & move), Kids Focus (Brain games), Kids Finger Follow, Grade 6+ Focus and Grade 6+ Finger Follow.
+
+- **Where boosters live.** The separate `/student/brain-boosters` page is gone. That address now redirects to `/student/focus?boost=games`. Both navs lost their Brain Boosters entry, and Home's teaser links to Focus.
+- **Grade 6+ Focus.** `components/focus/FocusBoostersCard.jsx` sits under the Focus Timer. It has Exercises and Brain Games tabs, a check-in suggestion ("You checked in feeling tense… Try Finger Follow"), three tiles, and the picked booster's description with a small preview and a Play or Start button. "What's making it hard?" and "More calming tools" (the admin toolkit) replaced the old "Feeling stuck?" card, whose `StuckToolkit.jsx` is kept but unused.
+- **K-5 Focus.** "Need a minute first?" switches between Calm & move (Breathe, Wiggle, Listen) and Brain games. One "Try this" badge marks the best match for today's check-in.
+- **Suggestions.** `boosters.js#suggestBooster` picks the first booster matching the earliest category the server ranks for today's mood. The categories are the admin-managed toolkit categories.
+- **Booster pages.** Each booster opens `/student/focus/games/:id` or `/student/focus/exercises/:id`. Grade 6+ gets `pages/BoosterPage.jsx`: Back to Focus, the kind and length, the game, How it works, and Your pace, your space. K-5 gets `pages/kid/KidBoosterPage.jsx`: the game on its paper colour, How to play, About N min, Just for fun, and Maybe later. Exercises are Grade 6+ only, so a K-5 student opening one lands back on Focus.
+- **Games on their own pages.** The games take `hideHeading`, because the page shows the title. K-5 Finger Follow shows "3 short rounds" and a round/tap line instead of the three counters, with the same test ids.
+- **Breaks aren't focus time.** Opening a booster (6+) or a break card (K-5) while the clock runs pauses the session first.
+- **Styles.** The deleted page's layout rules (`.bb-panel` with its 900px minimum, the hero, the switches, the guide and pace aside) were removed from `brainBoosters.css`. `.bb-page` still carries the `--bb-*` variables for `BoosterGame`.
+- **Verification.** Scenario `focus-boosters.mjs` checks both Focus pages, the booster pages, the redirect, the navs, 390/360px and dark mode. The booster scenarios (`brain-boosters.mjs`, `finger-follow.mjs`, `finger-follow-full-session.mjs`) now open each game's own page.

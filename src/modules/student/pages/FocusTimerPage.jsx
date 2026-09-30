@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { LuCheck, LuChevronRight, LuHeadphones, LuPause, LuPlay, LuVolumeX } from 'react-icons/lu';
+import { Link, useSearchParams } from 'react-router-dom';
+import { LuCheck, LuChevronRight, LuHeadphones, LuPause, LuPlay, LuSlidersHorizontal, LuTimer, LuVolumeX } from 'react-icons/lu';
 import { Alert, Loader, Modal } from '../../../components/common';
 import { subjectPaint } from '../../../components/subjects/subjectColor';
 import { useSubjectColors } from '../../../components/subjects/useSubjectColors';
@@ -8,8 +8,8 @@ import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { toast } from '../../../hooks/useToast';
 import { formatDuration } from '../../../utils/date';
 import { getSubjectVisual } from '../components/subjectVisual';
+import FocusBoostersCard from '../components/focus/FocusBoostersCard';
 import StepsPanel from '../components/focus/StepsPanel';
-import StuckToolkit from '../components/focus/StuckToolkit';
 import { FOCUS_LENGTHS as LENGTHS } from '../components/focus/focusLengths';
 import '../components/focus/focusSession.css';
 import { formatClock, useFocusTimer } from '../hooks/useFocusTimer';
@@ -19,14 +19,22 @@ import { useTodayCheckIn } from '../../checkIn/hooks/useTodayCheckIn';
 import { useTodayTasks } from '../hooks/useTodayTasks';
 
 /**
- * "Focus session - one step at a time. Everything else can wait." (Grade 6+;
- * K-5 has KidFocusPage). Built to the focus mockup.
+ * Grade 6+ "Focus - Take a breath, choose what you need, and get to it."
+ * (K-5 has KidFocusPage). Built to the Focus mockup, with what used to be the
+ * separate Brain Boosters page folded in:
  *
- * A session is about one task and one of the student's own steps for it
- * ("Your steps", useFocusSteps). The countdown comes from the server's event
- * trail, so a refresh mid-session resumes exactly. Finishing offers to tick
- * the step done, which earns step points once. Underneath, "Feeling stuck?"
- * offers real, admin-managed toolkit exercises.
+ *   Focus Timer      pick a task and a length, or just start the clock; the
+ *                    countdown comes from the server's event trail, so a
+ *                    refresh mid-session resumes exactly
+ *   Brain Boosters   exercises and brain games (each opens its own page);
+ *                    today's check-in suggests one; "What's making it hard?"
+ *                    and the full regulation toolkit
+ *   Your steps       the student's own steps for the task (useFocusSteps);
+ *                    finishing a session offers to tick the step done
+ *
+ * `?assignment=&step=` opens a session already set up (the assignment page's
+ * "Start work"), `?minutes=` sets the length (the "short timer" help idea),
+ * `?boost=games|exercises` opens on the Brain Boosters card (Home's teaser).
  */
 
 const SOUNDS = [
@@ -58,8 +66,6 @@ function FocusSession({ timer, settings }) {
   const isActive = isRunning || isPaused;
 
   // What the student is planning while idle; a live session decides it instead.
-  // `?assignment=&step=` lets the assignment page's "Start work" open a session already set up;
-  // `&minutes=` comes from the "start with a short timer" help idea.
   const [pickedAssignmentId, setPickedAssignmentId] = useState(() => params.get('assignment'));
   const [pickedStepId, setPickedStepId] = useState(() => params.get('step'));
   const [plannedMinutes, setPlannedMinutes] = useState(() => {
@@ -71,6 +77,8 @@ function FocusSession({ timer, settings }) {
   const [soundMenuOpen, setSoundMenuOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   const [justEnded, setJustEnded] = useState(null);
+  // Read once: the Brain Boosters tab to open on, and whether to scroll to it.
+  const [boost] = useState(() => params.get('boost'));
 
   const assignmentId = isActive ? session.assignmentId : pickedAssignmentId;
   const steps = useFocusSteps(assignmentId);
@@ -162,14 +170,19 @@ function FocusSession({ timer, settings }) {
       .catch(() => {});
   };
 
-  const stateLabel = timeUp ? 'Time’s up' : isRunning ? 'Focusing' : isPaused ? 'Paused' : 'Ready when you are';
+  // Stepping away for a break shouldn't count as focus time.
+  const pauseForBreak = async () => {
+    if (isRunning) await timer.pause().catch(() => {});
+  };
+
+  const stateLabel = timeUp ? 'Time’s up' : isRunning ? 'Focusing' : isPaused ? 'Paused' : 'Focus time';
   const subjectTone = getSubjectVisual(assignment?.subject).tone;
   const subjectColor = colorOf(assignment?.subject);
 
   return (
     <div className="fs-page td-page">
-      <h1 className="fs-title">Focus session</h1>
-      <p className="fs-subtitle">One step at a time. Everything else can wait.</p>
+      <h1 className="fs-title">Focus</h1>
+      <p className="fs-subtitle">Take a breath, choose what you need, and get to it.</p>
 
       {timer.error && (
         <Alert variant="error" className="ui-field">
@@ -200,141 +213,165 @@ function FocusSession({ timer, settings }) {
 
       <div className="fs-grid">
         <div className="fs-col">
-          <section className="fs-card fs-session" aria-label="Focus timer">
-            <div className="fs-context">
-              {assignment?.subject && (
-                <span className="fs-chip" data-tone={subjectTone} {...subjectPaint(subjectColor)}>
-                  {assignment.subject}
-                </span>
-              )}
-              <span>{assignment?.title ?? 'No task picked - a plain timer works too'}</span>
-            </div>
-
-            <h2 className="fs-heading">{currentStep?.title ?? (isActive ? 'Focus time' : 'Ready to focus?')}</h2>
-
-            <p className="fs-meta">
-              {currentStep && stepIndex >= 0 ? `Step ${stepIndex + 1} of ${steps.steps.length} · ` : ''}
-              planned {isActive ? session.plannedMinutes ?? plannedMinutes : plannedMinutes} min
-            </p>
-
-            <div className="fs-ring">
-              <svg viewBox="0 0 190 190" aria-hidden="true">
-                <circle cx="95" cy="95" r="84" fill="none" stroke="var(--color-bg-surface-sunken)" strokeWidth="13" />
-                <circle
-                  className="fs-ring__arc"
-                  cx="95"
-                  cy="95"
-                  r="84"
-                  fill="none"
-                  stroke={timeUp ? 'var(--color-success-solid)' : 'var(--accent-base)'}
-                  strokeWidth="13"
-                  strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * 84}
-                  strokeDashoffset={2 * Math.PI * 84 * (1 - (isActive ? ringPercent : 0))}
-                />
-              </svg>
-              <span className="fs-clock">{isActive ? formatClock(remaining) : formatClock(plannedSeconds)}</span>
-            </div>
-
-            <p className="fs-state" data-state={timeUp ? 'done' : undefined} aria-live="polite">
-              {stateLabel}
-            </p>
-
-            {!isActive && (
-              <div className="fs-setup">
-                <SearchableSelect
-                  label="What are you working on?"
-                  placeholder="No task (just the timer)"
-                  options={taskOptions}
-                  value={assignmentId}
-                  onChange={selectTask}
-                  loading={plan.isLoading}
-                  className="ui-field"
-                />
-                <span className="ui-label">How long?</span>
-                <div className="fs-lengths">
-                  {LENGTHS.map((m) => (
-                    <button key={m} type="button" className="fs-length" aria-pressed={plannedMinutes === m} onClick={() => setPlannedMinutes(m)}>
-                      {m} min
-                    </button>
-                  ))}
-                </div>
+          <section className="fs-card fs-timer-card" aria-labelledby="fs-timer-title">
+            <header className="fs-card__head">
+              <span className="fs-card__icon" aria-hidden="true">
+                <LuTimer size={18} />
+              </span>
+              <div>
+                <h2 id="fs-timer-title" className="fs-card__title">
+                  Focus Timer
+                </h2>
+                <p className="fs-card__sub">Pick a task and a length, or just start the clock.</p>
               </div>
-            )}
+            </header>
 
-            <div className="fs-actions">
-              {!isActive && (
-                <button type="button" className="fs-btn fs-btn--primary" onClick={handleStart} disabled={timer.isBusy}>
-                  <LuPlay size={15} aria-hidden="true" /> Start focus
-                </button>
-              )}
+            <div className="fs-timer">
+              <div className="fs-timer__dial">
+                <div className="fs-ring">
+                  <svg viewBox="0 0 190 190" aria-hidden="true">
+                    <circle cx="95" cy="95" r="84" fill="none" stroke="var(--fs-ring-track)" strokeWidth="11" />
+                    <circle
+                      className="fs-ring__arc"
+                      cx="95"
+                      cy="95"
+                      r="84"
+                      fill="none"
+                      stroke={timeUp ? 'var(--color-success-solid)' : 'var(--accent-base)'}
+                      strokeWidth="11"
+                      strokeLinecap="round"
+                      strokeDasharray={2 * Math.PI * 84}
+                      strokeDashoffset={2 * Math.PI * 84 * (1 - (isActive ? ringPercent : 0))}
+                    />
+                  </svg>
+                  <span className="fs-clock">{isActive ? formatClock(remaining) : formatClock(plannedSeconds)}</span>
+                </div>
+                <p className="fs-state" data-state={timeUp ? 'done' : undefined} aria-live="polite">
+                  {stateLabel}
+                </p>
+              </div>
 
-              {isRunning && (
-                <button type="button" className="fs-btn" onClick={() => timer.pause().catch(() => {})} disabled={timer.isBusy}>
-                  <LuPause size={15} aria-hidden="true" /> Pause
-                </button>
-              )}
-              {isPaused && (
-                <button type="button" className="fs-btn fs-btn--primary" onClick={() => timer.resume().catch(() => {})} disabled={timer.isBusy}>
-                  <LuPlay size={15} aria-hidden="true" /> Resume
-                </button>
-              )}
-
-              {timeUp && (
-                <button type="button" className="fs-btn" onClick={() => timer.extend(5).catch(() => {})} disabled={timer.isBusy}>
-                  +5 min
-                </button>
-              )}
-
-              {isActive && (
-                <button type="button" className="fs-btn fs-btn--ghost" onClick={() => setEndOpen(true)}>
-                  End session
-                </button>
-              )}
-
-              <span className="fs-sound-wrap">
-                <button
-                  type="button"
-                  className="fs-btn fs-btn--round"
-                  aria-haspopup="menu"
-                  aria-expanded={soundMenuOpen}
-                  aria-pressed={Boolean(soundFile)}
-                  aria-label={`Background sound: ${SOUNDS.find((s) => s.file === soundFile)?.label ?? 'No sound'}`}
-                  onClick={() => setSoundMenuOpen((v) => !v)}
-                >
-                  {soundFile ? <LuHeadphones size={18} aria-hidden="true" /> : <LuVolumeX size={18} aria-hidden="true" />}
-                </button>
-                {soundMenuOpen && (
-                  <div className="fs-sound-menu" role="menu" aria-label="Background sound">
-                    {SOUNDS.map((option) => (
-                      <button
-                        key={option.value || 'none'}
-                        type="button"
-                        role="menuitemradio"
-                        aria-checked={sound === option.value}
-                        className="fs-sound"
-                        onClick={() => {
-                          setSound(option.value);
-                          setSoundMenuOpen(false);
-                        }}
-                      >
-                        {sound === option.value ? <LuCheck size={14} aria-hidden="true" /> : <span style={{ width: 14 }} />}
-                        {option.label}
-                      </button>
-                    ))}
+              <div className="fs-timer__side">
+                {isActive ? (
+                  <div className="fs-now">
+                    <div className="fs-context">
+                      {assignment?.subject && (
+                        <span className="fs-chip" data-tone={subjectTone} {...subjectPaint(subjectColor)}>
+                          {assignment.subject}
+                        </span>
+                      )}
+                      <span>{assignment?.title ?? 'Just the timer'}</span>
+                    </div>
+                    <h3 className="fs-heading">{currentStep?.title ?? 'Focus time'}</h3>
+                    <p className="fs-meta">
+                      {currentStep && stepIndex >= 0 ? `Step ${stepIndex + 1} of ${steps.steps.length} · ` : ''}
+                      planned {session.plannedMinutes ?? plannedMinutes} min
+                    </p>
+                  </div>
+                ) : (
+                  <div className="fs-setup">
+                    <SearchableSelect
+                      label="What are you working on? (optional)"
+                      placeholder="No task (just the timer)"
+                      options={taskOptions}
+                      value={assignmentId}
+                      onChange={selectTask}
+                      loading={plan.isLoading}
+                      className="ui-field"
+                    />
+                    <span className="ui-label">How long?</span>
+                    <div className="fs-lengths">
+                      {LENGTHS.map((m) => (
+                        <button key={m} type="button" className="fs-length" aria-pressed={plannedMinutes === m} onClick={() => setPlannedMinutes(m)}>
+                          {m} min
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
-              </span>
+
+                <div className="fs-actions">
+                  {!isActive && (
+                    <button type="button" className="fs-btn fs-btn--primary" onClick={handleStart} disabled={timer.isBusy}>
+                      <LuPlay size={15} aria-hidden="true" /> Start focus
+                    </button>
+                  )}
+
+                  {isRunning && (
+                    <button type="button" className="fs-btn" onClick={() => timer.pause().catch(() => {})} disabled={timer.isBusy}>
+                      <LuPause size={15} aria-hidden="true" /> Pause
+                    </button>
+                  )}
+                  {isPaused && (
+                    <button type="button" className="fs-btn fs-btn--primary" onClick={() => timer.resume().catch(() => {})} disabled={timer.isBusy}>
+                      <LuPlay size={15} aria-hidden="true" /> Resume
+                    </button>
+                  )}
+
+                  {timeUp && (
+                    <button type="button" className="fs-btn" onClick={() => timer.extend(5).catch(() => {})} disabled={timer.isBusy}>
+                      +5 min
+                    </button>
+                  )}
+
+                  {isActive && (
+                    <button type="button" className="fs-btn fs-btn--ghost" onClick={() => setEndOpen(true)}>
+                      End session
+                    </button>
+                  )}
+
+                  <span className="fs-sound-wrap">
+                    <button
+                      type="button"
+                      className="fs-btn fs-btn--round"
+                      aria-haspopup="menu"
+                      aria-expanded={soundMenuOpen}
+                      aria-pressed={Boolean(soundFile)}
+                      aria-label={`Background sound: ${SOUNDS.find((s) => s.file === soundFile)?.label ?? 'No sound'}`}
+                      onClick={() => setSoundMenuOpen((v) => !v)}
+                    >
+                      {soundFile ? <LuHeadphones size={18} aria-hidden="true" /> : <LuVolumeX size={18} aria-hidden="true" />}
+                    </button>
+                    {soundMenuOpen && (
+                      <div className="fs-sound-menu" role="menu" aria-label="Background sound">
+                        {SOUNDS.map((option) => (
+                          <button
+                            key={option.value || 'none'}
+                            type="button"
+                            role="menuitemradio"
+                            aria-checked={sound === option.value}
+                            className="fs-sound"
+                            onClick={() => {
+                              setSound(option.value);
+                              setSoundMenuOpen(false);
+                            }}
+                          >
+                            {sound === option.value ? <LuCheck size={14} aria-hidden="true" /> : <span style={{ width: 14 }} />}
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </span>
+
+                  {/* Default length and sound are the student's own settings. */}
+                  <Link to="/student/settings" className="fs-btn fs-btn--round" aria-label="Focus settings: default length and sound" title="Focus settings">
+                    <LuSlidersHorizontal size={18} aria-hidden="true" />
+                  </Link>
+                </div>
+              </div>
             </div>
 
             {/* Loops quietly while the clock runs; paused with the session. */}
             <audio ref={audioRef} loop preload="none" aria-hidden="true" />
           </section>
 
-          <StuckToolkit
+          <FocusBoostersCard
+            initialTab={boost === 'exercises' ? 'exercises' : 'games'}
+            scrollIntoView={Boolean(boost)}
+            onBeforeOpen={pauseForBreak}
             onExerciseOpenChange={(open) => {
-              // Stepping away shouldn't count as focus time - pause while the exercise runs.
-              if (open && isRunning) timer.pause().catch(() => {});
+              if (open) pauseForBreak();
             }}
           />
         </div>

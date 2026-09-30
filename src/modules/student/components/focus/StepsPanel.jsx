@@ -163,6 +163,8 @@ export function StepsPanel({ assignment, steps, currentStepId, onSelectStep, sel
           </button>
         </form>
       )}
+
+      {assignment && <p className="fs-steps__note">These steps are yours. Edit, reorder or delete them any time.</p>}
     </section>
   );
 }

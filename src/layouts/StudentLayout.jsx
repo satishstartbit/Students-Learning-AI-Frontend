@@ -7,7 +7,6 @@ import '@fontsource/poppins/700.css';
 import {
   LuBell,
   LuCalendarDays,
-  LuGamepad2,
   LuHouse,
   LuListChecks,
   LuPalette,
@@ -34,7 +33,8 @@ import '../theme/studentTheme.css';
  * Navigation for the student area (/student/*) - Grade 6 and up. K-5 nav
  * lives in modules/student/components/kid/kidNav.js.
  *
- * The primary learning and break activities live at the top,
+ * The primary learning activities live at the top (the Focus mockup's Home,
+ * Plan, Assignments, Focus, Rewards - Brain Boosters are part of Focus now),
  * then Notifications / Make it yours / Settings pinned to the bottom above
  * the account tile (`placement: 'bottom'`, see AppSidebar.jsx).
  *
@@ -51,7 +51,6 @@ const NAV_ITEMS = [
       { to: '/student/calendar', label: 'Plan', icon: LuCalendarDays },
       { to: '/student/assignments', label: 'Assignments', icon: LuListChecks },
       { to: '/student/focus', label: 'Focus', icon: LuTimer },
-      { to: '/student/brain-boosters', label: 'Brain Boosters', icon: LuGamepad2 },
       { to: '/student/rewards', label: 'Rewards', icon: LuTrophy },
     ],
   },
@@ -67,9 +66,9 @@ const NAV_ITEMS = [
 ];
 
 /**
- * The phone tab bar (the Assignments mobile mockup). Brain Boosters,
- * Notifications, Make it yours and Settings are in the avatar's "More"
- * sheet, and the top bar's bell opens Notifications.
+ * The phone tab bar (the Assignments mobile mockup). Notifications, Make it
+ * yours and Settings are in the avatar's "More" sheet, and the top bar's
+ * bell opens Notifications. Brain Boosters are on the Focus tab.
  */
 const MOBILE_TABS = [
   { to: '/student', label: 'Home', icon: LuHouse, end: true },

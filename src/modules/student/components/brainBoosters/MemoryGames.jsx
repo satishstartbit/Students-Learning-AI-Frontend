@@ -182,15 +182,18 @@ function MemorySession({ mode, isJunior, reducedMotion }) {
   );
 }
 
-export default function MemoryGames({ isJunior = false, reducedMotion = false }) {
+/** `hideHeading`: on its own page (pages/BoosterPage.jsx) the page shows the title. */
+export default function MemoryGames({ isJunior = false, reducedMotion = false, hideHeading = false }) {
   const [mode, setMode] = useState('clap');
 
   return (
     <div className="bb-memory">
-      <div className="bb-game-heading">
-        <span className="bb-memory-heading-icon" aria-hidden="true">🧠</span>
-        <div><h2>Memory Games</h2><p>{isJunior ? 'Watch, remember, and play!' : 'Practice remembering patterns and sequences.'}</p></div>
-      </div>
+      {!hideHeading && (
+        <div className="bb-game-heading">
+          <span className="bb-memory-heading-icon" aria-hidden="true">🧠</span>
+          <div><h2>Memory Games</h2><p>{isJunior ? 'Watch, remember, and play!' : 'Practice remembering patterns and sequences.'}</p></div>
+        </div>
+      )}
       <div className="bb-memory-tabs" role="group" aria-label="Choose a memory game">
         {Object.entries(GAMES).map(([key, game]) => (
           <button key={key} type="button" className={`bb-memory-tab ${mode === key ? 'is-selected' : ''}`} aria-pressed={mode === key} onClick={() => setMode(key)}>

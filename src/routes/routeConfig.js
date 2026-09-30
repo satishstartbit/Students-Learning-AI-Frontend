@@ -54,7 +54,7 @@ const StudentAssignmentDetailPage = lazy(() => import('../modules/student/pages/
 const StudentHomePage = lazy(() => import('../modules/student/pages/StudentHomePage'));
 const StudentPlanPage = lazy(() => import('../modules/student/pages/StudentPlanPage'));
 const FocusTimerPage = lazy(() => import('../modules/student/pages/FocusTimerPage'));
-const BrainBoostersPage = lazy(() => import('../modules/student/pages/BrainBoostersPage'));
+const BoosterPage = lazy(() => import('../modules/student/pages/BoosterPage'));
 const RewardsPage = lazy(() => import('../modules/student/pages/RewardsPage'));
 const NotificationsPage = lazy(() => import('../modules/student/pages/NotificationsPage'));
 const MakeItYoursPage = lazy(() => import('../modules/student/pages/MakeItYoursPage'));
@@ -65,6 +65,7 @@ const KidHomePage = lazy(() => import('../modules/student/pages/kid/KidHomePage'
 const KidMyWeekPage = lazy(() => import('../modules/student/pages/kid/KidMyWeekPage'));
 const KidFocusPage = lazy(() => import('../modules/student/pages/kid/KidFocusPage'));
 const KidFocusActivityPage = lazy(() => import('../modules/student/pages/kid/KidFocusActivityPage'));
+const KidBoosterPage = lazy(() => import('../modules/student/pages/kid/KidBoosterPage'));
 const KidAssignmentsPage = lazy(() => import('../modules/student/pages/kid/KidAssignmentsPage'));
 const KidMakeItYoursPage = lazy(() => import('../modules/student/pages/kid/KidMakeItYoursPage'));
 const KidSettingsPage = lazy(() => import('../modules/student/pages/kid/KidSettingsPage'));
@@ -459,18 +460,37 @@ export const STUDENT_ROUTES = {
     },
     // When the student can study and when they're busy (the planner's inputs).
     { path: 'study-times', label: 'Study times', component: StudentStudyTimesPage },
-    {
-      path: 'brain-boosters',
-      label: 'Brain Boosters',
-      component: BrainBoostersPage,
-      guards: [RequireCheckIn],
-    },
+    // Brain Boosters now live on the Focus page (both bands); old links land there.
+    { path: 'brain-boosters', label: 'Brain Boosters', redirectTo: '/student/focus?boost=games' },
     {
       path: 'focus',
       label: 'Focus',
       permissions: [PERMISSIONS.FOCUS_READ],
       component: GradeBandPage,
       props: { junior: KidFocusPage, standard: FocusTimerPage },
+      guards: [RequireCheckIn],
+    },
+    /*
+     * One Brain Booster on its own page, opened from the Focus page with
+     * "Back to Focus". Brain games for both bands; exercises are Grade 6+
+     * (K-5 has Breathe / Wiggle / Listen, so KidBoosterPage sends an
+     * exercise back to Focus). Declared before `focus/:activityKey`, though
+     * the extra segment already keeps them apart.
+     */
+    {
+      path: 'focus/games/:boosterId',
+      label: 'Brain game',
+      permissions: [PERMISSIONS.FOCUS_READ],
+      component: GradeBandPage,
+      props: { junior: KidBoosterPage, standard: BoosterPage, kind: 'game' },
+      guards: [RequireCheckIn],
+    },
+    {
+      path: 'focus/exercises/:boosterId',
+      label: 'Exercise',
+      permissions: [PERMISSIONS.FOCUS_READ],
+      component: GradeBandPage,
+      props: { junior: KidBoosterPage, standard: BoosterPage, kind: 'exercise' },
       guards: [RequireCheckIn],
     },
     {

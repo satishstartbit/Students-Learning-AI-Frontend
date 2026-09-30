@@ -1,8 +1,10 @@
 /*
  * Grade 6+ assignment page (pages/AssignmentDetailPage.jsx), built to the
- * assignment mockup: a header card with overall progress, the step breakdown,
- * and a right rail (overview, next step, resources, notes, details).
- * K-5 keeps the simpler single-column page.
+ * assignment mockups: a header card with overall progress, the step
+ * breakdown, and a right rail (overview, next step, resources, notes,
+ * details); once handed in, the review banner and "Your answers" (the
+ * "Detail (Reviewed)" mockup, section at the end). K-5 has its own page
+ * (components/kid/KidAssignmentView.jsx, Tailwind on the kid tokens).
  */
 .ad-page {
   max-width: 1120px;
@@ -494,4 +496,353 @@
 }
 .ad-due > svg {
   margin-top: 3px;
+}
+
+/* ------------------------------------------------------------- handed in
+   The "Detail (Reviewed)" mockup: ReviewBanner, AnswerReviewCard and the
+   rail's Status card. Right answers use the success tokens, answers to look
+   at again the warning tokens, so both follow light and dark mode. */
+.ad-textlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.ad-textlink:hover {
+  color: var(--accent-base);
+}
+.ad-status__title {
+  margin: 10px 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.ad-review {
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--color-success-border) 55%, transparent);
+  border-radius: 16px;
+  background: var(--color-success-bg);
+}
+.ad-review[data-state='waiting'] {
+  border-color: color-mix(in srgb, var(--accent-base) 25%, transparent);
+  background: var(--accent-soft);
+}
+.ad-review__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ad-review__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-success-solid);
+  color: var(--color-success-on-solid);
+}
+.ad-review[data-state='waiting'] .ad-review__icon {
+  background: var(--accent-base);
+  color: var(--accent-on);
+}
+.ad-review__text {
+  flex: 1;
+  min-width: 0;
+}
+.ad-review__eyebrow {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-success-fg);
+}
+.ad-review[data-state='waiting'] .ad-review__eyebrow {
+  color: var(--accent-base);
+}
+.ad-review__title {
+  margin: 2px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.ad-review__sub {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+}
+.ad-review__score {
+  flex: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: var(--color-bg-surface);
+  text-align: center;
+}
+.ad-review__score span {
+  display: block;
+  font-size: 10.5px;
+  color: var(--color-text-secondary);
+}
+.ad-review__score strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ad-review__note {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--color-bg-surface);
+}
+.ad-review__who {
+  margin: 0;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+.ad-review__feedback {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.ad-answers__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 12px;
+}
+.ad-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ad-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 999px;
+  background: var(--color-bg-surface);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.ad-chip[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--accent-base) 40%, transparent);
+  background: var(--accent-soft);
+}
+.ad-chip:focus-visible,
+.ad-textlink:focus-visible,
+.ad-q__passage summary:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+
+.ad-qlist {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.ad-q {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-bg-surface);
+}
+.ad-q__eyebrow {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.ad-q__prompt {
+  margin: 6px 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.ad-q__picture {
+  margin-bottom: 12px;
+}
+.ad-q__passage {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+}
+.ad-q__passage summary {
+  width: fit-content;
+  border-radius: 4px;
+  font-weight: 500;
+  color: var(--accent-base);
+  cursor: pointer;
+}
+.ad-q__passage p {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--color-bg-surface-sunken);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.ad-q__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ad-q__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 10px;
+  background: var(--color-bg-surface);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+.ad-q__option[data-state='chosen-right'] {
+  border-color: var(--color-success-border);
+  background: var(--color-success-bg);
+  font-weight: 600;
+}
+.ad-q__option[data-state='chosen-wrong'] {
+  border-color: color-mix(in srgb, var(--color-warning-border) 45%, transparent);
+  background: var(--color-warning-bg);
+  font-weight: 600;
+}
+.ad-q__option[data-state='chosen'] {
+  border-color: color-mix(in srgb, var(--accent-base) 45%, transparent);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+.ad-q__option[data-state='answer'] {
+  border: 1.5px dashed var(--color-success-border);
+}
+.ad-q__mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+.ad-q__option[data-state='chosen-right'] .ad-q__mark {
+  border-color: var(--color-success-solid);
+  background: var(--color-success-solid);
+  color: var(--color-success-on-solid);
+}
+.ad-q__option[data-state='chosen-wrong'] .ad-q__mark {
+  border-color: var(--color-warning-solid);
+  background: var(--color-warning-solid);
+  color: var(--color-warning-on-solid);
+}
+.ad-q__option[data-state='chosen'] .ad-q__mark {
+  border-color: var(--accent-base);
+  background: var(--accent-base);
+}
+.ad-q__option[data-state='answer'] .ad-q__mark {
+  border-color: var(--color-success-solid);
+}
+.ad-q__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ad-q__tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--color-success-fg);
+}
+.ad-q__written {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--color-border-strong);
+  border-radius: 8px;
+  background: var(--color-bg-surface-sunken);
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.ad-q__result {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+.ad-q__result[data-state='right'] {
+  color: var(--color-success-fg);
+}
+.ad-q__result[data-state='wrong'] {
+  color: var(--color-warning-fg);
+}
+.ad-written {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--color-bg-surface-sunken);
+}
+.ad-written__label {
+  margin: 0;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+.ad-written__text {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 560px) {
+  .ad-review {
+    padding: 16px;
+  }
+  .ad-review__head {
+    flex-wrap: wrap;
+  }
+  /* The score drops under the headline as a full-width row. */
+  .ad-review__score {
+    display: flex;
+    flex-basis: 100%;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 8px 12px;
+  }
+  .ad-q {
+    padding: 12px;
+  }
+  .ad-q__options {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
+import { LuEye, LuPlay, LuSparkles } from 'react-icons/lu';
 import { advanceFollow, changeFollowPace, createFollowState, FOLLOW_PACES, FOLLOW_RADIUS, FOLLOW_ROUND_MS, FOLLOW_ROUNDS, followCue, followPosition, pauseFollow, resetFollow, resumeFollow, startFollow, tapFollow } from './followGameLogic';
 import './trackingGames.css';
 import './fingerFollow.css';
 
-export default function FingerFollow({ isJunior = false, reducedMotion = false }) {
+/**
+ * Finger Follow: follow the dot with your eyes, tap it once each time it
+ * glows gold (followGameLogic.js has the rules). On its own page
+ * (pages/BoosterPage.jsx), which shows the title, so `hideHeading` drops the
+ * game's own. K-5 (`isJunior`) sees a short round/tap line under the board
+ * instead of the three counters - "just for fun" - with the same test ids.
+ */
+export default function FingerFollow({ isJunior = false, reducedMotion = false, hideHeading = false }) {
   const board = useRef(null);
   const dot = useRef(null);
   const progress = useRef(null);
@@ -63,33 +71,55 @@ export default function FingerFollow({ isJunior = false, reducedMotion = false }
   }, [isJunior, reducedMotion]);
 
   return (
-    <section className="bb-video-follow bb-tracking-game" data-phase={view.phase} aria-labelledby="bb-finger-title">
-      <header className="bb-follow-heading"><h2 id="bb-finger-title">Finger Follow</h2><p>Track the dot with ONLY your eyes</p></header>
+    <section
+      className="bb-video-follow bb-tracking-game"
+      data-phase={view.phase}
+      data-band={isJunior ? 'kid' : 'standard'}
+      aria-labelledby={hideHeading ? undefined : 'bb-finger-title'}
+      aria-label={hideHeading ? 'Finger Follow' : undefined}
+    >
+      {!hideHeading && <header className="bb-follow-heading"><h2 id="bb-finger-title">Finger Follow</h2><p>Track the dot with ONLY your eyes</p></header>}
       <div className="bb-follow-paces" role="group" aria-label="Dot speed">
-        {Object.entries(FOLLOW_PACES).map(([pace, item]) => <button key={pace} type="button" className={`bb-follow-pace bb-follow-pace--${pace}`} aria-pressed={view.pace === pace} onClick={() => actions.current?.pace(pace)}><span aria-hidden="true">{item.icon}</span> {item.label}</button>)}
+        {!isJunior && <span className="bb-follow-paces__label" aria-hidden="true">Speed</span>}
+        {Object.entries(FOLLOW_PACES).map(([pace, item]) => <button key={pace} type="button" className={`bb-follow-pace bb-follow-pace--${pace}`} aria-pressed={view.pace === pace} onClick={() => actions.current?.pace(pace)}>{item.label}</button>)}
       </div>
-      <div className="bb-follow-stats">
+      {!isJunior && <div className="bb-follow-stats">
         <div><strong data-testid="follow-rounds">{view.rounds}</strong><span>Rounds</span></div>
         <div><strong data-testid="follow-score">{view.taps}</strong><span>Taps</span></div>
-        <div><strong data-testid="follow-streak">{view.streak}</strong><span>🔥 Streak</span></div>
-      </div>
+        <div><strong data-testid="follow-streak">{view.streak}</strong><span>Streak</span></div>
+      </div>}
       <div className="bb-follow-progress" role="progressbar" aria-label="Round progress" aria-valuemin={0} aria-valuemax={100}><span ref={progress} /></div>
       <div ref={board} className="bb-follow-field" role="group" aria-label="Finger Follow game board" aria-describedby="bb-follow-help">
-        <button ref={dot} type="button" className="bb-follow-dot" disabled={view.phase !== 'playing'} aria-label={view.glowing ? 'Glowing dot: tap now' : 'Follow the dot: wait for the glow'} onClick={(event) => { if (event.detail === 0) actions.current?.tap(); }}><span aria-hidden="true">🎯</span></button>
+        <button ref={dot} type="button" className="bb-follow-dot" disabled={view.phase !== 'playing'} aria-label={view.glowing ? 'Glowing dot: tap now' : 'Follow the dot: wait for the glow'} onClick={(event) => { if (event.detail === 0) actions.current?.tap(); }} />
         {view.phase === 'ready' && <div className="bb-follow-overlay">
-          <span className="bb-follow-eye" aria-hidden="true">👁️</span>
-          <p>Follow the 🎯 dot with your eyes only.<br />Tap it when it glows!</p>
-          <button type="button" data-follow-control className="bb-follow-start" onClick={() => actions.current?.start()}>Let&apos;s go! ▶</button>
+          <span className="bb-follow-eye" aria-hidden="true"><LuEye /></span>
+          <p><strong>Follow the dot with your eyes only.</strong><br />Tap it when it glows gold.</p>
+          <button type="button" data-follow-control className="bb-follow-start" onClick={() => actions.current?.start()}><LuPlay aria-hidden="true" />Let&apos;s go!</button>
         </div>}
-        {view.phase === 'paused' && <div className="bb-follow-overlay bb-follow-overlay--paused"><span className="bb-follow-eye" aria-hidden="true">👁️</span><p>Paused. Ready to follow again?</p><button type="button" data-follow-control className="bb-follow-start" onClick={() => actions.current?.resume()}>Resume ▶</button></div>}
-        {view.phase === 'complete' && <div className="bb-follow-overlay"><span className="bb-follow-eye" aria-hidden="true">✨</span><p>{FOLLOW_ROUNDS} rounds complete!<br />{view.taps} successful taps</p><button type="button" data-follow-control className="bb-follow-start" onClick={() => actions.current?.start()}>Play again ▶</button></div>}
+        {view.phase === 'paused' && <div className="bb-follow-overlay bb-follow-overlay--paused"><span className="bb-follow-eye" aria-hidden="true"><LuEye /></span><p><strong>Paused.</strong><br />Ready to follow again?</p><button type="button" data-follow-control className="bb-follow-start" onClick={() => actions.current?.resume()}><LuPlay aria-hidden="true" />Resume</button></div>}
+        {view.phase === 'complete' && <div className="bb-follow-overlay"><span className="bb-follow-eye" aria-hidden="true"><LuSparkles /></span><p><strong>{FOLLOW_ROUNDS} rounds complete!</strong><br />{view.taps} successful taps</p><button type="button" data-follow-control className="bb-follow-start" onClick={() => actions.current?.start()}><LuPlay aria-hidden="true" />Play again</button></div>}
         {view.phase !== 'ready' && <div className="bb-follow-tools">
           {view.phase === 'playing' && <button type="button" data-follow-control onClick={() => actions.current?.pause()}>Pause</button>}
           <button type="button" data-follow-control onClick={() => actions.current?.reset()}>Reset</button>
         </div>}
         <span className="bb-follow-cue" role="status">{view.phase === 'playing' ? view.notice || (view.glowing ? '✨ Tap now!' : 'Follow the dot…') : ''}</span>
       </div>
-      <p className="bb-follow-tip" id="bb-follow-help">✨ Keep your head STILL — only move your eyes!</p>
+      {isJunior ? (
+        <p className="bb-follow-caption" id="bb-follow-help">
+          {view.phase === 'ready' ? (
+            <>
+              {FOLLOW_ROUNDS} short rounds
+              <span className="ui-sr-only">
+                {' '}- <span data-testid="follow-rounds">{view.rounds}</span> rounds done, <span data-testid="follow-score">{view.taps}</span> taps, streak <span data-testid="follow-streak">{view.streak}</span>
+              </span>
+            </>
+          ) : (
+            <>Round <strong data-testid="follow-rounds">{view.rounds}</strong> of {FOLLOW_ROUNDS} done · <strong data-testid="follow-score">{view.taps}</strong> taps · streak <strong data-testid="follow-streak">{view.streak}</strong></>
+          )}
+        </p>
+      ) : (
+        <p className="bb-follow-tip" id="bb-follow-help">Keep your head still. Only move your eyes.</p>
+      )}
       {reducedMotion && <p className="bb-follow-calm">Calm play: the dot stays still and glowing. Five taps complete a round.</p>}
     </section>
   );
