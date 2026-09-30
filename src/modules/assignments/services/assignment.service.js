@@ -74,6 +74,15 @@ export const submitAssignment = (id, payload = {}) => api.post(`/assignments/${i
 export const reviewSubmission = (submissionId, payload) =>
   api.patch(`/assignments/submissions/${submissionId}/review`, payload);
 
+/** The owning teacher's plan: fixed checkpoints and their own step list (PDF Q3, Q5). */
+export const getTeacherPlan = (id) => api.get(`/assignments/${id}/plan`);
+
+/** Replaces the checkpoints: [{ id?, title, dueDate 'YYYY-MM-DD' }]. */
+export const setCheckpoints = (id, checkpoints) => api.put(`/assignments/${id}/checkpoints`, { checkpoints });
+
+/** Sets (or clears with null) the step list every student gets as required steps. */
+export const setTeacherPlan = (id, steps) => api.put(`/assignments/${id}/teacher-plan`, { steps });
+
 export default {
   listAssignments,
   getAssignmentCounts,
@@ -91,4 +100,7 @@ export default {
   saveAssignmentProgress,
   submitAssignment,
   reviewSubmission,
+  getTeacherPlan,
+  setCheckpoints,
+  setTeacherPlan,
 };

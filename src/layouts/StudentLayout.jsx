@@ -21,6 +21,7 @@ import { TodayCheckInProvider } from '../modules/checkIn/components/TodayCheckIn
 import { KidLockedScreen } from '../modules/student/components/kid/KidLockedScreen';
 import StudentSettingsProvider from '../modules/student/components/StudentSettingsProvider';
 import { StudentExperienceContext } from '../modules/student/hooks/useStudentExperience';
+import AccessBanner from '../modules/subscription/components/AccessBanner';
 import StudentLockedScreen from '../modules/subscription/components/StudentLockedScreen';
 import { SubscriptionAccessContext, useAccessStatus } from '../modules/subscription/hooks/useSubscriptionAccess';
 import { isCheckInRequired, isJuniorGrade } from '../utils/gradeBand';
@@ -154,21 +155,27 @@ export function StudentLayout({ children }) {
     return () => document.body.classList.remove('student-theme');
   }, [standardShell]);
 
-  const { loaded, isLoading: accessLoading, hasAccess, reason, refresh } = accessStatus;
+  const { loaded, isLoading: accessLoading, hasAccess, reason, state, readOnly, capabilities, message, refresh } = accessStatus;
   const access = useMemo(
-    () => ({ loaded, isLoading: accessLoading, hasAccess, reason, refresh }),
-    [loaded, accessLoading, hasAccess, reason, refresh]
+    () => ({ loaded, isLoading: accessLoading, hasAccess, reason, state, readOnly, capabilities, message, refresh }),
+    [loaded, accessLoading, hasAccess, reason, state, readOnly, capabilities, message, refresh]
   );
 
   // Only the first lookups block - a later refresh keeps the page mounted.
   if ((me.isLoading && !me.data) || access.isLoading) return <StudentShellLoading />;
 
-  const locked = access.loaded && !access.hasAccess;
+  // After grace (readOnly) everything saved stays readable - no lock screen (PDF Q11).
+  const locked = access.loaded && !access.hasAccess && !access.readOnly;
   // If the profile couldn't be loaded we can't tell - don't trap the student.
   const needsOnboarding =
     !locked && Boolean(me.data) && !onboarded && !ONBOARDING_EXEMPT_PATHS.includes(location.pathname);
 
-  let content = children;
+  let content = (
+    <>
+      <AccessBanner access={access} role="STUDENT" />
+      {children}
+    </>
+  );
   if (locked) content = isJunior ? <KidLockedScreen /> : <StudentLockedScreen />;
   else if (needsOnboarding) content = <Navigate to="/student/onboarding" replace />;
 

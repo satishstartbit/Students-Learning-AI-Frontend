@@ -9,7 +9,7 @@ The student's daily check-in (how they feel, energy, where they feel it, how muc
 | `components/RequireCheckIn.jsx` | Route guard for work routes. **Holds the K-5 band only.** Grade 6+ can skip. |
 | `pages/CheckInPage.jsx` (Grade 6+, `/student/check-in` standard) · `student/pages/kid/KidCheckInPage.jsx` (K-5) | Standalone check-in pages |
 | `components/StudentCheckInModal.jsx` + `studentCheckIn.css` (`ci-`) | Grade 6+ check-in modal (mood tiles, energy, body areas, time, note) |
-| `components/DifficultyPicker.jsx` + `hooks/useDifficultyPicker.js` + `difficultyPicker.css` (`dp-`) | Grade 6+ "what is making it hard?" → reasons → strategies. The K-5 version is `student/components/kid/KidDifficultyPicker.jsx`. |
+| `components/DifficultyPicker.jsx` + `hooks/useDifficultyPicker.js` + `difficultyPicker.css` (`dp-`) | Grade 6+ "what is making it hard?" → reasons → strategies. The K-5 version is `student/components/kid/KidDifficultyPicker.jsx`. Both now **record** what was picked (`POST /students/me/support/barriers`, codes only - the old note box was removed because it was never saved) and show the server's ranked ideas with "Try this" (the idea's app action: smaller steps, explain, short focus, toolkit, re-plan, ask an adult). "Share with a grown-up" decides whether a parent's summary counts it. See `planner` (`useSupport`). |
 | `components/MoodGlyph.jsx`, `hooks/useMoodLookup.js`, `moods.js` | Draw a mood from master data (emoji or uploaded icon, background colour). Also used by parent/teacher Progress. |
 | `nextPath.js` | Where to send the student after checking in (`?next=`), with kid-friendly labels |
 | `services/checkIn.service.js` | `GET /check-ins/today`, `POST /check-ins`, `GET /check-ins/history` |

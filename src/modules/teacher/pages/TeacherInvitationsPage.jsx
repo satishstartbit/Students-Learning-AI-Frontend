@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Badge, Button, ButtonGroup, Card, EmptyState, ErrorState, Loader, Modal, PageHeader, Textarea } from '../../../components/common';
+import { Badge, Button, ButtonGroup, Card, EmptyState, ErrorState, Loader, Modal, PageHeader } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
 import { formatDate } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatSubjects, invitationStatusOf } from '../../invitations/invitationStatus';
 import invitationService from '../../invitations/services/teacherInvitation.service';
+import DeclineFields from '../../invitations/components/DeclineFields';
 
 /**
  * /teacher/invitations - parents' invitations to connect with their child,
@@ -64,7 +65,7 @@ export default function TeacherInvitationsPage() {
   const list = useApi(invitationService.listMine, { immediate: true });
   const [busy, setBusy] = useState(null);
   const [declining, setDeclining] = useState(null);
-  const [reason, setReason] = useState('');
+  const [answer, setAnswer] = useState({ reason: '', sharedMessage: '' });
 
   const items = Array.isArray(list.data) ? list.data : [];
   const pending = items.filter((i) => i.status === 'pending');
@@ -88,10 +89,10 @@ export default function TeacherInvitationsPage() {
   const confirmDecline = async () => {
     setBusy(`decline:${declining.id}`);
     try {
-      await invitationService.decline(declining.id, reason);
+      await invitationService.decline(declining.id, answer);
       toast.success('Invitation declined - the parent has been told');
       setDeclining(null);
-      setReason('');
+      setAnswer({ reason: '', sharedMessage: '' });
       reload();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -168,13 +169,10 @@ export default function TeacherInvitationsPage() {
           </>
         }
       >
-        <Textarea
-          label="Note for the parent (optional)"
-          hint="For example, if you don't teach this student."
-          rows={3}
-          maxLength={500}
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
+        <DeclineFields
+          value={answer}
+          onChange={setAnswer}
+          familyName={declining?.invitedBy?.name ?? 'the family'}
         />
       </Modal>
     </div>

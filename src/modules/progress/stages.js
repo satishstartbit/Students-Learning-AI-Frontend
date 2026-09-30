@@ -9,6 +9,8 @@ export const TASK_STAGES = {
   returned: { label: 'Sent back to fix', tone: 'warning' },
   submitted: { label: 'Submitted', tone: 'primary' },
   reviewed: { label: 'Scored / feedback given', tone: 'success' },
+  // The student's own or parent-added work: no hand-in, just finished.
+  done: { label: 'Done', tone: 'success' },
 };
 
 /** Badge tone for a check-in mood - "needs support" moods stand out, without alarming red. */

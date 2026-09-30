@@ -11,12 +11,13 @@ Everything a signed-in student sees, in **two experiences**: the K-5 kid UI ("My
 ## Where it lives
 | Area | Route | Junior / Standard page | Key pieces |
 |---|---|---|---|
-| Home | `/student` | `KidHomePage` / `StudentHomePage` | `components/home/*` (`sh-`), `components/kid/*` |
+| Home | `/student` | `KidHomePage` / `StudentHomePage` | `components/home/*` (`sh-`), `components/kid/*`. Grade 6+: planner `NextActionsCard` (+ Help), `SupportCheckBack`, `PlanNotices`, `PendingIntakes`; Today's Tasks in the server plan's order; "Add assignment" = Type it / Say it / Photo / PDF (planner `AddWorkDialog`). K-5: `components/kid/KidPlanCard.jsx` - one next step, "It's tricky", guided Say it / Photo / Type it |
+| Study times | `/student/study-times` | planner `StudyTimesPage` (both bands) | weekly study times + busy times |
 | Onboarding | `/student/onboarding` | `KidOnboardingPage` / `onboarding/StudentOnboardingPage` | first-login questionnaire (gate in StudentLayout) |
 | Assignments | `/student/assignments` | `KidAssignmentsPage` / `MyAssignmentsPage` | `components/assignments/*` (`sa-`), `components/kid/TaskCard.jsx`. Grade 6+ to the mobile mockup: "Assignments" + **Add assignment** (own task, `OwnTaskModal`), one empty card when there is nothing at all, phone cards (`sa-mcard`). The page owns the own-task list and dialog. |
 | Assignment detail | `/student/assignments/:id` | `AssignmentDetailPage` (both; `isJunior` → simple page, else `components/assignment/StandardAssignmentView`, `ad-`) | answers via `assignments/components/QuestionAnswer` |
 | Focus | `/student/focus`, `/focus/:activityKey` | `KidFocusPage` + `KidFocusActivityPage` / `FocusTimerPage` | `hooks/useFocusTimer.js`, `useFocusSteps.js`, `components/focus/*` (`fs-`), `components/kid/KidFocusTimerCard.jsx` |
-| Plan | `/student/calendar` | `KidMyWeekPage` / `StudentPlanPage` | `components/plan/*` (`sp-`), `hooks/useWeekPlan`, `useTodayTasks` |
+| Plan | `/student/calendar` | `KidMyWeekPage` / `StudentPlanPage` | `components/plan/*` (`sp-`), `hooks/useWeekPlan`, `useTodayTasks`. Grade 6+ views: Calendar (study times from the plan on each day - open one to move/keep it - plus what's due), Next 3, Priority (Today/Next/Later), Due date, Subject. Uses the `planner` module |
 | Brain boosters | `/student/brain-boosters` | `BrainBoostersPage` | `components/brainBoosters/*` (`bb-`); pure game logic has `*.test.js` |
 | Rewards | `/student/rewards` | `KidRewardsPage` / `RewardsPage` | `components/rewards/*` (`rw-`), `hooks/useRewards` |
 | Make it yours | `/student/make-it-yours` | `KidMakeItYoursPage` / `MakeItYoursPage` | `components/personalize/*` (`my-`): accent, avatar, note style, card style |
@@ -43,7 +44,9 @@ Everything a signed-in student sees, in **two experiences**: the K-5 kid UI ("My
 - **Personalisation:** accent via `data-accent` (5 families). The kid UI follows the accent. Avatars, sticky-note styles, stickers and themes are master data (`masterManagement`).
 - **Rewards:** points come from `points_rules` (e.g. daily check-in once/day, task steps once). Collectible rewards unlock by threshold, one notification per reward, idempotent (unique `student_rewards(student_id, reward_id)`). Redemption uses a lock against double-spend.
 - **Mood visuals are dynamic:** icons and colours come from the `emotional_states` master (`MoodGlyph`, `moodCelebrationConfig`). Never map a mood name to a hardcoded icon.
-- Student free text that goes to AI is safety-screened on the backend (see `aiAssistant`). Notes, own tasks and the check-in note don't go to a model.
+- Student free text that goes to AI is safety-screened on the backend (see `aiAssistant`). Own task titles/notes reach a model only for personal steps and added work (screened first); notes and the check-in note never do.
+- **Own tasks** (`/my-tasks`): a parent can add one for the child (`addedBy: 'parent'`, `canEdit: false`) - `OwnTaskModal` then shows it read-only with Mark done. Own tasks are visible to parents (Progress, Schedule); a teacher sees one only when the student shares it (`ShareWithTeacher`).
+- **Focus** accepts `?minutes=` (the "short timer" help idea) besides `?assignment=&step=`.
 - Don't add `<Toast />` in pages. `KidLayout` and `AuthenticatedLayout` render it.
 - `components/StudentCheckInCard.jsx` is unreferenced (kept, not deleted).
 

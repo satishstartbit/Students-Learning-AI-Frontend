@@ -43,7 +43,16 @@ export function PracticeQuestionCard({ sessionId, message, disabled = false, onA
     setSubmitError(null);
     try {
       const { data } = await aiAssistantService.submitPracticeAnswer(sessionId, message.id, answer);
-      setResult({ correct: data.correct, explanation: data.explanation ?? null });
+      // result: correct | incorrect | unsure (a written answer checked by a
+      // person, not a machine) | blocked (the safety check stopped it).
+      setResult({
+        correct: data.correct,
+        result: data.result ?? (data.correct ? 'correct' : 'incorrect'),
+        countedCorrect: data.countedCorrect,
+        explanation: data.explanation ?? null,
+        modelAnswer: data.feedbackMessage?.metadata?.modelAnswer ?? null,
+        feedback: data.feedbackMessage?.content ?? null,
+      });
       onAnswered?.(data);
     } catch (err) {
       setSubmitError(getErrorMessage(err));
@@ -134,13 +143,34 @@ export function PracticeQuestionCard({ sessionId, message, disabled = false, onA
 
       {result && (
         <>
-          <Alert
-            variant={result.correct ? 'success' : 'warning'}
-            title={result.correct ? "You got it! 🎉" : "Not quite - give it another go!"}
-            className="ui-field"
-          >
-            {result.correct && result.explanation ? result.explanation : null}
-          </Alert>
+          {result.result === 'blocked' ? (
+            <Alert variant="info" className="ui-field">
+              <span style={{ whiteSpace: 'pre-line' }}>{result.feedback}</span>
+            </Alert>
+          ) : result.result === 'unsure' ? (
+            <Alert variant="info" title="Compare with the model answer" className="ui-field">
+              {result.modelAnswer && (
+                <p style={{ margin: '0 0 var(--spacing-xs)' }}>
+                  <strong>Model answer:</strong> {result.modelAnswer}
+                </p>
+              )}
+              {result.explanation}
+            </Alert>
+          ) : (
+            <Alert
+              variant={result.correct ? 'success' : 'warning'}
+              title={
+                result.correct
+                  ? result.countedCorrect === false
+                    ? 'Correct - you already got this one'
+                    : 'You got it! 🎉'
+                  : 'Not quite - give it another go!'
+              }
+              className="ui-field"
+            >
+              {result.correct && result.explanation ? result.explanation : null}
+            </Alert>
+          )}
 
           {!disabled && (
             <Button variant="secondary" onClick={handleTryAgain}>

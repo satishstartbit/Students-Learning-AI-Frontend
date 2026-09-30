@@ -7,7 +7,8 @@ Family subscriptions and the paywall: parent plan/checkout/card management, stud
 |---|---|
 | `pages/ParentSubscriptionPage.jsx` (`/parent/subscription`), `CheckoutPage.jsx` (`/parent/subscription/checkout`) | Plan, status, auto-renew, cancel, payments, saved card |
 | `components/PaymentMethodCard.jsx`, `CardSetupModal.jsx`, `stripe.js` | Saved card via Stripe SetupIntents (`VITE_STRIPE_PUBLISHABLE_KEY`) |
-| `hooks/useSubscriptionAccess.js` | `useAccessStatus()` → `{ loaded, hasAccess, reason }` for layouts |
+| `hooks/useSubscriptionAccess.js` | `useAccessStatus()` → `{ loaded, hasAccess, reason, state, readOnly, capabilities, message, graceEndsAt }` for layouts. PDF Q11: `grace` (missed payment, everything works until `graceEndsAt`), `lapsed` + `readOnly` (after grace: history readable, capabilities per `billing.policy.afterGrace`), `none` (never subscribed: paywall). Students never get billing details: during grace they read `active`, and their `message` is the neutral one. |
+| `components/AccessBanner.jsx` | Shown by ParentLayout/StudentLayout: the parent's grace notice (date + Update payment) or the read-only notice (Renew for parents, neutral for students). A read-only family is NOT locked or redirected. |
 | `components/StudentLockedScreen.jsx` | Grade 6+ lock screen. The K-5 one is `student/components/kid/KidLockedScreen.jsx`. |
 | `pages/admin/AdminSubscriptionsPage.jsx`, `AdminPaymentsPage.jsx`, `AdminRevenuePage.jsx`, `AdminCouponRedemptionsPage.jsx` | `/admin/subscriptions`, `/admin/subscriptions/payments` (search, stats, CSV export, refund), `/admin/subscriptions/revenue`, `/admin/masters/discount-codes/:id/redemptions` |
 | `services/subscription.service.js` | All `/subscriptions/*` calls |

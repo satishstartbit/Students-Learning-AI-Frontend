@@ -104,6 +104,13 @@ export default function SubscriptionPlanFormPage() {
     },
   });
 
+  // Features follow the loaded plan - adjusted during render, not in an effect.
+  const [featuresSeededFrom, setFeaturesSeededFrom] = useState(null);
+  if (existing && existing !== featuresSeededFrom) {
+    setFeaturesSeededFrom(existing);
+    setFeatures(existing.features ?? {});
+  }
+
   useEffect(() => {
     if (!existing) return;
     form.reset({
@@ -119,7 +126,6 @@ export default function SubscriptionPlanFormPage() {
       displayOrder: existing.displayOrder ?? 0,
       isActive: existing.isActive ?? true,
     });
-    setFeatures(existing.features ?? {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existing]);
 

@@ -55,12 +55,15 @@ function FocusSession({ timer, settings }) {
   const isActive = isRunning || isPaused;
 
   // What the student is planning while idle; a live session decides it instead.
-  // `?assignment=&step=` lets the assignment page's "Start work" open a session already set up.
+  // `?assignment=&step=` lets the assignment page's "Start work" open a session already set up;
+  // `&minutes=` comes from the "start with a short timer" help idea.
   const [pickedAssignmentId, setPickedAssignmentId] = useState(() => params.get('assignment'));
   const [pickedStepId, setPickedStepId] = useState(() => params.get('step'));
-  const [plannedMinutes, setPlannedMinutes] = useState(
-    () => settings?.defaultFocusMinutes ?? checkIn?.availableMinutes ?? 25
-  );
+  const [plannedMinutes, setPlannedMinutes] = useState(() => {
+    const asked = Number(params.get('minutes'));
+    if (Number.isInteger(asked) && asked >= 1 && asked <= 120) return asked;
+    return settings?.defaultFocusMinutes ?? checkIn?.availableMinutes ?? 25;
+  });
   const [sound, setSound] = useState(() => (settings?.backgroundSound ? SOUNDS[1].value : ''));
   const [soundMenuOpen, setSoundMenuOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);

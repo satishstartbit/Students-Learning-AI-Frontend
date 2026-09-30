@@ -30,6 +30,7 @@ import { DOCUMENT_MIME_TYPES, IMAGE_MIME_TYPES } from '../../../utils/file';
 import assignmentService from '../../assignments/services/assignment.service';
 import ReviewSubmissionModal from '../../assignments/components/ReviewSubmissionModal';
 import QuestionPicture from '../../assignments/media/QuestionPicture';
+import TeacherPlanCard from '../components/assignmentDetails/TeacherPlanCard';
 
 /** The task's questions as the teacher set them, correct answers marked. */
 function QuestionsPreview({ questions }) {
@@ -349,6 +350,8 @@ export default function AssignmentDetailsPage() {
           <QuestionsPreview questions={assignment.questions} />
         </Card>
       )}
+
+      <TeacherPlanCard assignmentId={assignment.id} archived={assignment.status === ASSIGNMENT_CRUD_STATUS.ARCHIVED} />
 
       {assignment.backgroundAudio && (
         <Card title="Background audio" subtitle="Plays automatically when a student opens this task." className="ui-field">

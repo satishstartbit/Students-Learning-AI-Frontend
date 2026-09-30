@@ -45,6 +45,13 @@ export default function ThemeFormPage() {
     },
   });
 
+  // Theme settings follow the loaded record - adjusted during render, not in an effect.
+  const [configSeededFrom, setConfigSeededFrom] = useState(null);
+  if (existing && existing !== configSeededFrom) {
+    setConfigSeededFrom(existing);
+    setConfig({ ...DEFAULT_CONFIG, ...(existing.configJson ?? {}) });
+  }
+
   useEffect(() => {
     if (!existing) return;
     form.reset({
@@ -53,7 +60,6 @@ export default function ThemeFormPage() {
       displayOrder: existing.displayOrder ?? 0,
       isActive: existing.isActive ?? true,
     });
-    setConfig({ ...DEFAULT_CONFIG, ...(existing.configJson ?? {}) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existing]);
 

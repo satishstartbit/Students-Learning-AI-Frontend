@@ -53,12 +53,21 @@ export function useNotifications({ pollIntervalMs = DEFAULT_POLL_MS, limit = 10 
   );
 
   useEffect(() => {
-    loadUnreadCount();
-    loadNotifications().catch(() => {});
+    // First load one microtask later: loadNotifications flips isLoading
+    // straight away, and setting state synchronously inside an effect body
+    // cascades renders (react-hooks/set-state-in-effect).
+    let active = true;
+    Promise.resolve().then(() => {
+      if (!active) return;
+      loadUnreadCount();
+      loadNotifications().catch(() => {});
+    });
 
-    if (!pollIntervalMs) return undefined;
-    const timer = setInterval(loadUnreadCount, pollIntervalMs);
-    return () => clearInterval(timer);
+    const timer = pollIntervalMs ? setInterval(loadUnreadCount, pollIntervalMs) : null;
+    return () => {
+      active = false;
+      if (timer) clearInterval(timer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pollIntervalMs]);
 

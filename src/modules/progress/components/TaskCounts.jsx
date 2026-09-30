@@ -7,6 +7,7 @@ const ORDER = [
   ['returned', 'returned'],
   ['submitted', 'submitted'],
   ['reviewed', 'reviewed'],
+  ['done', 'done'],
 ];
 
 /** Task counts per stage, skipping empty stages; overdue called out separately. */

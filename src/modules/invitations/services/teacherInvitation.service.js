@@ -9,8 +9,16 @@ import api from '../../../utils/apiClient';
 // ---- the invitation link (works signed in or out)
 export const getByToken = (token) => api.get(`/teacher-invitations/${encodeURIComponent(token)}`);
 export const acceptByToken = (token) => api.post(`/teacher-invitations/${encodeURIComponent(token)}/accept`);
-export const declineByToken = (token, reason) =>
-  api.post(`/teacher-invitations/${encodeURIComponent(token)}/decline`, { reason: reason || null });
+/**
+ * Decline (PDF Q7): `reason` is PRIVATE feedback for Growing Focus - the
+ * family never sees it; `sharedMessage` is what the teacher chooses to share.
+ */
+const declineBody = ({ reason, sharedMessage } = {}) => ({
+  reason: reason?.trim() || null,
+  sharedMessage: sharedMessage?.trim() || null,
+});
+export const declineByToken = (token, answer) =>
+  api.post(`/teacher-invitations/${encodeURIComponent(token)}/decline`, declineBody(answer));
 
 /**
  * Query string with repeated keys (subject=A&subject=B). axios would send an
@@ -39,7 +47,7 @@ export const cancel = (invitationId) => api.post(`/parent/teacher-invitations/${
 // ---- teacher (signed in)
 export const listMine = (params = {}) => api.get('/teacher/invitations', { params });
 export const accept = (invitationId) => api.post(`/teacher/invitations/${invitationId}/accept`);
-export const decline = (invitationId, reason) => api.post(`/teacher/invitations/${invitationId}/decline`, { reason: reason || null });
+export const decline = (invitationId, answer) => api.post(`/teacher/invitations/${invitationId}/decline`, declineBody(answer));
 
 // ---- Super Admin
 /** Every teacher chosen x every student chosen: { teacherIds, studentIds, subjects, grade, academicYearId }. */

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Alert, Badge, Button, Card, EmptyState, Loader, Textarea } from '../../../components/common';
+import { Alert, Badge, Button, Card, EmptyState, Loader } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
 import { toast } from '../../../hooks/useToast';
@@ -9,6 +9,7 @@ import { getErrorMessage } from '../../../utils/errorHandler';
 import { USER_ROLES } from '../../../utils/constants';
 import { formatSubjects, invitationStatusOf } from '../invitationStatus';
 import invitationService from '../services/teacherInvitation.service';
+import DeclineFields from '../components/DeclineFields';
 
 /**
  * /invitations/teacher/:token - where a teacher lands from a parent's
@@ -46,7 +47,7 @@ export default function TeacherInvitationPage() {
 
   const invitation = useApi(invitationService.getByToken, { immediate: true, args: [token] });
   const [declining, setDeclining] = useState(searchParams.get('action') === 'decline');
-  const [reason, setReason] = useState('');
+  const [answer, setAnswer] = useState({ reason: '', sharedMessage: '' });
   const [busy, setBusy] = useState(null);
   const [outcome, setOutcome] = useState(null);
 
@@ -106,7 +107,9 @@ export default function TeacherInvitationPage() {
         <EmptyState
           icon="✓"
           title="Invitation declined"
-          description={`We've let ${inv.invitedBy?.name ?? 'the parent'} know. Nothing was shared with you.`}
+          description={`We've let ${inv.invitedBy?.name ?? 'the parent'} know you declined${
+            answer.sharedMessage.trim() ? ', with your message' : ''
+          }. Nothing was shared with you.`}
         />
       </Card>
     );
@@ -148,20 +151,13 @@ export default function TeacherInvitationPage() {
 
   const declineForm = (
     <div className="ui-field" data-testid="decline-form">
-      <Textarea
-        label="Anything the parent should know? (optional)"
-        hint="For example, if the invitation reached the wrong teacher."
-        rows={3}
-        maxLength={500}
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-      />
+      <DeclineFields value={answer} onChange={setAnswer} familyName={inv.invitedBy?.name ?? 'the family'} />
       <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap' }}>
         <Button
           variant="danger"
           loading={busy === 'declined'}
           disabled={Boolean(busy)}
-          onClick={() => run('declined', () => invitationService.declineByToken(token, reason), 'Invitation declined')}
+          onClick={() => run('declined', () => invitationService.declineByToken(token, answer), 'Invitation declined')}
         >
           Decline invitation
         </Button>

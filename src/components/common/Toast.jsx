@@ -1,16 +1,46 @@
+import { useEffect, useId, useSyncExternalStore } from 'react';
 import Alert from './Alert';
 import { useToast } from '../../hooks/useToast';
 
+/*
+ * Only ONE <Toast /> may paint the queue. The layouts mount it, and many
+ * pages mount another; each copy used to draw the same toasts in the same
+ * fixed spot, so screen readers announced every message twice. Mounted
+ * copies register here and only the first one renders.
+ */
+const mounted = [];
+const listeners = new Set();
+const notify = () => listeners.forEach((listener) => listener());
+const subscribe = (listener) => {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+};
+const currentOwner = () => mounted[0] ?? null;
+
+function register(id) {
+  mounted.push(id);
+  notify();
+  return () => {
+    const index = mounted.indexOf(id);
+    if (index >= 0) mounted.splice(index, 1);
+    notify();
+  };
+}
+
 /**
- * Renders the toast queue. Mount once, near the root of the app.
+ * Renders the toast queue. Mount once, near the root of the app (extra
+ * mounts are harmless - only one copy renders).
  *
  * Anything (including non-React module code) can raise a toast through
  * `toast.success(...)` from hooks/useToast.
  */
 export function Toast({ className = '' }) {
+  const id = useId();
   const { toasts, dismiss } = useToast();
+  useEffect(() => register(id), [id]);
+  const owner = useSyncExternalStore(subscribe, currentOwner, currentOwner);
 
-  if (toasts.length === 0) return null;
+  if (owner !== id || toasts.length === 0) return null;
 
   return (
     <div

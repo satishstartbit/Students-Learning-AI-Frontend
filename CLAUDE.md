@@ -11,7 +11,7 @@ React 19 + Vite, Tailwind v4 (`@layer utilities`), shadcn primitives in `src/com
 ## Structure
 | Path | What |
 |---|---|
-| `routes/routeConfig.js` | Every route per role (`path`, `label`, `permissions`, `component`, `props`). Student pages that differ by band use `GradeBandPage` with `props: { junior, standard }`. |
+| `routes/routeConfig.js` | Every route per role (`path`, `label`, `permissions`, `component`, `props`). Student pages that differ by band use `GradeBandPage` with `props: { junior, standard }`. Pages are `lazy(() => import(...))` (one chunk each); `AppRoutes` wraps each in `Suspense`, so add new pages the same way. |
 | `layouts/` | `SuperAdminLayout`, `TeacherLayout`, `ParentLayout` (onboarding + subscription gates), `StudentLayout` (grade band, check-in gate, subscription lock; K-5 → `KidLayout`, Grade 6+ → `AuthenticatedLayout`). The layouts render `<Toast />`, so pages must not render another. |
 | `components/common/` | Button, Input, Select, MultiSelect, Modal, ConfirmationModal, DataTable, FilterBar, Tabs (`items` prop), Alert, Badge, StatusBadge, PageHeader, … Use these before writing new ones. |
 | `hooks/` | `useApi` (loading/error/data + `run`), `useForm` (values, validation, `getFieldProps`), `useToast`, `useModal`, `usePhotoField`, `usePagination`, `useDebounce` |
@@ -52,7 +52,9 @@ React 19 + Vite, Tailwind v4 (`@layer utilities`), shadcn primitives in `src/com
 | [masterManagement](src/modules/masterManagement/CLAUDE.md) | Super Admin master data (generic engine + dedicated masters) |
 | [notifications](src/modules/notifications/CLAUDE.md) | Bell, unread count, per-role routing of notifications |
 | [onboarding](src/modules/onboarding/CLAUDE.md) | Student first-login questionnaire, parent family form |
-| [parent](src/modules/parent/CLAUDE.md) | Parent overview, My Children (children + parents), sidebar, invite-teacher requests, progress, profile |
+| [parent](src/modules/parent/CLAUDE.md) | Parent overview, My Children (children + parents, archive/restore), sidebar, invite-teacher requests, progress, profile |
+| [planner](src/modules/planner/CLAUDE.md) | Growing Focus: server plan (Next up, Today/Next/Later, views, study blocks), adding work (type/voice/photo/PDF), study & busy times, help when stuck, sharing own work, parent Schedule |
+| [platform](src/modules/platform/CLAUDE.md) | Super Admin Platform settings (business rules as versioned data), System status, AI usage |
 | [profile](src/modules/profile/CLAUDE.md) | Shared "My Profile" UI kit (cards, photo header, chips) |
 | [progress](src/modules/progress/CLAUDE.md) | Shared student progress detail used by the parent and teacher Progress pages |
 | [student](src/modules/student/CLAUDE.md) | Everything a student sees: home, plan, assignments, focus, rewards, notes, settings, K-5 kid UI |

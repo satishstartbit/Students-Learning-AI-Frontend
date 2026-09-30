@@ -113,8 +113,8 @@ export default function TeacherInvitationsList({ invitations, onChanged }) {
                 )}
                 {inv.status === 'declined' && (
                   <div className="ui-hint" style={{ margin: '4px 0 0', color: 'var(--color-text-primary)' }}>
-                    {inv.declineReason ? `Their note: "${inv.declineReason}"` : 'No note left.'} If the email was wrong, send a new
-                    invitation.
+                    {inv.declineMessage ? `Their message to you: "${inv.declineMessage}"` : 'No message left.'} If the email was
+                    wrong, send a new invitation.
                   </div>
                 )}
               </div>

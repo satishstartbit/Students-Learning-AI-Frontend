@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { LuCheck, LuLifeBuoy } from 'react-icons/lu';
 import { Button, Checkbox, ErrorState, Loader, Modal } from '../../../components/common';
+import { useSupport } from '../../planner/hooks/useSupport';
 import { useDifficultyPicker } from '../hooks/useDifficultyPicker';
 import './difficultyPicker.css';
 
@@ -14,35 +15,60 @@ import './difficultyPicker.css';
  * (useDifficultyPicker). The K-5 version reads the same lists through the
  * same hook - see kid/KidDifficultyPicker.jsx.
  *
+ * What they pick is recorded (services/support - codes only, no free text)
+ * so the ideas can be ranked by what has helped this student before and
+ * "Did that help?" can follow up. The ideas come back from the server with
+ * the app action each one opens ("Try this"). If the server can't be
+ * reached, the same master-data ideas are shown without the button.
+ * "Share with a grown-up" decides whether a parent's summary counts it.
+ *
  * @param isOpen
- * @param onClose   dismissed without asking for help ("Not now")
- * @param onHelp    (selection) => void - what they picked and what was
- *                  suggested, for the caller to act on
+ * @param onClose       dismissed ("Not now") or finished
+ * @param onHelp        (selection) => void - what they picked and what was suggested
+ * @param assignmentId  optional: the work this is about
+ * @param stepId        optional: the step this is about
+ * @param onChanged     called when an idea changed their plan (smaller steps, replan)
  */
-export function DifficultyPicker({ isOpen, onClose, onHelp }) {
+export function DifficultyPicker({ isOpen, onClose, onHelp, assignmentId, stepId, onChanged }) {
   const { groups, strategiesFor, isLoading, error, reload } = useDifficultyPicker({ immediate: isOpen });
+  const support = useSupport({ assignmentId, stepId, onChanged });
 
   const [picked, setPicked] = useState([]);
-  const [note, setNote] = useState('');
   const [share, setShare] = useState(true);
   const [showing, setShowing] = useState('reasons');
+  const [asking, setAsking] = useState(false);
+  // The server's answer: { eventId, ideas, disclaimer } - or null when it couldn't be reached.
+  const [answer, setAnswer] = useState(null);
 
   const toggle = (code) =>
     setPicked((current) => (current.includes(code) ? current.filter((c) => c !== code) : [...current, code]));
 
-  const strategies = useMemo(() => strategiesFor(picked), [picked, strategiesFor]);
+  const localStrategies = useMemo(() => strategiesFor(picked), [picked, strategiesFor]);
+  const strategies = answer?.ideas ?? localStrategies;
 
   const countIn = (group) => group.reasons.filter((r) => picked.includes(r.code)).length;
 
-  const handleHelp = () => {
-    onHelp?.({ reasons: picked, note: note.trim() || null, share, strategies });
+  const handleHelp = async () => {
+    setAsking(true);
+    const result = await support.ask(picked, { shared: share });
+    setAnswer(result);
+    setAsking(false);
+    onHelp?.({ reasons: picked, share, strategies: result?.ideas ?? localStrategies });
     setShowing('help');
   };
 
   const reset = () => {
     setPicked([]);
-    setNote('');
+    setAnswer(null);
     setShowing('reasons');
+  };
+
+  const tryIdea = async (idea) => {
+    const ok = await support.run({ strategyCode: idea.code, eventId: answer?.eventId });
+    if (ok) {
+      reset();
+      onClose?.();
+    }
   };
 
   return (
@@ -68,7 +94,8 @@ export function DifficultyPicker({ isOpen, onClose, onHelp }) {
             <h2 className="dp-title">Thanks for telling us</h2>
             <p className="dp-empathy">
               That sounds hard, and noticing it is the difficult part - well done. Here{' '}
-              {strategies.length === 1 ? 'is something' : 'are a couple of things'} that might help right now.
+              {strategies.length === 1 ? 'is something' : strategies.length === 2 ? 'are a couple of things' : 'are a few things'} that might help
+              right now.
             </p>
           </div>
 
@@ -78,13 +105,19 @@ export function DifficultyPicker({ isOpen, onClose, onHelp }) {
                 <span className="dp-strategy__num" aria-hidden="true">
                   {index + 1}
                 </span>
-                <span>
+                <span style={{ flex: 1, minWidth: 0 }}>
                   <span className="dp-strategy__name">{strategy.name}</span>
                   {strategy.description && <p className="dp-strategy__desc">{strategy.description}</p>}
                 </span>
+                {answer && strategy.action && strategy.action !== 'none' && (
+                  <Button size="sm" variant="secondary" loading={support.busy === strategy.code} onClick={() => tryIdea(strategy)}>
+                    Try this
+                  </Button>
+                )}
               </li>
             ))}
           </ul>
+          {answer?.disclaimer && <p className="dp-strategy__desc">{answer.disclaimer}</p>}
 
           <div className="dp-foot">
             <button type="button" className="dp-reasons-back" onClick={() => setShowing('reasons')}>
@@ -148,20 +181,6 @@ export function DifficultyPicker({ isOpen, onClose, onHelp }) {
             })}
           </div>
 
-          <div>
-            <label className="ui-label" htmlFor="dp-note">
-              Want to tell us more? (optional)
-            </label>
-            <textarea
-              id="dp-note"
-              className="dp-note"
-              value={note}
-              maxLength={500}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder="A few words is plenty."
-            />
-          </div>
-
           <Checkbox
             className="dp-consent"
             checked={share}
@@ -183,7 +202,7 @@ export function DifficultyPicker({ isOpen, onClose, onHelp }) {
               >
                 Not now
               </Button>
-              <Button onClick={handleHelp} disabled={picked.length === 0}>
+              <Button onClick={handleHelp} disabled={picked.length === 0} loading={asking}>
                 Show me what might help
               </Button>
             </div>

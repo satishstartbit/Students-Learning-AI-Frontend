@@ -2,6 +2,7 @@ import {
   LuActivity,
   LuChartLine,
   LuFileText,
+  LuHandshake,
   LuHouse,
   LuLayoutDashboard,
   LuListChecks,
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
       // Parents' invitations to connect with their child (accept / decline).
       { to: '/teacher/invitations', label: 'Invitations', icon: LuMailOpen },
       { to: '/teacher/assignments', label: 'Assignments', icon: LuFileText },
+      { to: '/teacher/shared-work', label: 'Shared with me', icon: LuHandshake },
       { to: '/teacher/progress', label: 'Progress', icon: LuChartLine },
       { to: '/teacher/learning-activity', label: 'Learning Activity', icon: LuSparkles },
       { to: '/teacher/profile', label: 'My Profile', icon: LuUser },

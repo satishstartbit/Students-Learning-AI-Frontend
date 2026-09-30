@@ -33,6 +33,14 @@ export function useAccessStatus() {
     isLoading: access.isLoading && !access.data,
     hasAccess: Boolean(access.data?.hasAccess),
     reason: access.data?.reason ?? null,
+    // PDF Q11: after grace a family keeps reading everything saved (readOnly),
+    // with `capabilities` saying what else still works; `message` is the
+    // admin's wording for this role (students never see billing details).
+    state: access.data?.state ?? null,
+    readOnly: Boolean(access.data?.readOnly),
+    capabilities: access.data?.capabilities ?? null,
+    message: access.data?.message ?? null,
+    graceEndsAt: access.data?.graceEndsAt ?? null,
     refresh,
   };
 }
@@ -42,6 +50,11 @@ export const SubscriptionAccessContext = createContext({
   isLoading: false,
   hasAccess: true,
   reason: null,
+  state: null,
+  readOnly: false,
+  capabilities: null,
+  message: null,
+  graceEndsAt: null,
   refresh: () => Promise.resolve(),
 });
 

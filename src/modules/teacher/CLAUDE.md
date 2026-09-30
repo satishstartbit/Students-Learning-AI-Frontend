@@ -10,7 +10,8 @@ The teacher's portal: dashboard, My Students, assignments, progress, invitations
 | `/teacher/students/:id` | `pages/TeacherStudentPage.jsx` | One student: overview, focus time this week, alerts (mark seen) |
 | `/teacher/assignments` | `pages/AssignmentsListPage.jsx` | Status tabs with counts (`?view=`), filters, table. `components/assignmentsList/*` (`al-`). Cards below 1280px (`al-mcard`: title + ⋮ menu, subject, due, submitted bar, status, Edit); same folding filters as My Students. |
 | `/teacher/assignments/new`, `/:id/edit` | `pages/AssignmentFormPage.jsx` | Collapsible `FormSection`s, `PublishPanel`, `RosterPicker`, `TagListInput`. Uses `assignments/*` components. |
-| `/teacher/assignments/:id` | `pages/AssignmentDetailsPage.jsx` | Submissions and review (`assignments/ReviewSubmissionModal`) |
+| `/teacher/assignments/:id` | `pages/AssignmentDetailsPage.jsx` | Submissions and review (`assignments/ReviewSubmissionModal`). **Steps and checkpoints** (`components/assignmentDetails/TeacherPlanCard.jsx`, PDF Q3/Q5): fixed checkpoints (on or before the due date) and an optional own step list that every student gets as required steps - untouched suggested steps are replaced, finished work is kept. `GET /assignments/:id/plan`, `PUT /:id/checkpoints`, `PUT /:id/teacher-plan` (owning teacher only). |
+| `/teacher/shared-work` | `pages/SharedWorkPage.jsx` ("Shared with me") | Students' own work shared with this teacher on purpose; "Take this on" = adopt (teacher-verified, origin kept). `services/sharedWork.service.js` → `/teacher/shared-work` |
 | `/teacher/progress` | `pages/TeacherProgressPage.jsx` | Uses `progress/StudentProgressDetail` |
 | `/teacher/invitations` | `pages/TeacherInvitationsPage.jsx` | Accept/decline invitations (no `awaiting_approval`/`rejected` rows are ever shown) |
 | `/teacher/profile` | `pages/TeacherProfilePage.jsx` | My Profile (`profile` kit) |
@@ -23,6 +24,7 @@ Services: `services/dashboard.service.js` (`GET /dashboard`), `teacherStudent.se
 ## Rules - read before changing
 - **A teacher sees only their students:** those linked by an active `teacher_student` relationship (subject + grade + academic year). Every `/teacher/students/:id…` call checks this in the service. Keep it that way for new endpoints.
 - Teachers are connected **only** by accepting an invitation (or by Super Admin as an assisted change). There's no self-serve "add student".
+- A teacher sees an invitation only once it was actually sent (`sent_count > 0` in `teacherInvitation.service#listForTeacher`/`loadTeacherInvitation`): a request the parent withdrew while it awaited approval stays invisible, and 404 by id. `teacher_user_id` is set when the request is filed, so Super Admin sees at once that the teacher has an account.
 - **Dates** on the dashboard and lists resolve in the teacher's timezone (`getUtcRangeFor`). "This week" ends Sunday. Due-date filters (Overdue / Today / Next 7 days / Later / None) are computed server-side in that timezone.
 - **Waiting to mark** groups `submitted` submissions by assignment and counts pending free-text answers.
 - **Check-in alerts** (see `checkIn`) show on My Students and the student page until the teacher marks them seen (`POST /teacher/students/:studentId/alerts/:alertId/seen`).

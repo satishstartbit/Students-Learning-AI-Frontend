@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import PublicRoutes from './PublicRoutes';
 import ProtectedRoutes from './ProtectedRoutes';
@@ -5,7 +6,7 @@ import RoleRoutes from './RoleRoutes';
 import RoutePlaceholder from './RoutePlaceholder';
 import { OPEN_ROUTES, PUBLIC_ROUTES, ROLE_ROUTE_GROUPS } from './routeConfig';
 import { useAuth } from '../hooks/useAuth';
-import { RoleGuard } from '../components/common';
+import { Loader, RoleGuard } from '../components/common';
 import NotFoundPage from '../pages/status/NotFoundPage';
 
 /**
@@ -39,8 +40,11 @@ function renderRouteElement(route) {
   if (route.redirectTo) return <Navigate to={route.redirectTo} replace />;
 
   const Component = route.component;
+  // Pages are lazy-loaded (routeConfig.js): the layout stays up while a page's chunk arrives.
   const content = Component ? (
-    <Component {...(route.props ?? {})} />
+    <Suspense fallback={<Loader message="Loading…" />}>
+      <Component {...(route.props ?? {})} />
+    </Suspense>
   ) : (
     route.element ?? <RoutePlaceholder label={route.label} />
   );

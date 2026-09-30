@@ -5,6 +5,13 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
+import AddWorkDialog from '../../planner/components/AddWorkDialog';
+import NeedHelpDialog from '../../planner/components/NeedHelpDialog';
+import NextActionsCard from '../../planner/components/NextActionsCard';
+import PendingIntakes from '../../planner/components/PendingIntakes';
+import PlanNotices from '../../planner/components/PlanNotices';
+import SupportCheckBack from '../../planner/components/SupportCheckBack';
+import '../../planner/planner.css';
 import NoteEditorModal from '../components/NoteEditorModal';
 import BrainBoostersTeaser from '../components/brainBoosters/BrainBoostersTeaser';
 import AddTaskCard from '../components/home/AddTaskCard';
@@ -26,11 +33,14 @@ import rewardService from '../services/reward.service';
  * "My Day" - the Grade 6+ student Home, built to the student dashboard
  * mockup. Every section reads and writes real data:
  *
- *   Today's Tasks / Upcoming Deadlines  /assignments + /my-tasks (useTodayTasks)
+ *   Next up / plan notices              /students/me/plan (useTodayTasks().schedule)
+ *   Today's Tasks / Upcoming Deadlines  /assignments + /my-tasks, in the plan's priority order
+ *   Waiting for you                     /work-intakes (added work with a question)
  *   Today's check-in                    /check-ins (TodayCheckInProvider)
  *   Your progress                       /rewards/summary + /rewards/catalog
  *   Start Focus                         /focus/today-minutes
- *   Add assignment                      /my-tasks (OwnTaskModal)
+ *   Add assignment                      /work-intakes (AddWorkDialog: type, say, photo, PDF)
+ *   Own task details                    /my-tasks (OwnTaskModal)
  *   My Notes                            /notes (NotesBoard + NoteEditorModal)
  */
 export default function StudentHomePage() {
@@ -44,8 +54,12 @@ export default function StudentHomePage() {
   // The board shows the student's general notes; notes tied to an assignment live on that assignment's page.
   const notes = useApi(noteService.list, { immediate: true, args: [{ generalOnly: true }] });
 
-  // Own-task dialog: null = closed, else { mode: 'type' | 'photo' | 'edit', task? }.
+  // Own-task details: null = closed, else { mode: 'edit', task }.
   const [taskDialog, setTaskDialog] = useState(null);
+  // Add work: null = closed, else the way in ('quick' | 'voice' | 'photo' | 'document').
+  const [adding, setAdding] = useState(null);
+  // "Need help?" for one planned step: null = closed.
+  const [helpFor, setHelpFor] = useState(null);
   // Note dialog: undefined = closed, null = add, a note = edit.
   const [editingNote, setEditingNote] = useState(undefined);
   const [noteToDelete, setNoteToDelete] = useState(null);
@@ -108,6 +122,19 @@ export default function StudentHomePage() {
 
       <div className="sh-grid">
         <div className="sh-col">
+          <NextActionsCard
+            plan={plan.schedule}
+            isLoading={plan.scheduleLoading}
+            error={plan.scheduleError}
+            onRetry={plan.reloadSchedule}
+            planHref="/student/calendar"
+            onHelp={(a) =>
+              setHelpFor({ assignmentId: a.assignmentId, stepId: a.stepId, title: a.assignmentTitle ?? a.title, canRemove: a.workSource === 'student' })
+            }
+          />
+          <SupportCheckBack />
+          <PlanNotices plan={plan.schedule} studyTimesHref="/student/study-times" />
+          <PendingIntakes onChanged={plan.reload} />
           <TodayTasksCard
             tasks={plan.tasks}
             openCount={plan.openCount}
@@ -131,7 +158,7 @@ export default function StudentHomePage() {
           />
           <StartFocusCard minutesToday={todayMinutes.data?.minutes ?? 0} />
           <BrainBoostersTeaser />
-          <AddTaskCard onAdd={(mode) => setTaskDialog({ mode })} />
+          <AddTaskCard onAdd={setAdding} />
         </div>
       </div>
 
@@ -153,6 +180,9 @@ export default function StudentHomePage() {
         onClose={() => setTaskDialog(null)}
         onChanged={plan.reload}
       />
+
+      <AddWorkDialog key={adding ?? 'closed'} isOpen={Boolean(adding)} method={adding} onClose={() => setAdding(null)} onAdded={plan.reload} />
+      <NeedHelpDialog target={helpFor} onClose={() => setHelpFor(null)} onChanged={plan.reload} />
 
       <NoteEditorModal
         isOpen={editingNote !== undefined}

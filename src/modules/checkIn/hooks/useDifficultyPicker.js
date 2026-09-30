@@ -60,6 +60,8 @@ export function useDifficultyPicker({ immediate = true } = {}) {
   return {
     groups,
     reasonByCode: byCode,
+    // Every active strategy - to name one by its code (e.g. "Did that help?").
+    strategies: data?.strategies ?? [],
     strategiesFor,
     isLoading: api.isLoading && !api.data,
     error: api.data ? null : api.error,
