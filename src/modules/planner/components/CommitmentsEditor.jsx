@@ -5,6 +5,7 @@ import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
 import { addDaysToKey, formatDateKey, getDateKey } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
+import { useSchoolworkSettings } from '../hooks/useSchoolworkSettings';
 import planService from '../services/plan.service';
 
 const WEEKDAY_OPTIONS = [1, 2, 3, 4, 5, 6, 7].map((d) => ({
@@ -18,8 +19,9 @@ function describe(c) {
   return `${when} · ${c.allDay ? 'All day' : `${c.start}–${c.end}`}`;
 }
 
-function CommitmentForm({ studentId, commitment, onDone, onCancel }) {
+function CommitmentForm({ studentId, commitment, categories = [], onDone, onCancel }) {
   const [title, setTitle] = useState(commitment?.title ?? '');
+  const [category, setCategory] = useState(commitment?.category ?? '');
   const [repeat, setRepeat] = useState(commitment?.repeat ?? 'weekly');
   const [weekday, setWeekday] = useState(String(commitment?.weekday ?? 1));
   const [date, setDate] = useState(commitment?.date ?? getDateKey());
@@ -43,6 +45,7 @@ function CommitmentForm({ studentId, commitment, onDone, onCancel }) {
     setError(null);
     const values = {
       title: title.trim(),
+      category: category || null,
       repeat,
       ...(repeat === 'weekly' ? { weekday: Number(weekday) } : { date }),
       allDay,
@@ -68,6 +71,16 @@ function CommitmentForm({ studentId, commitment, onDone, onCancel }) {
         </Alert>
       )}
       <Input label="What is it?" value={title} maxLength={150} onChange={(e) => setTitle(e.target.value)} error={attempted ? errors.title : undefined} autoFocus />
+      {categories.length > 0 && (
+        <Select
+          label="What kind of activity?"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          options={categories.map((c) => ({ value: c.code, label: `${c.icon ? `${c.icon} ` : ''}${c.name}` }))}
+          placeholder="Choose one (optional)"
+          hint="Its colour on the calendar. It never becomes schoolwork."
+        />
+      )}
       <Select
         label="How often"
         value={repeat}
@@ -101,9 +114,14 @@ function CommitmentForm({ studentId, commitment, onDone, onCancel }) {
   );
 }
 
-/** Busy times (practice, appointments): the planner never puts study time on top of them. */
+/**
+ * Busy times (practice, family dinner, plans with friends, appointments): the
+ * planner never puts study time on top of them, and they show on the full
+ * calendar in their activity category's colour - never as schoolwork.
+ */
 export function CommitmentsEditor({ studentId = 'me', onChanged }) {
   const availability = useApi(planService.getAvailability, { immediate: true, args: [studentId] });
+  const { categories, categoryOf } = useSchoolworkSettings(studentId);
   const [editing, setEditing] = useState(undefined); // undefined closed · null new · object edit
   const [removing, setRemoving] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -139,18 +157,24 @@ export function CommitmentsEditor({ studentId = 'me', onChanged }) {
         <p className="pl-muted">No busy times yet.</p>
       ) : (
         <ul className="pl-list">
-          {list.map((c) => (
-            <li key={c.id} className="pl-item">
-              <div className="pl-item__main">
-                <p className="pl-item__title">{c.title}</p>
-                <p className="pl-item__meta">{describe(c)}</p>
-              </div>
-              <div className="pl-row">
-                <IconButton icon={<LuPencil aria-hidden="true" />} label={`Edit ${c.title}`} onClick={() => setEditing(c)} />
-                <IconButton icon={<LuTrash2 aria-hidden="true" />} label={`Remove ${c.title}`} onClick={() => setRemoving(c)} />
-              </div>
-            </li>
-          ))}
+          {list.map((c) => {
+            const kind = categoryOf(c.category);
+            return (
+              <li key={c.id} className="pl-item" style={kind?.color ? { borderLeft: `4px solid ${kind.color}` } : undefined}>
+                <div className="pl-item__main">
+                  <p className="pl-item__title">{c.title}</p>
+                  <p className="pl-item__meta">
+                    {kind ? `${kind.icon ? `${kind.icon} ` : ''}${kind.name} · ` : ''}
+                    {describe(c)}
+                  </p>
+                </div>
+                <div className="pl-row">
+                  <IconButton icon={<LuPencil aria-hidden="true" />} label={`Edit ${c.title}`} onClick={() => setEditing(c)} />
+                  <IconButton icon={<LuTrash2 aria-hidden="true" />} label={`Remove ${c.title}`} onClick={() => setRemoving(c)} />
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
       <div className="pl-actions" style={{ justifyContent: 'flex-start' }}>
@@ -165,6 +189,7 @@ export function CommitmentsEditor({ studentId = 'me', onChanged }) {
             key={editing?.id ?? 'new'}
             studentId={studentId}
             commitment={editing}
+            categories={categories}
             onCancel={() => setEditing(undefined)}
             onDone={() => {
               setEditing(undefined);

@@ -1,4 +1,6 @@
 import { LuCheck, LuStar } from 'react-icons/lu';
+import { subjectPaint } from '../../../../components/subjects/subjectColor';
+import { useSubjectColors } from '../../../../components/subjects/useSubjectColors';
 import { cn } from '../../../../lib/utils';
 import { ASSIGNMENT_RECIPIENT_STATUS as STATUS } from '../../../../utils/constants';
 import { getSubjectStyle } from './subjectStyle';
@@ -73,14 +75,26 @@ const TILE_SIZES = {
   xl: 'size-20 rounded-full sm:size-24 [&_svg]:size-10 sm:[&_svg]:size-11',
 };
 
-/** The subject's picture on a coloured paper square. Decorative - the subject name is printed nearby. */
+/**
+ * The subject's picture on a coloured paper circle. Decorative - the subject
+ * name is printed nearby. The paper is the subject's own colour when one is
+ * known (Subjects master or the student's choice - the same colour as on
+ * their sticky notes and calendar), else the kid palette's.
+ */
 export function SubjectTile({ subject, size = 'md', className }) {
   const { icon: Icon, tile, ink } = getSubjectStyle(subject);
+  const { colorOf } = useSubjectColors();
+  const paint = subjectPaint(colorOf(subject));
 
   return (
     <span
       aria-hidden="true"
-      className={cn('grid shrink-0 place-items-center shadow-paper', tile, ink, TILE_SIZES[size], className)}
+      className={cn('grid shrink-0 place-items-center shadow-paper', !paint.style && tile, !paint.style && ink, TILE_SIZES[size], className)}
+      style={
+        paint.style
+          ? { ...paint.style, backgroundColor: 'var(--subject-color)', color: paint['data-ink'] === 'light' ? 'var(--color-text-on-dark)' : 'var(--color-text-on-light)' }
+          : undefined
+      }
     >
       <Icon strokeWidth={2.2} />
     </span>

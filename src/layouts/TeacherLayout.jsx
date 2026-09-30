@@ -15,6 +15,7 @@ import { useEffect } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getMe } from '../modules/auth/services/auth.service';
 import AppSettingsProvider from '../components/appearance/AppSettingsProvider';
+import SubjectColorsProvider from '../components/subjects/SubjectColorsProvider';
 import AuthenticatedLayout from './AuthenticatedLayout';
 import usePortalTheme from './usePortalTheme';
 
@@ -67,9 +68,12 @@ export function TeacherLayout({ children }) {
     // they are in this area - the same picker and the same stored setting the
     // student and parent areas use (components/appearance/).
     <AppSettingsProvider>
-      <AuthenticatedLayout navItems={NAV_ITEMS} mobileTabs={MOBILE_TABS} title="Teacher Portal" subtitle="Teacher" brand="TP" accountSubtitle={school}>
-        {children}
-      </AuthenticatedLayout>
+      {/* The admin's subject colours, so a subject looks the same to teachers as to their students. */}
+      <SubjectColorsProvider>
+        <AuthenticatedLayout navItems={NAV_ITEMS} mobileTabs={MOBILE_TABS} title="Teacher Portal" subtitle="Teacher" brand="TP" accountSubtitle={school}>
+          {children}
+        </AuthenticatedLayout>
+      </SubjectColorsProvider>
     </AppSettingsProvider>
   );
 }

@@ -12,6 +12,7 @@ import {
 } from 'react-icons/lu';
 import AppSettingsProvider from '../components/appearance/AppSettingsProvider';
 import { Loader } from '../components/common';
+import SubjectColorsProvider from '../components/subjects/SubjectColorsProvider';
 import { useApi } from '../hooks/useApi';
 import onboardingService from '../modules/onboarding/services/onboarding.service';
 import { ParentOnboardingContext } from '../modules/parent/hooks/useParentOnboarding';
@@ -167,16 +168,19 @@ export function ParentLayout({ children }) {
       <SubscriptionAccessContext.Provider value={access}>
         <ViewingChildContext.Provider value={viewingContext}>
           <AppSettingsProvider>
-            <AuthenticatedLayout
-              navItems={NAV_ITEMS}
-              mobileTabs={MOBILE_TABS}
-              title="Parent Portal"
-              subtitle="Parent"
-              brand="FP"
-              sidebarExtra={<ViewingChildPicker />}
-            >
-              {content}
-            </AuthenticatedLayout>
+            {/* The admin's subject colours, so subjects look the same here as on the child's screens. */}
+            <SubjectColorsProvider>
+              <AuthenticatedLayout
+                navItems={NAV_ITEMS}
+                mobileTabs={MOBILE_TABS}
+                title="Parent Portal"
+                subtitle="Parent"
+                brand="FP"
+                sidebarExtra={<ViewingChildPicker />}
+              >
+                {content}
+              </AuthenticatedLayout>
+            </SubjectColorsProvider>
           </AppSettingsProvider>
         </ViewingChildContext.Provider>
       </SubscriptionAccessContext.Provider>

@@ -20,6 +20,7 @@ import { getMe } from '../modules/auth/services/auth.service';
 import { TodayCheckInProvider } from '../modules/checkIn/components/TodayCheckInProvider';
 import { KidLockedScreen } from '../modules/student/components/kid/KidLockedScreen';
 import StudentSettingsProvider from '../modules/student/components/StudentSettingsProvider';
+import SchoolworkSettingsProvider from '../modules/planner/components/SchoolworkSettingsProvider';
 import { StudentExperienceContext } from '../modules/student/hooks/useStudentExperience';
 import AccessBanner from '../modules/subscription/components/AccessBanner';
 import StudentLockedScreen from '../modules/subscription/components/StudentLockedScreen';
@@ -202,8 +203,15 @@ export function StudentLayout({ children }) {
   return (
     <StudentExperienceContext.Provider value={experience}>
       <SubscriptionAccessContext.Provider value={access}>
-        {/* A locked student can't reach any work screen, so there's no check-in to load. */}
-        {locked ? shell : <TodayCheckInProvider>{shell}</TodayCheckInProvider>}
+        {/* A locked student can't reach any work screen, so there's no check-in or schoolwork settings to load. */}
+        {locked ? (
+          shell
+        ) : (
+          <TodayCheckInProvider>
+            {/* How they see their schoolwork and their subject colours, for every screen (both bands). */}
+            <SchoolworkSettingsProvider>{shell}</SchoolworkSettingsProvider>
+          </TodayCheckInProvider>
+        )}
       </SubscriptionAccessContext.Provider>
     </StudentExperienceContext.Provider>
   );

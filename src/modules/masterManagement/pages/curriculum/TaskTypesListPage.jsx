@@ -9,7 +9,14 @@ const columns = [
     sortable: true,
     render: (row) => (
       <div>
-        <strong>{row.name}</strong>
+        <strong>
+          {row.icon && (
+            <span aria-hidden="true" style={{ marginRight: 6 }}>
+              {row.icon}
+            </span>
+          )}
+          {row.name}
+        </strong>
         {row.description && <div className="ui-hint">{row.description}</div>}
       </div>
     ),

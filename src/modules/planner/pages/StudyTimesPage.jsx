@@ -35,7 +35,7 @@ function StudyTimes({ studentId, title, description, backHref, backLabel }) {
               <h2 id="pl-busy-title" className="pl-card__title">
                 Busy times
               </h2>
-              <p className="pl-card__sub">Practice, lessons, appointments - never planned over.</p>
+              <p className="pl-card__sub">Practice, family time, plans with friends, appointments - never planned over, and shown on the calendar.</p>
             </div>
           </div>
           <CommitmentsEditor studentId={studentId} />

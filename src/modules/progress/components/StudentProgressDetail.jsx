@@ -4,6 +4,7 @@ import { formatName } from '../../../utils/format';
 // Subject colours come from the same helper the student's own Home/Plan use,
 // so a subject reads the same for the child, the parent and the teacher.
 import { getSubjectVisual } from '../../student/components/subjectVisual';
+import SubjectPill from '../../../components/subjects/SubjectPill';
 import { ENERGY_LEVELS } from '../../checkIn/moods';
 import { useMoodLookup } from '../../checkIn/hooks/useMoodLookup';
 import MoodIcon from './MoodIcon';
@@ -135,9 +136,7 @@ function AssignedTasks({ tasks, showTeacher, stageLabels }) {
       header: 'Subject',
       render: (row) =>
         row.subject ? (
-          <span className="pg-subject" data-tone={getSubjectVisual(row.subject).tone}>
-            {row.subject}
-          </span>
+          <SubjectPill subject={row.subject} tone={getSubjectVisual(row.subject).tone} className="pg-subject" />
         ) : (
           <span className="ui-hint">—</span>
         ),

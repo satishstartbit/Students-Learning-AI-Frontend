@@ -1,0 +1,43 @@
+/*
+ * One colour per subject across the platform. Wherever a subject is painted
+ * with a keyword tone (modules/student/components/subjectVisual.js - Home
+ * tiles, assignment page, focus timer, teacher lists, progress), the
+ * subject's own colour wins when one is known: the Super Admin's default on
+ * the Subjects master, or the student's own choice. subjectPaint() sets
+ * --subject-color and data-ink on the element; these rules feed that colour
+ * into each module's tone variables.
+ *
+ * The attribute is repeated on purpose: (0,3,0) beats every module's
+ * `.x[data-tone='…']` (0,2,0) whatever order the stylesheets load in.
+ */
+[data-subject-color][data-subject-color][data-ink] {
+  --sh-subject-bg: var(--subject-color);
+  --sh-subject-border: transparent;
+  --sh-chip-bg: var(--subject-color);
+  --sp-chip-bg: var(--subject-color);
+  --ts-bg: var(--subject-color);
+  --ts-border: transparent;
+  --pg-subject-bg: var(--subject-color);
+  --al-tile-bg: var(--subject-color);
+  --al-tile-border: transparent;
+  --sticky-tone-bg: var(--subject-color);
+  --sticky-tone-border: transparent;
+}
+[data-subject-color][data-subject-color][data-ink='dark'] {
+  --sh-subject-fg: var(--color-text-on-light);
+  --sh-chip-fg: var(--color-text-on-light);
+  --sp-chip-fg: var(--color-text-on-light);
+  --ts-fg: var(--color-text-on-light);
+  --pg-subject-fg: var(--color-text-on-light);
+  --al-tile-fg: var(--color-text-on-light);
+  --sticky-ink: var(--color-text-on-light);
+}
+[data-subject-color][data-subject-color][data-ink='light'] {
+  --sh-subject-fg: var(--color-text-on-dark);
+  --sh-chip-fg: var(--color-text-on-dark);
+  --sp-chip-fg: var(--color-text-on-dark);
+  --ts-fg: var(--color-text-on-dark);
+  --pg-subject-fg: var(--color-text-on-dark);
+  --al-tile-fg: var(--color-text-on-dark);
+  --sticky-ink: var(--color-text-on-dark);
+}

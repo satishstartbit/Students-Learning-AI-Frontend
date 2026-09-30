@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { LuCheck, LuChevronRight, LuHeadphones, LuPause, LuPlay, LuVolumeX } from 'react-icons/lu';
 import { Alert, Loader, Modal } from '../../../components/common';
+import { subjectPaint } from '../../../components/subjects/subjectColor';
+import { useSubjectColors } from '../../../components/subjects/useSubjectColors';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { toast } from '../../../hooks/useToast';
 import { formatDuration } from '../../../utils/date';
@@ -47,6 +49,7 @@ export default function FocusTimerPage() {
 function FocusSession({ timer, settings }) {
   const [params, setParams] = useSearchParams();
   const plan = useTodayTasks();
+  const { colorOf } = useSubjectColors();
   const { checkIn } = useTodayCheckIn();
   const { session } = timer;
 
@@ -161,6 +164,7 @@ function FocusSession({ timer, settings }) {
 
   const stateLabel = timeUp ? 'Time’s up' : isRunning ? 'Focusing' : isPaused ? 'Paused' : 'Ready when you are';
   const subjectTone = getSubjectVisual(assignment?.subject).tone;
+  const subjectColor = colorOf(assignment?.subject);
 
   return (
     <div className="fs-page td-page">
@@ -199,7 +203,7 @@ function FocusSession({ timer, settings }) {
           <section className="fs-card fs-session" aria-label="Focus timer">
             <div className="fs-context">
               {assignment?.subject && (
-                <span className="fs-chip" data-tone={subjectTone}>
+                <span className="fs-chip" data-tone={subjectTone} {...subjectPaint(subjectColor)}>
                   {assignment.subject}
                 </span>
               )}

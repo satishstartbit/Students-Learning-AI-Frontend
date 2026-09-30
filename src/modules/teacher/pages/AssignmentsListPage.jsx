@@ -12,6 +12,8 @@ import { ASSIGNMENT_CRUD_STATUS } from '../../../utils/constants';
 import assignmentService from '../../assignments/services/assignment.service';
 import teacherStudentService from '../services/teacherStudent.service';
 import { getSubjectVisual } from '../../student/components/subjectVisual';
+import { subjectPaint } from '../../../components/subjects/subjectColor';
+import { useSubjectColors } from '../../../components/subjects/useSubjectColors';
 import '../components/assignmentsList/assignmentsList.css';
 
 /** Status tabs, in the mockup's order. Archived only shows once there is something archived. */
@@ -80,11 +82,13 @@ function dueLabel(dueDate) {
 }
 
 function SubjectCell({ subject }) {
+  // The subject's colour (Subjects master) - the one its students see - else its tone.
+  const { colorOf } = useSubjectColors();
   if (!subject) return <span className="al-muted">—</span>;
   const { icon: Icon, tone } = getSubjectVisual(subject);
   return (
     <span className="al-subject">
-      <span className="al-subject__tile" data-tone={tone} aria-hidden="true">
+      <span className="al-subject__tile" data-tone={tone} {...subjectPaint(colorOf(subject))} aria-hidden="true">
         <Icon size={14} strokeWidth={2.1} />
       </span>
       {subject}

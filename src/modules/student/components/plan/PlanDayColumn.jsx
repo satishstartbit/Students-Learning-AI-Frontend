@@ -1,33 +1,7 @@
-import { LuCalendarCheck, LuCoffee, LuHeart, LuPin, LuPlus } from 'react-icons/lu';
-import { formatDateKey, formatDurationLong, formatTime, weekdayOfKey } from '../../../../utils/date';
+import { LuCalendarCheck, LuCoffee, LuHeart, LuPlus } from 'react-icons/lu';
+import { formatDateKey, formatDurationLong, weekdayOfKey } from '../../../../utils/date';
+import DayAgenda from '../../../planner/components/schoolwork/DayAgenda';
 import PlanTaskCard from './PlanTaskCard';
-
-const BLOCK_STATUS = { done: 'Done', missed: 'Missed - moved to a later time' };
-
-/** One planned study time. Future ones open the move/keep dialog; past ones are history. */
-function StudyBlock({ block, timeZone, todayKey, onOpen }) {
-  const editable = block.status === 'scheduled' && block.date >= todayKey;
-  const content = (
-    <>
-      <span className="pl-block__time">
-        {formatTime(block.startAt, { timeZone })}–{formatTime(block.endAt, { timeZone })}
-        {block.pinned && <LuPin size={11} aria-label="Kept where you put it" style={{ marginLeft: 4 }} />}
-      </span>
-      <span className="pl-block__title">{block.title}</span>
-      {block.assignmentTitle && block.assignmentTitle !== block.title && <span className="pl-block__work">{block.assignmentTitle}</span>}
-      {BLOCK_STATUS[block.status] && <span className="pl-block__work">{BLOCK_STATUS[block.status]}</span>}
-    </>
-  );
-  return editable ? (
-    <button type="button" className="pl-block" data-status={block.status} onClick={() => onOpen(block)}>
-      {content}
-    </button>
-  ) : (
-    <div className="pl-block" data-status={block.status}>
-      {content}
-    </div>
-  );
-}
 
 /** What an empty day says - weekends nudge toward planning, weekdays just rest. */
 function emptyState(dayKey, todayKey) {
@@ -39,9 +13,11 @@ function emptyState(dayKey, todayKey) {
 }
 
 /**
- * One day on the Plan board: its header, the study times the planner put on
- * it (`blocks`), the tasks due that day, an Add button (new work pre-dated to
- * this day) and the day's totals.
+ * One day of the full calendar: its header, the study times the planner put
+ * on it (`blocks`) and the student's personal activities (`events`: practice,
+ * dinner, plans - shown, never schoolwork) in time order, the tasks due that
+ * day, an Add button (new work pre-dated to this day) and the day's totals.
+ * Everything wears its subject colour (`colorOf`).
  */
 export function PlanDayColumn({
   day,
@@ -50,13 +26,17 @@ export function PlanDayColumn({
   isLoading,
   layout = 'week',
   blocks = [],
+  events = [],
   timeZone,
+  colorOf = () => null,
+  showTypeIcons = true,
   onOpenBlock,
   onPickDay,
   onAdd,
   onOpenOwn,
   onNextWeek,
 }) {
+  const hasAgenda = blocks.length > 0 || events.length > 0;
   const isToday = day.key === todayKey;
   const isSelected = day.key === selectedKey && !isToday;
   const doneCount = day.items.filter((t) => t.done).length;
@@ -88,18 +68,23 @@ export function PlanDayColumn({
       </button>
 
       <div className="sp-day__tasks">
-        {blocks.length > 0 && (
-          <div className="pl-stack" style={{ gap: 6 }} aria-label="Study times">
-            {blocks.map((b) => (
-              <StudyBlock key={b.id} block={b} timeZone={timeZone} todayKey={todayKey} onOpen={onOpenBlock} />
-            ))}
-          </div>
+        {hasAgenda && (
+          <DayAgenda
+            blocks={blocks}
+            events={events}
+            timeZone={timeZone}
+            todayKey={todayKey}
+            colorOf={colorOf}
+            showTypeIcons={showTypeIcons}
+            onOpenBlock={onOpenBlock}
+            compact={layout === 'week'}
+          />
         )}
-        {blocks.length > 0 && day.items.length > 0 && <span className="sp-day__stat">Due this day</span>}
+        {hasAgenda && day.items.length > 0 && <span className="sp-day__stat">Due this day</span>}
         {isLoading ? (
           <div className="sp-skeleton" aria-hidden="true" />
         ) : day.items.length === 0 ? (
-          blocks.length > 0 ? null : empty.action === 'next-week' ? (
+          hasAgenda ? null : empty.action === 'next-week' ? (
             <button type="button" className="sp-rest" onClick={onNextWeek}>
               <EmptyIcon size={16} aria-hidden="true" />
               <span className="sp-rest__title">{empty.title}</span>
@@ -114,7 +99,7 @@ export function PlanDayColumn({
           )
         ) : (
           day.items.map((task) => (
-            <PlanTaskCard key={task.key} task={task} isOverdue={!task.done && day.key < todayKey} onOpenOwn={onOpenOwn} />
+            <PlanTaskCard key={task.key} task={task} color={colorOf(task.subject)} isOverdue={!task.done && day.key < todayKey} onOpenOwn={onOpenOwn} />
           ))
         )}
       </div>

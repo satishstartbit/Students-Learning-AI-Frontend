@@ -17,11 +17,11 @@ Everything a signed-in student sees, in **two experiences**: the K-5 kid UI ("My
 | Assignments | `/student/assignments` | `KidAssignmentsPage` / `MyAssignmentsPage` | `components/assignments/*` (`sa-`), `components/kid/TaskCard.jsx`. Grade 6+ to the mobile mockup: "Assignments" + **Add assignment** (own task, `OwnTaskModal`), one empty card when there is nothing at all, phone cards (`sa-mcard`). The page owns the own-task list and dialog. |
 | Assignment detail | `/student/assignments/:id` | `AssignmentDetailPage` (both; `isJunior` → simple page, else `components/assignment/StandardAssignmentView`, `ad-`) | answers via `assignments/components/QuestionAnswer` |
 | Focus | `/student/focus`, `/focus/:activityKey` | `KidFocusPage` + `KidFocusActivityPage` / `FocusTimerPage` | `hooks/useFocusTimer.js`, `useFocusSteps.js`, `components/focus/*` (`fs-`), `components/kid/KidFocusTimerCard.jsx` |
-| Plan | `/student/calendar` | `KidMyWeekPage` / `StudentPlanPage` | `components/plan/*` (`sp-`), `hooks/useWeekPlan`, `useTodayTasks`. Grade 6+ views: Calendar (study times from the plan on each day - open one to move/keep it - plus what's due), Next 3, Priority (Today/Next/Later), Due date, Subject. Uses the `planner` module |
+| Plan | `/student/calendar` | `KidMyWeekPage` / `StudentPlanPage` | "My Schoolwork": the same plan as **Sticky notes** (To Do / Doing / Done, subject colours, open a note for its steps), **List** (plan order, or Next 3 / Due date / Subject; tick own work) or **Calendar** (full calendar: study times - open one to move/keep it - and personal events in time order, plus what's due; week/day). Opens on the view chosen in Customize / Settings; switch any time. K-5 "My week": the same three views in kid style (Sticky notes / My list / My week). `components/plan/*` (`sp-`), `hooks/useWeekPlan`, `useTodayTasks`; the views are the `planner` module's `components/schoolwork/*` |
 | Brain boosters | `/student/brain-boosters` | `BrainBoostersPage` | `components/brainBoosters/*` (`bb-`); pure game logic has `*.test.js` |
 | Rewards | `/student/rewards` | `KidRewardsPage` / `RewardsPage` | `components/rewards/*` (`rw-`), `hooks/useRewards` |
 | Make it yours | `/student/make-it-yours` | `KidMakeItYoursPage` / `MakeItYoursPage` | `components/personalize/*` (`my-`): accent, avatar, note style, card style |
-| Settings / Help | `/student/settings`, `/help` | `KidSettingsPage` / `StudentSettingsPage`, `StudentHelpPage` | `StudentSettingsProvider.jsx` (Grade 6+) applies settings app-wide |
+| Settings / Help | `/student/settings`, `/help` | `KidSettingsPage` / `StudentSettingsPage`, `StudentHelpPage` | `StudentSettingsProvider.jsx` (Grade 6+) applies settings app-wide. "My Growing Focus" (6+) / "How I see my work" (K-5): default view, type icons, estimated time, personal events on the board, subject colours - the planner's schoolwork settings, shared with the Plan page's Customize |
 | Notifications | `/student/notifications` | `NotificationsPage` | `components/notifications/*` (`sn-`) |
 | Check-in UI | `/student/check-in` | `KidCheckInPage` / `checkIn/CheckInPage` | `components/kid/CheckInModal`, `MoodCelebration` (`mc-`, `moodCelebrationConfig.js`) |
 
@@ -44,6 +44,8 @@ Everything a signed-in student sees, in **two experiences**: the K-5 kid UI ("My
 - **Personalisation:** accent via `data-accent` (5 families). The kid UI follows the accent. Avatars, sticky-note styles, stickers and themes are master data (`masterManagement`).
 - **Rewards:** points come from `points_rules` (e.g. daily check-in once/day, task steps once). Collectible rewards unlock by threshold, one notification per reward, idempotent (unique `student_rewards(student_id, reward_id)`). Redemption uses a lock against double-spend.
 - **Mood visuals are dynamic:** icons and colours come from the `emotional_states` master (`MoodGlyph`, `moodCelebrationConfig`). Never map a mood name to a hardcoded icon.
+- **Subject colours are data:** `subjectVisual.js` (6+) and `kid/subjectStyle.js` (K-5) give each subject an icon and a fallback tone, but a subject's own colour (Subjects master, or the student's choice) wins wherever it is painted - `SubjectTile`, `SubjectIcon`, the assignment page, the focus chip, the plan cards, K-5 `PaperKit#SubjectTile` - through `useSubjectColors` + `subjectPaint` (`components/subjects/`).
+- **Own tasks** have a status of pending / in_progress (Doing on the board) / completed, and an optional kind of work (`workType`, an Assignment Types name) chosen in `OwnTaskModal`.
 - Student free text that goes to AI is safety-screened on the backend (see `aiAssistant`). Own task titles/notes reach a model only for personal steps and added work (screened first); notes and the check-in note never do.
 - **Own tasks** (`/my-tasks`): a parent can add one for the child (`addedBy: 'parent'`, `canEdit: false`) - `OwnTaskModal` then shows it read-only with Mark done. Own tasks are visible to parents (Progress, Schedule); a teacher sees one only when the student shares it (`ShareWithTeacher`).
 - **Focus** accepts `?minutes=` (the "short timer" help idea) besides `?assignment=&step=`.
@@ -52,7 +54,7 @@ Everything a signed-in student sees, in **two experiences**: the K-5 kid UI ("My
 
 ## Verify
 - `npm test` (brain-booster logic) · `npx eslint src/modules/student` · `npm run build`
-- UI: harness with `USERS.kid` **and** `USERS.student`. Example: `.claude/testing/scenarios/student-task-focus.mjs`.
+- UI: harness with `USERS.kid` **and** `USERS.student`. Example: `.claude/testing/scenarios/student-task-focus.mjs`; the schoolwork views: `scenarios/schoolwork-views.mjs`.
 - Backend focus/rewards rules: api-tester (dry-run or private backend with a zz student).
 
 ## Related

@@ -4,6 +4,7 @@ import { Alert, Button, Input, Modal, Select, Spinner, Textarea } from '../../..
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { useOnboardingLookup } from '../../onboarding/hooks/useOnboardingLookup';
 import { useIntakeProgress } from '../hooks/useIntakeProgress';
+import { useWorkTypeOptions } from '../hooks/useWorkTypeOptions';
 import intakeService from '../services/intake.service';
 import IntakeConfirm from './IntakeConfirm';
 import VoiceRecorder from './VoiceRecorder';
@@ -15,9 +16,11 @@ const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/heic,image/heif';
 /** Grade 6+ quick-add (Q14): title and optional facts, created at once with no reading. */
 function QuickAddForm({ studentId, defaultDueDate, onCreated, onBack }) {
   const subjects = useOnboardingLookup('subjects');
+  const workTypes = useWorkTypeOptions();
   const [title, setTitle] = useState('');
   const [dueDate, setDueDate] = useState(defaultDueDate ?? '');
   const [subject, setSubject] = useState('');
+  const [workType, setWorkType] = useState('');
   const [minutes, setMinutes] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
@@ -39,6 +42,7 @@ function QuickAddForm({ studentId, defaultDueDate, onCreated, onBack }) {
           title: title.trim(),
           dueDate: dueDate || null,
           subject: subject || null,
+          taskType: workType || null,
           estimatedMinutes: minutes ? Number(minutes) : null,
           description: description.trim() || null,
         },
@@ -71,6 +75,14 @@ function QuickAddForm({ studentId, defaultDueDate, onCreated, onBack }) {
         <Input label="Due date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         <Select label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} options={subjects.options} placeholder="No subject" loading={subjects.loading} />
       </div>
+      <Select
+        label="Kind of work"
+        value={workType}
+        onChange={(e) => setWorkType(e.target.value)}
+        options={workTypes.options}
+        placeholder="Not sure"
+        loading={workTypes.loading}
+      />
       <Input
         label="About how long? (minutes)"
         type="number"

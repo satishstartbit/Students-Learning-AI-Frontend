@@ -1,3 +1,5 @@
+import { subjectPaint } from '../../../../components/subjects/subjectColor';
+import { useSubjectColors } from '../../../../components/subjects/useSubjectColors';
 import { getSubjectVisual } from '../../../student/components/subjectVisual';
 import { initialsOf, moodVisual } from './studentFormat';
 import './teacherStudents.css';
@@ -11,13 +13,17 @@ export function StudentAvatar({ student, size = 'md' }) {
   );
 }
 
-/** Subjects as small tinted pills (same colour per subject as the Assignments list tiles). */
+/**
+ * Subjects as small tinted pills - each in its subject colour (Subjects
+ * master) when it has one, the same colour students see; else its tone.
+ */
 export function SubjectChips({ subjects = [] }) {
+  const { colorOf } = useSubjectColors();
   if (!subjects.length) return <span className="ts-muted">—</span>;
   return (
     <span className="ts-chips">
       {subjects.map((s) => (
-        <span key={s} className="ts-chip ts-tone" data-tone={getSubjectVisual(s).tone}>
+        <span key={s} className="ts-chip ts-tone" data-tone={getSubjectVisual(s).tone} {...subjectPaint(colorOf(s))}>
           {s}
         </span>
       ))}

@@ -29,6 +29,15 @@ export const deleteCommitment = (studentId, id) => api.delete(`${base(studentId)
 /** Move / resize / pin one study time. `expectedVersion` refuses a stale edit. */
 export const updateBlock = (studentId, id, values) => api.patch(`${base(studentId)}/blocks/${id}`, values);
 
+/** Move one piece of work on the sticky-note board: `progress` 'todo' | 'doing' | 'done'. */
+export const setProgress = (studentId, workId, progress) => api.patch(`${base(studentId)}/work/${workId}/progress`, { progress });
+
+/** "Customize My Growing Focus": preferences + every subject's colour + activity categories. */
+export const getSchoolworkSettings = (studentId) => api.get(`${base(studentId)}/schoolwork-settings`);
+
+/** Partial: { defaultView?, showTypeIcons?, showEstimatedTime?, showPersonalEvents?, subjectColors? }. */
+export const updateSchoolworkSettings = (studentId, patch) => api.patch(`${base(studentId)}/schoolwork-settings`, patch);
+
 export default {
   getPlan,
   replan,
@@ -39,4 +48,7 @@ export default {
   updateCommitment,
   deleteCommitment,
   updateBlock,
+  setProgress,
+  getSchoolworkSettings,
+  updateSchoolworkSettings,
 };

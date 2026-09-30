@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LuArrowLeft, LuCalendar } from 'react-icons/lu';
 import { ConfirmationModal, StatusBadge } from '../../../../components/common';
+import { subjectPaint } from '../../../../components/subjects/subjectColor';
+import { useSubjectColors } from '../../../../components/subjects/useSubjectColors';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
 import { daysUntilDateKey, formatDateKey } from '../../../../utils/date';
@@ -54,6 +56,7 @@ export function StandardAssignmentView({ item, assignmentId, reload, children })
   const nextStep = steps.steps.find((s) => !s.done) ?? null;
   const due = dueLabel(a.dueDate);
   const tone = getSubjectVisual(a.subject).tone;
+  const { colorOf } = useSubjectColors();
 
   const notes = (notesApi.data ?? []).map((n) => ({
     id: n.id,
@@ -100,7 +103,7 @@ export function StandardAssignmentView({ item, assignmentId, reload, children })
         <div className="ad-col">
           <section className="ad-card ad-header" aria-label="Assignment">
             <div className="ad-header__main">
-              <span className="ad-subject" data-tone={tone} aria-hidden="true">
+              <span className="ad-subject" data-tone={tone} {...subjectPaint(colorOf(a.subject))} aria-hidden="true">
                 <SubjectIcon subject={a.subject} size="md" />
               </span>
               <div style={{ minWidth: 0 }}>

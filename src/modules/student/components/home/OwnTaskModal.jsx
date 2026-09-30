@@ -5,6 +5,7 @@ import { toast } from '../../../../hooks/useToast';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import { useOnboardingLookup } from '../../../onboarding/hooks/useOnboardingLookup';
 import ShareWithTeacher from '../../../planner/components/ShareWithTeacher';
+import { useWorkTypeOptions } from '../../../planner/hooks/useWorkTypeOptions';
 import studentTaskService from '../../services/studentTask.service';
 
 /**
@@ -69,9 +70,11 @@ function PhotoField({ file, existingUrl, onPick, onClear, emphasis }) {
 function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
   const isEdit = mode === 'edit';
   const subjects = useOnboardingLookup('subjects');
+  const workTypes = useWorkTypeOptions();
 
   const [title, setTitle] = useState(task?.title ?? '');
   const [subject, setSubject] = useState(task?.subject ?? '');
+  const [workType, setWorkType] = useState(task?.workType ?? '');
   const [dueDate, setDueDate] = useState(task?.dueDate ?? defaultDueDate ?? '');
   const [minutes, setMinutes] = useState(task?.estimatedMinutes ? String(task.estimatedMinutes) : '');
   const [description, setDescription] = useState(task?.description ?? '');
@@ -91,6 +94,13 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
     if (subject && !opts.some((o) => o.value === subject)) opts.unshift({ value: subject, label: subject });
     return opts;
   }, [subjects.options, subject]);
+
+  const workTypeOptions = useMemo(() => {
+    const opts = [...workTypes.options];
+    // Same for a kind of work an admin has since switched off.
+    if (workType && !opts.some((o) => o.value === workType)) opts.unshift({ value: workType, label: workType });
+    return opts;
+  }, [workTypes.options, workType]);
 
   const minutesNumber = minutes === '' ? null : Number(minutes);
   const errors = {
@@ -134,6 +144,7 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
     const values = {
       title: title.trim(),
       subject,
+      workType,
       dueDate,
       estimatedMinutes: minutes === '' ? '' : minutesNumber,
       description: description.trim(),
@@ -219,6 +230,15 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
         />
         <Input label="Due date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
       </div>
+
+      <Select
+        label="Kind of work"
+        value={workType}
+        onChange={(e) => setWorkType(e.target.value)}
+        options={workTypeOptions}
+        placeholder="Not sure"
+        loading={workTypes.loading}
+      />
 
       <Input
         label="How long will it take? (minutes)"
