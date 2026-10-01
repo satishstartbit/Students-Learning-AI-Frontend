@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import { USER_ROLES } from '../utils/constants';
 import { PERMISSIONS } from '../utils/permissions';
 import PublicLayout from '../layouts/PublicLayout';
@@ -6,116 +7,120 @@ import StudentLayout from '../layouts/StudentLayout';
 import TeacherLayout from '../layouts/TeacherLayout';
 import ParentLayout from '../layouts/ParentLayout';
 
-import LoginPage from '../modules/auth/pages/LoginPage';
-import AdminLoginPage from '../modules/auth/pages/AdminLoginPage';
-import RegisterPage from '../modules/auth/pages/RegisterPage';
-import ForgotPasswordPage from '../modules/auth/pages/ForgotPasswordPage';
-import ResetPasswordPage from '../modules/auth/pages/ResetPasswordPage';
-import VerifyEmailPage from '../modules/auth/pages/VerifyEmailPage';
-import TeacherInvitationPage from '../modules/invitations/pages/TeacherInvitationPage';
-
-import AdminDashboardPage from '../modules/superAdmin/pages/AdminDashboardPage';
-import UsersListPage from '../modules/superAdmin/pages/UsersListPage';
-import CreateUserPage from '../modules/superAdmin/pages/CreateUserPage';
-import UserDetailPage from '../modules/superAdmin/pages/UserDetailPage';
-import EditUserPage from '../modules/superAdmin/pages/EditUserPage';
-import RelationshipsPage from '../modules/superAdmin/pages/RelationshipsPage';
-import TeacherInvitationsAdminPage from '../modules/superAdmin/pages/TeacherInvitationsAdminPage';
-import TeacherConnectionsPage from '../modules/superAdmin/pages/TeacherConnectionsPage';
 // import InvitationEmailPage from '../modules/superAdmin/pages/InvitationEmailPage';
-import AdminProfilePage from '../modules/superAdmin/pages/AdminProfilePage';
 
-import ParentChildrenPage from '../modules/parent/pages/ParentChildrenPage';
-import ParentProfilePage from '../modules/parent/pages/ParentProfilePage';
-import ParentProgressPage from '../modules/parent/pages/ParentProgressPage';
-import ParentDashboardPage from '../modules/parent/pages/ParentDashboardPage';
-
-import StudentOnboardingPage from '../modules/onboarding/pages/StudentOnboardingPage';
-import ParentOnboardingPage from '../modules/onboarding/pages/ParentOnboardingPage';
-import CheckInPage from '../modules/checkIn/pages/CheckInPage';
 import RequireCheckIn from '../modules/checkIn/components/RequireCheckIn';
 
-import TeacherDashboardPage from '../modules/teacher/pages/TeacherDashboardPage';
-import MyStudentsPage from '../modules/teacher/pages/MyStudentsPage';
-import TeacherStudentPage from '../modules/teacher/pages/TeacherStudentPage';
-import AssignmentsListPage from '../modules/teacher/pages/AssignmentsListPage';
-import AssignmentFormPage from '../modules/teacher/pages/AssignmentFormPage';
-import AssignmentDetailsPage from '../modules/teacher/pages/AssignmentDetailsPage';
-import TeacherProfilePage from '../modules/teacher/pages/TeacherProfilePage';
-import TeacherProgressPage from '../modules/teacher/pages/TeacherProgressPage';
-import TeacherInvitationsPage from '../modules/teacher/pages/TeacherInvitationsPage';
-
-import MyAssignmentsPage from '../modules/student/pages/MyAssignmentsPage';
-import StudentAssignmentDetailPage from '../modules/student/pages/AssignmentDetailPage';
-import StudentHomePage from '../modules/student/pages/StudentHomePage';
-import StudentPlanPage from '../modules/student/pages/StudentPlanPage';
-import FocusTimerPage from '../modules/student/pages/FocusTimerPage';
-import BrainBoostersPage from '../modules/student/pages/BrainBoostersPage';
-import RewardsPage from '../modules/student/pages/RewardsPage';
-import NotificationsPage from '../modules/student/pages/NotificationsPage';
-import MakeItYoursPage from '../modules/student/pages/MakeItYoursPage';
-import StudentSettingsPage from '../modules/student/pages/StudentSettingsPage';
-import StudentHelpPage from '../modules/student/pages/StudentHelpPage';
-import GradeBandPage from '../modules/student/pages/GradeBandPage';
-import KidHomePage from '../modules/student/pages/kid/KidHomePage';
-import KidMyWeekPage from '../modules/student/pages/kid/KidMyWeekPage';
-import KidFocusPage from '../modules/student/pages/kid/KidFocusPage';
-import KidFocusActivityPage from '../modules/student/pages/kid/KidFocusActivityPage';
-import KidAssignmentsPage from '../modules/student/pages/kid/KidAssignmentsPage';
-import KidMakeItYoursPage from '../modules/student/pages/kid/KidMakeItYoursPage';
-import KidSettingsPage from '../modules/student/pages/kid/KidSettingsPage';
-import KidRewardsPage from '../modules/student/pages/kid/KidRewardsPage';
-import KidCheckInPage from '../modules/student/pages/kid/KidCheckInPage';
-import KidOnboardingPage from '../modules/student/pages/kid/KidOnboardingPage';
-
-import AssistantHomePage from '../modules/aiAssistant/pages/AssistantHomePage';
-import LearningSessionPage from '../modules/aiAssistant/pages/LearningSessionPage';
-import LearningHistoryPage from '../modules/aiAssistant/pages/LearningHistoryPage';
-import TeacherLearningActivityPage from '../modules/aiAssistant/pages/TeacherLearningActivityPage';
-import ParentLearningSummaryPage from '../modules/aiAssistant/pages/ParentLearningSummaryPage';
-
-import MasterDashboardPage from '../modules/masterManagement/pages/MasterDashboardPage';
-import MasterListPage from '../modules/masterManagement/pages/MasterListPage';
-import MasterFormPage from '../modules/masterManagement/pages/MasterFormPage';
-import AcademicYearsListPage from '../modules/masterManagement/pages/academicYears/AcademicYearsListPage';
-import AcademicYearFormPage from '../modules/masterManagement/pages/academicYears/AcademicYearFormPage';
-import SchoolsListPage from '../modules/masterManagement/pages/schools/SchoolsListPage';
-import SchoolFormPage from '../modules/masterManagement/pages/schools/SchoolFormPage';
-import TaskTypesListPage from '../modules/masterManagement/pages/curriculum/TaskTypesListPage';
-import TaskTypeFormPage from '../modules/masterManagement/pages/curriculum/TaskTypeFormPage';
-import QuestionTypesListPage from '../modules/masterManagement/pages/curriculum/QuestionTypesListPage';
-import QuestionTypeFormPage from '../modules/masterManagement/pages/curriculum/QuestionTypeFormPage';
-import CurriculumSubjectsListPage from '../modules/masterManagement/pages/curriculum/CurriculumSubjectsListPage';
-import CurriculumSubjectFormPage from '../modules/masterManagement/pages/curriculum/CurriculumSubjectFormPage';
-import TopicsListPage from '../modules/masterManagement/pages/curriculum/TopicsListPage';
-import TopicFormPage from '../modules/masterManagement/pages/curriculum/TopicFormPage';
-import AudioTracksListPage from '../modules/masterManagement/pages/curriculum/AudioTracksListPage';
-import AudioTrackFormPage from '../modules/masterManagement/pages/curriculum/AudioTrackFormPage';
-import RegulationActivitiesListPage from '../modules/masterManagement/pages/regulationActivities/RegulationActivitiesListPage';
-import RegulationActivityFormPage from '../modules/masterManagement/pages/regulationActivities/RegulationActivityFormPage';
-import RewardActivitiesListPage from '../modules/masterManagement/pages/rewardActivities/RewardActivitiesListPage';
-import RewardActivityFormPage from '../modules/masterManagement/pages/rewardActivities/RewardActivityFormPage';
-import StudentRewardsListPage from '../modules/masterManagement/pages/studentRewards/StudentRewardsListPage';
-import StudentRewardFormPage from '../modules/masterManagement/pages/studentRewards/StudentRewardFormPage';
-import SubscriptionPlansListPage from '../modules/masterManagement/pages/subscriptionPlans/SubscriptionPlansListPage';
-import SubscriptionPlanFormPage from '../modules/masterManagement/pages/subscriptionPlans/SubscriptionPlanFormPage';
-import DiscountCodesListPage from '../modules/masterManagement/pages/discountCodes/DiscountCodesListPage';
-import DiscountCodeFormPage from '../modules/masterManagement/pages/discountCodes/DiscountCodeFormPage';
-import ThemesListPage from '../modules/masterManagement/pages/themes/ThemesListPage';
-import ThemeFormPage from '../modules/masterManagement/pages/themes/ThemeFormPage';
-import AvatarsListPage from '../modules/masterManagement/pages/avatars/AvatarsListPage';
-import AvatarFormPage from '../modules/masterManagement/pages/avatars/AvatarFormPage';
-import StickyNoteStylesListPage from '../modules/masterManagement/pages/stickyNoteStyles/StickyNoteStylesListPage';
-import StickyNoteStyleFormPage from '../modules/masterManagement/pages/stickyNoteStyles/StickyNoteStyleFormPage';
-import StickersListPage from '../modules/masterManagement/pages/stickers/StickersListPage';
-import StickerFormPage from '../modules/masterManagement/pages/stickers/StickerFormPage';
-
-import AdminSubscriptionsPage from '../modules/subscription/pages/admin/AdminSubscriptionsPage';
-import AdminPaymentsPage from '../modules/subscription/pages/admin/AdminPaymentsPage';
-import AdminRevenuePage from '../modules/subscription/pages/admin/AdminRevenuePage';
-import AdminCouponRedemptionsPage from '../modules/subscription/pages/admin/AdminCouponRedemptionsPage';
-import ParentSubscriptionPage from '../modules/subscription/pages/ParentSubscriptionPage';
-import CheckoutPage from '../modules/subscription/pages/CheckoutPage';
+// Pages load on demand, one chunk per page (AppRoutes wraps each in Suspense).
+const LoginPage = lazy(() => import('../modules/auth/pages/LoginPage'));
+const AdminLoginPage = lazy(() => import('../modules/auth/pages/AdminLoginPage'));
+const RegisterPage = lazy(() => import('../modules/auth/pages/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('../modules/auth/pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('../modules/auth/pages/ResetPasswordPage'));
+const VerifyEmailPage = lazy(() => import('../modules/auth/pages/VerifyEmailPage'));
+const TeacherInvitationPage = lazy(() => import('../modules/invitations/pages/TeacherInvitationPage'));
+const AdminDashboardPage = lazy(() => import('../modules/superAdmin/pages/AdminDashboardPage'));
+const UsersListPage = lazy(() => import('../modules/superAdmin/pages/UsersListPage'));
+const CreateUserPage = lazy(() => import('../modules/superAdmin/pages/CreateUserPage'));
+const UserDetailPage = lazy(() => import('../modules/superAdmin/pages/UserDetailPage'));
+const EditUserPage = lazy(() => import('../modules/superAdmin/pages/EditUserPage'));
+const RelationshipsPage = lazy(() => import('../modules/superAdmin/pages/RelationshipsPage'));
+const TeacherInvitationsAdminPage = lazy(() => import('../modules/superAdmin/pages/TeacherInvitationsAdminPage'));
+const TeacherConnectionsPage = lazy(() => import('../modules/superAdmin/pages/TeacherConnectionsPage'));
+const AdminProfilePage = lazy(() => import('../modules/superAdmin/pages/AdminProfilePage'));
+const PlatformSettingsPage = lazy(() => import('../modules/platform/pages/PlatformSettingsPage'));
+const PlatformSettingPage = lazy(() => import('../modules/platform/pages/PlatformSettingPage'));
+const SystemStatusPage = lazy(() => import('../modules/platform/pages/SystemStatusPage'));
+const AiUsagePage = lazy(() => import('../modules/platform/pages/AiUsagePage'));
+const ParentChildrenPage = lazy(() => import('../modules/parent/pages/ParentChildrenPage'));
+const ParentProfilePage = lazy(() => import('../modules/parent/pages/ParentProfilePage'));
+const ParentProgressPage = lazy(() => import('../modules/parent/pages/ParentProgressPage'));
+const ParentDashboardPage = lazy(() => import('../modules/parent/pages/ParentDashboardPage'));
+const StudentOnboardingPage = lazy(() => import('../modules/onboarding/pages/StudentOnboardingPage'));
+const ParentOnboardingPage = lazy(() => import('../modules/onboarding/pages/ParentOnboardingPage'));
+const CheckInPage = lazy(() => import('../modules/checkIn/pages/CheckInPage'));
+const TeacherDashboardPage = lazy(() => import('../modules/teacher/pages/TeacherDashboardPage'));
+const MyStudentsPage = lazy(() => import('../modules/teacher/pages/MyStudentsPage'));
+const TeacherStudentPage = lazy(() => import('../modules/teacher/pages/TeacherStudentPage'));
+const AssignmentsListPage = lazy(() => import('../modules/teacher/pages/AssignmentsListPage'));
+const AssignmentFormPage = lazy(() => import('../modules/teacher/pages/AssignmentFormPage'));
+const AssignmentDetailsPage = lazy(() => import('../modules/teacher/pages/AssignmentDetailsPage'));
+const TeacherProfilePage = lazy(() => import('../modules/teacher/pages/TeacherProfilePage'));
+const TeacherProgressPage = lazy(() => import('../modules/teacher/pages/TeacherProgressPage'));
+const TeacherInvitationsPage = lazy(() => import('../modules/teacher/pages/TeacherInvitationsPage'));
+const SharedWorkPage = lazy(() => import('../modules/teacher/pages/SharedWorkPage'));
+const MyAssignmentsPage = lazy(() => import('../modules/student/pages/MyAssignmentsPage'));
+const StudentAssignmentDetailPage = lazy(() => import('../modules/student/pages/AssignmentDetailPage'));
+const StudentHomePage = lazy(() => import('../modules/student/pages/StudentHomePage'));
+const StudentPlanPage = lazy(() => import('../modules/student/pages/StudentPlanPage'));
+const FocusTimerPage = lazy(() => import('../modules/student/pages/FocusTimerPage'));
+const BoosterPage = lazy(() => import('../modules/student/pages/BoosterPage'));
+const RewardsPage = lazy(() => import('../modules/student/pages/RewardsPage'));
+const NotificationsPage = lazy(() => import('../modules/student/pages/NotificationsPage'));
+const MakeItYoursPage = lazy(() => import('../modules/student/pages/MakeItYoursPage'));
+const StudentSettingsPage = lazy(() => import('../modules/student/pages/StudentSettingsPage'));
+const StudentHelpPage = lazy(() => import('../modules/student/pages/StudentHelpPage'));
+const GradeBandPage = lazy(() => import('../modules/student/pages/GradeBandPage'));
+const KidHomePage = lazy(() => import('../modules/student/pages/kid/KidHomePage'));
+const KidMyWeekPage = lazy(() => import('../modules/student/pages/kid/KidMyWeekPage'));
+const KidFocusPage = lazy(() => import('../modules/student/pages/kid/KidFocusPage'));
+const KidFocusActivityPage = lazy(() => import('../modules/student/pages/kid/KidFocusActivityPage'));
+const KidBoosterPage = lazy(() => import('../modules/student/pages/kid/KidBoosterPage'));
+const KidAssignmentsPage = lazy(() => import('../modules/student/pages/kid/KidAssignmentsPage'));
+const KidMakeItYoursPage = lazy(() => import('../modules/student/pages/kid/KidMakeItYoursPage'));
+const KidSettingsPage = lazy(() => import('../modules/student/pages/kid/KidSettingsPage'));
+const KidRewardsPage = lazy(() => import('../modules/student/pages/kid/KidRewardsPage'));
+const KidCheckInPage = lazy(() => import('../modules/student/pages/kid/KidCheckInPage'));
+const KidOnboardingPage = lazy(() => import('../modules/student/pages/kid/KidOnboardingPage'));
+const ParentStudyTimesPage = lazy(() => import('../modules/planner/pages/StudyTimesPage').then((m) => ({ default: m.ParentStudyTimesPage })));
+const StudentStudyTimesPage = lazy(() => import('../modules/planner/pages/StudyTimesPage').then((m) => ({ default: m.StudentStudyTimesPage })));
+const ParentSchedulePage = lazy(() => import('../modules/planner/pages/ParentSchedulePage'));
+const AssistantHomePage = lazy(() => import('../modules/aiAssistant/pages/AssistantHomePage'));
+const LearningSessionPage = lazy(() => import('../modules/aiAssistant/pages/LearningSessionPage'));
+const LearningHistoryPage = lazy(() => import('../modules/aiAssistant/pages/LearningHistoryPage'));
+const TeacherLearningActivityPage = lazy(() => import('../modules/aiAssistant/pages/TeacherLearningActivityPage'));
+const ParentLearningSummaryPage = lazy(() => import('../modules/aiAssistant/pages/ParentLearningSummaryPage'));
+const MasterDashboardPage = lazy(() => import('../modules/masterManagement/pages/MasterDashboardPage'));
+const MasterListPage = lazy(() => import('../modules/masterManagement/pages/MasterListPage'));
+const MasterFormPage = lazy(() => import('../modules/masterManagement/pages/MasterFormPage'));
+const AcademicYearsListPage = lazy(() => import('../modules/masterManagement/pages/academicYears/AcademicYearsListPage'));
+const AcademicYearFormPage = lazy(() => import('../modules/masterManagement/pages/academicYears/AcademicYearFormPage'));
+const SchoolsListPage = lazy(() => import('../modules/masterManagement/pages/schools/SchoolsListPage'));
+const SchoolFormPage = lazy(() => import('../modules/masterManagement/pages/schools/SchoolFormPage'));
+const TaskTypesListPage = lazy(() => import('../modules/masterManagement/pages/curriculum/TaskTypesListPage'));
+const TaskTypeFormPage = lazy(() => import('../modules/masterManagement/pages/curriculum/TaskTypeFormPage'));
+const QuestionTypesListPage = lazy(() => import('../modules/masterManagement/pages/curriculum/QuestionTypesListPage'));
+const QuestionTypeFormPage = lazy(() => import('../modules/masterManagement/pages/curriculum/QuestionTypeFormPage'));
+const CurriculumSubjectsListPage = lazy(() => import('../modules/masterManagement/pages/curriculum/CurriculumSubjectsListPage'));
+const CurriculumSubjectFormPage = lazy(() => import('../modules/masterManagement/pages/curriculum/CurriculumSubjectFormPage'));
+const TopicsListPage = lazy(() => import('../modules/masterManagement/pages/curriculum/TopicsListPage'));
+const TopicFormPage = lazy(() => import('../modules/masterManagement/pages/curriculum/TopicFormPage'));
+const AudioTracksListPage = lazy(() => import('../modules/masterManagement/pages/curriculum/AudioTracksListPage'));
+const AudioTrackFormPage = lazy(() => import('../modules/masterManagement/pages/curriculum/AudioTrackFormPage'));
+const RegulationActivitiesListPage = lazy(() => import('../modules/masterManagement/pages/regulationActivities/RegulationActivitiesListPage'));
+const RegulationActivityFormPage = lazy(() => import('../modules/masterManagement/pages/regulationActivities/RegulationActivityFormPage'));
+const RewardActivitiesListPage = lazy(() => import('../modules/masterManagement/pages/rewardActivities/RewardActivitiesListPage'));
+const RewardActivityFormPage = lazy(() => import('../modules/masterManagement/pages/rewardActivities/RewardActivityFormPage'));
+const StudentRewardsListPage = lazy(() => import('../modules/masterManagement/pages/studentRewards/StudentRewardsListPage'));
+const StudentRewardFormPage = lazy(() => import('../modules/masterManagement/pages/studentRewards/StudentRewardFormPage'));
+const SubscriptionPlansListPage = lazy(() => import('../modules/masterManagement/pages/subscriptionPlans/SubscriptionPlansListPage'));
+const SubscriptionPlanFormPage = lazy(() => import('../modules/masterManagement/pages/subscriptionPlans/SubscriptionPlanFormPage'));
+const DiscountCodesListPage = lazy(() => import('../modules/masterManagement/pages/discountCodes/DiscountCodesListPage'));
+const DiscountCodeFormPage = lazy(() => import('../modules/masterManagement/pages/discountCodes/DiscountCodeFormPage'));
+const ThemesListPage = lazy(() => import('../modules/masterManagement/pages/themes/ThemesListPage'));
+const ThemeFormPage = lazy(() => import('../modules/masterManagement/pages/themes/ThemeFormPage'));
+const AvatarsListPage = lazy(() => import('../modules/masterManagement/pages/avatars/AvatarsListPage'));
+const AvatarFormPage = lazy(() => import('../modules/masterManagement/pages/avatars/AvatarFormPage'));
+const StickyNoteStylesListPage = lazy(() => import('../modules/masterManagement/pages/stickyNoteStyles/StickyNoteStylesListPage'));
+const StickyNoteStyleFormPage = lazy(() => import('../modules/masterManagement/pages/stickyNoteStyles/StickyNoteStyleFormPage'));
+const StickersListPage = lazy(() => import('../modules/masterManagement/pages/stickers/StickersListPage'));
+const StickerFormPage = lazy(() => import('../modules/masterManagement/pages/stickers/StickerFormPage'));
+const AdminSubscriptionsPage = lazy(() => import('../modules/subscription/pages/admin/AdminSubscriptionsPage'));
+const AdminPaymentsPage = lazy(() => import('../modules/subscription/pages/admin/AdminPaymentsPage'));
+const AdminRevenuePage = lazy(() => import('../modules/subscription/pages/admin/AdminRevenuePage'));
+const AdminCouponRedemptionsPage = lazy(() => import('../modules/subscription/pages/admin/AdminCouponRedemptionsPage'));
+const ParentSubscriptionPage = lazy(() => import('../modules/subscription/pages/ParentSubscriptionPage'));
+const CheckoutPage = lazy(() => import('../modules/subscription/pages/CheckoutPage'));
 
 /**
  * The single definition of the app's routes.
@@ -174,6 +179,11 @@ export const SUPER_ADMIN_ROUTES = {
     { path: 'dashboard', label: 'Dashboard', redirectTo: '/admin' },
     // The Super Admin's own account (account menu > Account).
     { path: 'profile', label: 'My Profile', permissions: [PERMISSIONS.PROFILE_READ], component: AdminProfilePage },
+    // Business policies changed without a release (modules/platform).
+    { path: 'settings', label: 'Platform settings', component: PlatformSettingsPage },
+    { path: 'settings/:key', label: 'Platform setting', component: PlatformSettingPage },
+    { path: 'system', label: 'System status', component: SystemStatusPage },
+    { path: 'ai-usage', label: 'AI usage', component: AiUsagePage },
     /*
      * There is no combined user list - the console is organised by role.
      * The bare path only forwards, so an old bookmark does not dead-end.
@@ -208,12 +218,26 @@ export const SUPER_ADMIN_ROUTES = {
       props: { fixedRole: USER_ROLES.TEACHER },
     },
 
+    /*
+     * Create pages, one per role Super Admin can add (utils/constants
+     * ROLE_CREATE_PATH). One component, `role` fixes the form. The old combined
+     * page redirects to the teacher form, which was its default role.
+     */
     {
-      path: 'users/create',
-      label: 'Create user',
+      path: 'users/teachers/create',
+      label: 'Create teacher',
       permissions: [PERMISSIONS.USER_CREATE],
       component: CreateUserPage,
+      props: { role: USER_ROLES.TEACHER },
     },
+    {
+      path: 'users/parents/create',
+      label: 'Create parent',
+      permissions: [PERMISSIONS.USER_CREATE],
+      component: CreateUserPage,
+      props: { role: USER_ROLES.PARENT },
+    },
+    { path: 'users/create', label: 'Create user', redirectTo: '/admin/users/teachers/create' },
     {
       path: 'users/:id',
       label: 'User details',
@@ -434,18 +458,39 @@ export const STUDENT_ROUTES = {
       props: { junior: KidMyWeekPage, standard: StudentPlanPage },
       guards: [RequireCheckIn],
     },
-    {
-      path: 'brain-boosters',
-      label: 'Brain Boosters',
-      component: BrainBoostersPage,
-      guards: [RequireCheckIn],
-    },
+    // When the student can study and when they're busy (the planner's inputs).
+    { path: 'study-times', label: 'Study times', component: StudentStudyTimesPage },
+    // Brain Boosters now live on the Focus page (both bands); old links land there.
+    { path: 'brain-boosters', label: 'Brain Boosters', redirectTo: '/student/focus?boost=games' },
     {
       path: 'focus',
       label: 'Focus',
       permissions: [PERMISSIONS.FOCUS_READ],
       component: GradeBandPage,
       props: { junior: KidFocusPage, standard: FocusTimerPage },
+      guards: [RequireCheckIn],
+    },
+    /*
+     * One Brain Booster on its own page, opened from the Focus page with
+     * "Back to Focus". Brain games for both bands; exercises are Grade 6+
+     * (K-5 has Breathe / Wiggle / Listen, so KidBoosterPage sends an
+     * exercise back to Focus). Declared before `focus/:activityKey`, though
+     * the extra segment already keeps them apart.
+     */
+    {
+      path: 'focus/games/:boosterId',
+      label: 'Brain game',
+      permissions: [PERMISSIONS.FOCUS_READ],
+      component: GradeBandPage,
+      props: { junior: KidBoosterPage, standard: BoosterPage, kind: 'game' },
+      guards: [RequireCheckIn],
+    },
+    {
+      path: 'focus/exercises/:boosterId',
+      label: 'Exercise',
+      permissions: [PERMISSIONS.FOCUS_READ],
+      component: GradeBandPage,
+      props: { junior: KidBoosterPage, standard: BoosterPage, kind: 'exercise' },
       guards: [RequireCheckIn],
     },
     {
@@ -514,6 +559,8 @@ export const TEACHER_ROUTES = {
     { path: 'students/:id', label: 'Student', permissions: [PERMISSIONS.USER_READ], component: TeacherStudentPage },
     // Parents' invitations to connect with their child - accept or decline.
     { path: 'invitations', label: 'Invitations', component: TeacherInvitationsPage },
+    // Students' own work shared with this teacher on purpose (PDF Q15).
+    { path: 'shared-work', label: 'Shared with me', component: SharedWorkPage },
     {
       path: 'assignments',
       label: 'Assignments',
@@ -593,6 +640,19 @@ export const PARENT_ROUTES = {
       label: 'Progress',
       permissions: [PERMISSIONS.PROGRESS_READ],
       component: ParentProgressPage,
+    },
+    {
+      // The viewing child's plan, all their work (every source) and adding work for them.
+      path: 'schedule',
+      label: 'Schedule',
+      permissions: [PERMISSIONS.PROGRESS_READ],
+      component: ParentSchedulePage,
+    },
+    {
+      path: 'schedule/study-times',
+      label: 'Study times',
+      permissions: [PERMISSIONS.PROGRESS_READ],
+      component: ParentStudyTimesPage,
     },
     {
       path: 'learning-summary',

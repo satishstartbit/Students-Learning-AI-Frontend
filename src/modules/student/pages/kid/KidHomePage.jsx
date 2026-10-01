@@ -10,6 +10,7 @@ import { HeroScene } from '../../components/kid/HeroScene';
 import { MyProgressCard } from '../../components/kid/MyProgressCard';
 import { FooterScene, WoodenSign, Heart } from '../../components/kid/KidScenery';
 import { KidSkeleton } from '../../components/kid/KidStates';
+import { KidPlanCard } from '../../components/kid/KidPlanCard';
 import { NextTaskCard } from '../../components/kid/NextTaskCard';
 import { TaskCard } from '../../components/kid/TaskCard';
 
@@ -49,6 +50,10 @@ export default function KidHomePage() {
               error={tasks.error}
               onRetry={tasks.reload}
             />
+          </BlurFade>
+
+          <BlurFade delay={0.15}>
+            <KidPlanCard />
           </BlurFade>
 
           {(tasks.isLoading || otherTasks.length > 0) && (

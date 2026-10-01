@@ -72,6 +72,12 @@ export const getChildProgress = (id) => api.get(`/parent/children/${id}/progress
 export const removeChild = (id, { permanent = false } = {}) =>
   api.delete(`/parent/children/${id}`, { params: { permanent } });
 
+/** Archive (PDF Q12): everything saved is kept and readable; the child no longer takes a seat. */
+export const archiveChild = (id) => api.post(`/parent/children/${id}/archive`);
+
+/** The same child back - same account and history - with a fresh plan. */
+export const restoreChild = (id) => api.post(`/parent/children/${id}/restore`);
+
 // --- family -----------------------------------------------------------------
 // The family's parents and the plan's limits: { isAccountHolder, accountHolder,
 // plan, children: { used, max, canAdd }, parents: { used, max, canAdd }, members }.
@@ -131,6 +137,8 @@ export default {
   getProgress,
   getChildProgress,
   removeChild,
+  archiveChild,
+  restoreChild,
   getFamily,
   addFamilyParent,
   removeFamilyParent,

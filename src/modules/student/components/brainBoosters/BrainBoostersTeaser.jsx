@@ -2,11 +2,14 @@ import { Link } from 'react-router-dom';
 import { LuArrowRight, LuGamepad2 } from 'react-icons/lu';
 import './brainBoostersTeaser.css';
 
-/** A shared home shortcut for both student experiences. */
+/**
+ * A shared home shortcut for both student experiences. Brain Boosters live on
+ * the Focus page now; `?boost=games` opens it on the brain games.
+ */
 export default function BrainBoostersTeaser({ isJunior = false }) {
   return (
     <Link
-      to="/student/brain-boosters"
+      to="/student/focus?boost=games"
       className={`bbt-card${isJunior ? ' bbt-card--junior' : ''}`}
     >
       <span className="bbt-icon" aria-hidden="true">

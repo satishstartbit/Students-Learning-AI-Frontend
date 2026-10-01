@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LuBell, LuChevronRight, LuCircleHelp, LuPalette, LuSmile, LuTimer } from 'react-icons/lu';
+import { LuBell, LuChevronRight, LuCircleHelp, LuPalette, LuSmile, LuStickyNote, LuTimer } from 'react-icons/lu';
 import { Alert, Button, Input, Modal } from '../../../components/common';
 import { useAuth } from '../../../hooks/useAuth';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
+import { SubjectColorsDialog } from '../../planner/components/schoolwork/SubjectColorsDialog';
+import { useSchoolworkSettings } from '../../planner/hooks/useSchoolworkSettings';
+import { VIEW_OPTIONS } from '../../planner/schoolwork';
 import { useStudentSettings } from '../hooks/useStudentSettings';
 import '../components/settings/studentSettings.css';
 
@@ -166,10 +169,16 @@ export default function StudentSettingsPage() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { settings, isLoading, error, update, reload } = useStudentSettings();
+  // "Customize My Growing Focus" - shared with the Plan page (SchoolworkSettingsProvider).
+  const schoolwork = useSchoolworkSettings('me');
   const [dialog, setDialog] = useState(null);
 
   const save = (patch) =>
     update(patch).catch((err) => {
+      toast.error(getErrorMessage(err) || 'Couldn’t save that setting - please try again.');
+    });
+  const saveSchoolwork = (patch) =>
+    schoolwork.update(patch).catch((err) => {
       toast.error(getErrorMessage(err) || 'Couldn’t save that setting - please try again.');
     });
 
@@ -263,6 +272,44 @@ export default function StudentSettingsPage() {
         />
       </Group>
 
+      <Group icon={LuStickyNote} label="My Growing Focus">
+        <SelectRow
+          id="schoolwork-view"
+          label="Show my schoolwork as"
+          hint="Where the Plan page opens - switch views there any time"
+          value={schoolwork.preferences.defaultView}
+          options={VIEW_OPTIONS.map((v) => ({ value: v.key, label: `${v.label} (${v.hint.toLowerCase()})` }))}
+          onChange={(v) => saveSchoolwork({ defaultView: v })}
+        />
+        <SwitchRow
+          id="schoolwork-type-icons"
+          label="Show assignment type icons"
+          hint="A small picture for homework, reading, projects…"
+          checked={schoolwork.preferences.showTypeIcons}
+          onChange={(v) => saveSchoolwork({ showTypeIcons: v })}
+        />
+        <SwitchRow
+          id="schoolwork-estimated-time"
+          label="Show estimated time"
+          hint="How long each piece of work should take"
+          checked={schoolwork.preferences.showEstimatedTime}
+          onChange={(v) => saveSchoolwork({ showEstimatedTime: v })}
+        />
+        <SwitchRow
+          id="schoolwork-personal-events"
+          label="Show personal events on schoolwork board"
+          hint="Practice, family time and plans - always on your calendar"
+          checked={schoolwork.preferences.showPersonalEvents}
+          onChange={(v) => saveSchoolwork({ showPersonalEvents: v })}
+        />
+        <OpenRow
+          label="Subject colours"
+          hint="One colour per subject, everywhere"
+          value={schoolwork.subjects.some((s) => s.custom) ? `${schoolwork.subjects.filter((s) => s.custom).length} changed` : 'School colours'}
+          onClick={() => setDialog('colors')}
+        />
+      </Group>
+
       <Group icon={LuTimer} label="Focus sessions">
         <SelectRow
           id="focus-length"
@@ -314,6 +361,8 @@ export default function StudentSettingsPage() {
           </button>
         </li>
       </Group>
+
+      <SubjectColorsDialog isOpen={dialog === 'colors'} onClose={() => setDialog(null)} store={schoolwork} />
 
       <NameDialog
         isOpen={dialog === 'name'}

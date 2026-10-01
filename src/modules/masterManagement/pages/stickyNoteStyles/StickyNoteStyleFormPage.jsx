@@ -40,10 +40,17 @@ export default function StickyNoteStyleFormPage() {
     },
   });
 
+  // The style's settings follow the loaded record - adjusted during render,
+  // not in an effect (react-hooks/set-state-in-effect).
+  const [configSeededFrom, setConfigSeededFrom] = useState(null);
+  if (existing && existing !== configSeededFrom) {
+    setConfigSeededFrom(existing);
+    setConfig({ ...DEFAULT_CONFIG, ...(existing.configJson ?? {}) });
+  }
+
   useEffect(() => {
     if (!existing) return;
     form.reset({ name: existing.name ?? '', displayOrder: existing.displayOrder ?? 0, isActive: existing.isActive ?? true });
-    setConfig({ ...DEFAULT_CONFIG, ...(existing.configJson ?? {}) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existing]);
 

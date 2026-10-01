@@ -1,28 +1,25 @@
 import { useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
+import BrandMark from '../../../../components/common/BrandMark';
 import { cn } from '../../../../lib/utils';
 import { useAuth } from '../../../../hooks/useAuth';
+import { APP_NAME } from '../../../../utils/constants';
 import { useStudentExperience } from '../../hooks/useStudentExperience';
 import { KidAvatar } from './KidAvatar';
-import { StarIcon } from './KidIcons';
-import { KID_NAV_ITEMS, KID_SETTINGS_ITEM } from './kidNav';
+import { KID_FOOT_ITEMS, KID_NAV_ITEMS, KID_SETTINGS_ITEM, KID_TAB_ITEMS } from './kidNav';
 
 /**
- * The K-5 shell's navigation: a roomy sidebar on laptops and desktops, and
- * a top bar plus a bottom tab bar (thumb-reachable, like a tablet app) below
- * the `lg` breakpoint.
+ * The K-5 shell's navigation, drawn to the Kids Focus mockups: a calm
+ * sidebar on laptops and desktops ("Growing Focus", outline icons, the page
+ * you are on lightly shaded), and a top bar plus a bottom tab bar
+ * (thumb-reachable, like a tablet app) below the `lg` breakpoint.
  */
 
+/** The same "Growing Focus" mark as every other shell (BrandMark), in the kid display type. */
 function Brand() {
   return (
-    <Link to="/student" className="flex items-center gap-3 rounded-2xl no-underline">
-      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-kid-blue shadow-paper lg:size-14">
-        <StarIcon className="size-8 lg:size-9" />
-      </span>
-      <span className="font-kid-display text-lg font-semibold leading-tight text-kid-navy lg:text-xl">
-        My Learning <br />
-        Space
-      </span>
+    <Link to="/student" className="flex min-w-0 items-center rounded-2xl no-underline">
+      <BrandMark name={APP_NAME} size="md" className="min-w-0 font-kid-display" />
     </Link>
   );
 }
@@ -36,12 +33,12 @@ function SidebarLink({ item }) {
       end={item.end}
       className={({ isActive }) =>
         cn(
-          'group flex h-14 items-center gap-4 rounded-2xl px-3.5 font-kid-display text-[1.2rem] text-kid-navy no-underline transition-colors',
-          isActive ? 'bg-kid-sky font-semibold shadow-paper' : 'hover:bg-kid-paper-deep/70'
+          'flex min-h-11 items-center gap-3 rounded-xl px-3 font-kid-display text-base text-kid-ink no-underline transition-colors',
+          isActive ? 'bg-[var(--accent-soft)] font-semibold' : 'text-kid-ink-soft hover:bg-kid-paper-deep/60 hover:text-kid-ink'
         )
       }
     >
-      <Icon className="size-8 shrink-0 transition-transform duration-200 group-hover:-rotate-6 group-hover:scale-110" />
+      <Icon className="size-5 shrink-0" aria-hidden="true" />
       <span className="truncate">{item.label}</span>
     </NavLink>
   );
@@ -55,14 +52,14 @@ function ProfileTile() {
   return (
     <Link
       to={KID_SETTINGS_ITEM.to}
-      className="flex items-center gap-3 rounded-2xl p-2 no-underline transition-colors hover:bg-kid-paper-deep/70"
+      className="flex items-center gap-3 rounded-xl p-2 no-underline transition-colors hover:bg-kid-paper-deep/60"
     >
-      <KidAvatar photoUrl={profile?.profileImageUrl} size="md" />
+      <KidAvatar photoUrl={profile?.profileImageUrl} size="sm" />
       <span className="min-w-0">
-        <span className="block truncate font-kid-display text-lg font-semibold text-kid-ink">
+        <span className="block truncate font-kid-display text-base font-semibold text-kid-ink">
           {user?.firstName}
         </span>
-        {grade && <span className="block truncate text-base text-kid-ink-soft">{grade}</span>}
+        {grade && <span className="block truncate text-sm text-kid-ink-soft">{grade}</span>}
       </span>
     </Link>
   );
@@ -70,13 +67,13 @@ function ProfileTile() {
 
 export function KidSidebar() {
   return (
-    <aside className="kid-ui relative hidden min-h-0 w-64 shrink-0 flex-col border-r border-kid-edge bg-kid-sidebar px-4 pb-4 pt-6 lg:flex">
-      <div className="shrink-0 px-1">
+    <aside className="kid-ui relative hidden min-h-0 w-60 shrink-0 flex-col border-r border-kid-edge bg-kid-sidebar px-3 pb-4 pt-5 lg:flex">
+      <div className="shrink-0 px-2">
         <Brand />
       </div>
 
-      <nav aria-label="Main" className="my-6 min-h-0 flex-1 overflow-y-auto">
-        <ul className="flex flex-col gap-1.5">
+      <nav aria-label="Main" className="mt-7 min-h-0 flex-1 overflow-y-auto">
+        <ul className="flex flex-col gap-1">
           {KID_NAV_ITEMS.map((item) => (
             <li key={item.to}>
               <SidebarLink item={item} />
@@ -85,9 +82,12 @@ export function KidSidebar() {
         </ul>
       </nav>
 
-      <div className="mt-auto flex shrink-0 flex-col gap-3">
+      <div className="mt-4 flex shrink-0 flex-col gap-1">
+        {KID_FOOT_ITEMS.map((item) => (
+          <SidebarLink key={item.to} item={item} />
+        ))}
         <SidebarLink item={KID_SETTINGS_ITEM} />
-        <hr className="m-0 h-0 border-0 border-t border-kid-edge" />
+        <hr className="my-2 h-0 border-0 border-t border-kid-edge" />
         <ProfileTile />
       </div>
     </aside>
@@ -131,24 +131,24 @@ export function KidTabBar() {
     >
       <div ref={scrollRef} className="overflow-x-auto overscroll-x-contain">
         <ul className="mx-auto flex w-full min-w-max">
-          {KID_NAV_ITEMS.map((item) => {
+          {KID_TAB_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
               <li key={item.to} className="min-w-24 flex-1">
                 <NavLink
                   to={item.to}
                   end={item.end}
-                  className="flex h-[4.25rem] flex-col items-center justify-center gap-0.5 whitespace-nowrap px-2 font-kid-display text-[0.8rem] text-kid-navy no-underline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-kid-teal"
+                  className="flex h-[4.25rem] flex-col items-center justify-center gap-0.5 whitespace-nowrap px-2 font-kid-display text-[0.8rem] text-kid-ink no-underline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-kid-teal"
                 >
                   {({ isActive }) => (
                     <>
                       <span
                         className={cn(
                           'grid h-9 w-14 place-items-center rounded-full transition-colors',
-                          isActive && 'bg-kid-sky'
+                          isActive && 'bg-[var(--accent-soft)]'
                         )}
                       >
-                        <Icon className="size-7" />
+                        <Icon className="size-6" aria-hidden="true" />
                       </span>
                       <span className={cn(isActive && 'font-semibold')}>{item.label}</span>
                     </>

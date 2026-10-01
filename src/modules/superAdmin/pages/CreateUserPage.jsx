@@ -1,101 +1,91 @@
-﻿import { Link, useNavigate } from 'react-router-dom';
-import {
-  PageHeader,
-  Card,
-  Input,
-  Button,
-  Alert,
-  Radio,
-  SectionHeader,
-  ButtonGroup,
-} from '../../../components/common';
+import { Link, useNavigate } from 'react-router-dom';
+import { PageHeader, Card, Input, Button, Alert, SectionHeader, ButtonGroup } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
-import {
-  ADMIN_CREATABLE_ROLES,
-  ROLE_LABELS,
-  USER_ROLES,
-  listPathForRole,
-} from '../../../utils/constants';
+import { ROLE_LABELS, USER_ROLES, listPathForRole } from '../../../utils/constants';
 import adminUserService from '../services/adminUser.service';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
 
 /**
- * Super Admin create-user form.
+ * What differs between the two create pages.
  *
- * The form changes with the selected role, and Super Admin is not offered -
- * those accounts are provisioned directly in the database.
+ * Teacher and Parent only. Students are added by their parent, so that the
+ * parent-child link is always created at the same time and no student can end
+ * up without a parent. The API refuses a STUDENT here too. Super Admin is not
+ * offered either - those accounts are provisioned directly in the database.
+ */
+const PAGES = {
+  [USER_ROLES.TEACHER]: {
+    description: 'The teacher sets their own password from an emailed link.',
+    profileTitle: 'Teaching profile',
+  },
+  [USER_ROLES.PARENT]: {
+    description: 'The parent sets their own password from an emailed link. You can add their children on the next page.',
+    profileTitle: 'Family profile',
+  },
+};
+
+/**
+ * Super Admin create pages: /admin/users/teachers/create and
+ * /admin/users/parents/create. routeConfig passes the `role`; there is no
+ * role picker.
  *
  * No password field: the account is created without a usable password and the
  * new user is emailed a link to set their own, so an admin never sees, sets
  * or transmits a plaintext password.
- */
-/**
- * Teacher and Parent only.
  *
- * Students are added by their parent, so that the parent-child link is always
- * created at the same time and no student can end up without a parent. The
- * API refuses a STUDENT here too.
- */
-const ROLE_OPTIONS = ADMIN_CREATABLE_ROLES.map((r) => ({
-  value: r,
-  label: ROLE_LABELS[r],
-}));
-
-/*
  * No time zone field: the new account gets the app default (backend
  * user.service#createUser), then its owner's device sets theirs on first
  * sign-in (hooks/useDeviceTimezone.js).
  */
-export default function CreateUserPage() {
+export default function CreateUserPage({ role = USER_ROLES.TEACHER }) {
+  // Keyed so going from one create page to the other starts a fresh form.
+  return <CreateUserForm key={role} role={role} />;
+}
+
+function CreateUserForm({ role }) {
   const navigate = useNavigate();
+  const label = ROLE_LABELS[role];
+  const title = `Create ${label.toLowerCase()}`;
+  const listPath = listPathForRole(role);
+  const page = PAGES[role];
 
   const form = useForm({
     initialValues: {
-      role: USER_ROLES.TEACHER,
       firstName: '',
       lastName: '',
       email: '',
       phone: '',
     },
     validationSchema: {
-      role: [required('Choose a role')],
       firstName: [required('Enter a first name')],
       email: [required('Enter an email address'), emailRule()],
       phone: [phoneRule()],
     },
     async onSubmit(values) {
       const { data } = await adminUserService.createUser({
-        role: values.role,
+        role,
         firstName: values.firstName,
         lastName: values.lastName || null,
         email: values.email,
         phone: values.phone || null,
-        profile: buildProfilePayload(values.role, values),
+        profile: buildProfilePayload(role, values),
       });
 
-      toast.success(
-        `User created - username "${data.username}". They have been emailed a link to set their password.`
-      );
+      toast.success(`${label} created - username "${data.username}". They have been emailed a link to set their password.`);
       navigate(`/admin/users/${data.id}`);
       return data;
     },
   });
 
-  const role = form.values.role;
-
   return (
     <div className="td-page">
       <PageHeader
-        title="Create user"
-        description="The new user sets their own password from an emailed link."
-        breadcrumbs={[
-          // Follows the role picker, so "back" lands on the matching list.
-          { label: `${ROLE_LABELS[role]}s`, to: listPathForRole(role) },
-          { label: 'Create user' },
-        ]}
+        title={title}
+        description={page.description}
+        breadcrumbs={[{ label: `${label}s`, to: listPath }, { label: title }]}
       />
 
       <Card>
@@ -106,38 +96,22 @@ export default function CreateUserPage() {
         )}
 
         <form onSubmit={form.handleSubmit} noValidate>
-          <Radio
-            name="role"
-            label="Role"
-            options={ROLE_OPTIONS}
-            direction="row"
-            value={role}
-            onChange={form.handleChange}
-            error={form.touched.role ? form.errors.role : null}
-            required
-          />
-
           <SectionHeader title="Account details" as="h3" />
 
           <Input label="First name" required {...form.getFieldProps('firstName')} />
           <Input label="Last name" {...form.getFieldProps('lastName')} />
           <Input label="Email" type="email" required {...form.getFieldProps('email')} />
-          <Input
-            label="Phone"
-            type="tel"
-            hint="e.g. (416) 555-1234"
-            {...form.getFieldProps('phone')}
-          />
+          <Input label="Phone" type="tel" hint="e.g. (416) 555-1234" {...form.getFieldProps('phone')} />
 
-          <SectionHeader title={`${ROLE_LABELS[role]} profile`} as="h3" />
+          <SectionHeader title={page.profileTitle} as="h3" />
 
           <RoleProfileFields role={role} getProps={form.getFieldProps} includeAdminOnly />
 
           <ButtonGroup>
             <Button type="submit" loading={form.isSubmitting}>
-              Create user
+              {title}
             </Button>
-            <Button as={Link} to={listPathForRole(role)} variant="secondary">
+            <Button as={Link} to={listPath} variant="secondary">
               Cancel
             </Button>
           </ButtonGroup>
@@ -146,4 +120,3 @@ export default function CreateUserPage() {
     </div>
   );
 }
-

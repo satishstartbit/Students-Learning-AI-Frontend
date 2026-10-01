@@ -11,7 +11,7 @@ React 19 + Vite, Tailwind v4 (`@layer utilities`), shadcn primitives in `src/com
 ## Structure
 | Path | What |
 |---|---|
-| `routes/routeConfig.js` | Every route per role (`path`, `label`, `permissions`, `component`, `props`). Student pages that differ by band use `GradeBandPage` with `props: { junior, standard }`. |
+| `routes/routeConfig.js` | Every route per role (`path`, `label`, `permissions`, `component`, `props`). Student pages that differ by band use `GradeBandPage` with `props: { junior, standard }`. Pages are `lazy(() => import(...))` (one chunk each); `AppRoutes` wraps each in `Suspense`, so add new pages the same way. |
 | `layouts/` | `SuperAdminLayout`, `TeacherLayout`, `ParentLayout` (onboarding + subscription gates), `StudentLayout` (grade band, check-in gate, subscription lock; K-5 → `KidLayout`, Grade 6+ → `AuthenticatedLayout`). The layouts render `<Toast />`, so pages must not render another. |
 | `components/common/` | Button, Input, Select, MultiSelect, Modal, ConfirmationModal, DataTable, FilterBar, Tabs (`items` prop), Alert, Badge, StatusBadge, PageHeader, … Use these before writing new ones. |
 | `hooks/` | `useApi` (loading/error/data + `run`), `useForm` (values, validation, `getFieldProps`), `useToast`, `useModal`, `usePhotoField`, `usePagination`, `useDebounce` |
@@ -25,6 +25,7 @@ React 19 + Vite, Tailwind v4 (`@layer utilities`), shadcn primitives in `src/com
 - **Module CSS** sits next to its components with a short class prefix per module (listed in each module doc). Page wrappers get `td-page`.
 - **Two student experiences:** `useStudentExperience().isJunior`. K-5 uses `components/kid/*`, `KidButton`, `PaperCard` and `font-kid-*` classes. Grade 6+ uses the standard student styles. The band is set at runtime by the backend (`/auth/me → gradeBand`, env `KIDS_UI`), with `VITE_KIDS_UI` as the fallback. A student feature normally needs both versions.
 - **Admin-managed lists** (subjects, grades, moods, task types, difficulty reasons, body areas, available time, …) come from the API. Never hardcode them.
+- **Subject colours** are data too: one colour per subject across the platform (Subjects master default, a student's own choice on top). Read with `components/subjects/useSubjectColors` (students: planner `SchoolworkSettingsProvider`; parents/teachers: `SubjectColorsProvider` in their layouts) and paint with `subjectPaint(color)` (sets `--subject-color` + `data-ink`; `subjectColors.css` feeds it into each module's tone variables). Text on a subject colour uses the fixed `--color-text-on-light` / `--color-text-on-dark` tokens. `SubjectPill` is for table column renderers.
 - **Confirmations and messages:** `ConfirmationModal` (`variant="danger"` for destructive actions) and `toast.*`. Never `window.confirm`/`alert`.
 - **Lint:** `react-hooks/set-state-in-effect` (use derived state or a keyed remount) and `react-refresh/only-export-components` (put hooks and constants in their own files, e.g. `useX.js`, `xConfig.js`). On Windows, file names that differ only by case collide.
 - **Phone width:** 390px (and 360px) with no horizontal scroll.
@@ -52,7 +53,9 @@ React 19 + Vite, Tailwind v4 (`@layer utilities`), shadcn primitives in `src/com
 | [masterManagement](src/modules/masterManagement/CLAUDE.md) | Super Admin master data (generic engine + dedicated masters) |
 | [notifications](src/modules/notifications/CLAUDE.md) | Bell, unread count, per-role routing of notifications |
 | [onboarding](src/modules/onboarding/CLAUDE.md) | Student first-login questionnaire, parent family form |
-| [parent](src/modules/parent/CLAUDE.md) | Parent overview, My Children (children + parents), sidebar, invite-teacher requests, progress, profile |
+| [parent](src/modules/parent/CLAUDE.md) | Parent overview, My Children (children + parents, archive/restore), sidebar, invite-teacher requests, progress, profile |
+| [planner](src/modules/planner/CLAUDE.md) | Growing Focus: server plan (Next up, Today/Next/Later, views, study blocks), adding work (type/voice/photo/PDF), study & busy times, help when stuck, sharing own work, parent Schedule |
+| [platform](src/modules/platform/CLAUDE.md) | Super Admin Platform settings (business rules as versioned data), System status, AI usage |
 | [profile](src/modules/profile/CLAUDE.md) | Shared "My Profile" UI kit (cards, photo header, chips) |
 | [progress](src/modules/progress/CLAUDE.md) | Shared student progress detail used by the parent and teacher Progress pages |
 | [student](src/modules/student/CLAUDE.md) | Everything a student sees: home, plan, assignments, focus, rewards, notes, settings, K-5 kid UI |

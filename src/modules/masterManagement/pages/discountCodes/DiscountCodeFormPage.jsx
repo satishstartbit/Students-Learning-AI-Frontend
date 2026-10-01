@@ -73,6 +73,14 @@ export default function DiscountCodeFormPage() {
     },
   });
 
+  // Plans picked for this code follow the loaded record - adjusted during
+  // render (React's pattern for state derived from a changed prop), not in an effect.
+  const [plansSeededFrom, setPlansSeededFrom] = useState(null);
+  if (existing && existing !== plansSeededFrom) {
+    setPlansSeededFrom(existing);
+    setApplicablePlans(existing.applicablePlans ?? []);
+  }
+
   useEffect(() => {
     if (!existing) return;
     form.reset({
@@ -87,7 +95,6 @@ export default function DiscountCodeFormPage() {
       displayOrder: existing.displayOrder ?? 0,
       isActive: existing.isActive ?? true,
     });
-    setApplicablePlans(existing.applicablePlans ?? []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existing]);
 

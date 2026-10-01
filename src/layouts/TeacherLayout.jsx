@@ -2,6 +2,7 @@ import {
   LuActivity,
   LuChartLine,
   LuFileText,
+  LuHandshake,
   LuHouse,
   LuLayoutDashboard,
   LuListChecks,
@@ -14,6 +15,7 @@ import { useEffect } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getMe } from '../modules/auth/services/auth.service';
 import AppSettingsProvider from '../components/appearance/AppSettingsProvider';
+import SubjectColorsProvider from '../components/subjects/SubjectColorsProvider';
 import AuthenticatedLayout from './AuthenticatedLayout';
 import usePortalTheme from './usePortalTheme';
 
@@ -27,6 +29,7 @@ const NAV_ITEMS = [
       // Parents' invitations to connect with their child (accept / decline).
       { to: '/teacher/invitations', label: 'Invitations', icon: LuMailOpen },
       { to: '/teacher/assignments', label: 'Assignments', icon: LuFileText },
+      { to: '/teacher/shared-work', label: 'Shared with me', icon: LuHandshake },
       { to: '/teacher/progress', label: 'Progress', icon: LuChartLine },
       { to: '/teacher/learning-activity', label: 'Learning Activity', icon: LuSparkles },
       { to: '/teacher/profile', label: 'My Profile', icon: LuUser },
@@ -65,9 +68,12 @@ export function TeacherLayout({ children }) {
     // they are in this area - the same picker and the same stored setting the
     // student and parent areas use (components/appearance/).
     <AppSettingsProvider>
-      <AuthenticatedLayout navItems={NAV_ITEMS} mobileTabs={MOBILE_TABS} title="Teacher Portal" subtitle="Teacher" brand="TP" accountSubtitle={school}>
-        {children}
-      </AuthenticatedLayout>
+      {/* The admin's subject colours, so a subject looks the same to teachers as to their students. */}
+      <SubjectColorsProvider>
+        <AuthenticatedLayout navItems={NAV_ITEMS} mobileTabs={MOBILE_TABS} title="Teacher Portal" subtitle="Teacher" brand="TP" accountSubtitle={school}>
+          {children}
+        </AuthenticatedLayout>
+      </SubjectColorsProvider>
     </AppSettingsProvider>
   );
 }

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { PageHeader, StatCard, Button } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
-import { USER_ROLES } from '../../../utils/constants';
+import { USER_ROLES, ROLE_CREATE_PATH } from '../../../utils/constants';
 import adminUserService from '../services/adminUser.service';
 
 /**
@@ -38,9 +38,14 @@ export default function AdminDashboardPage() {
         title={`Welcome back, ${user?.firstName ?? 'Admin'}`}
         description="Platform overview and account administration."
         actions={
-          <Button as={Link} to="/admin/users/create">
-            Create user
-          </Button>
+          <>
+            <Button as={Link} to={ROLE_CREATE_PATH[USER_ROLES.TEACHER]}>
+              Create teacher
+            </Button>
+            <Button as={Link} to={ROLE_CREATE_PATH[USER_ROLES.PARENT]} variant="secondary">
+              Create parent
+            </Button>
+          </>
         }
       />
 

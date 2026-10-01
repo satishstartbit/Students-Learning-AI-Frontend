@@ -11,7 +11,7 @@ import { taskTypeService } from '../../services/curriculum.service';
 import '../../components/masterPages.css';
 
 const LIST_PATH = '/admin/masters/task-types';
-const EMPTY = { name: '', description: '', minGrade: '', maxGrade: '', subtaskStyle: '', displayOrder: 0, isActive: true };
+const EMPTY = { name: '', description: '', icon: '', minGrade: '', maxGrade: '', subtaskStyle: '', displayOrder: 0, isActive: true };
 
 export default function TaskTypeFormPage() {
   const { id } = useParams();
@@ -33,11 +33,13 @@ export default function TaskTypeFormPage() {
       ],
       minGrade: [],
       maxGrade: [gradeOrderRule],
+      icon: [(value) => (String(value ?? '').trim().length > 16 ? 'Use one emoji, e.g. 📝' : null)],
     },
     async onSubmit(values) {
       const payload = {
         name: values.name.trim(),
         description: values.description.trim() || null,
+        icon: values.icon.trim() || null,
         minGrade: toGradeValue(values.minGrade),
         maxGrade: toGradeValue(values.maxGrade),
         subtaskStyle: values.subtaskStyle.trim(),
@@ -56,6 +58,7 @@ export default function TaskTypeFormPage() {
     reset({
       name: existing.name ?? '',
       description: existing.description ?? '',
+      icon: existing.icon ?? '',
       minGrade: fromGradeValue(existing.minGrade),
       maxGrade: fromGradeValue(existing.maxGrade),
       subtaskStyle: existing.subtaskStyle ?? '',
@@ -86,6 +89,12 @@ export default function TaskTypeFormPage() {
             hint="Shown to teachers when they pick a task type."
             rows={3}
             {...form.getFieldProps('description')}
+          />
+          <Input
+            label="Icon"
+            hint="One emoji shown beside this type on students' sticky notes, list and calendar - e.g. 📝 homework, 🔬 project, 📖 reading."
+            maxLength={16}
+            {...form.getFieldProps('icon')}
           />
           <GradeRangeFields fromProps={form.getFieldProps('minGrade')} toProps={form.getFieldProps('maxGrade')} />
           <Input

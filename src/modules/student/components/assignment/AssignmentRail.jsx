@@ -1,26 +1,28 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  LuBookOpen,
   LuClock3,
   LuFileText,
   LuImage,
   LuInfo,
-  LuNotebookPen,
-  LuPaperclip,
   LuPlay,
   LuPlus,
   LuStickyNote,
+  LuTimer,
 } from 'react-icons/lu';
 import { toast } from '../../../../hooks/useToast';
-import { formatDate, formatDurationLong } from '../../../../utils/date';
+import { formatDate, formatDateKey, formatDurationLong } from '../../../../utils/date';
 import { formatFileSize } from '../../../../utils/format';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import assignmentService from '../../../assignments/services/assignment.service';
+import { PRIORITY_LABELS, WORK_MODE_LABELS, personName } from './assignmentLabels';
 
 /**
  * The right rail of the Grade 6+ assignment page: what the task asks for, the
- * next step (with a link straight into a focus session on it), the files for
- * it, the student's notes about it, and the plain details.
+ * next step (with a link straight into a focus session on it) - or, once the
+ * work is handed in, its status - the files for it, the student's notes
+ * about it, and the plain details.
  *
  * Everything here is real data: the overview is the teacher's own
  * instructions, resources are the teacher's files plus anything the student
@@ -34,12 +36,12 @@ const FILE_KIND = (mimeType = '') => {
 };
 
 export function OverviewCard({ assignment }) {
-  const teacherName = [assignment.createdBy?.firstName, assignment.createdBy?.lastName].filter(Boolean).join(' ');
+  const teacherName = personName(assignment.createdBy);
 
   return (
     <section className="ad-card" aria-labelledby="ad-overview-title">
       <h2 id="ad-overview-title" className="ad-card__title">
-        <LuInfo size={15} aria-hidden="true" /> Assignment overview
+        <LuBookOpen size={15} aria-hidden="true" /> Assignment overview
       </h2>
       {assignment.description ? (
         <p style={{ margin: '10px 0 0', fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{assignment.description}</p>
@@ -95,6 +97,25 @@ export function NextStepCard({ assignmentId, step, allDone, hasSteps }) {
   );
 }
 
+/** In place of "Next step" once the work is handed in: where it stands now. */
+export function StatusCard({ reviewed, stepsDone }) {
+  return (
+    <section className="ad-card" aria-labelledby="ad-status-title">
+      <h2 id="ad-status-title" className="ad-card__title">
+        <LuTimer size={15} aria-hidden="true" /> Status
+      </h2>
+      <p className="ad-status__title">{reviewed ? 'All done!' : 'Handed in'}</p>
+      <p className="ad-next__desc">
+        {reviewed
+          ? stepsDone
+            ? 'Every step is finished and your work has been reviewed.'
+            : 'Your work has been reviewed.'
+          : 'Your teacher will check it soon. Nothing else to do for now.'}
+      </p>
+    </section>
+  );
+}
+
 export function ResourcesCard({ assignmentId, teacherFiles = [], myFiles = [], canAttach, onUploaded }) {
   const inputRef = useRef(null);
   const [busy, setBusy] = useState(false);
@@ -125,7 +146,7 @@ export function ResourcesCard({ assignmentId, teacherFiles = [], myFiles = [], c
   return (
     <section className="ad-card" aria-labelledby="ad-resources-title">
       <h2 id="ad-resources-title" className="ad-card__title">
-        <LuPaperclip size={15} aria-hidden="true" /> Resources
+        <LuFileText size={15} aria-hidden="true" /> Resources
       </h2>
 
       {rows.length === 0 ? (
@@ -175,8 +196,8 @@ export function NotesCard({ notes, onAdd, onOpen }) {
         <h2 id="ad-notes-title" className="ad-card__title">
           <LuStickyNote size={15} aria-hidden="true" /> Notes
         </h2>
-        <button type="button" className="ad-edit" onClick={onAdd}>
-          <LuNotebookPen size={14} aria-hidden="true" /> Add
+        <button type="button" className="ad-textlink" onClick={onAdd} aria-label="Add a note">
+          <LuPlus size={13} aria-hidden="true" /> Add
         </button>
       </div>
 
@@ -204,7 +225,11 @@ export function DetailsCard({ assignment }) {
   const rows = [
     ['Type', assignment.taskType?.name ?? '—'],
     ['Subject', assignment.subject ?? '—'],
-    ['Added by', assignment.createdBy ? [assignment.createdBy.firstName, assignment.createdBy.lastName].filter(Boolean).join(' ') : '—'],
+    // A due date is a calendar day, not an instant.
+    ['Due', assignment.dueDate ? formatDateKey(assignment.dueDate, { weekday: 'short', month: 'short', day: 'numeric', year: undefined }) : '—'],
+    ['Priority', PRIORITY_LABELS[assignment.priority] ?? '—'],
+    ['Doing it', WORK_MODE_LABELS[assignment.workMode] ?? '—'],
+    ['Added by', personName(assignment.createdBy) || '—'],
     ['Date created', assignment.createdAt ? formatDate(assignment.createdAt) : '—'],
   ];
 

@@ -105,7 +105,10 @@ export default function LearningSessionPage() {
     try {
       const { data } = await aiAssistantService.requestPracticeQuestion(sessionId);
       appendMessages(data);
-      setSession((prev) => (prev ? { ...prev, practiceQuestionCount: (prev.practiceQuestionCount ?? 0) + 1 } : prev));
+      // A safety reply instead of a question doesn't count as a question.
+      if (data?.type === 'practice_question') {
+        setSession((prev) => (prev ? { ...prev, practiceQuestionCount: (prev.practiceQuestionCount ?? 0) + 1 } : prev));
+      }
     } catch (err) {
       setPracticeError(getErrorMessage(err));
     } finally {
@@ -115,7 +118,8 @@ export default function LearningSessionPage() {
 
   const handleAnswered = (result) => {
     appendMessages(result.feedbackMessage);
-    if (result.correct) {
+    // The server counts a question once, however often the right answer is re-sent.
+    if (result.correct && result.countedCorrect !== false) {
       setSession((prev) =>
         prev ? { ...prev, practiceCorrectCount: (prev.practiceCorrectCount ?? 0) + 1 } : prev
       );

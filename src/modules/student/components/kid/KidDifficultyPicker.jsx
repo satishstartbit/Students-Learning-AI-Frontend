@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { LuCheck, LuLifeBuoy, LuX } from 'react-icons/lu';
 import { cn } from '../../../../lib/utils';
 import { useDifficultyPicker } from '../../../checkIn/hooks/useDifficultyPicker';
+import { useSupport } from '../../../planner/hooks/useSupport';
 import { KidButton } from './KidButton';
 import { KidOops, KidSkeleton } from './KidStates';
 
@@ -16,15 +17,21 @@ import { KidOops, KidSkeleton } from './KidStates';
  * Super Admin writes the groups, the reasons and the strategies once and
  * both bands follow. No note field here: typing is the thing a stuck K-5
  * student is least likely to want to do.
+ *
+ * What they tap is recorded (codes only) so ideas can favour what helped
+ * before; an idea with an app action gets a "Try it" button.
  */
-export function KidDifficultyPicker({ isOpen, onClose, onHelp }) {
+export function KidDifficultyPicker({ isOpen, onClose, onHelp, assignmentId, stepId, onChanged }) {
   const { groups, strategiesFor, isLoading, error, reload } = useDifficultyPicker({ immediate: isOpen });
+  const support = useSupport({ assignmentId, stepId, onChanged });
 
   const [picked, setPicked] = useState([]);
   const [groupIndex, setGroupIndex] = useState(0);
   const [showing, setShowing] = useState('reasons');
+  const [answer, setAnswer] = useState(null);
 
-  const strategies = useMemo(() => strategiesFor(picked), [picked, strategiesFor]);
+  const localStrategies = useMemo(() => strategiesFor(picked), [picked, strategiesFor]);
+  const strategies = answer?.ideas ?? localStrategies;
   const group = groups[groupIndex] ?? null;
   const isLast = groupIndex >= groups.length - 1;
 
@@ -33,16 +40,23 @@ export function KidDifficultyPicker({ isOpen, onClose, onHelp }) {
   const toggle = (code) =>
     setPicked((current) => (current.includes(code) ? current.filter((c) => c !== code) : [...current, code]));
 
-  const finish = () => {
-    onHelp?.({ reasons: picked, strategies });
+  const finish = async () => {
+    const result = await support.ask(picked);
+    setAnswer(result);
+    onHelp?.({ reasons: picked, strategies: result?.ideas ?? localStrategies });
     setShowing('help');
   };
 
   const close = () => {
     setPicked([]);
     setGroupIndex(0);
+    setAnswer(null);
     setShowing('reasons');
     onClose?.();
+  };
+
+  const tryIdea = async (idea) => {
+    if (await support.run({ strategyCode: idea.code, eventId: answer?.eventId })) close();
   };
 
   // Portalled into .kid-theme, like the check-in dialog, so it keeps the
@@ -80,7 +94,7 @@ export function KidDifficultyPicker({ isOpen, onClose, onHelp }) {
             <div>
               <h2 className="font-kid-hand text-[2rem] leading-none text-kid-ink">Thanks for telling me!</h2>
               <p className="mt-2 font-kid-body text-lg text-kid-ink-soft">
-                {strategies.length === 1 ? "Here's something" : "Here are two things"} that might help.
+                {strategies.length === 1 ? "Here's something" : `Here are ${strategies.length === 2 ? 'two' : 'some'} things`} that might help.
               </p>
             </div>
 
@@ -93,7 +107,12 @@ export function KidDifficultyPicker({ isOpen, onClose, onHelp }) {
                   <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-kid-green">
                     <LuCheck className="size-5 text-kid-green-deep" strokeWidth={3} />
                   </span>
-                  <span className="font-kid-display text-lg font-semibold text-kid-ink">{strategy.name}</span>
+                  <span className="flex-1 font-kid-display text-lg font-semibold text-kid-ink">{strategy.name}</span>
+                  {answer && strategy.action && strategy.action !== 'none' && (
+                    <KidButton size="sm" variant="secondary" onClick={() => tryIdea(strategy)} disabled={Boolean(support.busy)}>
+                      Try it
+                    </KidButton>
+                  )}
                 </li>
               ))}
             </ul>

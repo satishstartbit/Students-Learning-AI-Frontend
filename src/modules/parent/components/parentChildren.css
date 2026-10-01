@@ -149,7 +149,7 @@
   text-decoration: none;
 }
 
-/* --- Foot: the three per-child actions -------------------------------- */
+/* --- Foot: the per-child actions -------------------------------------- */
 .pc-foot {
   display: flex;
   flex-wrap: wrap;
@@ -270,13 +270,11 @@
   box-shadow: var(--focus-ring);
 }
 
-/* --- Phones: the card's three actions stay on one row, left-aligned ---- */
+/* --- Phones: compact actions, left-aligned; up to four of them ("View as"
+   included) wrap to a second row rather than running off the card. ------- */
 @media (max-width: 640px) {
   .pc-card {
     padding: 16px;
-  }
-  .pc-foot {
-    flex-wrap: nowrap;
   }
   .pc-foot > .ui-btn {
     min-height: 36px;

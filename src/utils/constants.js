@@ -58,6 +58,15 @@ export const ROLE_LIST_PATH = Object.freeze({
 export const listPathForRole = (role) => ROLE_LIST_PATH[role] ?? '/admin/users/students';
 
 /**
+ * Super Admin's create page per role - one for teachers, one for parents.
+ * Students have none: their parent adds them (or Super Admin, on the parent's page).
+ */
+export const ROLE_CREATE_PATH = Object.freeze({
+  [USER_ROLES.TEACHER]: '/admin/users/teachers/create',
+  [USER_ROLES.PARENT]: '/admin/users/parents/create',
+});
+
+/**
  * Where an unauthenticated visitor is sent per area.
  * Super Admin has its own sign-in page, so an expired admin session returns
  * there rather than to the shared user login.

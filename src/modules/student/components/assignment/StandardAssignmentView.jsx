@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LuArrowLeft, LuCalendar } from 'react-icons/lu';
 import { ConfirmationModal, StatusBadge } from '../../../../components/common';
+import { subjectPaint } from '../../../../components/subjects/subjectColor';
+import { useSubjectColors } from '../../../../components/subjects/useSubjectColors';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
-import { daysUntilDateKey, formatDateKey } from '../../../../utils/date';
+import { daysUntilDateKey, formatDate, formatDateKey } from '../../../../utils/date';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import focusService from '../../services/focus.service';
 import noteService from '../../services/note.service';
@@ -13,18 +15,30 @@ import NoteEditorModal from '../NoteEditorModal';
 import SubjectIcon from '../SubjectIcon';
 import { getSubjectVisual } from '../subjectVisual';
 import TaskBreakdown from './TaskBreakdown';
-import { DetailsCard, NextStepCard, NotesCard, OverviewCard, ResourcesCard } from './AssignmentRail';
+import { DetailsCard, NextStepCard, NotesCard, OverviewCard, ResourcesCard, StatusCard } from './AssignmentRail';
+import { HANDED_IN_STATUSES, REVIEWED_STATUSES, personName } from './assignmentLabels';
 import './assignmentDetail.css';
 
 /**
- * The Grade 6+ assignment page, built to the assignment mockup: header with
+ * The Grade 6+ assignment page, built to the assignment mockups: header with
  * overall progress, the student's own task breakdown, their work, and a rail
- * with the overview, next step, resources, notes and details.
+ * with the overview, next step, resources, notes and details. Once the work
+ * is handed in ("Detail (Reviewed)" mockup) the header says when and who
+ * reviewed it, the breakdown gives way to the review (the page's children:
+ * ReviewBanner + AnswerReviewCard) and "Next step" becomes "Status".
  *
  * The steps are the same plan the Focus page uses (/focus/steps), so ticking
  * one here or finishing it in a focus session both show up in the other
- * place. K-5 keeps the simpler page (AssignmentDetailPage).
+ * place. K-5 has components/kid/KidAssignmentView.jsx.
  */
+
+/** "Handed in Mon, Sep. 28 · Reviewed by Maria Rivera" - the header line once the work is in. */
+function handedInLabel(item) {
+  const submission = item.submission ?? {};
+  const when = submission.submittedAt ? formatDate(submission.submittedAt, { weekday: 'short', month: 'short', day: 'numeric', year: undefined }) : '';
+  const reviewer = REVIEWED_STATUSES.includes(item.status) ? personName(submission.reviewedBy) : '';
+  return [when ? `Handed in ${when}` : 'Handed in', reviewer ? `Reviewed by ${reviewer}` : null].filter(Boolean).join(' · ');
+}
 
 /** "Friday, 23 May · 9 days left" - due dates are calendar days, not instants. */
 function dueLabel(dueDate) {
@@ -54,6 +68,8 @@ export function StandardAssignmentView({ item, assignmentId, reload, children })
   const nextStep = steps.steps.find((s) => !s.done) ?? null;
   const due = dueLabel(a.dueDate);
   const tone = getSubjectVisual(a.subject).tone;
+  const { colorOf } = useSubjectColors();
+  const handedIn = HANDED_IN_STATUSES.includes(item.status);
 
   const notes = (notesApi.data ?? []).map((n) => ({
     id: n.id,
@@ -100,15 +116,15 @@ export function StandardAssignmentView({ item, assignmentId, reload, children })
         <div className="ad-col">
           <section className="ad-card ad-header" aria-label="Assignment">
             <div className="ad-header__main">
-              <span className="ad-subject" data-tone={tone} aria-hidden="true">
+              <span className="ad-subject" data-tone={tone} {...subjectPaint(colorOf(a.subject))} aria-hidden="true">
                 <SubjectIcon subject={a.subject} size="md" />
               </span>
               <div style={{ minWidth: 0 }}>
                 <h1 className="ad-title">{a.title}</h1>
-                <p className="ad-due" data-overdue={due.overdue || undefined}>
+                <p className="ad-due" data-overdue={(!handedIn && due.overdue) || undefined}>
                   {/* The text in its own span, so on a phone it wraps beside the icon instead of under it. */}
                   <LuCalendar size={13} aria-hidden="true" style={{ flex: 'none' }} />
-                  <span>Due {due.text}</span>
+                  <span>{handedIn ? handedInLabel(item) : `Due ${due.text}`}</span>
                 </p>
               </div>
             </div>
@@ -134,14 +150,19 @@ export function StandardAssignmentView({ item, assignmentId, reload, children })
             )}
           </section>
 
-          <TaskBreakdown steps={steps} activeStepId={activeStepId} />
+          {/* Steps plan the work; once it's handed in there is nothing left to plan. */}
+          {!handedIn && <TaskBreakdown steps={steps} activeStepId={activeStepId} />}
 
           {children}
         </div>
 
         <div className="ad-col">
           <OverviewCard assignment={a} />
-          <NextStepCard assignmentId={assignmentId} step={nextStep} hasSteps={total > 0} allDone={total > 0 && !nextStep} />
+          {handedIn ? (
+            <StatusCard reviewed={REVIEWED_STATUSES.includes(item.status)} stepsDone={total > 0 && !nextStep} />
+          ) : (
+            <NextStepCard assignmentId={assignmentId} step={nextStep} hasSteps={total > 0} allDone={total > 0 && !nextStep} />
+          )}
           <ResourcesCard
             assignmentId={assignmentId}
             teacherFiles={a.files ?? []}

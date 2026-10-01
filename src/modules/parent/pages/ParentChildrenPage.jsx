@@ -85,7 +85,7 @@ function teacherRows(child) {
 }
 
 /** One child: who they are, what they're learning, and who teaches them. */
-function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvite, onView, onViewAs, onRemove }) {
+function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvite, onView, onViewAs, onRemove, onArchive, onRestore }) {
   const rows = useMemo(() => teacherRows(child), [child]);
 
   // Subjects follow the teachers - the ones already teaching this child plus
@@ -121,6 +121,9 @@ function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvi
             { key: 'progress', label: 'View progress', onClick: () => onProgress(child) },
             { key: 'invite', label: 'Invite a teacher', onClick: () => onInvite(child) },
             { key: 'divider', divider: true },
+            child.archived
+              ? { key: 'restore', label: 'Restore child', onClick: () => onRestore(child) }
+              : { key: 'archive', label: 'Archive child', onClick: () => onArchive(child) },
             { key: 'remove', label: 'Remove child', danger: true, onClick: () => onRemove(child) },
           ]}
         />
@@ -128,7 +131,7 @@ function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvi
 
       <div className="pc-chips">
         {isViewing && <Badge variant="primary">Viewing now</Badge>}
-        <StatusBadge status={child.status} />
+        {child.archived ? <Badge variant="neutral">Archived - history kept</Badge> : <StatusBadge status={child.status} />}
         {/* Children have no email to verify; what matters is whether they've signed in. */}
         {!child.lastLoginAt && (
           <Badge variant="warning" dot>
@@ -218,6 +221,7 @@ export default function ParentChildrenPage() {
   const passwordModal = useModal();
   const inviteModal = useModal();
   const removeModal = useModal();
+  const archiveModal = useModal();
 
   const load = useCallback(() => {
     refreshViewing(); // keep the sidebar picker in sync
@@ -234,6 +238,27 @@ export default function ParentChildrenPage() {
       await parentService.removeChild(removeModal.payload.id);
       toast.success('Child removed from your account');
       removeModal.close();
+      await load();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  // Archive / restore (PDF Q12): the same child, all history kept either way.
+  const handleArchive = async () => {
+    try {
+      await parentService.archiveChild(archiveModal.payload.id);
+      toast.success(`${formatName(archiveModal.payload)} is archived - everything they saved is kept`);
+      archiveModal.close();
+      await load();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+  const handleRestore = async (child) => {
+    try {
+      await parentService.restoreChild(child.id);
+      toast.success(`${formatName(child)} is back - their plan is being updated`);
       await load();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -304,6 +329,8 @@ export default function ParentChildrenPage() {
                 onInvite={(c) => inviteModal.open(c)}
                 onView={(c) => detailsModal.open(c.id)}
                 onRemove={(c) => removeModal.open(c)}
+                onArchive={(c) => archiveModal.open(c)}
+                onRestore={handleRestore}
               />
             ))}
           </div>
@@ -359,6 +386,19 @@ export default function ParentChildrenPage() {
         }
         confirmLabel="Remove"
         variant="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={archiveModal.isOpen}
+        onClose={archiveModal.close}
+        onConfirm={handleArchive}
+        title="Archive this child?"
+        message={
+          archiveModal.payload
+            ? `${formatName(archiveModal.payload)} keeps their account and everything they saved, and you can both still read it. They won't take a place on your plan, and planning and AI help stop for them. You can restore them at any time.`
+            : ''
+        }
+        confirmLabel="Archive"
       />
     </div>
   );

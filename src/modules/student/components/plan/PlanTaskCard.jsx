@@ -1,13 +1,16 @@
 import { Link } from 'react-router-dom';
 import { LuCheck, LuClock3, LuPlay, LuUser } from 'react-icons/lu';
+import { subjectPaint } from '../../../../components/subjects/subjectColor';
 import { getSubjectVisual } from '../subjectVisual';
 
 /**
  * One task on the Plan board - teacher work or the student's own task
  * (the normalized shape from hooks/useTodayTasks.js). Open work gets a
- * Start button; finished work shows a green tick instead.
+ * Start button; finished work shows a green tick instead. `color` is the
+ * subject's colour (admin default or the student's own choice); without one
+ * the chip keeps its tone.
  */
-export function PlanTaskCard({ task, isOverdue, onOpenOwn }) {
+export function PlanTaskCard({ task, color, isOverdue, onOpenOwn }) {
   const isOwn = task.type === 'own';
   const { tone } = getSubjectVisual(task.subject);
   const minutes = task.estimatedMinutes ? `${task.estimatedMinutes} min` : null;
@@ -18,7 +21,7 @@ export function PlanTaskCard({ task, isOverdue, onOpenOwn }) {
     <article className="sp-task" data-done={task.done || undefined} data-overdue={isOverdue || undefined}>
       <div className="sp-task__top">
         {task.subject ? (
-          <span className="sp-chip" data-tone={tone}>
+          <span className="sp-chip" data-tone={tone} {...subjectPaint(color)}>
             {task.subject}
           </span>
         ) : (

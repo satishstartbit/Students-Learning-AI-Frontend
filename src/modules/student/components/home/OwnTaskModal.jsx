@@ -4,6 +4,8 @@ import { Alert, Button, ConfirmationModal, Input, Modal, Select, Textarea } from
 import { toast } from '../../../../hooks/useToast';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import { useOnboardingLookup } from '../../../onboarding/hooks/useOnboardingLookup';
+import ShareWithTeacher from '../../../planner/components/ShareWithTeacher';
+import { useWorkTypeOptions } from '../../../planner/hooks/useWorkTypeOptions';
 import studentTaskService from '../../services/studentTask.service';
 
 /**
@@ -68,9 +70,11 @@ function PhotoField({ file, existingUrl, onPick, onClear, emphasis }) {
 function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
   const isEdit = mode === 'edit';
   const subjects = useOnboardingLookup('subjects');
+  const workTypes = useWorkTypeOptions();
 
   const [title, setTitle] = useState(task?.title ?? '');
   const [subject, setSubject] = useState(task?.subject ?? '');
+  const [workType, setWorkType] = useState(task?.workType ?? '');
   const [dueDate, setDueDate] = useState(task?.dueDate ?? defaultDueDate ?? '');
   const [minutes, setMinutes] = useState(task?.estimatedMinutes ? String(task.estimatedMinutes) : '');
   const [description, setDescription] = useState(task?.description ?? '');
@@ -90,6 +94,13 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
     if (subject && !opts.some((o) => o.value === subject)) opts.unshift({ value: subject, label: subject });
     return opts;
   }, [subjects.options, subject]);
+
+  const workTypeOptions = useMemo(() => {
+    const opts = [...workTypes.options];
+    // Same for a kind of work an admin has since switched off.
+    if (workType && !opts.some((o) => o.value === workType)) opts.unshift({ value: workType, label: workType });
+    return opts;
+  }, [workTypes.options, workType]);
 
   const minutesNumber = minutes === '' ? null : Number(minutes);
   const errors = {
@@ -133,6 +144,7 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
     const values = {
       title: title.trim(),
       subject,
+      workType,
       dueDate,
       estimatedMinutes: minutes === '' ? '' : minutesNumber,
       description: description.trim(),
@@ -148,6 +160,40 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
   };
 
   const done = task?.status === 'completed';
+
+  // A parent added this for the student (PDF Q15): they can finish it, not rewrite or delete it.
+  if (isEdit && task?.canEdit === false) {
+    return (
+      <div>
+        {error && (
+          <Alert variant="error" className="ui-field">
+            {error}
+          </Alert>
+        )}
+        <Alert variant="info" className="ui-field">
+          Your parent added this task. You can mark it done - ask them if something about it needs to change.
+        </Alert>
+        <p className="ui-label" style={{ marginBottom: 4 }}>
+          {task.title}
+        </p>
+        {task.description && <p className="ui-hint" style={{ whiteSpace: 'pre-wrap' }}>{task.description}</p>}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-lg)' }}>
+          <Button type="button" variant="secondary" size="sm" onClick={onCancel} disabled={Boolean(busy)}>
+            Close
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            loading={busy === 'toggle'}
+            startIcon={done ? <LuRotateCcw aria-hidden="true" /> : <LuCheck aria-hidden="true" />}
+            onClick={() => run('toggle', () => studentTaskService.update(task.id, { completed: !done }), done ? 'Moved back to your list' : 'Nice - task done!')}
+          >
+            {done ? 'Not done yet' : 'Mark done'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} noValidate>
@@ -185,6 +231,15 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
         <Input label="Due date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
       </div>
 
+      <Select
+        label="Kind of work"
+        value={workType}
+        onChange={(e) => setWorkType(e.target.value)}
+        options={workTypeOptions}
+        placeholder="Not sure"
+        loading={workTypes.loading}
+      />
+
       <Input
         label="How long will it take? (minutes)"
         type="number"
@@ -209,6 +264,8 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
           }}
         />
       )}
+
+      {isEdit && <ShareWithTeacher workId={task.id} />}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--spacing-sm)', flexWrap: 'wrap', marginTop: 'var(--spacing-lg)' }}>
         <div style={{ display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap' }}>
@@ -278,7 +335,13 @@ export function OwnTaskModal({ mode, task, defaultDueDate, onClose, onChanged })
       isOpen={isOpen}
       onClose={onClose}
       title={TITLES[mode] ?? 'Task'}
-      description={mode === 'edit' ? 'Only you can see tasks you add.' : 'Only you can see this - it shows up in your day.'}
+      description={
+        mode === 'edit'
+          ? task?.canEdit === false
+            ? 'Added by your parent.'
+            : 'You and your parents can see tasks you add. A teacher sees one only if you share it.'
+          : 'You and your parents can see this - it shows up in your day.'
+      }
       size="md"
     >
       {isOpen && (

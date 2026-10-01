@@ -9,7 +9,8 @@ const BALLOONS = [
   { name: 'Coral', color: '#ff8278', ink: '#7e2620' }, { name: 'Green', color: '#51c9a3', ink: '#135541' },
 ];
 
-export default function BalloonEyes({ isJunior = false, reducedMotion = false }) {
+/** `hideHeading`: on its own page (pages/BoosterPage.jsx) the page shows the title. */
+export default function BalloonEyes({ isJunior = false, reducedMotion = false, hideHeading = false }) {
   const [state, dispatch] = useReducer(trackingSessionReducer, undefined, createTrackingSession);
   const field = useRef(null);
   const targetRef = useRef(null);
@@ -44,8 +45,8 @@ export default function BalloonEyes({ isJunior = false, reducedMotion = false })
           : 'Name the colour, then pop the balloon. Play a set of ten.';
 
   return (
-    <section className="bb-tracking-game" aria-labelledby="bb-balloon-title" data-phase={state.phase}>
-      <div className="bb-game-heading"><span className="bb-tracking-icon" aria-hidden="true">🎈</span><div><h2 id="bb-balloon-title">Balloon Eyes</h2><p>Watch the colour. Follow the balloon. Pop!</p></div></div>
+    <section className="bb-tracking-game" aria-labelledby={hideHeading ? undefined : 'bb-balloon-title'} aria-label={hideHeading ? 'Balloon Eyes' : undefined} data-phase={state.phase}>
+      {!hideHeading && <div className="bb-game-heading"><span className="bb-tracking-icon" aria-hidden="true">🎈</span><div><h2 id="bb-balloon-title">Balloon Eyes</h2><p>Watch the colour. Follow the balloon. Pop!</p></div></div>}
       <p className="bb-game-rules">{reducedMotion ? 'Pop ten still balloons at your own pace. There is no time limit.' : 'Pop each balloon before it leaves the sky. Each balloon counts once; after three pops the next level is a little quicker.'}</p>
       <div className="bb-stats">
         <div className="bb-stat"><strong>{state.hits}</strong><span>Popped</span></div>

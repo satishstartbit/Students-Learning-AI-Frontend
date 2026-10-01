@@ -1,9 +1,10 @@
 /*
- * Grade 6+ Focus session (FocusTimerPage.jsx), built to the focus mockup:
- * a session card (task chip, step heading, countdown ring, Pause / End
- * session / sound), "Your steps" beside it, and "Feeling stuck? Take two
- * minutes." toolkit cards underneath. Theme tokens throughout; the three
- * toolkit card tints are illustration colours.
+ * Grade 6+ Focus (FocusTimerPage.jsx), built to the Focus mockup: the
+ * "Focus Timer" card (the ring on a sunken panel, the task, length and
+ * sound beside it), "Brain Boosters" under it (FocusBoostersCard, the
+ * `fs-boost-*` rules at the end) and "Your steps" beside both. Theme tokens
+ * throughout; the booster tiles use the sticky-note paper tokens, and the
+ * (now unused) StuckToolkit card tints are illustration colours.
  */
 .fs-page {
   max-width: 1080px;
@@ -636,5 +637,344 @@
   .fs-task__actions,
   .fs-task .fs-lengths {
     justify-content: center;
+  }
+}
+
+/* ------------------------------------------------------------ card headers
+   "Focus Timer" and "Brain Boosters": a small icon tile, a title and one
+   line under it - the same header as "Your steps". */
+.fs-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.fs-card__head > div {
+  min-width: 0;
+}
+.fs-card__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--color-text-secondary);
+}
+.fs-card__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.fs-card__sub {
+  margin: 1px 0 0;
+  font-size: 11.5px;
+  color: var(--color-text-secondary);
+}
+
+/* ------------------------------------------------------------ Focus Timer
+   The ring on a sunken panel, the choices beside it. The two halves sit
+   side by side while the card has room for both (auto-fit), and stack on a
+   phone or beside an open sidebar on a small laptop. */
+.fs-timer {
+  --fs-ring-track: color-mix(in srgb, var(--accent-base) 16%, var(--color-bg-surface));
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+.fs-timer__dial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 12px 16px;
+  border-radius: 14px;
+  background: var(--color-bg-surface-sunken);
+}
+.fs-timer .fs-ring {
+  width: 172px;
+  height: 172px;
+}
+.fs-timer .fs-clock {
+  font-size: 42px;
+}
+.fs-timer__dial .fs-state {
+  margin: 10px 0 0;
+}
+.fs-timer__side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.fs-timer .fs-setup {
+  max-width: none;
+  margin-top: 0;
+}
+.fs-timer .fs-lengths {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 6px 0 18px;
+}
+.fs-timer .fs-length {
+  padding: 0 6px;
+}
+.fs-timer .fs-actions {
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: auto;
+}
+.fs-timer .fs-actions .fs-btn--primary {
+  flex: 1 1 140px;
+}
+.fs-timer .fs-sound-menu {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+.fs-actions a.fs-btn {
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+/* While a session runs: what it is about, above Pause / End session. */
+.fs-now {
+  margin-bottom: 18px;
+}
+.fs-now .fs-context {
+  justify-content: flex-start;
+}
+.fs-now .fs-heading {
+  margin: 10px 0 4px;
+  font-size: 20px;
+}
+.fs-now .fs-meta {
+  margin: 0;
+}
+
+/* "These steps are yours…" under the step list. */
+.fs-steps__note {
+  margin: 12px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+/* ------------------------------------------------------------ Brain Boosters
+   FocusBoostersCard: Exercises | Brain Games, today's suggestion, three
+   tiles, and the picked one's description with a Play button. */
+.fs-boost-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--color-bg-surface-sunken);
+}
+.fs-boost-tabs button {
+  height: 32px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.fs-boost-tabs button[aria-pressed='true'] {
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-sticky);
+}
+.fs-boost-suggest {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+}
+.fs-boost-suggest__mood {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-bg-surface);
+  font-size: 16px;
+  line-height: 1;
+}
+.fs-boost-suggest__mood img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.fs-link--inline {
+  display: inline;
+  padding: 0;
+  font-size: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Each booster's paper colour (the sticky-note tokens, light in both modes). */
+.fs-boost-tile,
+.fs-boost-preview--emoji {
+  --tile-bg: var(--sticky-lavender);
+  --tile-border: var(--sticky-lavender-border);
+}
+:is(.fs-boost-tile, .fs-boost-preview--emoji)[data-tone='pink'] { --tile-bg: var(--sticky-pink); --tile-border: var(--sticky-pink-border); }
+:is(.fs-boost-tile, .fs-boost-preview--emoji)[data-tone='yellow'] { --tile-bg: var(--sticky-yellow); --tile-border: var(--sticky-yellow-border); }
+:is(.fs-boost-tile, .fs-boost-preview--emoji)[data-tone='blue'] { --tile-bg: var(--sticky-blue); --tile-border: var(--sticky-blue-border); }
+:is(.fs-boost-tile, .fs-boost-preview--emoji)[data-tone='green'] { --tile-bg: var(--sticky-green); --tile-border: var(--sticky-green-border); }
+:is(.fs-boost-tile, .fs-boost-preview--emoji)[data-tone='orange'] { --tile-bg: var(--sticky-orange); --tile-border: var(--sticky-orange-border); }
+
+.fs-boost-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.fs-boost-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 84px;
+  padding: 12px 6px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 12px;
+  background: var(--color-bg-surface);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--color-text-primary);
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.fs-boost-tile:hover {
+  border-color: var(--tile-border);
+}
+.fs-boost-tile[aria-pressed='true'] {
+  border-color: var(--tile-border);
+  background: var(--tile-bg);
+  color: var(--sticky-ink);
+}
+.fs-boost-tile__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--tile-bg);
+  color: var(--sticky-ink);
+}
+.fs-boost-tile[aria-pressed='true'] .fs-boost-tile__icon {
+  background: color-mix(in srgb, var(--color-text-on-dark) 78%, var(--tile-bg));
+}
+.fs-boost-tile__label {
+  overflow-wrap: anywhere;
+}
+.fs-boost-tile:focus-visible,
+.fs-boost-tabs button:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 2px;
+}
+
+/* The picked booster: words and Play on one side, a small picture on the
+   other; the picture drops underneath when the card is narrow. */
+.fs-boost-detail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px 18px;
+  align-items: center;
+  margin-top: 14px;
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--color-bg-surface-sunken);
+}
+.fs-boost-detail__text {
+  min-width: 0;
+}
+.fs-boost-detail__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.fs-boost-detail__blurb {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+.fs-boost-detail__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  color: var(--color-text-secondary);
+}
+.fs-boost-detail__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 14px;
+}
+.fs-boost-detail__actions .fs-btn {
+  height: 40px;
+}
+.fs-boost-detail__actions .fs-link {
+  font-size: 11.5px;
+}
+.fs-boost-how {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+.fs-boost-preview {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  justify-self: center;
+  border-radius: 12px;
+}
+.fs-boost-preview--emoji {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 200 / 124;
+  background: var(--tile-bg);
+  font-size: 44px;
+  line-height: 1;
+}
+.fs-boost-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 14px;
+  margin-top: 12px;
+}
+@media (max-width: 380px) {
+  .fs-boost-tiles {
+    gap: 6px;
+  }
+  .fs-boost-tile {
+    font-size: 11.5px;
   }
 }

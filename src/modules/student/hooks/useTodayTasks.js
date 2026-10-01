@@ -5,6 +5,8 @@ import { ASSIGNMENT_RECIPIENT_STATUS as STATUS } from '../../../utils/constants'
 import { daysUntilDateKey, isTodayInTimezone } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import assignmentService from '../../assignments/services/assignment.service';
+import { usePlan } from '../../planner/hooks/usePlan';
+import { planRankMap } from '../../planner/planView';
 import studentTaskService from '../services/studentTask.service';
 
 /**
@@ -55,6 +57,8 @@ function fromOwn(task) {
     key: keyOf('own', task.id),
     type: 'own',
     id: task.id,
+    // An own task is an assignments row too - the plan ranks it by this id.
+    planId: task.id,
     assignmentId: null,
     title: task.title,
     subject: task.subject ?? null,
@@ -71,44 +75,53 @@ function fromOwn(task) {
 
 const isUpcoming = (task) => Boolean(task.dueDate) && daysUntilDateKey(task.dueDate) > 0;
 
-const nullsLast =(a, b) => (a == null ? (b == null ? 0 : 1) : b == null ? -1 : a < b ? -1 : a > b ? 1 : 0);
+const nullsLast = (a, b) => (a == null ? (b == null ? 0 : 1) : b == null ? -1 : a < b ? -1 : a > b ? 1 : 0);
 
-const startedFirst = (a, b) => (a.status === STATUS.IN_PROGRESS ? 0 : 1) - (b.status === STATUS.IN_PROGRESS ? 0 : 1);
-
-/** Open work first; then the student's own saved order; then soonest due, started work ahead of new on a tie. */
-function byPlan(a, b) {
+/**
+ * Open work first; then the student's own saved (dragged) order - an explicit
+ * choice wins; then the server plan's priority (deadline, remaining effort,
+ * dependencies, carryover, capacity - PDF Q9); then soonest due.
+ */
+const byPlan = (rank) => (a, b) => {
   if (a.done !== b.done) return a.done ? 1 : -1;
   return (
     nullsLast(a.sortOrder, b.sortOrder) ||
+    nullsLast(rank.get(a.planId ?? a.assignmentId), rank.get(b.planId ?? b.assignmentId)) ||
     nullsLast(a.dueDate, b.dueDate) ||
-    startedFirst(a, b) ||
     a.title.localeCompare(b.title)
   );
-}
+};
 
 export function useTodayTasks() {
   const assignments = useApi(assignmentService.listAssignments, { immediate: true, args: [QUERY] });
   const own = useApi(studentTaskService.list, { immediate: true });
+  // The server's plan: priority order, reasons, next actions, conflicts.
+  const schedule = usePlan('me');
   const { run: runAssignments } = assignments;
   const { run: runOwn } = own;
+  const { reload: reloadSchedule } = schedule;
+  const priorities = schedule.plan?.priorities;
+  const rank = useMemo(() => planRankMap(priorities ?? []), [priorities]);
+  const why = useMemo(() => new Map((priorities ?? []).map((p) => [p.assignmentId, p.why?.[0] ?? null])), [priorities]);
 
   // Keys in the order the student just dragged them, until the server copy catches up.
   const [pendingOrder, setPendingOrder] = useState(null);
 
   const all = useMemo(
-    () => [
-      ...(Array.isArray(assignments.data) ? assignments.data : []).map(fromAssignment),
-      ...(Array.isArray(own.data) ? own.data : []).map(fromOwn),
-    ],
-    [assignments.data, own.data]
+    () =>
+      [
+        ...(Array.isArray(assignments.data) ? assignments.data : []).map(fromAssignment),
+        ...(Array.isArray(own.data) ? own.data : []).map(fromOwn),
+      ].map((t) => ({ ...t, why: why.get(t.planId ?? t.assignmentId) ?? null })),
+    [assignments.data, own.data, why]
   );
 
   const tasks = useMemo(() => {
-    const today = all.filter((t) => (t.done ? isTodayInTimezone(t.doneAt) : !isUpcoming(t))).sort(byPlan);
+    const today = all.filter((t) => (t.done ? isTodayInTimezone(t.doneAt) : !isUpcoming(t))).sort(byPlan(rank));
     if (!pendingOrder) return today;
     const position = new Map(pendingOrder.map((key, i) => [key, i]));
     return [...today].sort((a, b) => nullsLast(position.get(a.key), position.get(b.key)));
-  }, [all, pendingOrder]);
+  }, [all, pendingOrder, rank]);
 
   const upcoming = useMemo(
     () =>
@@ -119,8 +132,8 @@ export function useTodayTasks() {
   );
 
   const reload = useCallback(
-    () => Promise.all([runAssignments(QUERY).catch(() => {}), runOwn().catch(() => {})]),
-    [runAssignments, runOwn]
+    () => Promise.all([runAssignments(QUERY).catch(() => {}), runOwn().catch(() => {}), reloadSchedule()]),
+    [runAssignments, runOwn, reloadSchedule]
   );
 
   /** Moves one row and saves the whole order. Rolls back (with a message) if the save fails. */
@@ -148,12 +161,13 @@ export function useTodayTasks() {
       try {
         await studentTaskService.update(task.id, { completed: done });
         await runOwn().catch(() => {});
+        reloadSchedule();
         if (done) toast.success('Nice - task done!');
       } catch (err) {
         toast.error(getErrorMessage(err));
       }
     },
-    [runOwn]
+    [runOwn, reloadSchedule]
   );
 
   const open = tasks.filter((t) => !t.done);
@@ -167,6 +181,11 @@ export function useTodayTasks() {
     minutesLeft: open.reduce((sum, t) => sum + t.estimatedMinutes, 0),
     isLoading: (assignments.isLoading && !assignments.data) || (own.isLoading && !own.data),
     error: assignments.error ?? own.error,
+    // The server plan itself (next actions, conflicts, explanation) and its state.
+    schedule: schedule.plan,
+    scheduleLoading: schedule.isLoading,
+    scheduleError: schedule.error,
+    reloadSchedule,
     reload,
     move,
     setOwnDone,

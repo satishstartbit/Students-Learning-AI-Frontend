@@ -38,6 +38,11 @@
   --color-text-tertiary: #948c85; /* placeholders, disabled-control text */
   --color-text-disabled: #b3aaa2;
   --color-text-on-dark: #ffffff;
+  /* Fixed near-black for content on a permanently-light surface whatever the
+   * app mode - e.g. text on a subject colour (sticky notes, subject chips).
+   * Pairs with text-on-dark; does not redefine in the dark blocks below. */
+  --color-text-on-light: #2a2521;
+  --color-text-on-light-muted: #4a423c;
   --color-text-inverse: #ffffff;
 
   /* --- Borders --------------------------------------------------------- */

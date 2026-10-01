@@ -5,7 +5,7 @@ Shared, read-only "how is this student doing" UI used by **both** the parent and
 ## Where it lives
 | Frontend | Purpose |
 |---|---|
-| `components/StudentProgressDetail.jsx` + `progressDetail.css` (`pg-`) | The detail panel: today's check-in, recent check-ins, focus time today, task counts and task list |
+| `components/StudentProgressDetail.jsx` + `progressDetail.css` (`pg-`) | The detail panel: today's check-in, recent check-ins, focus time today, task counts and task list. For a family (not a teacher) the list also holds the child's own and parent-added work: stage `done`, "From" = Added by your child / a parent (PDF Q15). A teacher's view never includes unshared own work. |
 | `components/CheckInStrip.jsx`, `CheckInBadge.jsx`, `MoodIcon.jsx` | Recent check-ins. Mood icon and colour come from the `emotional_states` master (via `checkIn/MoodGlyph`), never from a name map. |
 | `components/TaskCounts.jsx` | Counts per stage |
 | `stages.js` | `TASK_STAGES` labels/tones for the stage keys the backend sends (`not_started`, `in_progress`, `returned`, `submitted`, `reviewed`), and `MOOD_TONE` (badge tone per mood code) |

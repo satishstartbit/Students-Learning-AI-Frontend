@@ -87,6 +87,16 @@ export function getHourInTimezone(value = new Date(), { timeZone } = {}) {
   return parts ? Number(parts.hour) % 24 : null;
 }
 
+/**
+ * Minutes past midnight (0-1439) of an instant on the wall clock of the
+ * user's (or given) timezone - for putting a timed item in order beside a
+ * wall-clock one (a study time beside "Soccer 16:15"). Not for display.
+ */
+export function getClockMinutesInTimezone(value, { timeZone } = {}) {
+  const parts = zonedParts(value, timeZone);
+  return parts ? (Number(parts.hour) % 24) * 60 + Number(parts.minute) : null;
+}
+
 /** "2026-09-11" for the calendar day `value` falls on in the user's timezone. */
 export function getDateKey(value = new Date(), { timeZone } = {}) {
   const parts = zonedParts(value, timeZone);
@@ -109,6 +119,22 @@ export function formatDateKey(dateKey, { locale, ...options } = {}) {
     ...options,
     timeZone: 'UTC',
   }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+}
+
+/**
+ * Formats a wall-clock time ("16:15", as busy times and study windows store
+ * it) in the active locale - "4:15 p.m." in en-CA. Like a day key it is not
+ * an instant: it is already in the student's own zone, so nothing converts.
+ */
+export function formatClockTime(hhmm, { locale, ...options } = {}) {
+  const match = /^(\d{1,2}):(\d{2})/.exec(String(hhmm ?? ''));
+  if (!match) return '';
+  return new Intl.DateTimeFormat(locale ?? getActiveLocale(), {
+    hour: 'numeric',
+    minute: '2-digit',
+    ...options,
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(2026, 0, 1, Number(match[1]), Number(match[2]))));
 }
 
 /** "May 12 – 18, 2025" (en-CA) - a span of two calendar day keys, collapsing the shared parts. */

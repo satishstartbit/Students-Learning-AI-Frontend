@@ -4,6 +4,7 @@ import { formatName } from '../../../utils/format';
 // Subject colours come from the same helper the student's own Home/Plan use,
 // so a subject reads the same for the child, the parent and the teacher.
 import { getSubjectVisual } from '../../student/components/subjectVisual';
+import SubjectPill from '../../../components/subjects/SubjectPill';
 import { ENERGY_LEVELS } from '../../checkIn/moods';
 import { useMoodLookup } from '../../checkIn/hooks/useMoodLookup';
 import MoodIcon from './MoodIcon';
@@ -58,7 +59,7 @@ function TodayCards({ progress }) {
   const checkIn = today?.checkIn;
   const mood = checkIn ? moodFor(checkIn.mood) : null;
 
-  const done = (counts?.submitted ?? 0) + (counts?.reviewed ?? 0);
+  const done = (counts?.submitted ?? 0) + (counts?.reviewed ?? 0) + (counts?.done ?? 0);
   const total = counts?.total ?? 0;
   const pct = total ? Math.round((done / total) * 100) : 0;
 
@@ -135,9 +136,7 @@ function AssignedTasks({ tasks, showTeacher, stageLabels }) {
       header: 'Subject',
       render: (row) =>
         row.subject ? (
-          <span className="pg-subject" data-tone={getSubjectVisual(row.subject).tone}>
-            {row.subject}
-          </span>
+          <SubjectPill subject={row.subject} tone={getSubjectVisual(row.subject).tone} className="pg-subject" />
         ) : (
           <span className="ui-hint">—</span>
         ),
@@ -146,8 +145,18 @@ function AssignedTasks({ tasks, showTeacher, stageLabels }) {
       ? [
           {
             key: 'teacher',
-            header: 'Teacher',
-            render: (row) => (row.teacher ? formatName(row.teacher) : <span className="ui-hint">—</span>),
+            header: 'From',
+            // Own work (PDF Q15) says who added it - never a teacher it didn't come from.
+            render: (row) =>
+              row.teacher ? (
+                formatName(row.teacher)
+              ) : row.source === 'parent' ? (
+                <span className="ui-hint">Added by a parent</span>
+              ) : row.source === 'student' ? (
+                <span className="ui-hint">Added by your child</span>
+              ) : (
+                <span className="ui-hint">—</span>
+              ),
           },
         ]
       : []),

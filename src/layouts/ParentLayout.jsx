@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import {
   LuBell,
+  LuCalendarDays,
   LuChartLine,
   LuCreditCard,
   LuLayoutGrid,
@@ -11,12 +12,14 @@ import {
 } from 'react-icons/lu';
 import AppSettingsProvider from '../components/appearance/AppSettingsProvider';
 import { Loader } from '../components/common';
+import SubjectColorsProvider from '../components/subjects/SubjectColorsProvider';
 import { useApi } from '../hooks/useApi';
 import onboardingService from '../modules/onboarding/services/onboarding.service';
 import { ParentOnboardingContext } from '../modules/parent/hooks/useParentOnboarding';
 import ViewingChildPicker from '../modules/parent/components/ViewingChildPicker';
 import { ViewingChildContext } from '../modules/parent/hooks/useViewingChild';
 import parentService from '../modules/parent/services/parent.service';
+import AccessBanner from '../modules/subscription/components/AccessBanner';
 import { SubscriptionAccessContext, useAccessStatus } from '../modules/subscription/hooks/useSubscriptionAccess';
 import AuthenticatedLayout from './AuthenticatedLayout';
 import usePortalTheme from './usePortalTheme';
@@ -40,6 +43,7 @@ const NAV_ITEMS = [
     items: [
       { to: '/parent', label: 'Overview', icon: LuLayoutGrid, end: true },
       { to: '/parent/progress', label: 'Progress', icon: LuChartLine },
+      { to: '/parent/schedule', label: 'Schedule', icon: LuCalendarDays },
       { to: '/parent/learning-summary', label: 'Learning Summary', icon: LuSparkles },
     ],
   },
@@ -137,17 +141,24 @@ export function ParentLayout({ children }) {
   const refresh = useCallback(() => run().catch(() => {}), [run]);
   const context = useMemo(() => ({ completed, refresh }), [completed, refresh]);
 
-  const { loaded, isLoading: accessLoading, hasAccess, reason, refresh: refreshAccess } = accessStatus;
+  const { loaded, isLoading: accessLoading, hasAccess, reason, state, readOnly, capabilities, message, graceEndsAt, refresh: refreshAccess } =
+    accessStatus;
   const access = useMemo(
-    () => ({ loaded, isLoading: accessLoading, hasAccess, reason, refresh: refreshAccess }),
-    [loaded, accessLoading, hasAccess, reason, refreshAccess]
+    () => ({ loaded, isLoading: accessLoading, hasAccess, reason, state, readOnly, capabilities, message, graceEndsAt, refresh: refreshAccess }),
+    [loaded, accessLoading, hasAccess, reason, state, readOnly, capabilities, message, graceEndsAt, refreshAccess]
   );
 
   const { pathname } = location;
   const needsOnboarding = Boolean(onboarding.data) && !completed && pathname !== ONBOARDING_PATH;
-  const needsSubscription = access.loaded && !access.hasAccess && !SUBSCRIPTION_EXEMPT_PATHS.includes(pathname);
+  // After grace (readOnly) the family keeps reading everything saved - no redirect (PDF Q11).
+  const needsSubscription = access.loaded && !access.hasAccess && !access.readOnly && !SUBSCRIPTION_EXEMPT_PATHS.includes(pathname);
 
-  let content = children;
+  let content = (
+    <>
+      <AccessBanner access={access} role="PARENT" />
+      {children}
+    </>
+  );
   if ((onboarding.isLoading && !onboarding.data) || access.isLoading) content = <Loader message="Loading…" />;
   else if (needsOnboarding) content = <Navigate to={ONBOARDING_PATH} replace />;
   else if (needsSubscription) content = <Navigate to={SUBSCRIPTION_PATH} replace />;
@@ -157,16 +168,19 @@ export function ParentLayout({ children }) {
       <SubscriptionAccessContext.Provider value={access}>
         <ViewingChildContext.Provider value={viewingContext}>
           <AppSettingsProvider>
-            <AuthenticatedLayout
-              navItems={NAV_ITEMS}
-              mobileTabs={MOBILE_TABS}
-              title="Parent Portal"
-              subtitle="Parent"
-              brand="FP"
-              sidebarExtra={<ViewingChildPicker />}
-            >
-              {content}
-            </AuthenticatedLayout>
+            {/* The admin's subject colours, so subjects look the same here as on the child's screens. */}
+            <SubjectColorsProvider>
+              <AuthenticatedLayout
+                navItems={NAV_ITEMS}
+                mobileTabs={MOBILE_TABS}
+                title="Parent Portal"
+                subtitle="Parent"
+                brand="FP"
+                sidebarExtra={<ViewingChildPicker />}
+              >
+                {content}
+              </AuthenticatedLayout>
+            </SubjectColorsProvider>
           </AppSettingsProvider>
         </ViewingChildContext.Provider>
       </SubscriptionAccessContext.Provider>

@@ -1,0 +1,100 @@
+/*
+ * A Brain Booster's own page (Grade 6+: pages/BoosterPage.jsx) and the game
+ * host both bands use (BoosterGame.jsx). Built to the "Student Brain Games -
+ * Finger Follow (Ready)" mockup. Tokens only.
+ */
+.bb-page.bb-game-host { padding: 0; overflow-anchor: none; }
+
+.bb-booster { padding: 0 0 40px; }
+.bb-booster__inner { max-width: 1040px; }
+.bb-booster__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.bb-booster__back:hover { color: var(--accent-base); }
+.bb-booster__back:focus-visible { outline: 2px solid var(--accent-base); outline-offset: 2px; border-radius: 6px; }
+.bb-booster__eyebrow {
+  margin: 10px 0 0;
+  color: var(--accent-base);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.bb-booster__title { margin: 4px 0 0; color: var(--color-text-primary); font-size: 28px; font-weight: 700; line-height: 1.2; }
+.bb-booster__sub { margin: 6px 0 20px; color: var(--color-text-secondary); font-size: 14px; }
+.bb-booster__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 560px) minmax(240px, 300px);
+  align-items: start;
+  gap: 24px;
+}
+@media (max-width: 960px) {
+  .bb-booster__layout { grid-template-columns: minmax(0, 1fr); max-width: 640px; }
+}
+.bb-booster__game {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 20px;
+  background: var(--color-bg-surface);
+}
+.bb-booster__aside { display: flex; flex-direction: column; gap: 14px; }
+.bb-booster__how {
+  padding: 20px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 20px;
+  background: var(--color-bg-surface);
+}
+.bb-booster__how-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.bb-booster__how-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-base);
+}
+.bb-booster__how h2 { margin: 0; color: var(--color-text-primary); font-size: 16px; font-weight: 700; }
+.bb-booster__how-head p { margin: 2px 0 0; color: var(--color-text-secondary); font-size: 12px; line-height: 1.5; }
+.bb-booster__steps { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; counter-reset: bb-step; }
+.bb-booster__steps li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+  counter-increment: bb-step;
+}
+.bb-booster__steps li::before {
+  content: counter(bb-step);
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-base);
+  color: var(--accent-on);
+  font-size: 11px;
+  font-weight: 700;
+}
+.bb-booster__pace {
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: var(--accent-soft);
+}
+.bb-booster__pace h3 { margin: 0 0 4px; color: var(--color-text-primary); font-size: 14px; font-weight: 700; }
+.bb-booster__pace p { margin: 0; color: var(--color-text-secondary); font-size: 12.5px; line-height: 1.55; }
+.bb-booster__pace p + p { margin-top: 6px; }
+
+/* The K-5 page puts the game on a coloured paper panel (pages/kid/KidBoosterPage.jsx). */
+.bb-kid-game .bb-follow-field { height: 280px; }

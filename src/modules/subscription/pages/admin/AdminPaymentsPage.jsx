@@ -33,7 +33,6 @@ import { useApi } from '../../../../hooks/useApi';
 import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
-import { PAGINATION } from '../../../../utils/constants';
 import { formatDate } from '../../../../utils/date';
 import { formatCurrency, formatName, formatNumber, titleCase } from '../../../../utils/format';
 import { getErrorMessage } from '../../../../utils/errorHandler';
@@ -53,8 +52,6 @@ const TYPE_OPTIONS = [
   { value: 'refund', label: 'Refund' },
   { value: 'failed_payment', label: 'Failed payment' },
 ];
-
-const ROWS_PER_PAGE_OPTIONS = PAGINATION.PAGE_SIZE_OPTIONS.map((n) => ({ value: String(n), label: String(n) }));
 
 /** "pi_3Oa...b7f2" - short enough for a table cell; the full id is still in the title attribute and the details drawer. */
 const shortId = (id) => (id ? `${id.slice(0, 10)}…${id.slice(-4)}` : null);
@@ -76,7 +73,7 @@ function statTrend(changePercent) {
  */
 export default function AdminPaymentsPage() {
   const pagination = usePagination();
-  const { page, limit, applyMeta, goToPage, setLimit } = pagination;
+  const { page, limit, applyMeta, goToPage } = pagination;
 
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');

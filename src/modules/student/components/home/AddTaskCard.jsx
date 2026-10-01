@@ -1,6 +1,16 @@
-import { LuCamera, LuPencil, LuPlus } from 'react-icons/lu';
+import { LuCamera, LuFileText, LuMic, LuPencil, LuPlus } from 'react-icons/lu';
 
-/** "Add assignment" - opens the own-task dialog, typed or starting from a photo. */
+const TILES = [
+  { mode: 'quick', icon: LuPencil, title: 'Type it', hint: 'Add manually' },
+  { mode: 'voice', icon: LuMic, title: 'Say it', hint: 'Short voice note' },
+  { mode: 'photo', icon: LuCamera, title: 'Add photo', hint: 'We read it for you' },
+  { mode: 'document', icon: LuFileText, title: 'Add PDF', hint: 'From school' },
+];
+
+/**
+ * "Add assignment" - every way in (PDF Q13): typed, voice, photo or PDF.
+ * All four end the same way: work with personal steps and study times.
+ */
 export function AddTaskCard({ onAdd }) {
   return (
     <section className="sh-card" aria-labelledby="sh-add-title">
@@ -9,16 +19,13 @@ export function AddTaskCard({ onAdd }) {
       </h2>
       <p className="sh-add__text">Track anything you need to get done.</p>
       <div className="sh-add__tiles">
-        <button type="button" className="sh-add__tile" onClick={() => onAdd('type')}>
-          <LuPencil size={16} aria-hidden="true" />
-          <span className="sh-add__tile-title">Type it</span>
-          <span className="sh-add__tile-hint">Add manually</span>
-        </button>
-        <button type="button" className="sh-add__tile" onClick={() => onAdd('photo')}>
-          <LuCamera size={16} aria-hidden="true" />
-          <span className="sh-add__tile-title">Add photo</span>
-          <span className="sh-add__tile-hint">Snap to add</span>
-        </button>
+        {TILES.map(({ mode, icon: Icon, title, hint }) => (
+          <button key={mode} type="button" className="sh-add__tile" onClick={() => onAdd(mode)}>
+            <Icon size={16} aria-hidden="true" />
+            <span className="sh-add__tile-title">{title}</span>
+            <span className="sh-add__tile-hint">{hint}</span>
+          </button>
+        ))}
       </div>
     </section>
   );

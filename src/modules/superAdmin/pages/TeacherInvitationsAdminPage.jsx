@@ -122,9 +122,15 @@ export default function TeacherInvitationsAdminPage() {
         return (
           <div>
             <Badge variant={s.variant}>{s.label}</Badge>
+            {/* Private feedback (never shown to the family) vs. the message the teacher shared (PDF Q7). */}
             {row.declineReason && (
-              <div className="ui-hint" style={{ margin: '2px 0 0' }} title={row.declineReason}>
-                “{row.declineReason.length > 40 ? `${row.declineReason.slice(0, 40)}…` : row.declineReason}”
+              <div className="ui-hint" style={{ margin: '2px 0 0' }} title={`Private feedback: ${row.declineReason}`}>
+                Private: “{row.declineReason.length > 40 ? `${row.declineReason.slice(0, 40)}…` : row.declineReason}”
+              </div>
+            )}
+            {row.declineMessage && (
+              <div className="ui-hint" style={{ margin: '2px 0 0' }} title={`Shared with the family: ${row.declineMessage}`}>
+                To family: “{row.declineMessage.length > 40 ? `${row.declineMessage.slice(0, 40)}…` : row.declineMessage}”
               </div>
             )}
           </div>

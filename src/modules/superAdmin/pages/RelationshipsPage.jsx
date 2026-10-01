@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { LuFilterX, LuUnlink, LuUserPlus } from 'react-icons/lu';
 import {
   PageHeader,
-  Card,
   Button,
   IconButton,
   SearchInput,
@@ -12,12 +11,7 @@ import {
   Alert,
   FilterBar,
   Badge,
-  Tabs,
   Select,
-  EmptyState,
-  ErrorState,
-  Loader,
-  Toast,
 } from '../../../components/common';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { Tooltip } from '../../../components/ui/tooltip';
@@ -53,123 +47,9 @@ const STATUS_OPTIONS = [
 ];
 const STATUS_FILTER_OPTIONS = [{ value: '', label: 'All statuses' }, ...STATUS_OPTIONS];
 
-const VIEW_TABS = [
-  { key: 'all', label: 'All Assignments' },
-  { key: 'byTeacher', label: 'By Teacher' },
-  { key: 'byStudent', label: 'By Student' },
-];
-
-/** Splits one person's flat assignment list into per subject/grade groups. */
-function groupBySubjectGrade(items, otherKey) {
-  const map = new Map();
-
-  for (const item of items) {
-    const other = item[otherKey];
-    if (!other) continue;
-
-    const key = `${item.subject ?? ''}|${item.grade ?? ''}`;
-    if (!map.has(key)) map.set(key, { subject: item.subject, grade: item.grade, people: [] });
-
-    map.get(key).people.push({
-      ...other,
-      relationshipId: item.id,
-      status: item.status,
-      academicYear: item.academicYear,
-    });
-  }
-
-  return [...map.values()];
-}
-
-/** "By Teacher" / "By Student": one card per person, grouped by subject + grade. */
-function GroupedAssignments({ groups, otherKey, savingId, onStatusChange, onUnassign, onOpenAssign }) {
-  if (groups.length === 0) {
-    return (
-      <EmptyState
-        icon="🔗"
-        title="No assignments match these filters"
-        description="Try adjusting the filters above, or invite a teacher."
-        action={
-          <Button startIcon={<LuUserPlus aria-hidden="true" />} onClick={onOpenAssign}>
-            Invite Teachers
-          </Button>
-        }
-      />
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      {groups.map((group) => (
-        <Card key={group.person.id} className="ui-field">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <Link to={`/admin/users/${group.person.id}`} className="text-base font-semibold">
-              {formatName(group.person)}
-            </Link>
-            <Badge variant="neutral">
-              {group.items.length} assignment{group.items.length === 1 ? '' : 's'}
-            </Badge>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            {groupBySubjectGrade(group.items, otherKey).map((sg) => (
-              <div
-                key={`${sg.subject}|${sg.grade}`}
-                className="border-l-2 pl-3"
-                style={{ borderColor: 'var(--color-border-default)' }}
-              >
-                <div className="mb-2 flex flex-wrap items-center gap-1.5 text-sm font-semibold">
-                  <Badge variant="neutral">{sg.subject || 'No subject'}</Badge>
-                  <Badge variant="info">{sg.grade || 'No grade'}</Badge>
-                </div>
-
-                <ul className="flex flex-col gap-2">
-                  {sg.people.map((person) => (
-                    <li key={person.relationshipId} className="flex flex-wrap items-center gap-2 text-sm">
-                      <Link to={`/admin/users/${person.id}`}>{formatName(person)}</Link>
-                      {person.academicYear && <Badge variant="neutral">{person.academicYear.name}</Badge>}
-
-                      <Select
-                        value={person.status}
-                        onChange={(e) => onStatusChange(person.relationshipId, e.target.value)}
-                        options={STATUS_OPTIONS}
-                        disabled={savingId === person.relationshipId}
-                        fieldClassName="mb-0"
-                        className="!w-auto"
-                      />
-
-                      <Tooltip label="Unassign" side="top">
-                        <IconButton
-                          icon={<LuUnlink aria-hidden="true" />}
-                          label="Unassign"
-                          variant="danger"
-                          size="sm"
-                          onClick={() =>
-                            onUnassign(
-                              otherKey === 'related'
-                                ? { id: person.relationshipId, owner: group.person, related: person }
-                                : { id: person.relationshipId, owner: person, related: group.person }
-                            )
-                          }
-                        />
-                      </Tooltip>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
 export default function RelationshipsPage() {
   const pagination = usePagination();
   const { page, limit, applyMeta, goToPage } = pagination;
-
-  const [view, setView] = useState('all');
 
   // --- reference data: subjects, grades, academic years -------------------
   const subjects = useApi(masterGenericService.listItems);
@@ -287,53 +167,27 @@ export default function RelationshipsPage() {
     goToPage(1);
   };
 
-  // --- list / grouped views --------------------------------------------------
+  // --- list ----------------------------------------------------------------
   const list = useApi(adminUserService.listRelationships);
-  const grouped = useApi(adminUserService.listRelationshipsGrouped);
-
   const { run: runList, meta: listMeta } = list;
-  const { run: runGrouped } = grouped;
 
-  const loadList = useCallback(
+  const refreshCurrentView = useCallback(
     () => runList({ page, limit, relationshipType: RELATIONSHIP_TYPE, ...filters }),
     [runList, page, limit, filters]
   );
-
-  const loadGrouped = useCallback(
-    () => runGrouped({ groupBy: view === 'byStudent' ? 'student' : 'teacher', ...filters }),
-    [runGrouped, view, filters]
-  );
-
-  const refreshCurrentView = useCallback(
-    () => (view === 'all' ? loadList() : loadGrouped()),
-    [view, loadList, loadGrouped]
-  );
+  const loadList = refreshCurrentView;
 
   useEffect(() => {
     refreshCurrentView().catch(() => { });
   }, [refreshCurrentView]);
 
   useEffect(() => {
-    if (view === 'all' && listMeta?.total !== undefined) applyMeta(listMeta);
-  }, [view, listMeta, applyMeta]);
+    if (listMeta?.total !== undefined) applyMeta(listMeta);
+  }, [listMeta, applyMeta]);
 
-  // --- row actions: status edit + unassign -----------------------------------
-  const [savingId, setSavingId] = useState(null);
+  // --- row action: unassign ---------------------------------------------------
   const removeModal = useModal();
   const [deleting, setDeleting] = useState(false);
-
-  const handleStatusChange = async (id, status) => {
-    setSavingId(id);
-    try {
-      await adminUserService.updateRelationship(id, { status });
-      toast.success('Status updated');
-      await refreshCurrentView();
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setSavingId(null);
-    }
-  };
 
   const handleUnassign = async () => {
     setDeleting(true);
@@ -381,20 +235,6 @@ export default function RelationshipsPage() {
       className: 'hidden lg:table-cell',
       render: (row) => (row.academicYear?.name ? <Badge variant="neutral">{row.academicYear.name}</Badge> : '—'),
     },
-    // {
-    //   key: 'status',
-    //   header: 'Status',
-    //   render: (row) => (
-    //     <Select
-    //       value={row.status}
-    //       onChange={(e) => handleStatusChange(row.id, e.target.value)}
-    //       options={STATUS_OPTIONS}
-    //       disabled={savingId === row.id}
-    //       fieldClassName="mb-0"
-    //       className="!w-auto"
-    //     />
-    //   ),
-    // },
     {
       key: 'createdAt',
       header: 'Assigned Date',
@@ -580,7 +420,6 @@ export default function RelationshipsPage() {
         loading={deleting}
       />
 
-      <Toast />
     </div>
   );
 }

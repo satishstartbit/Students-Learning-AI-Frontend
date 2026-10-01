@@ -480,6 +480,9 @@
 .sp-chip[data-tone='green'] { --sp-chip-bg: var(--sticky-green); --sp-chip-fg: #2f7d32; }
 .sp-chip[data-tone='lavender'] { --sp-chip-bg: var(--sticky-lavender); --sp-chip-fg: #6b43c4; }
 .sp-chip[data-tone='orange'] { --sp-chip-bg: var(--sticky-orange); --sp-chip-fg: #b45309; }
+/* The subject's own colour (Subjects master or the student's choice) wins over the keyword tone. */
+.sp-chip[data-subject-color] { --sp-chip-bg: var(--subject-color); --sp-chip-fg: var(--color-text-on-light); font-weight: 600; }
+.sp-chip[data-subject-color][data-ink='light'] { --sp-chip-fg: var(--color-text-on-dark); }
 .sp-task__from {
   display: grid;
   place-items: center;

@@ -2,6 +2,7 @@ import { DataTable } from '../../../components/common';
 import { formatDate, formatDuration, formatDurationLong, formatTime, getDateKey } from '../../../utils/date';
 // The same subject icon/tone the student sees on their own Home and Plan.
 import { getSubjectVisual } from '../../student/components/subjectVisual';
+import SubjectPill from '../../../components/subjects/SubjectPill';
 import '../../progress/components/progressDetail.css';
 import './learningSummary.css';
 
@@ -82,9 +83,9 @@ function SubjectsPractised({ bySubject }) {
 
             return (
               <div key={row.subject} className="ls-subject">
-                <span className="pg-subject ls-subject__icon" data-tone={tone}>
+                <SubjectPill subject={row.subject} tone={tone} className="pg-subject ls-subject__icon">
                   <Icon size={16} aria-hidden="true" />
-                </span>
+                </SubjectPill>
 
                 <div>
                   <div className="ls-subject__head">
@@ -143,9 +144,7 @@ const SESSION_COLUMNS = [
     header: 'Subject',
     render: (row) =>
       row.subject ? (
-        <span className="pg-subject" data-tone={getSubjectVisual(row.subject).tone}>
-          {row.subject}
-        </span>
+        <SubjectPill subject={row.subject} tone={getSubjectVisual(row.subject).tone} className="pg-subject" />
       ) : (
         <span className="ls-muted">—</span>
       ),
