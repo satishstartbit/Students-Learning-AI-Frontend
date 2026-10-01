@@ -32,6 +32,21 @@
   grid-area: extra;
 }
 
+/* One column: the page orders every section itself (parent My Profile). */
+.pf-layout--single {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'main';
+  grid-template-rows: auto;
+}
+
+/* The photo row at the top of a section ("Personal details"), not a card of
+   its own: a rule under it separates it from the fields. */
+.pf-header.pf-header--inline {
+  padding: 0 0 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--color-border-default);
+}
+
 /* The photo card, stacked for the narrow column. */
 .pf-layout__head .pf-header {
   flex-direction: column;

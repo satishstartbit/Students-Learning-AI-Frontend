@@ -18,8 +18,13 @@ const INITIAL_VALUES = { currentPassword: '', newPassword: '', confirmNewPasswor
  *
  * `compact` is the My Profile card look: a secondary "Change password"
  * button aligned to the right, under the fields.
+ *
+ * `layout="profile"` is for a full-width My Profile card (the parent's
+ * one-column page): current password at half width, then new + confirm side
+ * by side in the profile's two-column grid (`pf-half`, `pf-grid`; one column
+ * on phones). The default stacks the three fields, as before.
  */
-export default function ChangePasswordForm({ compact = false }) {
+export default function ChangePasswordForm({ compact = false, layout = 'stacked' }) {
   const navigate = useNavigate();
   const { signOut } = useAuth();
 
@@ -42,6 +47,22 @@ export default function ChangePasswordForm({ compact = false }) {
     },
   });
 
+  const current = (
+    <PasswordInput label="Current password" autoComplete="current-password" required {...form.getFieldProps('currentPassword')} />
+  );
+  const next = (
+    <PasswordInput
+      label="New password"
+      autoComplete="new-password"
+      hint="At least 8 characters, with an upper case letter, a lower case letter and a number."
+      required
+      {...form.getFieldProps('newPassword')}
+    />
+  );
+  const confirm = (
+    <PasswordInput label="Confirm new password" autoComplete="new-password" required {...form.getFieldProps('confirmNewPassword')} />
+  );
+
   return (
     <form onSubmit={form.handleSubmit} noValidate>
       {form.submitError && (
@@ -50,25 +71,21 @@ export default function ChangePasswordForm({ compact = false }) {
         </Alert>
       )}
 
-      <PasswordInput
-        label="Current password"
-        autoComplete="current-password"
-        required
-        {...form.getFieldProps('currentPassword')}
-      />
-      <PasswordInput
-        label="New password"
-        autoComplete="new-password"
-        hint="At least 8 characters, with an upper case letter, a lower case letter and a number."
-        required
-        {...form.getFieldProps('newPassword')}
-      />
-      <PasswordInput
-        label="Confirm new password"
-        autoComplete="new-password"
-        required
-        {...form.getFieldProps('confirmNewPassword')}
-      />
+      {layout === 'profile' ? (
+        <>
+          <div className="pf-half">{current}</div>
+          <div className="pf-grid">
+            {next}
+            {confirm}
+          </div>
+        </>
+      ) : (
+        <>
+          {current}
+          {next}
+          {confirm}
+        </>
+      )}
 
       {compact ? (
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>

@@ -129,6 +129,41 @@
   color: var(--color-text-secondary);
 }
 
+/* System status: Email (provider, sender, where links open, last send). */
+.ps-email__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+.ps-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 18px;
+  margin: 0 0 var(--spacing-md);
+  font-size: 13.5px;
+}
+.ps-facts dt {
+  color: var(--color-text-secondary);
+}
+.ps-facts dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-text-primary);
+}
+@media (max-width: 560px) {
+  .ps-facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+  .ps-facts dd {
+    margin-bottom: 8px;
+  }
+}
+
 @media (max-width: 720px) {
   .ps-fields {
     grid-template-columns: minmax(0, 1fr);

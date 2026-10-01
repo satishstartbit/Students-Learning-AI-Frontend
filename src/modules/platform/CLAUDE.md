@@ -7,9 +7,9 @@ Super Admin tools for running the platform: versioned **Platform settings** (bus
 |---|---|
 | `pages/PlatformSettingsPage.jsx` (`/admin/settings`) | Every setting by category, with its published version |
 | `pages/PlatformSettingPage.jsx` (`/admin/settings/:key`) | Edit a draft → Check → Publish (reason required) → history with Rollback. The form is drawn from the setting's own field list (`components/SettingsFieldEditor.jsx`, recursive: text, textarea, integer, number, boolean, select, multiselect, tags, integerList, object, list) |
-| `pages/SystemStatusPage.jsx` (`/admin/system`) | Database, Redis, workers, scheduled sweeps (heartbeats), outbox backlog |
+| `pages/SystemStatusPage.jsx` (`/admin/system`) | Database, Redis, **Email** (provider, configured or not, sender, where links in emails open = `CLIENT_URL` with a warning when that isn't this site, last send / last failure + reason since the server started, **Send me a test email** to the signed-in Super Admin's own address via `POST /admin/system/test-email`), workers, scheduled sweeps (heartbeats), outbox backlog |
 | `pages/AiUsagePage.jsx` (`/admin/ai-usage`) | AI cost per use and model (USD, from the price table), cost per student, provider rate limits, template-fallback and invalid-proposal rates, how often added work needed a question. Counts and money only. |
-| `services/platform.service.js` | `/admin/settings/*`, `/admin/system/status`, `/admin/system/ai-usage?days=` |
+| `services/platform.service.js` | `/admin/settings/*`, `/admin/system/status`, `POST /admin/system/test-email`, `/admin/system/ai-usage?days=` |
 
 **Backend:** `routes/settings.routes.js`, `system.routes.js` (inside the Super Admin router) → `services/settings.service.js` (+ `repositories/settings.repository.js`, `config/settings/registry.js`, `fieldSchema.js`, `definitions/*`), `services/ops/{heartbeat,readiness,aiUsage}.service.js`. Models: `PlatformSettingVersion`, `ServiceHeartbeat` (migration 105).
 

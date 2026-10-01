@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PageHeader, Card, Input, Button, Alert, SectionHeader, ButtonGroup } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
+import { emailProblemText } from '../../../utils/emailProblem';
 import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
 import { ROLE_LABELS, USER_ROLES, listPathForRole } from '../../../utils/constants';
 import adminUserService from '../services/adminUser.service';
@@ -74,7 +75,16 @@ function CreateUserForm({ role }) {
         profile: buildProfilePayload(role, values),
       });
 
-      toast.success(`${label} created - username "${data.username}". They have been emailed a link to set their password.`);
+      // The account exists either way; say plainly when the set-password email
+      // didn't go out - without it the new user can't sign in.
+      if (data.inviteEmail?.sent === false) {
+        toast.error(
+          `${label} created - username "${data.username}" - but the email with their set-password link didn't go out. ${emailProblemText(data.inviteEmail.problem)} Once email works, use Reset password on their page to send a new link.`,
+          { title: "The set-password email didn't go out" }
+        );
+      } else {
+        toast.success(`${label} created - username "${data.username}". They have been emailed a link to set their password.`);
+      }
       navigate(`/admin/users/${data.id}`);
       return data;
     },

@@ -49,8 +49,7 @@ const NAV_ITEMS = [
         items: [
           // { to: '/admin/relationships/invitations', label: 'Teacher invitations', icon: LuMailOpen },
           { to: '/admin/relationships', label: 'Assignments', icon: LuLink, end: true },
-          // Assisted changes only - the parent's invitation is the normal path.
-          { to: '/admin/relationships/connections', label: 'Teacher connections', icon: LuUsersRound },
+          // "Teacher connections" removed at the client's request (2026-10-01).
           // Hidden for now - the wording lives in services/email/copy/teacher-invitation.txt (backend).
           // { to: '/admin/relationships/invitation-email', label: 'Invitation email', icon: LuMail }, // re-add LuMail to the import
         ],

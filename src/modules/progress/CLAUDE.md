@@ -6,7 +6,7 @@ Shared, read-only "how is this student doing" UI used by **both** the parent and
 | Frontend | Purpose |
 |---|---|
 | `components/StudentProgressDetail.jsx` + `progressDetail.css` (`pg-`) | The detail panel: today's check-in, recent check-ins, focus time today, task counts and task list. For a family (not a teacher) the list also holds the child's own and parent-added work: stage `done`, "From" = Added by your child / a parent (PDF Q15). A teacher's view never includes unshared own work. |
-| `components/CheckInStrip.jsx`, `CheckInBadge.jsx`, `MoodIcon.jsx` | Recent check-ins. Mood icon and colour come from the `emotional_states` master (via `checkIn/MoodGlyph`), never from a name map. |
+| `components/CheckInStrip.jsx`, `CheckInBadge.jsx`, `MoodIcon.jsx` | Recent check-ins. Mood icon and colour come from the `emotional_states` master (via `checkIn/MoodGlyph`), never from a name map. The parent Overview reuses the strip as its "Check-ins this week" panel (`days={7}` plus the optional `title`, `lead`, `titleAs`, `className`, `faceSize`) and `StudentProgressDetail`'s named export `TodayCards` as its top row - check `/parent` too when changing either. |
 | `components/TaskCounts.jsx` | Counts per stage |
 | `stages.js` | `TASK_STAGES` labels/tones for the stage keys the backend sends (`not_started`, `in_progress`, `returned`, `submitted`, `reviewed`), and `MOOD_TONE` (badge tone per mood code) |
 

@@ -204,3 +204,58 @@ body.portal-theme [data-collapsible='icon'] .vc-trigger[data-slot='sidebar-menu-
   flex: none;
   color: var(--accent-base);
 }
+
+/* --- Phone top bar chip (ViewingChildChip) ---------------------------- */
+.vc-chip__wrap {
+  position: relative;
+  min-width: 0;
+}
+.vc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-full, 9999px);
+  background: var(--accent-soft);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+span.vc-chip {
+  cursor: default;
+}
+.vc-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.vc-chip .vc-avatar {
+  background: var(--color-bg-surface);
+}
+.vc-chip__name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.vc-chip__chevron {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  transition: transform 200ms ease;
+}
+.vc-chip__chevron--open {
+  transform: rotate(180deg);
+}
+.vc-chip__menu {
+  right: auto;
+  min-width: 220px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vc-chip__chevron {
+    transition: none;
+  }
+}

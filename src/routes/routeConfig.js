@@ -26,7 +26,6 @@ const UserDetailPage = lazy(() => import('../modules/superAdmin/pages/UserDetail
 const EditUserPage = lazy(() => import('../modules/superAdmin/pages/EditUserPage'));
 const RelationshipsPage = lazy(() => import('../modules/superAdmin/pages/RelationshipsPage'));
 const TeacherInvitationsAdminPage = lazy(() => import('../modules/superAdmin/pages/TeacherInvitationsAdminPage'));
-const TeacherConnectionsPage = lazy(() => import('../modules/superAdmin/pages/TeacherConnectionsPage'));
 const AdminProfilePage = lazy(() => import('../modules/superAdmin/pages/AdminProfilePage'));
 const PlatformSettingsPage = lazy(() => import('../modules/platform/pages/PlatformSettingsPage'));
 const PlatformSettingPage = lazy(() => import('../modules/platform/pages/PlatformSettingPage'));
@@ -263,14 +262,11 @@ export const SUPER_ADMIN_ROUTES = {
       permissions: [PERMISSIONS.USER_READ],
       component: TeacherInvitationsAdminPage,
     },
-    {
-      // Assisted create / edit / move / approve / remove, each with a
-      // recorded reason - for when a family needs help, not the normal path.
-      path: 'relationships/connections',
-      label: 'Teacher connections',
-      permissions: [PERMISSIONS.USER_READ],
-      component: TeacherConnectionsPage,
-    },
+    // "Teacher connections" was removed at the client's request (2026-10-01);
+    // old links land on Assignments. Its page (superAdmin/pages/
+    // TeacherConnectionsPage.jsx) is kept unreferenced - it was also where
+    // parents' teacher requests were approved or rejected.
+    { path: 'relationships/connections', label: 'Teacher connections', redirectTo: '/admin/relationships' },
     // Hidden for now - the client-written invitation is edited in
     // services/email/copy/teacher-invitation.txt (backend) instead. Uncomment
     // this and the import above (and the nav item in SuperAdminLayout) to

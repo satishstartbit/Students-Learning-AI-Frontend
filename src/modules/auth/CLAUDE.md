@@ -16,7 +16,7 @@ Sign-in and account pages, the current-user API, and the **shared profile field 
 | `components/RoleProfileFields.jsx` | Per-role profile fields (STUDENT/TEACHER/PARENT) shared by registration, admin create/edit, and parent add/edit child. `includeAdminOnly` switches free text to master dropdowns. `lookupFetcher` picks the endpoint. `layout="profile"` puts STUDENT fields in the two-column `pf-grid`. |
 | `components/AddressFields.jsx` | Address group: Canada → province picker + "A1A 1A1" postal code with FSA auto-fill of city/province (`/postal-lookup/:fsa`); other countries → free text. `layout="profile"` gives the two-column version. |
 | `components/profilePayload.js` | `buildProfilePayload(role, values)`: joins multi-select arrays to CSV, drops empty values |
-| `components/ChangePasswordForm.jsx` | Change password (`compact` variant for My Profile) |
+| `components/ChangePasswordForm.jsx` | Change password (`compact` variant for My Profile; `layout="profile"` for a full-width card: current password at half width, new + confirm side by side; default `stacked`) |
 | `services/auth.service.js` | login/logout/register/me/verify/forgot (`{identifier}`)/verify-reset-code/reset/change-password, `GET /auth/lookups/master/:type` |
 
 Client session: `store/slices/authSlice.js` + `utils/auth.js`. Tokens and user are in localStorage `eflp.accessToken` / `eflp.user`. The client only checks the token's `exp`. Route guards: `routes/ProtectedRoutes.jsx`, `RoleRoutes.jsx`, `utils/permissions.js`.
@@ -38,6 +38,7 @@ Client session: `store/slices/authSlice.js` + `utils/auth.js`. Tokens and user a
   - Outside production the code is logged to the server console.
   - The link route `/verify-email?token=` still works.
   - Test: `.claude/testing/functional/register-verify.mjs`.
+- **A reset verifies the address (2026-10-01):** `POST /auth/reset-password` sets `email_verified_at` for an unverified teacher/parent, because their link or code only ever goes to their own address. So someone Super Admin created can set a password from the emailed link and sign straight in, without a second email (the verification code). Students are untouched.
 - **Password reset by code** (migration 102: `password_resets.kind` `'link'|'code'`, `attempts`):
   - `POST /auth/forgot-password {identifier}` (username, email or phone; the older `{email}` still works) sends a 6-digit code. A **student's code goes to their active parents** (their own email only if they have none), and the email names the child. Always 200 with `{ method, codeLength, expiresInMinutes, resendAfterSeconds }`. At most one code per `PASSWORD_RESET_RESEND_SECONDS` (45); only the newest counts.
   - `POST /auth/verify-reset-code {identifier, code}`: 400 `INVALID_CODE` or `CODE_EXPIRED` (after `PASSWORD_RESET_CODE_MINUTES` 10, a used code, or the `PASSWORD_RESET_CODE_MAX_ATTEMPTS`th (5) wrong try, claimed atomically so parallel guesses can't pass it). A right code is used up and swapped for `{ resetToken }`, a `'link'` row valid for `PASSWORD_RESET_AFTER_CODE_TTL` (15m).

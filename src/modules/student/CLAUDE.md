@@ -57,7 +57,7 @@ Everything a signed-in student sees, in **two experiences**: the K-5 kid UI ("My
 
 ## Verify
 - `npm test` (brain-booster logic) · `npx eslint src/modules/student` · `npm run build`
-- UI: harness with `USERS.kid` **and** `USERS.student`. Example: `.claude/testing/scenarios/student-task-focus.mjs`; the schoolwork views: `scenarios/schoolwork-views.mjs`; Focus with Brain Boosters: `scenarios/focus-boosters.mjs`; the games: `brain-boosters.mjs`, `finger-follow.mjs`; the assignment page reviewed / handed in / open, both bands: `student-assignment-review.mjs`. A fixture for `/check-ins/today` returns `{ date, checkedIn, checkIn }`, not the check-in itself.
+- UI: harness with `USERS.kid` **and** `USERS.student`. Example: `.claude/testing/scenarios/student-task-focus.mjs`; the schoolwork views: `scenarios/schoolwork-views.mjs`; Focus with Brain Boosters: `scenarios/focus-boosters.mjs`; the games: `brain-boosters.mjs`, `finger-follow.mjs`; the assignment page reviewed / handed in / open, both bands: `student-assignment-review.mjs`; the K-5 "What's making it tricky?" dialog at phone, tablet and laptop sizes: `kid-tricky-dialog.mjs`. **K-5 dialogs must fit the screen:** a bottom sheet on a phone or a backdrop that scrolls, never a fixed card taller than the viewport (`KidDifficultyPicker` keeps its heading and buttons fixed and scrolls the list; `CheckInModal` scrolls the backdrop). They are portalled into `.kid-theme`, so `kid-theme.css` resets `fieldset` there too. A fixture for `/check-ins/today` returns `{ date, checkedIn, checkIn }`, not the check-in itself.
 - Backend focus/rewards rules: api-tester (dry-run or private backend with a zz student).
 
 ## Related

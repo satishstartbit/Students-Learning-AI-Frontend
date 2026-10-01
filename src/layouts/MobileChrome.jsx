@@ -103,7 +103,11 @@ function MoreSheet({ isOpen, onClose, items, accountSubtitle }) {
  * @param mobileTabs        the five tab destinations
  * @param notificationsPath a page to link the bell to (students); otherwise the bell dropdown
  */
-export function MobileTopBar({ navItems, mobileTabs, notificationsPath, accountSubtitle }) {
+/**
+ * `brandSlot` (parents: the viewing-child chip) takes the place of the app
+ * name next to the logo, as the parent "child view" mobile mockup shows it.
+ */
+export function MobileTopBar({ navItems, mobileTabs, notificationsPath, accountSubtitle, brandSlot }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const { pathname } = useLocation();
   const tabPaths = new Set(mobileTabs.map((t) => t.to));
@@ -118,12 +122,15 @@ export function MobileTopBar({ navItems, mobileTabs, notificationsPath, accountS
 
   return (
     <header className="am-topbar">
-      <Link to="/" className="am-brand">
-        <span className="am-brand__mark" aria-hidden="true">
-          <LuStar />
-        </span>
-        <span className="am-brand__name">{APP_NAME}</span>
-      </Link>
+      <div className="am-brandrow">
+        <Link to="/" className="am-brand" aria-label={brandSlot ? APP_NAME : undefined}>
+          <span className="am-brand__mark" aria-hidden="true">
+            <LuStar />
+          </span>
+          {!brandSlot && <span className="am-brand__name">{APP_NAME}</span>}
+        </Link>
+        {brandSlot}
+      </div>
 
       <div className="am-topbar__actions">
         {notificationsPath ? <NotificationsLink to={notificationsPath} /> : <NotificationBell />}

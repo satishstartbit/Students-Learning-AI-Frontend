@@ -10,13 +10,17 @@ import { getInitials } from '../../../utils/format';
  * two columns - the forms (`children`) on the left, `head` (the photo card)
  * and `extra` (colour theme, password) on the right. Under 1080px it stacks
  * as head, forms, extra.
+ *
+ * With neither `head` nor `extra` it is one column: the page puts every
+ * section in `children`, in its own order (the parent's My Profile).
  */
 export function ProfilePageLayout({ description, notice, head, extra, children }) {
+  const single = !head && !extra;
   return (
     <div className="pf-page td-page">
       <PageHeader title="My Profile" description={description} />
       {notice}
-      <div className="pf-layout">
+      <div className={`pf-layout${single ? ' pf-layout--single' : ''}`}>
         {head && <div className="pf-layout__head">{head}</div>}
         <div className="pf-layout__main">{children}</div>
         {extra && <div className="pf-layout__extra">{extra}</div>}
@@ -45,6 +49,9 @@ export function ProfileSection({ title, hint, children, className = '', ...rest 
  * Edit child dialogs) passes `canRemove`/`removeLabel`/`note` to say so
  * instead, and `placeholderName` for while no name has been typed yet.
  * Without `onUpload` (Super Admin, who has no photo) it shows initials only.
+ *
+ * `inline` drops the card frame so the photo row can sit at the top of
+ * another section (the parent's "Personal details"), above its fields.
  */
 export function ProfileHeaderCard({
   name,
@@ -57,13 +64,15 @@ export function ProfileHeaderCard({
   canRemove = Boolean(photoUrl),
   removeLabel = 'Remove',
   note = 'Profile photo · JPG, PNG, WEBP or HEIC',
+  inline = false,
 }) {
   const inputRef = useRef(null);
   const [failedUrl, setFailedUrl] = useState(null);
   const showPhoto = photoUrl && failedUrl !== photoUrl;
+  const Root = inline ? 'div' : 'section';
 
   return (
-    <section className="pf-card pf-header" aria-label="Profile photo">
+    <Root className={inline ? 'pf-header pf-header--inline' : 'pf-card pf-header'} role={inline ? 'group' : undefined} aria-label="Profile photo">
       <span className="pf-avatar" aria-hidden="true">
         {showPhoto ? <img src={photoUrl} alt="" onError={() => setFailedUrl(photoUrl)} /> : getInitials(name) || '?'}
       </span>
@@ -106,7 +115,7 @@ export function ProfileHeaderCard({
         )}
       </div>
       )}
-    </section>
+    </Root>
   );
 }
 

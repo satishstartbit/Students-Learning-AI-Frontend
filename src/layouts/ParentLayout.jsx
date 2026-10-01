@@ -17,6 +17,7 @@ import { useApi } from '../hooks/useApi';
 import onboardingService from '../modules/onboarding/services/onboarding.service';
 import { ParentOnboardingContext } from '../modules/parent/hooks/useParentOnboarding';
 import ViewingChildPicker from '../modules/parent/components/ViewingChildPicker';
+import ViewingChildChip from '../modules/parent/components/ViewingChildChip';
 import { ViewingChildContext } from '../modules/parent/hooks/useViewingChild';
 import parentService from '../modules/parent/services/parent.service';
 import AccessBanner from '../modules/subscription/components/AccessBanner';
@@ -111,6 +112,8 @@ export function ParentLayout({ children }) {
   }, [completed, runChildren]);
 
   const childrenList = useMemo(() => childrenApi.data ?? [], [childrenApi.data]);
+  // Archived children keep their history but don't count as "Parent of N".
+  const activeChildCount = childrenList.filter((c) => !c.archived).length;
 
   const viewingChild = useMemo(() => {
     if (!childrenList.length) return null;
@@ -126,15 +129,20 @@ export function ParentLayout({ children }) {
   // new function per fetch re-ran their effect, which refetched, forever.
   const refreshChildren = useCallback(() => runChildren({ limit: 100 }).catch(() => {}), [runChildren]);
 
+  // Loading until the first answer: the fetch only starts in an effect after
+  // onboarding is known, so "not loading yet" must not read as "no children"
+  // (the Overview would flash "Add your first child").
+  const childrenLoading = completed && !childrenApi.data && !childrenApi.error;
+
   const viewingContext = useMemo(
     () => ({
       viewingChild,
       children: childrenList,
       setViewingChildId,
-      isLoading: childrenApi.isLoading && !childrenApi.data,
+      isLoading: childrenLoading,
       refresh: refreshChildren,
     }),
-    [viewingChild, childrenList, setViewingChildId, childrenApi.isLoading, childrenApi.data, refreshChildren],
+    [viewingChild, childrenList, setViewingChildId, childrenLoading, refreshChildren],
   );
 
   // --- Onboarding + subscription gates ----------------------------------
@@ -177,6 +185,10 @@ export function ParentLayout({ children }) {
                 subtitle="Parent"
                 brand="FP"
                 sidebarExtra={<ViewingChildPicker />}
+                // Phones: the child being viewed sits next to the logo (the "child view" mockup).
+                mobileBrandSlot={childrenList.length ? <ViewingChildChip /> : undefined}
+                // "Parent of 3" under the name, as teachers get their school and students their grade.
+                accountSubtitle={activeChildCount ? `Parent of ${activeChildCount}` : undefined}
               >
                 {content}
               </AuthenticatedLayout>

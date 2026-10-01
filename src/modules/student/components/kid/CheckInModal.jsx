@@ -144,9 +144,12 @@ export function CheckInModal({ isOpen, onClose, initial, onSave, firstName, mood
     );
   }
 
+  // The backdrop scrolls and the card centres with `m-auto`: on a short phone
+  // (the two halves stack) the whole card - and "I'm ready" - stays reachable
+  // instead of being cut off top and bottom.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-kid-ink/45 p-4"
+      className="fixed inset-0 z-50 flex overflow-y-auto overscroll-contain bg-kid-ink/45 p-3 sm:p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose?.();
       }}
@@ -165,7 +168,7 @@ export function CheckInModal({ isOpen, onClose, initial, onSave, firstName, mood
         aria-labelledby={`${uid}-title`}
         onKeyDown={handleKeyDown}
         tabIndex={-1}
-        className="relative z-10 grid w-full max-w-2xl overflow-hidden rounded-[2rem] shadow-2xl outline-none sm:grid-cols-2"
+        className="relative z-10 m-auto grid w-full max-w-2xl overflow-hidden rounded-[2rem] shadow-2xl outline-none sm:grid-cols-2"
       >
         <button
           type="button"

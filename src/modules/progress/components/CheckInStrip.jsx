@@ -29,8 +29,22 @@ function EnergyDots({ energy }) {
  * The strip is built from the day keys themselves, not from the history rows,
  * because a missing day is exactly what it needs to show - the API only
  * returns the days that have a check-in.
+ *
+ * `title`, `lead`, `titleAs`, `className` and `faceSize` let the parent's
+ * Overview show it as its "Check-ins this week" panel; Progress pages keep
+ * the defaults.
  */
-export function CheckInStrip({ history = [], todayKey, days = 14, name }) {
+export function CheckInStrip({
+  history = [],
+  todayKey,
+  days = 14,
+  name,
+  title,
+  lead,
+  titleAs: Title = 'h3',
+  className = 'pg-block',
+  faceSize = 28,
+}) {
   // Each day's face is that mood as Master Management publishes it.
   const { moodFor } = useMoodLookup();
   const byDate = useMemo(() => new Map(history.map((row) => [row.date, row])), [history]);
@@ -58,10 +72,10 @@ export function CheckInStrip({ history = [], todayKey, days = 14, name }) {
   }, [columns, moodFor]);
 
   return (
-    <section className="pg-block">
-      <h3 className="pg-block__title">Check-ins, last {days} days</h3>
+    <section className={className}>
+      <Title className="pg-block__title">{title ?? `Check-ins, last ${days} days`}</Title>
       <p className="pg-block__lead">
-        How {name || 'this student'} has been arriving each day. A dashed circle means no check-in that day.
+        {lead ?? `How ${name || 'this student'} has been arriving each day. A dashed circle means no check-in that day.`}
       </p>
 
       <div className="pg-strip">
@@ -80,7 +94,7 @@ export function CheckInStrip({ history = [], todayKey, days = 14, name }) {
                   className="pg-face pg-face--art"
                   title={`${formatDateKey(date)}: ${mood.name}, energy ${entry.energy}/${ENERGY_LEVELS.length}`}
                 >
-                  <MoodIcon mood={mood} size={28} />
+                  <MoodIcon mood={mood} size={faceSize} />
                   <span className="ui-sr-only">
                     {formatDateKey(date)}: {mood.name}, energy {entry.energy} of {ENERGY_LEVELS.length}
                   </span>

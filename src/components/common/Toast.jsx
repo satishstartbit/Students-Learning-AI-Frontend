@@ -48,15 +48,18 @@ export function Toast({ className = '' }) {
       role="region"
       aria-label="Notifications"
     >
+      {/* Like the mockup's "Profile saved / Your changes are live.": a toast
+          with a title shows the message under it; a message on its own
+          ("Progress saved") is the bold line. */}
       {toasts.map((item) => (
         <Alert
           key={item.id}
           variant={item.variant}
-          title={item.title}
+          title={item.title ?? item.message}
           onDismiss={() => dismiss(item.id)}
           className="ui-toast"
         >
-          {item.message}
+          {item.title ? item.message : null}
         </Alert>
       ))}
     </div>

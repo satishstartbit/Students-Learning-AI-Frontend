@@ -51,8 +51,11 @@ function EnergyDots({ energy }) {
   );
 }
 
-/** Today's check-in, today's tasks and today's focus time. */
-function TodayCards({ progress }) {
+/**
+ * Today's check-in, today's tasks and today's focus time. Also the top row
+ * of the parent's Overview, so the two pages read the same numbers.
+ */
+export function TodayCards({ progress }) {
   // The mood as Master Management publishes it, not a static emoji map.
   const { moodFor } = useMoodLookup();
   const { today, counts, nextDue, focus } = progress;
