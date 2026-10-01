@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { LuArrowDown, LuArrowUp, LuPlus, LuTrash2 } from 'react-icons/lu';
-import { Alert, Button, Card, ConfirmationModal, ErrorState, IconButton, Input, Select } from '../../../../components/common';
+import { Alert, Button, Card, ErrorState, IconButton, Input, Select } from '../../../../components/common';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
 import { formatDateKey } from '../../../../utils/date';
@@ -92,27 +92,88 @@ function CheckpointsEditor({ assignmentId, plan, disabled, onSaved }) {
   );
 }
 
+const MISSING_LABEL = { title: 'a title', dueDate: 'a due date', gradeOrSubject: 'a grade or subject' };
+const listWords = (words) => (words.length <= 1 ? words[0] ?? '' : `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`);
+
+/**
+ * Where the breakdown stands, in one line above the steps. The steps are made
+ * on Save (draft or publish); nothing here re-makes them on demand.
+ */
+function BreakdownStatus({ breakdown, live }) {
+  if (breakdown.status === 'unavailable') {
+    return (
+      <Alert variant="warning" className="ui-field">
+        Suggested steps aren&apos;t available on this server yet (it needs database update 113). You can still add your own.
+      </Alert>
+    );
+  }
+  if (breakdown.status === 'failed') {
+    return (
+      <Alert variant="warning" className="ui-field">
+        We couldn&apos;t make suggested steps this time. Save the assignment again to try once more, or add your own below.
+      </Alert>
+    );
+  }
+  let text;
+  if (breakdown.status === 'needs_fields') {
+    text = `Suggested steps are made when you save this assignment with ${listWords(breakdown.missing.map((m) => MISSING_LABEL[m] ?? m))}.`;
+  } else if (breakdown.status === 'making') {
+    text = 'Making suggested steps…';
+  } else if (breakdown.status === 'updating') {
+    text = 'Updating the steps to match your latest changes…';
+  } else if (breakdown.status === 'off') {
+    text = 'Automatic steps are switched off (Platform settings). Add your own steps below.';
+  } else if (live) {
+    text = 'Every student has these steps. Changing the instructions or due date re-works the steps they haven’t finished - finished steps never change.';
+  } else {
+    text = 'Suggested from what you saved. Edit anything - students see these steps only once you publish.';
+  }
+  return (
+    <p className="ui-hint" style={{ marginTop: 0 }} data-testid="breakdown-status" data-status={breakdown.status}>
+      {text}
+    </p>
+  );
+}
+
 function StepsEditor({ assignmentId, plan, disabled, onSaved }) {
-  const [rows, setRows] = useState(() => plan.steps.map((s) => ({ title: s.title, minutes: s.minutes ? String(s.minutes) : '', checkpointId: s.checkpointId ?? '' })));
+  const breakdown = plan.breakdown ?? { status: 'ready', steps: plan.steps ?? [], missing: [] };
+  const live = Boolean(breakdown.live);
+  const [rows, setRows] = useState(() =>
+    breakdown.steps.map((s) => ({
+      key: s.key ?? null,
+      title: s.title,
+      minutes: s.minutes ? String(s.minutes) : '',
+      checkpointId: s.checkpointId ?? '',
+      // Shown beside the step: the teacher's own, or a suggestion they haven't changed.
+      edited: Boolean(s.edited || s.origin === 'teacher'),
+      original: { title: s.title, minutes: s.minutes ? String(s.minutes) : '', checkpointId: s.checkpointId ?? '' },
+    }))
+  );
   const [saving, setSaving] = useState(false);
-  const [clearing, setClearing] = useState(false);
   const [error, setError] = useState(null);
   const checkpointOptions = plan.checkpoints.map((c) => ({ value: c.id, label: c.title }));
+  const waiting = ['making', 'needs_fields'].includes(breakdown.status) && !rows.length;
 
   const invalid = rows.some((r) => !r.title.trim() || (r.minutes && !(Number(r.minutes) >= 1 && Number(r.minutes) <= 600)));
+  const isYours = (r) =>
+    r.edited || !r.original || r.title.trim() !== r.original.title || r.minutes !== r.original.minutes || (r.checkpointId || '') !== (r.original.checkpointId || '');
 
-  const send = async (steps, message) => {
+  const send = async () => {
     setSaving(true);
     setError(null);
     try {
-      await assignmentService.setTeacherPlan(assignmentId, steps);
-      toast.success(message);
+      await assignmentService.setTeacherPlan(
+        assignmentId,
+        rows.map((r) => ({ key: r.key, title: r.title.trim(), minutes: r.minutes ? Number(r.minutes) : null, checkpointId: r.checkpointId || null }))
+      );
+      toast.success(live ? 'Every student’s unfinished steps now match. Finished steps didn’t change.' : 'Students see these steps once you publish.', {
+        title: 'Steps saved',
+      });
       onSaved();
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
       setSaving(false);
-      setClearing(false);
     }
   };
 
@@ -125,24 +186,26 @@ function StepsEditor({ assignmentId, plan, disabled, onSaved }) {
     });
 
   return (
-    <div className="ui-field">
-      <h3 className="ui-statcard__label">Your steps</h3>
-      <p className="ui-hint" style={{ marginTop: 0 }}>
-        Optional. Every student gets these as required steps instead of suggested ones. Steps a student already finished stay finished.
-        Without your steps, each student gets personal suggested steps they can change.
-      </p>
+    <div className="ui-field" data-testid="breakdown-steps">
+      <h3 className="ui-statcard__label">Steps</h3>
+      <BreakdownStatus breakdown={breakdown} live={live} />
       {error && (
         <Alert variant="error" className="ui-field">
           {error}
         </Alert>
       )}
+      {!waiting && rows.length > 0 && (
+        <p className="ui-hint" style={{ marginTop: 0 }}>
+          “Yours” steps are required for every student; suggested ones can be changed by each student.
+        </p>
+      )}
       {rows.map((r, i) => (
         <div
-          key={`step-${i}`}
+          key={r.key ?? `new-${i}`}
           style={{ ...rowStyle, gridTemplateColumns: checkpointOptions.length ? 'minmax(0, 2fr) 110px minmax(0, 1fr) auto' : 'minmax(0, 2fr) 110px auto' }}
         >
           <Input
-            label={`Step ${i + 1}`}
+            label={`Step ${i + 1} · ${isYours(r) ? 'Yours' : 'Suggested'}`}
             value={r.title}
             maxLength={200}
             disabled={disabled}
@@ -185,7 +248,7 @@ function StepsEditor({ assignmentId, plan, disabled, onSaved }) {
           </div>
         </div>
       ))}
-      {!disabled && (
+      {!disabled && !waiting && breakdown.status !== 'unavailable' && (
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <Button
             type="button"
@@ -193,57 +256,51 @@ function StepsEditor({ assignmentId, plan, disabled, onSaved }) {
             variant="secondary"
             startIcon={<LuPlus aria-hidden="true" />}
             disabled={rows.length >= 20}
-            onClick={() => setRows((list) => [...list, { title: '', minutes: '', checkpointId: '' }])}
+            onClick={() => setRows((list) => [...list, { key: null, title: '', minutes: '', checkpointId: '', edited: true, original: null }])}
           >
             Add step
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            loading={saving && !clearing}
-            disabled={invalid || !rows.length || saving}
-            onClick={() =>
-              send(
-                rows.map((r) => ({ title: r.title.trim(), minutes: r.minutes ? Number(r.minutes) : null, checkpointId: r.checkpointId || null })),
-                'Steps saved for every student'
-              )
-            }
-          >
-            Save steps for every student
+          <Button type="button" size="sm" loading={saving} disabled={invalid || !rows.length || saving} onClick={send}>
+            {live ? 'Save steps for every student' : 'Save steps'}
           </Button>
-          {plan.steps.length > 0 && (
-            <Button type="button" size="sm" variant="ghost" disabled={saving} onClick={() => setClearing(true)}>
-              Remove my steps
-            </Button>
-          )}
         </div>
       )}
-      <ConfirmationModal
-        isOpen={clearing}
-        onClose={() => setClearing(false)}
-        onConfirm={() => send(null, 'Your steps are no longer required - students can change them')}
-        loading={saving}
-        title="Remove your steps?"
-        message="Students keep the steps they have, but they're no longer required, so each student can change them."
-        confirmLabel="Remove"
-      />
     </div>
   );
 }
 
 /**
- * Checkpoints and the teacher's own steps for THEIR assignment (PDF Q3, Q5).
- * No approval queue: students get plans straight away; this is optional
- * correction that supersedes suggested steps.
+ * Checkpoints and the step breakdown for THEIR assignment (PDF Q3, Q5; the
+ * "AI Breakdown Timing" spec, 2026-10-01). The steps are made when the
+ * assignment is saved - draft or publish - and previewed and edited here;
+ * a draft's are never shown to students. No regenerate button: a different
+ * breakdown comes from editing the steps, or the assignment itself.
  */
 export function TeacherPlanCard({ assignmentId, archived }) {
   const plan = useApi(assignmentService.getTeacherPlan, { immediate: true, args: [assignmentId] });
-  const reload = () => plan.run(assignmentId).catch(() => {});
+  const { run } = plan;
+  const reload = useCallback(() => run(assignmentId).catch(() => {}), [run, assignmentId]);
+  const status = plan.data?.breakdown?.status;
+
+  // While the steps are being made (right after a save), look again every few seconds, for up to a minute.
+  const polls = useRef(0);
+  useEffect(() => {
+    if (!['making', 'updating'].includes(status)) {
+      polls.current = 0;
+      return undefined;
+    }
+    if (polls.current >= 20) return undefined;
+    const timer = setTimeout(() => {
+      polls.current += 1;
+      reload();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [status, plan.data, reload]);
 
   return (
     <Card
       title="Steps and checkpoints"
-      subtitle="Students get personal steps and study times automatically. Add your own to make them the same for everyone."
+      subtitle="Steps are suggested when you save the assignment. Edit them here; students get them when it’s published."
       className="ui-field"
     >
       {plan.error && !plan.data ? (
@@ -251,7 +308,8 @@ export function TeacherPlanCard({ assignmentId, archived }) {
       ) : !plan.data ? (
         <p className="ui-hint">Loading…</p>
       ) : (
-        <div key={JSON.stringify([plan.data.checkpoints, plan.data.steps])}>
+        // Re-mounted only when the stored steps or checkpoints change (not on a status-only poll).
+        <div key={JSON.stringify([plan.data.checkpoints, plan.data.breakdown?.steps ?? plan.data.steps])}>
           <CheckpointsEditor assignmentId={assignmentId} plan={plan.data} disabled={archived} onSaved={reload} />
           <StepsEditor assignmentId={assignmentId} plan={plan.data} disabled={archived} onSaved={reload} />
         </div>

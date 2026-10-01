@@ -9,7 +9,8 @@ import '../planner.css';
 
 const QUICK = {
   continue: { icon: LuPlay, label: 'Keep going', hint: 'I’m fine, carry on' },
-  smaller_steps: { icon: LuLayers, label: 'Smaller steps', hint: 'Break this step up' },
+  // Trigger A: re-makes only the unfinished steps, smaller. The one way a student gets a new breakdown.
+  smaller_steps: { icon: LuLayers, label: 'Break it down more', hint: 'Smaller steps for what’s left' },
   explain: { icon: LuCircleHelp, label: 'Explain it', hint: 'Ask the learning assistant' },
   replan: { icon: LuCalendarSync, label: 'Re-plan', hint: 'Fit my time again' },
   ask_adult: { icon: LuHandHelping, label: 'Ask an adult', hint: 'Tell my parent I need help' },
@@ -17,8 +18,8 @@ const QUICK = {
 };
 
 /**
- * "Need help?" for one piece of work (PDF Q1): Keep going, Smaller steps,
- * Explain, Re-plan, Ask an adult, No longer needed - which buttons show is
+ * "Need help?" for one piece of work (PDF Q1): Keep going, Break it down
+ * more, Explain, Re-plan, Ask an adult, No longer needed - which buttons show is
  * the admin's choice ("Help when work gets hard"), and "No longer needed"
  * only appears when this person may remove the work (never teacher work).
  * "Something's tricky…" opens the reasons picker with matched ideas.

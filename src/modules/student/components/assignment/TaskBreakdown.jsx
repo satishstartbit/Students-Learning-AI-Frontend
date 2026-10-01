@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LuArrowDown, LuArrowUp, LuCheck, LuClock3, LuEllipsis, LuPencil, LuPlus, LuSparkles, LuTrash2 } from 'react-icons/lu';
+import { LuArrowDown, LuArrowUp, LuCheck, LuClock3, LuEllipsis, LuPencil, LuPlus, LuTrash2 } from 'react-icons/lu';
 import { Button, Dropdown } from '../../../../components/common';
 
 /**
@@ -8,8 +8,9 @@ import { Button, Dropdown } from '../../../../components/common';
  * backend /focus/steps), with Done / In progress / To do.
  *
  * "In progress" is real: it's the step the student's live focus session is on.
- * "Suggest steps" fills an empty plan from the assignment's task type.
- * Editing (rename / reorder / remove / add) appears under "Edit steps".
+ * Steps arrive with the work (made when it was saved); there is no "Suggest"
+ * or "Regenerate" button - smaller steps come from "Need help? → Break it
+ * down more". Editing (rename / reorder / remove / add) appears under "Edit steps".
  */
 
 const stateOf = (step, activeStepId) => {
@@ -133,9 +134,11 @@ export function TaskBreakdown({ steps, activeStepId, onSelectStep }) {
         <p className="ad-steps__empty">Loading your steps…</p>
       ) : total === 0 ? (
         <div className="ad-steps__empty">
-          <p style={{ margin: '0 0 12px' }}>No steps yet. Small steps make a big task much easier to start.</p>
-          <Button size="sm" startIcon={<LuSparkles aria-hidden="true" />} onClick={steps.suggest}>
-            Suggest steps
+          <p style={{ margin: '0 0 12px' }}>
+            Your steps arrive with the work - check back in a moment. You can also add your own.
+          </p>
+          <Button size="sm" variant="secondary" startIcon={<LuPlus aria-hidden="true" />} onClick={() => setEditing(true)}>
+            Add a step
           </Button>
         </div>
       ) : (

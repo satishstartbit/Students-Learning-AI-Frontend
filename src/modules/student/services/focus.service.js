@@ -35,9 +35,6 @@ export const listSteps = (assignmentId) => api.get('/focus/steps', { params: { a
 
 export const addStep = (assignmentId, { title, estimatedMinutes }) => api.post('/focus/steps', { assignmentId, title, estimatedMinutes });
 
-/** Fills an empty plan from the assignment's task-type template. */
-export const suggestSteps = (assignmentId) => api.post('/focus/steps/suggest', { assignmentId });
-
 export const updateStep = (id, patch) => api.patch(`/focus/steps/${id}`, patch);
 
 export const deleteStep = (id) => api.delete(`/focus/steps/${id}`);
@@ -57,7 +54,6 @@ export default {
   listHistory,
   listSteps,
   addStep,
-  suggestSteps,
   updateStep,
   deleteStep,
   reorderSteps,
