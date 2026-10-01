@@ -963,42 +963,96 @@
   flex: 1;
 }
 
-/* --------------------------------------------------------------- feedback */
+/* --------------------------------------------------------------- feedback
+   Alerts and toasts (Alert.jsx, Toast.jsx), built to the notification
+   mockup: a lightly tinted card, a clear coloured border, an outline status
+   icon in the strong status colour, a bold title, a quieter description and
+   a plain grey close cross. Every colour is mixed from the status tokens
+   (--color-<status>-bg/-fg) and the surface, so light, dark, accent and the
+   K-5 theme each get their own version. */
 .ui-alert {
+  --ui-alert-tone: var(--color-info-fg);
+  --ui-alert-tint: var(--color-info-bg);
   display: flex;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  font-size: var(--font-size-md);
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 14px 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--ui-alert-tone) 55%, var(--color-bg-surface));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ui-alert-tint) 50%, var(--color-bg-surface));
+  color: var(--color-text-primary);
   font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+  line-height: 1.45;
+}
+/* Many pages add `ui-field` (a form-field column) to an alert just for its
+   bottom spacing - keep that spacing, but never the column layout. */
+.ui-alert.ui-field {
+  flex-direction: row;
+  gap: 12px;
+}
+.ui-alert--success {
+  --ui-alert-tone: var(--color-success-fg);
+  --ui-alert-tint: var(--color-success-bg);
+}
+.ui-alert--warning {
+  --ui-alert-tone: var(--color-warning-fg);
+  --ui-alert-tint: var(--color-warning-bg);
+}
+.ui-alert--error {
+  --ui-alert-tone: var(--color-danger-fg);
+  --ui-alert-tint: var(--color-danger-bg);
+}
+.ui-alert__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  /* Centred on the first line of text. */
+  height: 1.45em;
+  color: var(--ui-alert-tone);
+}
+.ui-alert__icon > svg {
+  width: 20px;
+  height: 20px;
 }
 .ui-alert__body {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .ui-alert__title {
-  font-weight: 600;
-  margin-bottom: 2px;
+  font-weight: 700;
 }
-.ui-alert--info {
-  background: var(--color-info-bg);
-  border-color: var(--color-info-fg);
+.ui-alert__text {
+  white-space: pre-line;
+}
+/* Under a title the message is the quieter description, as in the mockup. */
+.ui-alert--titled .ui-alert__text {
+  margin-top: 2px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+.ui-alert__close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: -3px -4px -3px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.ui-alert__close:hover {
+  background: color-mix(in srgb, var(--ui-alert-tone) 12%, transparent);
   color: var(--color-text-primary);
 }
-.ui-alert--success {
-  background: var(--color-success-bg);
-  border-color: var(--color-success-fg);
-  color: var(--color-text-primary);
-}
-.ui-alert--warning {
-  background: var(--color-warning-bg);
-  border-color: var(--color-warning-fg);
-  color: var(--color-text-primary);
-}
-.ui-alert--error {
-  background: var(--color-danger-bg);
-  border-color: var(--color-danger-fg);
-  color: var(--color-text-primary);
+.ui-alert__close:focus-visible {
+  outline: 2px solid var(--accent-ring, var(--accent-base));
+  outline-offset: 1px;
 }
 
 .ui-toast-region {
@@ -1009,11 +1063,10 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  width: min(360px, calc(100vw - 32px));
+  width: min(400px, calc(100vw - 32px));
 }
 .ui-toast {
-  box-shadow: var(--elevation-3);
-  background: var(--color-bg-surface);
+  box-shadow: 0 10px 24px -14px rgb(23 30 45 / 0.35);
 }
 
 .ui-spinner {

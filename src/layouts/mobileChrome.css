@@ -21,6 +21,12 @@
   background: var(--color-bg-surface);
 }
 
+.am-brandrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
 .am-brand {
   display: inline-flex;
   align-items: center;

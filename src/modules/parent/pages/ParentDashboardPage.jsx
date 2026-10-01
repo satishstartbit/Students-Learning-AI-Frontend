@@ -1,42 +1,43 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  LuArrowRight,
-  LuChartLine,
-  LuClipboardCheck,
-  LuCreditCard,
-  LuInfo,
-  LuListChecks,
-  LuRotateCcw,
-  LuSmile,
-  LuTimer,
-  LuTriangleAlert,
-  LuTrophy,
-} from 'react-icons/lu';
-import { Button, EmptyState, ErrorState, Loader, Toast } from '../../../components/common';
+import { LuArrowRight, LuCreditCard, LuInfo, LuListChecks, LuSmile, LuTimer, LuTriangleAlert, LuTrophy } from 'react-icons/lu';
+import { Button, EmptyState, ErrorState, Loader } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
-import { formatDate, formatDateKey, formatLongDate, formatTime, formatTimeAgo, getHourInTimezone } from '../../../utils/date';
+import { formatDate, formatDateKey, formatLongDate, formatTimeAgo, getHourInTimezone } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
-import { MoodFace, StudentAvatar } from '../../teacher/components/students/StudentBits';
-import { checkInWhen, focusLabel, fullName, partOfDayPhrase } from '../../teacher/components/students/studentFormat';
+import { useMoodLookup } from '../../checkIn/hooks/useMoodLookup';
+import CheckInStrip from '../../progress/components/CheckInStrip';
+import MoodIcon from '../../progress/components/MoodIcon';
+import { TodayCards } from '../../progress/components/StudentProgressDetail';
+import { StudentAvatar } from '../../teacher/components/students/StudentBits';
+import { checkInWhen, fullName, partOfDayPhrase } from '../../teacher/components/students/studentFormat';
+import { activityLine, alertLine, attentionLine, lowerFirst } from '../components/dashboard/overviewText';
+import { useViewingChild } from '../hooks/useViewingChild';
 import parentService from '../services/parent.service';
 import '../../teacher/components/students/teacherStudents.css';
 import '../../teacher/components/dashboard/teacherDashboard.css';
 import '../components/dashboard/parentDashboard.css';
 
 /*
- * The parent's Overview (/parent). Same page frame, stat cards, alert panel
- * and panels as the Teacher dashboard (td- classes), with the parent's own
- * content: each child today, the work coming up, what needs the parent, what
- * teachers marked and what the children did. Everything comes from
- * GET /parent/dashboard; "today" for a child is that child's own day.
+ * The parent's Overview (/parent), for the child picked in the sidebar's
+ * VIEWING card (the "Good evening, Naven" mockup). Switching child there
+ * switches everything here.
+ *
+ *   greeting · "Here's Sanjay's day so far."
+ *   plan notice (only when the plan needs the parent)
+ *   wellbeing alert (the latest one this parent hasn't marked seen)
+ *   Today's check-in · Tasks today · Focus time today  (the Progress page's cards)
+ *   Coming up            | Needs your attention
+ *   Check-ins this week  | Recent activity
+ *
+ * One request, GET /parent/children/:id/overview. Its "today" is the
+ * child's own day; the greeting and date are the parent's. With no children
+ * yet the page asks for the first one (GET /parent/dashboard for the name
+ * and plan notice).
  */
 
-const NUMBER_WORDS = ['no', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
-const lower = (s) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s);
-const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
-const progressLink = (childId) => `/parent/progress?childId=${childId}`;
+const PROGRESS = '/parent/progress';
 
 function greeting() {
   const hour = getHourInTimezone();
@@ -45,33 +46,29 @@ function greeting() {
   return 'Good evening';
 }
 
-/** "Thursday, September 24 · Two things need you today." */
-function subtitle(count) {
-  const date = formatDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric', year: undefined });
-  if (!count) return `${date} · Nothing needs you right now.`;
-  const word = count <= 10 ? NUMBER_WORDS[count] : String(count);
-  return `${date} · ${word} thing${count === 1 ? '' : 's'} need${count === 1 ? 's' : ''} you today.`;
-}
+/** "Tuesday, September 22" - the parent's own today. */
+const todayText = () => formatDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric', year: undefined });
 
-/** "Due today" / "Due tomorrow" / "Due Friday" / "Due Oct 8", from the child's own days-left count. */
+/** "Due today" / "Due tomorrow" / "Due Fri, Sep 25" - due dates are calendar days, never shifted. */
 function dueLabel(dueDate, daysLeft) {
   if (!dueDate) return 'No due date';
   if (daysLeft === 0) return 'Due today';
   if (daysLeft === 1) return 'Due tomorrow';
-  if (daysLeft > 1 && daysLeft < 7) {
-    return `Due ${formatDateKey(dueDate, { weekday: 'long', month: undefined, day: undefined, year: undefined })}`;
-  }
-  return `Due ${formatDateKey(dueDate, { year: undefined })}`;
+  return `Due ${formatDateKey(dueDate, { weekday: 'short', year: undefined })}`;
 }
 
-/** Focus time, or "Under 1m" when there were sessions too short to count a minute. */
-const focusValue = (minutes, sessions) => (!Number(minutes) && sessions ? 'Under 1m' : focusLabel(minutes));
+const weekdayName = (key) => formatDateKey(key, { weekday: 'long', year: undefined, month: undefined, day: undefined });
 
-/** "Harsh and Sam" / "Harsh, Sam and Maya". */
-function listNames(names) {
-  if (names.length <= 1) return names[0] ?? '';
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
-}
+/** The formatters overviewText.js words its lines with - all in the parent's locale. */
+const LINE_FORMAT = {
+  due: dueLabel,
+  day: (key) => formatDateKey(key, { weekday: 'short', year: undefined }),
+  sent: (at) => formatDate(at, { year: undefined }),
+  weekday: weekdayName,
+  weekdayPlural: (key) => `${weekdayName(key)}s`,
+  ago: (at) => formatTimeAgo(at),
+  when: (at) => checkInWhen(at),
+};
 
 const STAGE_PILL = {
   not_started: { label: 'Not started', tone: '' },
@@ -79,9 +76,11 @@ const STAGE_PILL = {
   returned: { label: 'Sent back to fix', tone: 'warning' },
 };
 
-function Panel({ title, link, linkLabel, children, className = '' }) {
+const ACTIVITY_ICON = { submitted: LuListChecks, focus: LuTimer, checkin: LuSmile, reward: LuTrophy };
+
+function Panel({ title, link, linkLabel, children }) {
   return (
-    <section className={`td-panel ${className}`.trim()}>
+    <section className="td-panel">
       <div className="td-panel__head">
         <h2 className="td-panel__title">{title}</h2>
         {link && (
@@ -95,13 +94,18 @@ function Panel({ title, link, linkLabel, children, className = '' }) {
   );
 }
 
-function StatCard({ to, label, value, note, tone }) {
+function Greeting({ parent, line }) {
   return (
-    <Link to={to} className="td-stat pd-stat">
-      <p className="td-stat__label">{label}</p>
-      <p className="td-stat__value">{value}</p>
-      <p className={`td-stat__note ${tone ? `td-stat__note--${tone}` : ''}`.trim()}>{note}</p>
-    </Link>
+    <header className="td-head">
+      <div>
+        <h1 className="td-greeting">
+          {greeting()}, {parent?.firstName ?? 'there'}
+        </h1>
+        <p className="td-subtitle">
+          {todayText()} · {line}
+        </p>
+      </div>
+    </header>
   );
 }
 
@@ -153,344 +157,202 @@ function AccountNotice({ account }) {
   );
 }
 
-function ChildCard({ child }) {
-  const { tasks, focus } = child;
-  const percent = tasks.total ? Math.round((tasks.handedIn / tasks.total) * 100) : 0;
+/** The child's latest check-in alert this parent hasn't marked seen. */
+function WellbeingAlert({ alert, child, onSeen }) {
+  const { moodFor } = useMoodLookup();
+  const [busy, setBusy] = useState(false);
+  const first = child.firstName ?? fullName(child);
 
-  let todayText = 'Not checked in yet today';
-  if (child.checkIn) todayText = `Checked in feeling ${lower(child.checkIn.moodName)} · ${formatTime(child.checkIn.at)}`;
-  else if (child.state === 'invited') todayText = 'No check-ins yet';
+  let note = null;
+  if (child.teachers > 0) note = `${first}’s teachers have been told too`;
+  else if (alert.parentEmailStatus === 'sent') note = 'We emailed you about this too';
 
-  let nextText = 'Nothing due soon';
-  if (child.nextDue) nextText = `${child.nextDue.title} · ${dueLabel(child.nextDue.dueDate, child.nextDue.daysLeft)}`;
-  else if (tasks.open) nextText = `${plural(tasks.open, 'open task')}, no due date`;
+  const text = alertLine(alert, {
+    weekday: weekdayName,
+    single: () => `Felt ${lowerFirst(alert.moodName)} at ${partOfDayPhrase(alert.createdAt)} check-in · ${checkInWhen(alert.createdAt)}`,
+  });
 
-  return (
-    <li className="pd-kid">
-      <div className="pd-kid__head">
-        <StudentAvatar student={child} size="lg" />
-        <div className="pd-kid__who">
-          <Link to={progressLink(child.id)} className="pd-kid__name">
-            {fullName(child)}
-          </Link>
-          <span className="td-meta">{child.grade ?? 'Grade not set'}</span>
-        </div>
-        {child.hasAlert && <span className="ts-pill ts-pill--danger">Alert</span>}
-        {!child.hasAlert && child.state === 'invited' && <span className="ts-pill">Not signed in</span>}
-        {!child.hasAlert && child.state === 'suspended' && <span className="ts-pill ts-pill--danger">Suspended</span>}
-      </div>
-
-      <div className="pd-kid__today">
-        <MoodFace checkIn={child.checkIn} label={child.checkIn ? child.checkIn.moodName : undefined} />
-        <span>{todayText}</span>
-      </div>
-
-      <div className="pd-kid__work">
-        <div className="pd-kid__workline">
-          <span>{tasks.total ? `${tasks.handedIn} of ${plural(tasks.total, 'task')} handed in` : 'No tasks from teachers yet'}</span>
-          {tasks.overdue > 0 && <span className="pd-kid__flag pd-kid__flag--danger">{tasks.overdue} overdue</span>}
-          {!tasks.overdue && tasks.dueToday > 0 && <span className="pd-kid__flag pd-kid__flag--warning">{tasks.dueToday} due today</span>}
-        </div>
-        <div
-          className="td-progress__track"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={percent}
-          aria-label={`${fullName(child)}: ${tasks.handedIn} of ${tasks.total} tasks handed in`}
-        >
-          <div className="td-progress__fill" style={{ width: `${percent}%` }} />
-        </div>
-        <p className="td-meta pd-kid__next">
-          <strong>Next:</strong> {nextText}
-        </p>
-      </div>
-
-      <dl className="pd-kid__stats">
-        <div>
-          <dt title="Focus time this week">Focus time</dt>
-          <dd>{focusValue(focus?.weekMinutes, focus?.weekSessions)}</dd>
-        </div>
-        <div>
-          <dt>Points</dt>
-          <dd>{child.points}</dd>
-        </div>
-        <div>
-          <dt>Teachers</dt>
-          <dd>
-            {child.teachers}
-            {child.invitations.waiting > 0 && <span className="pd-kid__sub"> +{child.invitations.waiting} invited</span>}
-          </dd>
-        </div>
-      </dl>
-
-      <Link to={progressLink(child.id)} className="td-panel__link pd-kid__foot">
-        View progress <LuArrowRight size={14} aria-hidden="true" />
-      </Link>
-    </li>
-  );
-}
-
-const ACTIVITY_ICON = { submitted: LuListChecks, focus: LuTimer, checkin: LuSmile, reward: LuTrophy };
-
-function activityText(item) {
-  const who = item.student.firstName ?? fullName(item.student);
-  if (item.type === 'submitted') return `${who} handed in ${item.assignment.title}`;
-  if (item.type === 'focus') return item.minutes ? `${who} finished a ${item.minutes} minute focus session` : `${who} finished a focus session`;
-  if (item.type === 'checkin') return `${who} checked in feeling ${lower(item.moodName)}`;
-  const kind = item.reward?.type === 'emoji' ? 'emoji' : item.reward?.type === 'sticker' ? 'sticker' : 'reward';
-  return `${who} earned the ${item.reward?.name} ${kind}`;
-}
-
-function Dashboard({ data, onReload }) {
-  const { stats, account, children, wellbeingAlerts, comingUp, needsAttention, recentFeedback, recentActivity } = data;
-  const [busyAlert, setBusyAlert] = useState(null);
-
-  const markSeen = async (alert) => {
-    setBusyAlert(alert.id);
+  const markSeen = async () => {
+    setBusy(true);
     try {
-      await parentService.markAlertSeen(alert.student.id, alert.id);
+      await parentService.markAlertSeen(child.id, alert.id);
       toast.success('Marked as seen');
-      await onReload();
+      await onSeen();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
-      setBusyAlert(null);
+      setBusy(false);
     }
   };
 
-  const header = (
-    <header className="td-head">
-      <div>
-        <h1 className="td-greeting">
-          {greeting()}, {data.parent.firstName ?? 'there'}
-        </h1>
-        <p className="td-subtitle">{subtitle(data.needsYouCount)}</p>
+  return (
+    <section className="td-alerts" aria-labelledby="pd-alert-title">
+      <div className="td-alerts__head">
+        <LuTriangleAlert size={18} aria-hidden="true" style={{ color: 'var(--color-danger-fg)' }} />
+        <h2 id="pd-alert-title" className="td-alerts__title">
+          Wellbeing alert
+        </h2>
+        {note && <span className="td-alerts__note">{note}</span>}
       </div>
-      {children.length > 0 && (
-        <div className="pd-head__actions">
-          <Button as={Link} to="/parent/children" variant="secondary">
-            My children
+      <div className="td-alert">
+        <StudentAvatar student={child} />
+        <MoodIcon mood={moodFor(alert.mood)} size={30} />
+        <div className="td-alert__body">
+          <div className="td-alert__name">{fullName(child)}</div>
+          <div className="td-alert__text">{text}</div>
+        </div>
+        <div className="pd-alert__actions">
+          <Button variant="ghost" size="sm" onClick={markSeen} loading={busy}>
+            Mark as seen
           </Button>
-          <Button as={Link} to="/parent/progress" startIcon={<LuChartLine />}>
-            View progress
+          <Button as={Link} to={PROGRESS} variant="secondary" size="sm">
+            See check-ins
           </Button>
         </div>
-      )}
-    </header>
-  );
-
-  if (!children.length) {
-    return (
-      <div className="td-page">
-        {header}
-        <AccountNotice account={account} />
-        <EmptyState
-          icon="👨‍👩‍👧"
-          title="Add your first child"
-          description="Once a child is on your account, their check-ins, work and focus time show up here every day."
-          action={
-            <Button as={Link} to="/parent/children">
-              Go to My Children
-            </Button>
-          }
-        />
       </div>
-    );
-  }
+    </section>
+  );
+}
 
-  const { checkedInToday: ci, dueThisWeek: due, focusThisWeek: focus } = stats;
-  let checkInNote = 'Everyone has';
-  if (ci.waiting.length) checkInNote = ci.waiting.length <= 2 ? `Waiting on ${listNames(ci.waiting)}` : `${ci.waiting.length} not yet`;
+function ComingUp({ items }) {
+  return (
+    <Panel title="Coming up" link={PROGRESS} linkLabel="See progress">
+      {items.length ? (
+        <ul className="td-list">
+          {items.map((item) => {
+            const pill = STAGE_PILL[item.stage] ?? STAGE_PILL.not_started;
+            return (
+              <li key={item.key} className="td-row">
+                <div className="td-row__body">
+                  <Link to={PROGRESS} className="td-row__title">
+                    {item.title}
+                  </Link>
+                  <div className="td-meta">{[item.subject, dueLabel(item.dueDate, item.daysLeft)].filter(Boolean).join(' · ')}</div>
+                </div>
+                <span className={`ts-pill ${pill.tone ? `ts-pill--${pill.tone}` : ''}`.trim()}>{pill.label}</span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="td-empty">Nothing due in the next two weeks.</p>
+      )}
+    </Panel>
+  );
+}
 
-  let dueNote = { text: 'Nothing due today', tone: '' };
-  if (due.overdue) dueNote = { text: `${due.overdue} overdue`, tone: 'danger' };
-  else if (due.dueToday) dueNote = { text: `${due.dueToday} due today`, tone: 'warning' };
+function NeedsAttention({ items, firstName }) {
+  const fmt = { ...LINE_FORMAT, firstName };
+  return (
+    <Panel title="Needs your attention">
+      {items.length ? (
+        <ul className="td-list">
+          {items.map((item) => {
+            const line = attentionLine(item, fmt);
+            return (
+              <li key={item.key} className="td-row">
+                <div className="td-row__body">
+                  <Link to={line.to} className="td-row__title">
+                    {line.title}
+                  </Link>
+                  {line.meta && <div className="td-meta">{line.meta}</div>}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="td-empty">Nothing needs you right now.</p>
+      )}
+    </Panel>
+  );
+}
+
+function RecentActivity({ items, firstName }) {
+  return (
+    <Panel title="Recent activity">
+      {items.length ? (
+        <ul className="td-list">
+          {items.map((item, index) => {
+            const Icon = ACTIVITY_ICON[item.type] ?? LuListChecks;
+            const line = activityLine(item, LINE_FORMAT);
+            return (
+              <li key={`${item.type}-${item.at}-${index}`} className="td-row">
+                <span className="pd-activity__icon" aria-hidden="true">
+                  <Icon size={16} />
+                </span>
+                <div className="td-row__body">
+                  <div className="td-row__title">{line.title}</div>
+                  <div className="td-meta">{line.meta}</div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="td-empty">Nothing from {firstName} yet.</p>
+      )}
+    </Panel>
+  );
+}
+
+function Overview({ data, onReload }) {
+  const { parent, account, child, progress, alert, comingUp = [], attention = [], recentActivity = [] } = data;
+  const first = child.firstName ?? fullName(child);
+  const line = child.archived
+    ? `${first}’s account is archived. Everything saved is still here.`
+    : `Here’s ${first}’s day so far.`;
 
   return (
-    <div className="td-page">
-      {header}
+    <div className="td-page pd-page">
+      <Greeting parent={parent} line={line} />
 
       <AccountNotice account={account} />
 
-      <div className="td-stats">
-        <StatCard
-          to="/parent/children"
-          label="Children"
-          value={stats.children.total}
-          note={stats.children.needAttention ? `${stats.children.needAttention} need${stats.children.needAttention === 1 ? 's' : ''} attention` : 'All doing fine'}
-          tone={stats.children.needAttention ? 'danger' : ''}
-        />
-        <StatCard to="/parent/progress" label="Checked in today" value={`${ci.done} of ${ci.total}`} note={checkInNote} />
-        <StatCard to="/parent/progress" label="Due this week" value={due.total} note={dueNote.text} tone={dueNote.tone} />
-        <StatCard
-          to="/parent/progress"
-          label="Focus this week"
-          value={focusValue(focus.minutes, focus.sessions)}
-          note={focus.sessions ? plural(focus.sessions, 'session') : 'No focus sessions yet'}
-        />
-      </div>
+      {alert && <WellbeingAlert alert={alert} child={child} onSeen={onReload} />}
 
-      {wellbeingAlerts.length > 0 && (
-        <section className="td-alerts" aria-labelledby="pd-alerts-title">
-          <div className="td-alerts__head">
-            <LuTriangleAlert size={18} aria-hidden="true" style={{ color: 'var(--color-danger-fg)' }} />
-            <h2 id="pd-alerts-title" className="td-alerts__title">
-              Wellbeing alerts
-            </h2>
-            <span className="td-alerts__note">Their teachers see these too</span>
-          </div>
-          <ul className="td-alerts__list">
-            {wellbeingAlerts.map((alert) => (
-              <li key={alert.id} className="td-alert">
-                <StudentAvatar student={alert.student} />
-                <MoodFace checkIn={alert} label={alert.moodName} />
-                <div className="td-alert__body">
-                  <div className="td-alert__name">{fullName(alert.student)}</div>
-                  <div className="td-alert__text">
-                    Felt {lower(alert.moodName)} at {partOfDayPhrase(alert.createdAt)} check-in · {checkInWhen(alert.createdAt)}
-                    {alert.parentEmailStatus === 'sent' ? ' · We emailed you about this' : ''}
-                  </div>
-                </div>
-                <div className="pd-alert__actions">
-                  <Button variant="ghost" size="sm" onClick={() => markSeen(alert)} loading={busyAlert === alert.id}>
-                    Mark as seen
-                  </Button>
-                  <Button as={Link} to={progressLink(alert.student.id)} variant="secondary" size="sm">
-                    View progress
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {progress && <TodayCards progress={progress} />}
 
-      <Panel title="Your children" link="/parent/children" linkLabel="Manage">
-        <ul className="pd-kids">
-          {children.map((child) => (
-            <ChildCard key={child.id} child={child} />
-          ))}
-        </ul>
-      </Panel>
-
-      <div className="td-grid">
-        <Panel title="Coming up" link="/parent/progress" linkLabel="All work">
-          {comingUp.length ? (
-            <ul className="td-list">
-              {comingUp.map((item) => {
-                const pill = STAGE_PILL[item.stage] ?? STAGE_PILL.not_started;
-                return (
-                  <li key={item.key} className="td-row">
-                    <StudentAvatar student={item.student} />
-                    <div className="td-row__body">
-                      <Link to={progressLink(item.student.id)} className="td-row__title">
-                        {item.title}
-                      </Link>
-                      <div className="td-meta">
-                        {[item.student.firstName, item.subject, dueLabel(item.dueDate, item.daysLeft)].filter(Boolean).join(' · ')}
-                      </div>
-                    </div>
-                    <span className={`ts-pill ${pill.tone ? `ts-pill--${pill.tone}` : ''}`.trim()}>{pill.label}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="td-empty">Nothing due in the next two weeks.</p>
-          )}
-        </Panel>
-
-        <Panel title="Needs attention" link="/parent/children" linkLabel="My children">
-          {needsAttention.length ? (
-            <ul className="td-list">
-              {needsAttention.map((item) => {
-                const to = item.kind === 'invitation' ? '/parent/children' : progressLink(item.student.id);
-                return (
-                  <li key={item.key} className="td-row">
-                    <StudentAvatar student={item.student} />
-                    <div className="td-row__body">
-                      <Link to={to} className="td-row__title">
-                        {fullName(item.student)}
-                      </Link>
-                      <div className="td-meta">{item.reasons.join(' · ')}</div>
-                    </div>
-                    <Button as={Link} to={to} variant="secondary" size="sm">
-                      {item.kind === 'invitation' ? 'Manage' : 'View'}
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="td-empty">Everyone is on track today.</p>
-          )}
-        </Panel>
-
-        <Panel title="From teachers">
-          {recentFeedback.length ? (
-            <ul className="td-list">
-              {recentFeedback.map((item) => {
-                const Icon = item.returned ? LuRotateCcw : LuClipboardCheck;
-                const meta = [
-                  item.student.firstName,
-                  item.teacherName ? `${item.returned ? 'Sent back' : 'Marked'} by ${item.teacherName}` : null,
-                  item.score !== null ? `Score ${item.score}%` : null,
-                  item.feedbackGiven ? 'Feedback left' : null,
-                  formatTimeAgo(item.at),
-                ].filter(Boolean);
-                return (
-                  <li key={item.id} className="td-row">
-                    <span className="td-activity__icon" aria-hidden="true">
-                      <Icon size={14} />
-                    </span>
-                    <div className="td-row__body">
-                      <Link to={progressLink(item.student.id)} className="td-row__title">
-                        {item.title}
-                      </Link>
-                      <div className="td-meta">{meta.join(' · ')}</div>
-                    </div>
-                    <span className={`ts-pill ${item.returned ? 'ts-pill--warning' : 'ts-pill--success'}`}>
-                      {item.returned ? 'Sent back' : 'Marked'}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="td-empty">Nothing has been marked yet.</p>
-          )}
-        </Panel>
-
-        <Panel title="Recent activity">
-          {recentActivity.length ? (
-            <ul className="td-list">
-              {recentActivity.map((item, index) => {
-                const Icon = ACTIVITY_ICON[item.type] ?? LuListChecks;
-                return (
-                  <li key={`${item.type}-${item.student.id}-${item.at}-${index}`} className="td-row">
-                    <span className="td-activity__icon" aria-hidden="true">
-                      <Icon size={14} />
-                    </span>
-                    <div className="td-row__body">
-                      <div className="td-row__title">{activityText(item)}</div>
-                      <div className="td-meta">{formatTimeAgo(item.at)}</div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="td-empty">Nothing from your children yet.</p>
-          )}
-        </Panel>
+      <div className="pd-cols">
+        <div className="pd-col">
+          <ComingUp items={comingUp} />
+          <CheckInStrip
+            className="td-panel pd-checkins"
+            titleAs="h2"
+            title="Check-ins this week"
+            lead="A dashed circle means no check-in that day."
+            days={7}
+            faceSize={34}
+            history={progress?.checkInHistory ?? []}
+            todayKey={progress?.today?.date ?? data.today}
+            name={first}
+          />
+        </div>
+        <div className="pd-col">
+          <NeedsAttention items={attention} firstName={first} />
+          <RecentActivity items={recentActivity} firstName={first} />
+        </div>
       </div>
     </div>
   );
 }
 
-/** The parent's Overview (/parent) - how each child is doing today. */
-export default function ParentDashboardPage() {
+/** One child's Overview. Keyed by child, so switching child starts clean. */
+function ChildOverview({ childId }) {
+  const { data, error, run } = useApi(parentService.getChildOverview);
+  const load = useCallback(() => run(childId).catch(() => {}), [run, childId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (error && !data) return <ErrorState error={error} onRetry={load} />;
+  if (!data) return <Loader message="Loading your overview…" />;
+  return <Overview data={data} onReload={load} />;
+}
+
+/** No children yet: the greeting, any plan notice, and a way to add the first one. */
+function NoChildren() {
   const { data, error, run } = useApi(parentService.getDashboard);
   const load = useCallback(() => run().catch(() => {}), [run]);
 
@@ -502,9 +364,29 @@ export default function ParentDashboardPage() {
   if (!data) return <Loader message="Loading your overview…" />;
 
   return (
-    <>
-      <Dashboard data={data} onReload={load} />
-      <Toast />
-    </>
+    <div className="td-page pd-page">
+      <Greeting parent={data.parent} line="Add a child to see their day here." />
+      <AccountNotice account={data.account} />
+      <EmptyState
+        icon="👨‍👩‍👧"
+        title="Add your first child"
+        description="Once a child is on your account, their check-ins, work and focus time show up here every day."
+        action={
+          <Button as={Link} to="/parent/children">
+            Go to My Children
+          </Button>
+        }
+      />
+    </div>
   );
+}
+
+/** The parent's Overview (/parent) - the sidebar's child, today. */
+export default function ParentDashboardPage() {
+  const { viewingChild, children, isLoading } = useViewingChild();
+
+  if (isLoading) return <Loader message="Loading your overview…" />;
+  if (!children.length) return <NoChildren />;
+  if (!viewingChild) return <Loader message="Loading your overview…" />;
+  return <ChildOverview key={viewingChild.id} childId={viewingChild.id} />;
 }

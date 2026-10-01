@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { LuUsersRound } from 'react-icons/lu';
 import {
   PageHeader,
   Card,
   Button,
   Badge,
-  StatusBadge,
-  Table,
   Input,
   Label,
   Alert,
@@ -16,19 +15,28 @@ import {
   Textarea,
   EmptyState,
   ErrorState,
-  Checkbox,
   Toast,
 } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
 import { formatDate } from '../../../utils/date';
-import { formatCurrency, formatName } from '../../../utils/format';
+import { formatCurrency, formatName, formatStatus } from '../../../utils/format';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { planFitReason } from '../../parent/familyLimits';
+import { useViewingChild } from '../../parent/hooks/useViewingChild';
+import BillingHistory from '../components/BillingHistory';
 import PaymentMethodCard from '../components/PaymentMethodCard';
 import { useSubscriptionAccess } from '../hooks/useSubscriptionAccess';
 import subscriptionService from '../services/subscription.service';
 import { describeCard } from '../stripe';
+import '../components/subscription.css';
+
+/** The plan's status as the mockup words it ("Free trial", not "Trialing"). */
+const PLAN_STATUS = {
+  trialing: { label: 'Free trial', variant: 'primary' },
+  active: { label: 'Active', variant: 'success' },
+  past_due: { label: 'Payment due', variant: 'warning' },
+};
 
 /** One selectable plan. `fitReason` = why it can't hold the family as it is now (it can't be chosen). */
 function PlanCard({ plan, selected, onSelect, fitReason }) {
@@ -109,6 +117,7 @@ function lockMessage(access, latest) {
 export default function ParentSubscriptionPage() {
   const navigate = useNavigate();
   const { refresh: refreshAccess } = useSubscriptionAccess();
+  const { viewingChild } = useViewingChild();
 
   const overview = useApi(subscriptionService.getMySubscription);
   const payments = useApi(subscriptionService.listMyPayments);
@@ -296,36 +305,6 @@ export default function ParentSubscriptionPage() {
     }
   };
 
-  const paymentColumns = [
-    { key: 'createdAt', header: 'Date', render: (row) => formatDate(row.createdAt) },
-    { key: 'planName', header: 'Plan', render: (row) => row.planName ?? '—' },
-    {
-      key: 'amount',
-      header: 'Amount',
-      align: 'right',
-      render: (row) => (
-        <div>
-          {formatCurrency(row.amount, row.currency)}
-          {row.discountApplied > 0 && (
-            <div className="ui-hint">−{formatCurrency(row.discountApplied, row.currency)} discount</div>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (row) => (
-        <div>
-          <StatusBadge status={row.status} />
-          {row.refundAmount > 0 && (
-            <div className="ui-hint">{formatCurrency(row.refundAmount, row.currency)} refunded</div>
-          )}
-        </div>
-      ),
-    },
-  ];
-
   if (overview.isLoading && !overview.data && plans.isLoading) {
     return <Loader message="Loading your subscription…" />;
   }
@@ -336,13 +315,14 @@ export default function ParentSubscriptionPage() {
     autoRenewDescription = `Cancelled on ${formatDate(current.cancelledAt)} - access ends ${periodEnd}. You can subscribe again once it ends.`;
   } else if (current?.autoRenew) {
     autoRenewDescription = card
-      ? `Renews on ${periodEnd}, charging ${describeCard(card)}.`
-      : `Renews on ${periodEnd} - add a card below, or the renewal payment will fail.`;
+      ? `On. Your plan renews on ${periodEnd} and charges ${describeCard(card)}.`
+      : `On. Your plan renews on ${periodEnd} - add a card, or the renewal payment will fail.`;
   } else if (current) {
-    autoRenewDescription = `Off - access ends ${periodEnd}. Turn it back on any time before then to keep your subscription.`;
+    autoRenewDescription = `Off. Access ends ${periodEnd}. Turn it back on any time before then to keep your plan.`;
   }
 
   const allPayments = payments.data ?? [];
+  const planStatus = current ? (PLAN_STATUS[current.status] ?? { label: formatStatus(current.status), variant: 'neutral' }) : null;
 
   return (
     <div className="td-page">
@@ -356,6 +336,15 @@ export default function ParentSubscriptionPage() {
               : 'Choose a plan to get started.'
         }
       />
+
+      {/* Billing is per family, while most parent pages follow the child in the sidebar. */}
+      <div className="sub-family" role="note">
+        <LuUsersRound className="sub-family__icon" aria-hidden="true" />
+        <span className="sub-family__title">Family account</span>
+        <span className="sub-family__text">
+          This page covers your whole family{viewingChild?.firstName ? `, not just ${viewingChild.firstName}` : ''}.
+        </span>
+      </div>
 
       {overview.error && (
         <ErrorState variant="compact" title="We couldn't load your subscription" error={overview.error} onRetry={load} />
@@ -374,63 +363,90 @@ export default function ParentSubscriptionPage() {
       )}
 
       {hasSubscription && (
-        <Card className="ui-field">
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--spacing-md)' }}>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: '1.2rem' }}>{current.plan?.name}</div>
-              <div className="ui-hint">
-                {formatCurrency(current.plan?.price, current.plan?.currency)} /{' '}
-                {current.plan?.billingCycle === 'yearly' ? 'year' : 'month'}
+        // The plan and its card side by side (the mockup); an extra parent sees the plan alone.
+        <div className={isAccountHolder ? 'sub-grid' : undefined}>
+          <section className="sub-card" aria-labelledby="sub-plan-title">
+            <div className="sub-plan__top">
+              <div className="min-w-0">
+                <h2 id="sub-plan-title" className="sub-plan__name">
+                  {current.plan?.name}
+                </h2>
+                <p className="sub-plan__price">
+                  {formatCurrency(current.plan?.price, current.plan?.currency)}
+                  <span className="sub-plan__cycle">/ {current.plan?.billingCycle === 'yearly' ? 'year' : 'month'}</span>
+                </p>
+                <div className="sub-plan__badges">
+                  <Badge variant={planStatus.variant} className="sub-badge">
+                    {planStatus.label}
+                  </Badge>
+                  {current.cancelledAt ? (
+                    <Badge variant="warning" className="sub-badge">
+                      Cancelled
+                    </Badge>
+                  ) : (
+                    !current.autoRenew && (
+                      <Badge variant="warning" className="sub-badge">
+                        Ends at period end
+                      </Badge>
+                    )
+                  )}
+                  {current.discountCode && (
+                    <Badge variant="primary" className="sub-badge">
+                      {current.discountCode.code}
+                    </Badge>
+                  )}
+                </div>
               </div>
-              <div style={{ marginTop: 'var(--spacing-sm)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                <StatusBadge status={current.status} />
-                {current.cancelledAt ? (
-                  <Badge variant="warning">Cancelled</Badge>
-                ) : (
-                  !current.autoRenew && <Badge variant="warning">Ends at period end</Badge>
-                )}
-                {current.discountCode && <Badge variant="primary">{current.discountCode.code}</Badge>}
+
+              <div className="sub-plan__when">
+                <span className="sub-plan__when-label">{current.autoRenew ? 'Renews on' : 'Access ends'}</span>
+                <span className="sub-plan__when-date">{current.currentPeriodEnd ? formatDate(current.currentPeriodEnd) : '—'}</span>
               </div>
             </div>
 
-            <div style={{ textAlign: 'right' }}>
-              <div className="ui-hint">{current.autoRenew ? 'Renews on' : 'Access ends'}</div>
-              <div style={{ fontWeight: 600 }}>{current.currentPeriodEnd ? formatDate(current.currentPeriodEnd) : '—'}</div>
-            </div>
-          </div>
+            {current.status === 'past_due' && (
+              <div style={{ marginTop: 'var(--spacing-md)' }}>
+                <Alert variant="warning">
+                  We could not charge your saved card. We will try again over the next few days — update your card to
+                  avoid losing access.
+                </Alert>
+              </div>
+            )}
 
-          {current.status === 'past_due' && (
-            <Alert variant="warning" className="ui-field">
-              We could not charge your saved card. We will try again over the next few days — update your
-              card below to avoid losing access.
-            </Alert>
-          )}
+            {isAccountHolder && (
+              <div className="sub-plan__renew">
+                <button
+                  type="button"
+                  role="switch"
+                  className="sub-switch"
+                  aria-checked={Boolean(current.autoRenew)}
+                  aria-labelledby="sub-renew-label"
+                  aria-describedby="sub-renew-text"
+                  disabled={Boolean(current.cancelledAt) || togglingAutoRenew}
+                  onClick={() => (current.autoRenew ? setAutoRenewOffOpen(true) : changeAutoRenew(true))}
+                />
+                <div className="min-w-0">
+                  <span id="sub-renew-label" className="sub-plan__renew-label">
+                    Auto-renewal
+                  </span>
+                  <span id="sub-renew-text" className="sub-plan__renew-text">
+                    {autoRenewDescription}
+                  </span>
+                </div>
+              </div>
+            )}
 
-          {isAccountHolder && (
-            <div style={{ marginTop: 'var(--spacing-lg)' }}>
-              <Checkbox
-                name="autoRenew"
-                label="Auto-renewal"
-                description={autoRenewDescription}
-                checked={current.autoRenew}
-                disabled={Boolean(current.cancelledAt) || togglingAutoRenew}
-                onChange={(event) => (event.target.checked ? changeAutoRenew(true) : setAutoRenewOffOpen(true))}
-              />
-            </div>
-          )}
+            {isAccountHolder && !current.cancelledAt && (
+              <div className="sub-plan__actions">
+                <Button variant="secondary" onClick={() => setCancelOpen(true)}>
+                  Cancel subscription
+                </Button>
+              </div>
+            )}
+          </section>
 
-          {isAccountHolder && !current.cancelledAt && (
-            <div style={{ marginTop: 'var(--spacing-md)' }}>
-              <Button variant="secondary" onClick={() => setCancelOpen(true)}>
-                Cancel subscription
-              </Button>
-            </div>
-          )}
-        </Card>
-      )}
-
-      {hasSubscription && isAccountHolder && (
-        <PaymentMethodCard card={card} autoRenewing={Boolean(current.autoRenew)} onChanged={reload} className="ui-field" />
+          {isAccountHolder && <PaymentMethodCard card={card} autoRenewing={Boolean(current.autoRenew)} onChanged={reload} />}
+        </div>
       )}
 
       {!hasSubscription && isAccountHolder && (
@@ -538,23 +554,12 @@ export default function ParentSubscriptionPage() {
 
           {/* Plans first when there's nothing in force - the card can also be added at checkout. */}
           <div style={{ marginTop: 'var(--spacing-lg)' }}>
-            <PaymentMethodCard card={card} autoRenewing={false} onChanged={reload} className="ui-field" />
+            <PaymentMethodCard card={card} autoRenewing={false} onChanged={reload} />
           </div>
         </>
       )}
 
-      {isAccountHolder && (hasSubscription || allPayments.length > 0) && (
-        <Card>
-          <SectionHeader title="Billing history" as="h3" />
-          <Table
-            columns={paymentColumns}
-            data={allPayments}
-            rowKey="id"
-            emptyContent="No payments yet."
-            caption="Billing history"
-          />
-        </Card>
-      )}
+      {isAccountHolder && (hasSubscription || allPayments.length > 0) && <BillingHistory payments={allPayments} />}
 
       <ConfirmationModal
         isOpen={cancelOpen}

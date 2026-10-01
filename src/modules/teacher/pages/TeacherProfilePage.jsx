@@ -79,9 +79,10 @@ const yearsRule = (value) => {
 };
 
 /**
- * /teacher/profile - built to the teacher profile mockup: photo header, then
- * Personal details, Address and Teaching as cards saved together by
- * "Save changes", and Change password on its own. What a teacher teaches
+ * /teacher/profile - one column, like the parent's My Profile (user request
+ * 2026-10-01): Colour theme on top, then Personal details with the photo row
+ * inside it, Address and Teaching (all three saved together by "Save
+ * changes"), and Change password at the bottom. What a teacher teaches
  * (subjects + grades) is what the invite forms match them on, so it's worth
  * keeping current.
  */
@@ -136,45 +137,28 @@ export default function TeacherProfilePage() {
 
   if (!record) {
     return (
-      <ProfilePageLayout description="Your details, what you teach, and your password.">
-        {error && <Alert variant="error">{getErrorMessage(error)}</Alert>}
+      <ProfilePageLayout description="Your colour theme, your details, what you teach, and your password.">
+        {error &&<Alert variant="error">{getErrorMessage(error)}</Alert>}
       </ProfilePageLayout>
     );
   }
 
+  // One column, top to bottom, like the parent's My Profile: Colour theme,
+  // Personal details (with the photo), Address, Teaching, Change password.
   return (
-    <ProfilePageLayout
-      description="Your details, what you teach, and your password."
-      head={
-        <ProfileHeaderCard
-          name={formatName(record)}
-          meta={metaLine(record)}
-          photoUrl={record.profile?.profileImageUrl ?? null}
-          busy={photo.busy}
-          onUpload={photo.upload}
-          onRemove={photo.remove}
+    <ProfilePageLayout description="Your colour theme, your details, what you teach, and your password.">
+      <ProfileSection title="Colour theme" hint="Changes the accent colour across your whole dashboard.">
+        <AccentPicker
+          value={appSettings.accent}
+          disabled={appSettings.isLoading}
+          onChange={(accent) =>
+            appSettings.update({ accent }).catch((err) => {
+              toast.error(getErrorMessage(err) || 'Couldn’t save that - please try again.');
+            })
+          }
         />
-      }
-      extra={
-        <>
-          <ProfileSection title="Colour theme" hint="Changes the accent colour across your whole dashboard.">
-            <AccentPicker
-              value={appSettings.accent}
-              disabled={appSettings.isLoading}
-              onChange={(accent) =>
-                appSettings.update({ accent }).catch((err) => {
-                  toast.error(getErrorMessage(err) || 'Couldn’t save that - please try again.');
-                })
-              }
-            />
-          </ProfileSection>
+      </ProfileSection>
 
-          <ProfileSection title="Change password">
-            <ChangePasswordForm compact />
-          </ProfileSection>
-        </>
-      }
-    >
       <form onSubmit={form.handleSubmit} noValidate data-testid="teacher-profile-form">
         {form.submitError && (
           <Alert variant="error" className="ui-field">
@@ -183,6 +167,16 @@ export default function TeacherProfilePage() {
         )}
 
         <ProfileSection title="Personal details">
+          {/* The photo saves on its own, straight away (useProfilePhoto); the fields save with Save changes. */}
+          <ProfileHeaderCard
+            inline
+            name={formatName(record)}
+            meta={metaLine(record)}
+            photoUrl={record.profile?.profileImageUrl ?? null}
+            busy={photo.busy}
+            onUpload={photo.upload}
+            onRemove={photo.remove}
+          />
           <div className="pf-grid">
             <Input label="First name" required autoComplete="given-name" {...form.getFieldProps('firstName')} />
             <Input label="Last name" autoComplete="family-name" {...form.getFieldProps('lastName')} />
@@ -233,6 +227,10 @@ export default function TeacherProfilePage() {
           </div>
         </ProfileSection>
       </form>
+
+      <ProfileSection title="Change password">
+        <ChangePasswordForm compact layout="profile" />
+      </ProfileSection>
     </ProfilePageLayout>
   );
 }

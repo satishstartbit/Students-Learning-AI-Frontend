@@ -45,6 +45,8 @@ export function AuthenticatedLayout({
   // Extra content rendered at the top of the sidebar's content area, before
   // the nav sections. The parent layout uses this for the VIEWING child picker.
   sidebarExtra,
+  // Phone top bar: shown next to the logo instead of the app name (parents: the viewing-child chip).
+  mobileBrandSlot,
   children,
 }) {
   const { user } = useAuth();
@@ -74,6 +76,7 @@ export function AuthenticatedLayout({
             mobileTabs={mobileTabs}
             notificationsPath={showNotificationBell ? undefined : notificationsPath}
             accountSubtitle={accountSubtitle}
+            brandSlot={mobileBrandSlot}
           />
         ) : (
           <header

@@ -59,6 +59,13 @@ export const setChildPassword = (id, { password, confirmPassword }) =>
  */
 export const getDashboard = () => api.get('/parent/dashboard');
 
+/**
+ * Overview page (/parent) for the child picked in the sidebar: today's
+ * check-in, tasks and focus, the latest alert, coming up, what needs the
+ * parent, the week's check-ins and recent activity - that child only.
+ */
+export const getChildOverview = (childId) => api.get(`/parent/children/${childId}/overview`);
+
 /** Marks a child's check-in alert as seen by this parent (teachers keep their own). */
 export const markAlertSeen = (childId, alertId) => api.post(`/parent/children/${childId}/alerts/${alertId}/seen`);
 
@@ -133,6 +140,7 @@ export default {
   updateChild,
   setChildPassword,
   getDashboard,
+  getChildOverview,
   markAlertSeen,
   getProgress,
   getChildProgress,

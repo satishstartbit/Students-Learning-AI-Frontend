@@ -16,7 +16,7 @@ Sign-in and account pages, the current-user API, and the **shared profile field 
 | `components/RoleProfileFields.jsx` | Per-role profile fields (STUDENT/TEACHER/PARENT) shared by registration, admin create/edit, and parent add/edit child. `includeAdminOnly` switches free text to master dropdowns. `lookupFetcher` picks the endpoint. `layout="profile"` puts STUDENT fields in the two-column `pf-grid`. |
 | `components/AddressFields.jsx` | Address group: Canada → province picker + "A1A 1A1" postal code with FSA auto-fill of city/province (`/postal-lookup/:fsa`); other countries → free text. `layout="profile"` gives the two-column version. |
 | `components/profilePayload.js` | `buildProfilePayload(role, values)`: joins multi-select arrays to CSV, drops empty values |
-| `components/ChangePasswordForm.jsx` | Change password (`compact` variant for My Profile) |
+| `components/ChangePasswordForm.jsx` | Change password (`compact` variant for My Profile; `layout="profile"` for a full-width card: current password at half width, new + confirm side by side; default `stacked`) |
 | `services/auth.service.js` | login/logout/register/me/verify/forgot (`{identifier}`)/verify-reset-code/reset/change-password, `GET /auth/lookups/master/:type` |
 
 Client session: `store/slices/authSlice.js` + `utils/auth.js`. Tokens and user are in localStorage `eflp.accessToken` / `eflp.user`. The client only checks the token's `exp`. Route guards: `routes/ProtectedRoutes.jsx`, `RoleRoutes.jsx`, `utils/permissions.js`.

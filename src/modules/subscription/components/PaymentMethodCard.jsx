@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Badge, Button, Card, ConfirmationModal } from '../../../components/common';
+import { LuCreditCard } from 'react-icons/lu';
+import { Badge, Button, ConfirmationModal } from '../../../components/common';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import subscriptionService from '../services/subscription.service';
 import { describeCard, formatCardExpiry } from '../stripe';
 import CardSetupModal from './CardSetupModal';
+import './subscription.css';
 
 /** True when a card's expiry month has already passed. */
 function isExpired(card) {
@@ -17,8 +19,9 @@ function isExpired(card) {
  * The parent's saved card: shows it, and lets them add, replace or remove it.
  * Removing is blocked by the server while auto-renewal depends on the card;
  * the button is hidden in that case too, with the reason shown instead.
+ * Laid out as the Subscription mockup's "Payment method" card.
  */
-export default function PaymentMethodCard({ card, autoRenewing, onChanged, className }) {
+export default function PaymentMethodCard({ card, autoRenewing, onChanged, className = '' }) {
   const [setupOpen, setSetupOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -40,24 +43,39 @@ export default function PaymentMethodCard({ card, autoRenewing, onChanged, class
   const expired = isExpired(card);
 
   return (
-    <Card title="Payment method" subtitle="The card used for your subscription and its renewals." className={className}>
+    <section className={`sub-card ${className}`.trim()} aria-labelledby="sub-payment-title">
+      <h2 id="sub-payment-title" className="sub-card__title">
+        Payment method
+      </h2>
+      <p className="sub-card__subtitle">The card used for your plan and its renewals.</p>
+
       {card ? (
         <>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-            <span aria-hidden="true" style={{ fontSize: 22 }}>
-              💳
-            </span>
-            <strong>{describeCard(card)}</strong>
-            {formatCardExpiry(card) && <span className="ui-hint">Expires {formatCardExpiry(card)}</span>}
-            {expired && <Badge variant="danger">Expired</Badge>}
-            {autoRenewing && <Badge variant="primary">Used for auto-renewal</Badge>}
+          <div className="sub-cardbox">
+            <LuCreditCard className="sub-cardbox__icon" aria-hidden="true" />
+            <div className="sub-cardbox__body">
+              <span className="sub-cardbox__name">{describeCard(card)}</span>
+              {formatCardExpiry(card) && <span className="sub-cardbox__meta">Expires {formatCardExpiry(card)}</span>}
+            </div>
+            <div className="sub-cardbox__badges">
+              {expired && (
+                <Badge variant="danger" className="sub-badge">
+                  Expired
+                </Badge>
+              )}
+              {autoRenewing && (
+                <Badge variant="primary" className="sub-badge">
+                  Auto-renewal
+                </Badge>
+              )}
+            </div>
           </div>
           {expired && (
-            <p className="ui-hint" style={{ color: 'var(--color-danger-fg)' }}>
+            <p className="sub-note" style={{ color: 'var(--color-danger-fg)' }}>
               This card has expired - replace it so your subscription can renew.
             </p>
           )}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-md)' }}>
+          <div className="sub-cardbox__actions">
             <Button variant="secondary" onClick={() => setSetupOpen(true)}>
               Replace card
             </Button>
@@ -67,16 +85,24 @@ export default function PaymentMethodCard({ card, autoRenewing, onChanged, class
               </Button>
             )}
           </div>
-          {autoRenewing && (
-            <p className="ui-hint" style={{ marginBottom: 0 }}>
-              To remove this card, replace it or turn off auto-renewal first.
-            </p>
-          )}
+          <p className="sub-note">
+            {autoRenewing && 'To remove this card, replace it or turn off auto-renewal first. '}
+            Card details are handled securely by Stripe.
+          </p>
         </>
       ) : (
         <>
-          <p style={{ marginTop: 0 }}>No card saved yet.</p>
-          <Button onClick={() => setSetupOpen(true)}>Add card</Button>
+          <div className="sub-cardbox">
+            <LuCreditCard className="sub-cardbox__icon" aria-hidden="true" />
+            <div className="sub-cardbox__body">
+              <span className="sub-cardbox__name">No card saved yet</span>
+              <span className="sub-cardbox__meta">Add one for your plan&apos;s renewals.</span>
+            </div>
+          </div>
+          <div className="sub-cardbox__actions">
+            <Button onClick={() => setSetupOpen(true)}>Add card</Button>
+          </div>
+          <p className="sub-note">Card details are handled securely by Stripe.</p>
         </>
       )}
 
@@ -101,6 +127,6 @@ export default function PaymentMethodCard({ card, autoRenewing, onChanged, class
         confirmLabel="Remove card"
         cancelLabel="Keep it"
       />
-    </Card>
+    </section>
   );
 }
