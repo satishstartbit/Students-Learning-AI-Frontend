@@ -298,14 +298,19 @@
     cursor: pointer;
   }
 
-  .kid-ui :where(fieldset) {
+  /* `.kid-theme` too: the kid dialogs (check-in, "What's making it tricky?",
+     the task picker) are portalled into the .kid-theme root, outside any
+     .kid-ui page, and otherwise showed the browser's grey fieldset frame. */
+  .kid-ui :where(fieldset),
+  .kid-theme :where(fieldset) {
     min-inline-size: 0;
     margin: 0;
     padding: 0;
     border: 0;
   }
 
-  .kid-ui :where(legend) {
+  .kid-ui :where(legend),
+  .kid-theme :where(legend) {
     padding: 0;
   }
 

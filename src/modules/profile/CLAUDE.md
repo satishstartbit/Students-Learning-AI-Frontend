@@ -2,7 +2,7 @@
 
 The shared "My Profile" UI kit. There are no pages here. The Teacher, Parent and Super Admin profile pages (`teacher/TeacherProfilePage`, `parent/ParentProfilePage`, `superAdmin/AdminProfilePage` at `/admin/profile`) and the parent's Add/Edit child dialogs are built from it, so they all look the same.
 
-**Page frame:** `ProfilePageLayout` gives the standard `PageHeader` ("My Profile" plus a description) and the full `.td-page` width (1120px, like every other page). Below that are two columns: the forms go in `children` (left), and `head` (photo card) plus `extra` (colour theme, change password) go on the right (340px). Under 1080px it stacks as head, forms, extra. **Without `head` and `extra` it is one column** (`pf-layout--single`) and the page orders every section itself - the parent's My Profile does this (user request 2026-10-01: Colour theme on top, photo inside Personal details, Change password at the bottom, no side column); Teacher and Super Admin keep two columns. Don't reintroduce a narrow `max-width` or a custom title.
+**Page frame:** `ProfilePageLayout` gives the standard `PageHeader` ("My Profile" plus a description) and the full `.td-page` width (1120px, like every other page). Below that are two columns: the forms go in `children` (left), and `head` (photo card) plus `extra` (colour theme, change password) go on the right (340px). Under 1080px it stacks as head, forms, extra. **Without `head` and `extra` it is one column** (`pf-layout--single`) and the page orders every section itself - the parent's and the teacher's My Profile do this (user request 2026-10-01: Colour theme on top, photo inside Personal details, Change password at the bottom, no side column); only Super Admin still uses two columns. Don't reintroduce a narrow `max-width` or a custom title.
 
 ## Where it lives
 | File | Purpose |
@@ -20,7 +20,7 @@ Used with `auth/components/AddressFields layout="profile"` and `RoleProfileField
 - A change to `.pf-*` affects Teacher Profile, Parent Profile and the child dialogs. Screenshot all of them.
 
 ## Verify
-- UI: harness. `/teacher/profile` (`USERS.teacher`), `/parent/profile` and `/parent/children` → Add / Edit (`USERS.parent`), at 1366px and 390px. `scenarios/profile-pages.mjs` (all three roles) and `scenarios/parent-profile-layout.mjs` (parent one-column order, photo inside Personal details, password grid, upload still immediate, teacher still two columns).
+- UI: harness. `/teacher/profile` (`USERS.teacher`), `/parent/profile` and `/parent/children` → Add / Edit (`USERS.parent`), at 1366px and 390px. `scenarios/profile-pages.mjs` (all three roles) and `scenarios/profile-one-column.mjs` (parent + teacher one-column order, photo inside Personal details, password grid, upload still immediate, Super Admin still two columns).
 
 ## Related
 `auth` (field groups, `PATCH /auth/me`), `parent`, `teacher`.

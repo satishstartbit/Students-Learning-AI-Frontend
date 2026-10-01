@@ -14,7 +14,7 @@ The teacher's portal: dashboard, My Students, assignments, progress, invitations
 | `/teacher/shared-work` | `pages/SharedWorkPage.jsx` ("Shared with me") | Students' own work shared with this teacher on purpose; "Take this on" = adopt (teacher-verified, origin kept). `services/sharedWork.service.js` → `/teacher/shared-work` |
 | `/teacher/progress` | `pages/TeacherProgressPage.jsx` | Uses `progress/StudentProgressDetail` |
 | `/teacher/invitations` | `pages/TeacherInvitationsPage.jsx` | Accept/decline invitations (no `awaiting_approval`/`rejected` rows are ever shown) |
-| `/teacher/profile` | `pages/TeacherProfilePage.jsx` | My Profile (`profile` kit) |
+| `/teacher/profile` | `pages/TeacherProfilePage.jsx` | My Profile (`profile` kit), one column like the parent's (2026-10-01): Colour theme → Personal details with the photo row inside → Address → Teaching (+ Save changes) → Change password. Test `scenarios/profile-one-column.mjs` |
 | `/teacher/learning-activity` | in `aiAssistant` | Aggregate AI-assistant activity |
 
 Services: `services/dashboard.service.js` (`GET /dashboard`), `teacherStudent.service.js` (`/teacher/students`, `/roster`, `/roster/counts`, `/students/:id/overview`, alerts seen, `/teacher/lookups/*`), `progress.service.js` (`/teacher/progress`).
