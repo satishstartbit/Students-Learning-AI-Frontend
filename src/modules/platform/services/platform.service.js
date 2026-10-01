@@ -21,6 +21,9 @@ export const rollback = (key, version, reason) =>
 
 export const systemStatus = () => api.get('/admin/system/status');
 
+/** Sends a test email to the signed-in Super Admin's own address: { sent, problem, to }. */
+export const sendTestEmail = () => api.post('/admin/system/test-email');
+
 /** AI cost and quality over the last `days` (1-90). Counts and money only. */
 export const aiUsage = (days = 30) => api.get('/admin/system/ai-usage', { params: { days } });
 
@@ -34,5 +37,6 @@ export default {
   publish,
   rollback,
   systemStatus,
+  sendTestEmail,
   aiUsage,
 };

@@ -38,6 +38,7 @@ Client session: `store/slices/authSlice.js` + `utils/auth.js`. Tokens and user a
   - Outside production the code is logged to the server console.
   - The link route `/verify-email?token=` still works.
   - Test: `.claude/testing/functional/register-verify.mjs`.
+- **A reset verifies the address (2026-10-01):** `POST /auth/reset-password` sets `email_verified_at` for an unverified teacher/parent, because their link or code only ever goes to their own address. So someone Super Admin created can set a password from the emailed link and sign straight in, without a second email (the verification code). Students are untouched.
 - **Password reset by code** (migration 102: `password_resets.kind` `'link'|'code'`, `attempts`):
   - `POST /auth/forgot-password {identifier}` (username, email or phone; the older `{email}` still works) sends a 6-digit code. A **student's code goes to their active parents** (their own email only if they have none), and the email names the child. Always 200 with `{ method, codeLength, expiresInMinutes, resendAfterSeconds }`. At most one code per `PASSWORD_RESET_RESEND_SECONDS` (45); only the newest counts.
   - `POST /auth/verify-reset-code {identifier, code}`: 400 `INVALID_CODE` or `CODE_EXPIRED` (after `PASSWORD_RESET_CODE_MINUTES` 10, a used code, or the `PASSWORD_RESET_CODE_MAX_ATTEMPTS`th (5) wrong try, claimed atomically so parallel guesses can't pass it). A right code is used up and swapped for `{ resetToken }`, a `'link'` row valid for `PASSWORD_RESET_AFTER_CODE_TTL` (15m).

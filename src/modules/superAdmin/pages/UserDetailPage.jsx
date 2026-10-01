@@ -19,6 +19,7 @@ import { formatDateTime } from '../../../utils/date';
 import { formatName } from '../../../utils/format';
 import { formatPhoneForDisplay } from '../../../utils/phone';
 import { ROLE_LABELS, USER_ROLES, USER_STATUS, listPathForRole } from '../../../utils/constants';
+import { emailProblemText } from '../../../utils/emailProblem';
 import { getErrorMessage, parseApiError } from '../../../utils/errorHandler';
 import adminUserService from '../services/adminUser.service';
 import ParentChildrenPanel from '../components/ParentChildrenPanel';
@@ -62,6 +63,8 @@ export default function UserDetailPage() {
   const [busy, setBusy] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState('');
   const [deleteBlockers, setDeleteBlockers] = useState([]);
+  // Why the last reset email didn't go out (an email problem code), if it didn't.
+  const [resetIssue, setResetIssue] = useState(null);
 
   const load = useCallback(() => run(id), [run, id]);
 
@@ -118,6 +121,31 @@ export default function UserDetailPage() {
     !user.emailVerified && (user.role === USER_ROLES.TEACHER || user.role === USER_ROLES.PARENT);
   // What the delete dialog asks the admin to type.
   const confirmValue = user.email ?? user.username ?? '';
+
+  /*
+   * The reset link is created and the user signed out whatever happens to
+   * the email - so a failed email is said plainly and stays on the page,
+   * instead of "Reset link sent" for a message that never left the server.
+   */
+  const sendReset = async () => {
+    setBusy(true);
+    try {
+      const { data } = await adminUserService.resetUserPassword(id);
+      if (data?.emailSent === false) {
+        setResetIssue(data.emailProblem ?? 'unknown');
+        toast.error(emailProblemText(data.emailProblem), { title: "The reset email didn't go out" });
+      } else {
+        setResetIssue(null);
+        toast.success(`Reset link sent to ${user.email}. They have been signed out everywhere.`);
+      }
+      resetModal.close();
+      await load();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const resendVerification = async () => {
     setBusy(true);
@@ -178,7 +206,14 @@ export default function UserDetailPage() {
         </Alert>
       )}
 
-      {needsVerification && (
+      {resetIssue && (
+        <Alert variant="error" title="The reset email didn't go out" className="ui-field" onDismiss={() => setResetIssue(null)}>
+          {emailProblemText(resetIssue)} {formatName(user)} has been signed out everywhere and can&apos;t sign in until a
+          reset email reaches them. Once email works, send the reset again. <Link to="/admin/system">Check email on System status</Link>
+        </Alert>
+      )}
+
+      {/* {needsVerification && (
         <Alert variant="warning" title="Email not verified" className="ui-field">
           <p style={{ margin: '0 0 var(--spacing-sm)' }}>
             {formatName(user)} can&apos;t sign in until they enter the code emailed to {user.email}. If it
@@ -197,7 +232,7 @@ export default function UserDetailPage() {
             </Button>
           </div>
         </Alert>
-      )}
+      )} */}
 
       <Card title="Account" className="ui-field">
         <div style={GRID}>
@@ -260,13 +295,7 @@ export default function UserDetailPage() {
       <ConfirmationModal
         isOpen={resetModal.isOpen}
         onClose={resetModal.close}
-        onConfirm={async () => {
-          const ok = await act(
-            () => adminUserService.resetUserPassword(id),
-            'Reset link sent and sessions revoked'
-          );
-          if (ok) resetModal.close();
-        }}
+        onConfirm={sendReset}
         title="Send a password reset?"
         message={`${user.email} will be emailed a link to set a new password, and all their sessions will be revoked immediately. You will not see their password.`}
         confirmLabel="Send reset link"
