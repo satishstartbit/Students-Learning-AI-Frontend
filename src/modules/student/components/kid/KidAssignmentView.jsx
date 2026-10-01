@@ -22,7 +22,9 @@ import { DueChip, PaperCard, SubjectTile } from './PaperKit';
  *                 (`children`: StudentWork), in one comfortable column
  *   handed in     "How did you do?" (with a sticker slot once reviewed), the
  *                 result card and "Your answers", beside the reading scene
- *                 on wide screens (under it on a phone)
+ *                 on wide screens; on a phone or tablet (the phone mockup)
+ *                 the scene is a strip under the header and the picture sits
+ *                 above the title, with the flame in the card's corner
  *
  * Grade 6+ has components/assignment/StandardAssignmentView.jsx.
  */
@@ -100,12 +102,18 @@ export function KidAssignmentView({ item, assignmentId, working, notices, childr
         Back to my work
       </Link>
 
-      <PaperCard as="header" tone="sheet" className="mt-4 flex items-center gap-4 border border-kid-edge/70 px-5 py-5 sm:gap-6 sm:px-7 sm:py-6">
-        <SubjectTile subject={a.subject} size="xl" className="size-16 rounded-[1.25rem] sm:size-20 [&_svg]:size-9 sm:[&_svg]:size-10" />
+      {/* Phone (the phone mockup): the subject picture on top, the title under it and the
+          flame in the card's corner. From `sm` up: picture beside the title, flame after it. */}
+      <PaperCard
+        as="header"
+        tone="sheet"
+        className="mt-4 flex flex-col items-start gap-4 border border-kid-edge/70 px-5 py-5 sm:flex-row sm:items-center sm:gap-6 sm:px-7 sm:py-6"
+      >
+        <SubjectTile subject={a.subject} size="xl" className="size-20 rounded-[1.25rem] [&_svg]:size-10" />
         <div className="min-w-0">
-          <h1 className="flex flex-wrap items-center gap-x-2 font-kid-display text-3xl font-semibold leading-tight text-kid-ink sm:text-4xl">
+          <h1 className="flex flex-wrap items-center gap-x-2 font-kid-display text-4xl font-semibold leading-tight text-kid-ink">
             <span className="min-w-0 break-words">{a.title}</span>
-            {reviewed && <StickerArt slug="flame" className="size-9 shrink-0 sm:size-10" />}
+            {reviewed && <StickerArt slug="flame" className="absolute right-4 top-4 size-10 shrink-0 sm:static" />}
           </h1>
           {kind && <p className="mt-1 text-base text-kid-ink-soft">{kind}</p>}
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
@@ -114,6 +122,14 @@ export function KidAssignmentView({ item, assignmentId, working, notices, childr
           </div>
         </div>
       </PaperCard>
+
+      {/* Phones and tablets: the reading scene as a strip under the header (the phone
+          mockup). Wide screens keep it bottom-left beside the answers (below). */}
+      {handedIn && (
+        <div aria-hidden="true" className="mx-auto mt-5 w-full max-w-md overflow-hidden rounded-[1.75rem] lg:hidden">
+          <img src={readingScene} alt="" width="640" height="803" decoding="async" className="aspect-[5/3] h-auto w-full object-cover object-[50%_58%]" />
+        </div>
+      )}
 
       {handedIn ? (
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:gap-10">
@@ -129,15 +145,8 @@ export function KidAssignmentView({ item, assignmentId, working, notices, childr
           </div>
 
           {/* The reading scene: bottom-left beside the answers on a wide screen, staying in view while they scroll. */}
-          <div aria-hidden="true" className="flex justify-center lg:col-start-1 lg:row-start-1 lg:flex-col lg:justify-end">
-            <img
-              src={readingScene}
-              alt=""
-              width="640"
-              height="803"
-              decoding="async"
-              className="h-auto w-full max-w-[14rem] sm:max-w-[17rem] lg:sticky lg:bottom-0 lg:max-w-[26rem]"
-            />
+          <div aria-hidden="true" className="hidden lg:col-start-1 lg:row-start-1 lg:flex lg:flex-col lg:justify-end">
+            <img src={readingScene} alt="" width="640" height="803" decoding="async" className="sticky bottom-0 h-auto w-full max-w-[26rem]" />
           </div>
         </div>
       ) : (

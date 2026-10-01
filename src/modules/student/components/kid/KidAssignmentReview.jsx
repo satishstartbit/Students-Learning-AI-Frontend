@@ -115,7 +115,8 @@ function KidReviewedQuestion({ row }) {
       )}
 
       {isMcqLike(question) ? (
-        <ul className="mt-3 grid list-none gap-2.5 p-0 [grid-template-columns:repeat(auto-fit,minmax(min(8.5rem,100%),1fr))]">
+        // One per row on a phone (the phone mockup), side by side from `sm` up.
+        <ul className="mt-3 grid list-none grid-cols-1 gap-2.5 p-0 sm:[grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr))]">
           {(question.options ?? []).map((option) => {
             const state = optionState(row, option.id);
             return (
