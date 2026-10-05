@@ -181,8 +181,8 @@ export const SUPER_ADMIN_ROUTES = {
     // Business policies changed without a release (modules/platform).
     { path: 'settings', label: 'Platform settings', component: PlatformSettingsPage },
     { path: 'settings/:key', label: 'Platform setting', component: PlatformSettingPage },
-    { path: 'system', label: 'System status', component: SystemStatusPage },
-    { path: 'ai-usage', label: 'AI usage', component: AiUsagePage },
+    // { path: 'system', label: 'System status', component: SystemStatusPage },
+    // { path: 'ai-usage', label: 'AI usage', component: AiUsagePage },
     /*
      * There is no combined user list - the console is organised by role.
      * The bare path only forwards, so an old bookmark does not dead-end.

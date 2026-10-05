@@ -92,7 +92,7 @@ export default function SchoolFormPage() {
         title={isEdit ? 'Edit school' : 'Add school'}
         breadcrumbs={[
           { label: 'Master Management', to: '/admin/masters' },
-          { label: 'Schools / Organizations', to: '/admin/masters/schools' },
+          // { label: 'Schools / Organizations', to: '/admin/masters/schools' },
           { label: isEdit ? 'Edit' : 'Create' },
         ]}
       />
