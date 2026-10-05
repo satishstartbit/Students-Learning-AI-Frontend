@@ -55,9 +55,9 @@ const NAV_ITEMS = [
         ],
       },
       { to: '/admin/masters', label: 'Master Management', icon: LuDatabase },
-      { to: '/admin/settings', label: 'Platform settings', icon: LuSlidersHorizontal },
-      { to: '/admin/system', label: 'System status', icon: LuActivity },
-      { to: '/admin/ai-usage', label: 'AI usage', icon: LuBrainCircuit },
+      // { to: '/admin/settings', label: 'Platform settings', icon: LuSlidersHorizontal },
+      // { to: '/admin/system', label: 'System status', icon: LuActivity },
+      // { to: '/admin/ai-usage', label: 'AI usage', icon: LuBrainCircuit },
     ],
   },
 

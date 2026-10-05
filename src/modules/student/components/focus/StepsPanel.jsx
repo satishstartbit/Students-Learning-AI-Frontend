@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { LuArrowDown, LuArrowUp, LuCheck, LuEllipsis, LuListChecks, LuPencil, LuPlus, LuSparkles, LuTrash2 } from 'react-icons/lu';
-import { Button, Dropdown } from '../../../../components/common';
+import { LuArrowDown, LuArrowUp, LuCheck, LuEllipsis, LuListChecks, LuPencil, LuPlus, LuTrash2 } from 'react-icons/lu';
+import { Dropdown } from '../../../../components/common';
 
 /**
  * "Your steps" - the student's own checklist for the task a focus session is
  * about (useFocusSteps). Click a step to make it the one you're working on;
  * tick the circle to mark it done by hand; the ⋯ menu renames, moves or
- * removes it. An empty plan offers "Suggest steps" (a template for the task
- * type) or typing your own.
+ * removes it. Steps arrive with the work; an empty plan invites typing your
+ * own (no "Suggest"/"Regenerate" button - smaller steps come from "Need
+ * help? → Break it down more").
  */
 
 function StepRow({ step, index, total, isCurrent, onSelect, selectDisabled, steps }) {
@@ -126,12 +127,7 @@ export function StepsPanel({ assignment, steps, currentStepId, onSelectStep, sel
       ) : steps.isLoading ? (
         <p className="fs-steps__empty">Loading your steps…</p>
       ) : total === 0 ? (
-        <div className="fs-steps__empty">
-          <p style={{ margin: '0 0 12px' }}>No steps yet. Small steps make big tasks easier.</p>
-          <Button size="sm" startIcon={<LuSparkles aria-hidden="true" />} onClick={steps.suggest}>
-            Suggest steps
-          </Button>
-        </div>
+        <p className="fs-steps__empty">Your steps arrive with the work - check back in a moment, or add your own below.</p>
       ) : (
         <ol className="fs-steps">
           {steps.steps.map((step, index) => (

@@ -36,7 +36,10 @@ export function useSupport({ studentId = 'me', assignmentId, stepId, onChanged }
         const done = data.event.action;
         const result = data.result ?? {};
         if (done === 'smaller_steps') {
-          toast.success(`Made ${result.steps?.length ?? 'some'} smaller steps. Start with the first one.`);
+          // "Break it down more": only what was left changed; finished steps stay as they were.
+          toast.success(`What was left is now ${result.steps?.length ?? 'a few'} smaller steps. Start with the first one.`, {
+            title: 'Broken down more',
+          });
           onChanged?.();
         } else if (done === 'replan') {
           toast.success('Your plan is being updated.');

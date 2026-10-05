@@ -51,7 +51,6 @@ export function useFocusSteps(assignmentId) {
     isLoading: Boolean(assignmentId) && list.isLoading && !list.data,
     reload,
     add: (title, estimatedMinutes) => act(() => focusService.addStep(assignmentId, { title, estimatedMinutes })),
-    suggest: () => act(() => focusService.suggestSteps(assignmentId), 'Here’s a plan to start from - change anything you like.'),
     rename: (stepId, title) => act(() => focusService.updateStep(stepId, { title })),
     toggleDone: (step) => act(() => focusService.updateStep(step.id, { done: !step.done })),
     remove: (stepId) => act(() => focusService.deleteStep(stepId)),

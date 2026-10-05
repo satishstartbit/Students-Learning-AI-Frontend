@@ -7,7 +7,7 @@ import { useDifficultyPicker } from '../../checkIn/hooks/useDifficultyPicker';
 import supportService from '../services/support.service';
 
 const ACTION_LABEL = {
-  smaller_steps: 'Making smaller steps',
+  smaller_steps: 'Breaking it down more',
   explain: 'Getting it explained',
   focus_short: 'A short focus timer',
   toolkit: 'A calm-down break',
