@@ -4,6 +4,7 @@ import {
   PageHeader,
   Card,
   Input,
+  PhoneInput,
   Button,
   ButtonGroup,
   Alert,
@@ -158,12 +159,7 @@ export default function EditUserPage() {
           {!isStudent && (
             <>
               <Input label="Email" type="email" required {...form.getFieldProps('email')} />
-              <Input
-                label="Phone"
-                type="tel"
-                hint="e.g. (416) 555-1234"
-                {...form.getFieldProps('phone')}
-              />
+              <PhoneInput label="Phone" {...form.getFieldProps('phone')} />
             </>
           )}
 

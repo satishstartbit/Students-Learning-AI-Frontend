@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Alert, Button, Input, Loader } from '../../../components/common';
+import { Alert, Button, Input, Loader, PhoneInput } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
 import { useForm } from '../../../hooks/useForm';
@@ -125,7 +125,7 @@ export default function AdminProfilePage() {
             <Input label="First name" required autoComplete="given-name" {...form.getFieldProps('firstName')} />
             <Input label="Last name" autoComplete="family-name" {...form.getFieldProps('lastName')} />
             <Input label="Email" type="email" value={record.email} readOnly disabled hint="Your sign-in email - it can't be changed here." />
-            <Input label="Phone" type="tel" autoComplete="tel" {...form.getFieldProps('phone')} />
+            <PhoneInput label="Phone" {...form.getFieldProps('phone')} />
           </div>
           <div className="pf-actions">
             <Button type="submit" loading={form.isSubmitting}>

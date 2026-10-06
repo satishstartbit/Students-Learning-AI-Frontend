@@ -25,6 +25,8 @@ export { default as UploadButton } from './UploadButton';
 export { default as ImageUpload } from './ImageUpload';
 export { default as SearchInput } from './SearchInput';
 export { default as PasswordInput } from './PasswordInput';
+// Phone numbers: formats as you type, "+1 (416) 555-1234".
+export { default as PhoneInput } from './PhoneInput';
 export { default as FormField } from './FormField';
 export { default as FormError } from './FormError';
 export { default as FieldHelper } from './FieldHelper';

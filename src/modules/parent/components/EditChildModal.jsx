@@ -25,6 +25,7 @@ function valuesFromChild(child) {
     lastName: child?.lastName ?? '',
     // No email or phone: a child signs in with their username (backend strips both).
     // No time zone field: the child's own device sets it (hooks/useDeviceTimezone.js).
+    addressLine2: child?.addressLine2 ?? '',
     address: child?.address ?? '',
     city: child?.city ?? '',
     state: child?.state ?? '',
@@ -79,6 +80,7 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
       await parentService.updateChild(childId, {
         firstName: values.firstName,
         lastName: values.lastName || null,
+        addressLine2: values.addressLine2 || null,
         address: values.address || null,
         city: values.city || null,
         state: values.state || null,
@@ -159,7 +161,13 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
           </ProfileSection>
 
           <ProfileSection title="Address">
-            <AddressFields layout="profile" values={form.values} getProps={form.getFieldProps} setFieldValue={form.setFieldValue} />
+            <AddressFields
+              layout="profile"
+              values={form.values}
+              getProps={form.getFieldProps}
+              setFieldValue={form.setFieldValue}
+              recipient={[form.values.firstName, form.values.lastName].filter(Boolean).join(' ')}
+            />
           </ProfileSection>
 
           <ProfileSection title={`About ${child.firstName}`} hint="Helps teachers understand how your child learns best.">

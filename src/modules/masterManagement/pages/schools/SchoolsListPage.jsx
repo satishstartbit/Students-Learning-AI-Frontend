@@ -7,6 +7,7 @@ import { useApi } from '../../../../hooks/useApi';
 import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
+import { normalizeAddressText } from '../../../../utils/address';
 import academicService from '../../services/academic.service';
 
 const STATUS_OPTIONS = [
@@ -72,7 +73,8 @@ export default function SchoolsListPage() {
   const columns = [
     { key: 'name', header: 'School', sortable: true, render: (row) => <strong>{row.name}</strong> },
     { key: 'schoolCode', header: 'Code', render: (row) => row.schoolCode ?? '—' },
-    { key: 'city', header: 'City', render: (row) => row.city ?? '—' },
+    // Canada Post style, as on the address's city line: "TORONTO ON".
+    { key: 'city', header: 'City / province', render: (row) => [normalizeAddressText(row.city ?? ''), row.state].filter(Boolean).join(' ') || '—' },
     { key: 'country', header: 'Country', render: (row) => row.country ?? '—' },
     { key: 'is_active', header: 'Status', render: (row) => <StatusBadge status={row.isActive ? 'active' : 'inactive'} /> },
     {

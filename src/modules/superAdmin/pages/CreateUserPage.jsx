@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { PageHeader, Card, Input, Button, Alert, SectionHeader, ButtonGroup } from '../../../components/common';
+import { PageHeader, Card, Input, PhoneInput, Button, Alert, SectionHeader, ButtonGroup } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { emailProblemText } from '../../../utils/emailProblem';
@@ -111,7 +111,7 @@ function CreateUserForm({ role }) {
           <Input label="First name" required {...form.getFieldProps('firstName')} />
           <Input label="Last name" {...form.getFieldProps('lastName')} />
           <Input label="Email" type="email" required {...form.getFieldProps('email')} />
-          <Input label="Phone" type="tel" hint="e.g. (416) 555-1234" {...form.getFieldProps('phone')} />
+          <PhoneInput label="Phone" {...form.getFieldProps('phone')} />
 
           <SectionHeader title={page.profileTitle} as="h3" />
 

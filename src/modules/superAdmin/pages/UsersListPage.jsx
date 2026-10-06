@@ -157,18 +157,18 @@ export default function UsersListPage({ fixedRole = null }) {
           </Badge>
         ),
     },
-    {
-      key: 'lastLoginAt',
-      header: 'Last login',
-      sortable: true,
-      render: (row) => (row.lastLoginAt ? formatRelative(row.lastLoginAt) : '—'),
-    },
-    {
-      key: 'createdAt',
-      header: 'Created',
-      sortable: true,
-      render: (row) => formatDateTime(row.createdAt),
-    },
+    // {
+    //   key: 'lastLoginAt',
+    //   header: 'Last login',
+    //   sortable: true,
+    //   render: (row) => (row.lastLoginAt ? formatRelative(row.lastLoginAt) : '—'),
+    // },
+    // {
+    //   key: 'createdAt',
+    //   header: 'Created',
+    //   sortable: true,
+    //   render: (row) => formatDateTime(row.createdAt),
+    // },
     {
       key: 'actions',
       header: 'Actions',
