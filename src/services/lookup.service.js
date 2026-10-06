@@ -4,7 +4,7 @@ import api from '../utils/apiClient';
  * Master lists every signed-in role shares (backend: /lookups).
  *
  * Teachers, parents and students all create work, and all three read the same
- * admin-managed lists - work types, priorities, subjects, grades - so these
+ * admin-managed lists - work types, subjects, grades - so these
  * live here rather than being copied into each module's own service. Nothing
  * that comes back is hardcoded anywhere in the app: Super Admin adds, rewords
  * or deactivates a row in Master Management and every screen follows.
@@ -19,9 +19,6 @@ export const listLookup = (type, params = {}) => api.get(`/lookups/${type}`, { p
 /** The kinds of work a task can be ("Homework", "Reading response", ...). */
 export const listWorkTypes = (params = {}) => listLookup('assignment_types', params);
 
-/** Priority levels a task can be given; `extra.numeric_value` is the order. */
-export const listPriorities = (params = {}) => listLookup('priorities', params);
-
 /**
  * The "what is making it hard to get started or keep going right now?"
  * picker: categories, each with its reasons, and each reason already carrying
@@ -34,6 +31,5 @@ export default {
   listLookupTypes,
   listLookup,
   listWorkTypes,
-  listPriorities,
   getDifficultyPicker,
 };

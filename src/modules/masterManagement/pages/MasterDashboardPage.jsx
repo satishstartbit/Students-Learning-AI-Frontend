@@ -201,14 +201,6 @@ export default function MasterDashboardPage() {
           <Tooltip label="View" side="top">
             <IconButton icon={<LuEye aria-hidden="true" />} label={`View ${row.label}`} size="sm" onClick={() => navigate(row.viewPath)} />
           </Tooltip>
-          <Tooltip label="Add" side="top">
-            <IconButton
-              icon={<LuPlus aria-hidden="true" />}
-              label={`Add to ${row.label}`}
-              size="sm"
-              onClick={() => navigate(`${row.viewPath}/create`)}
-            />
-          </Tooltip>
         </div>
       ),
     },

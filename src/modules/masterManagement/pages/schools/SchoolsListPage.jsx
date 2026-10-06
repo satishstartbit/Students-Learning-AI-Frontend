@@ -93,9 +93,12 @@ export default function SchoolsListPage() {
               <IconButton icon={<LuToggleRight aria-hidden="true" />} label="Activate" variant="success" size="sm" onClick={() => setConfirm({ type: 'activate', item: row })} />
             </Tooltip>
           )}
-          <Tooltip label="Delete" side="top">
-            <IconButton icon={<LuTrash2 aria-hidden="true" />} label="Delete" variant="danger" size="sm" onClick={() => setConfirm({ type: 'delete', item: row })} />
-          </Tooltip>
+          {/* Built-in rows (the master data the platform ships with) can't be deleted. */}
+          {!row.isSystem && (
+            <Tooltip label="Delete" side="top">
+              <IconButton icon={<LuTrash2 aria-hidden="true" />} label="Delete" variant="danger" size="sm" onClick={() => setConfirm({ type: 'delete', item: row })} />
+            </Tooltip>
+          )}
         </div>
       ),
     },

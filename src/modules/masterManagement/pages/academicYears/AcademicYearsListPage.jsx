@@ -103,9 +103,9 @@ export default function AcademicYearsListPage() {
               <IconButton icon={<LuToggleRight aria-hidden="true" />} label="Activate" variant="success" size="sm" onClick={() => setConfirm({ type: 'activate', item: row })} />
             </Tooltip>
           )}
-          <Tooltip label="Delete" side="top">
+          {/* <Tooltip label="Delete" side="top">
             <IconButton icon={<LuTrash2 aria-hidden="true" />} label="Delete" variant="danger" size="sm" onClick={() => setConfirm({ type: 'delete', item: row })} />
-          </Tooltip>
+          </Tooltip> */}
         </div>
       ),
     },
