@@ -49,6 +49,8 @@
   }
 }
 .kh-sway {
+  /* fill-box: an SVG group sways from its own stem, not the drawing's corner. */
+  transform-box: fill-box;
   transform-origin: 50% 100%;
   animation: kh-sway 3.6s ease-in-out infinite;
   animation-delay: var(--kh-delay, 0s);
@@ -238,6 +240,146 @@
   animation-delay: var(--kh-delay, 0s);
 }
 
+/* Light on water: white wave strokes drifting and glinting (BannerBits SeaShimmer). */
+@keyframes kh-shimmer {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translateX(var(--kh-shimmer-x, 12px));
+  }
+}
+.kh-shimmer {
+  opacity: 0.3;
+  animation: kh-shimmer var(--kh-shimmer-time, 4.6s) ease-in-out infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+/* A little boat rocking on the waves (BannerBits Sailboat). */
+@keyframes kh-rock {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(-8%) rotate(5deg);
+  }
+}
+.kh-rock {
+  transform-origin: 50% 90%;
+  animation: kh-rock 3.4s ease-in-out infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+/* A butterfly flitting about the flowers (BannerBits Butterfly): a lazy loop
+   out and back, the wings folding fast. */
+@keyframes kh-flutter {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(-8deg);
+  }
+  25% {
+    transform: translate(var(--kh-flutter-x, 160%), -90%) rotate(6deg);
+  }
+  50% {
+    transform: translate(calc(var(--kh-flutter-x, 160%) * 2), -10%) rotate(10deg);
+  }
+  75% {
+    transform: translate(var(--kh-flutter-x, 160%), 70%) rotate(-4deg);
+  }
+}
+.kh-flutter {
+  animation: kh-flutter var(--kh-flutter-time, 9s) ease-in-out infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+@keyframes kh-flit {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(0.4);
+  }
+}
+.kh-flit {
+  transform-origin: 50% 50%;
+  animation: kh-flit 0.32s ease-in-out infinite;
+}
+
+/* KidBannerHero: from a small tablet the banner takes its picture's shape. */
+@media (min-width: 640px) {
+  .kh-banner {
+    aspect-ratio: var(--kh-art-ratio);
+  }
+}
+
+/* Hearts rising from a happy animal (BannerBits RisingHearts). */
+@keyframes kh-heart {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-160%) scale(1.05) rotate(-12deg);
+  }
+}
+.kh-heart {
+  opacity: 0;
+  animation: kh-heart 4.6s ease-out infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+/* A little wiggle on hover (the week's dashed "+"). */
+@keyframes kh-wiggle {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  25% {
+    transform: rotate(6deg) scale(1.06);
+  }
+  50% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}
+.kh-wiggle:hover,
+.kh-wiggle:focus-visible {
+  animation: kh-wiggle 0.6s ease-in-out;
+}
+
+/* Stars on a card twinkle while it is hovered. */
+.group:hover .kh-star-hover svg {
+  animation: kh-twinkle 1.2s ease-in-out infinite;
+}
+.group:hover .kh-star-hover svg:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.group:hover .kh-star-hover svg:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* K-5 My week: from a tablet to a laptop the five day columns are narrow, so
+   a study time's / busy time's kind line ("⚽ Extracurricular") ends in "…"
+   instead of breaking inside a word. The full words stay in the page for
+   screen readers. (DayAgenda is the planner's, shared - left as it is.) */
+@media (min-width: 768px) and (max-width: 1279.98px) {
+  .kw-agenda .sw-slot__kind {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
 /* --- Entrances ------------------------------------------------------------ */
 
 @keyframes kh-pop {
@@ -309,6 +451,18 @@
 }
 .kh-tape--plain {
   background: color-mix(in srgb, var(--kid-paper-deep) 80%, transparent);
+}
+.kh-tape--green {
+  background: color-mix(in srgb, var(--kid-green) 88%, var(--kid-green-deep));
+  color: #2c5e29;
+}
+.kh-tape--lavender {
+  background: var(--kid-lavender);
+  color: var(--kid-purple);
+}
+/* A tape label that sits in the flow (a section heading), not on a card's edge. */
+.kh-tape--inline {
+  position: relative;
 }
 
 /* The speech bubble beside a task carried over from before. */

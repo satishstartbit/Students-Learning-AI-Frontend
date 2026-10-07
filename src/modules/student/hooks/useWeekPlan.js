@@ -1,6 +1,15 @@
 import { useMemo } from 'react';
 import { useMyTasks } from './useMyTasks';
-import { addDays, getDateKey } from '../../../utils/date';
+import { addDays, getDateKey, isDateKey } from '../../../utils/date';
+
+/**
+ * The calendar day a task is due. `due_date` is a DATE column, so the API
+ * sends a day key ("2026-10-07") - used as it is. Reading it through
+ * getDateKey would parse it as midnight UTC, which is still the day before
+ * everywhere in Canada, and file every task a day early. A full timestamp
+ * (should one ever come) is read in the student's own timezone.
+ */
+const dueDayOf = (dueDate) => (isDateKey(dueDate) ? dueDate : getDateKey(dueDate));
 
 /**
  * A calendar day as a fixed UTC-noon instant, from its "YYYY-MM-DD" key -
@@ -47,7 +56,7 @@ export function useWeekPlan(weekStart) {
       const date = addDays(weekStart, i);
       const key = getDateKey(date);
       const items = all
-        .filter((t) => t.assignment?.dueDate && getDateKey(t.assignment.dueDate) === key)
+        .filter((t) => t.assignment?.dueDate && dueDayOf(t.assignment.dueDate) === key)
         .sort((a, b) => (a.assignment?.title ?? '').localeCompare(b.assignment?.title ?? ''));
       return { date, key, items };
     });

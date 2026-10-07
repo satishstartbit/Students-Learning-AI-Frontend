@@ -102,6 +102,31 @@ export function SubjectTile({ subject, size = 'md', className }) {
 }
 
 /**
+ * The subject's big picture (an emoji drawing - book, flask, calculator,
+ * globe…) on a rounded square of the subject's colour: the K-5 "My week"
+ * tiles. Decorative - the title is printed under it.
+ */
+export function SubjectPicture({ subject, className }) {
+  const { emoji, tile } = getSubjectStyle(subject);
+  const { colorOf } = useSubjectColors();
+  const paint = subjectPaint(colorOf(subject));
+
+  return (
+    <span
+      aria-hidden="true"
+      className={cn('grid shrink-0 place-items-center rounded-[1.1rem] shadow-[inset_0_-3px_0_rgb(0_0_0/0.07)]', !paint.style && tile, className)}
+      style={
+        paint.style
+          ? { ...paint.style, backgroundColor: 'color-mix(in srgb, var(--subject-color) 55%, var(--kid-sheet))' }
+          : undefined
+      }
+    >
+      <span className="leading-none drop-shadow-[0_2px_1px_rgb(0_0_0/0.15)]">{emoji}</span>
+    </span>
+  );
+}
+
+/**
  * The circle at the end of a task card (the mockup's radio circle). It
  * shows progress rather than being a checkbox - a student can't tick work
  * off here, it's finished by handing it in.
