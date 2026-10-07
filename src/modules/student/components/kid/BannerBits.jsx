@@ -144,21 +144,102 @@ export function Sailboat({ className, motion = 'rock', delay = 0 }) {
   );
 }
 
-/** A butterfly flitting about the flowers: a lazy loop (`travel` = how far, in its own widths; negative goes left) with flapping wings. */
+/**
+ * A butterfly flitting about the flowers: a lazy loop (`travel` = how far, in
+ * its own widths; negative goes left). Its two wings are separate and fold in
+ * 3D on the body, towards the viewer (kh-flit: rotateY with perspective).
+ */
 export function Butterfly({ className, delay = 0, travel = '160%', time = '9s', wings = ['#f59ab5', '#f6c445'] }) {
   return (
     <span
-      className={cn('kh-flutter absolute block', className)}
+      className={cn('kh-flutter absolute block aspect-[40/32]', className)}
       style={{ '--kh-delay': `${delay}s`, '--kh-flutter-x': travel, '--kh-flutter-time': time }}
     >
-      <svg viewBox="0 0 40 32" className="kh-flit block w-full">
-        <path d="M20 15 C14 2 3 2 3 10 C3 17 12 18 20 15Z" fill={wings[0]} />
-        <path d="M20 15 C26 2 37 2 37 10 C37 17 28 18 20 15Z" fill={wings[0]} />
-        <path d="M20 16 C13 18 7 24 10 28 C13 31 18 25 20 17Z" fill={wings[1]} />
-        <path d="M20 16 C27 18 33 24 30 28 C27 31 22 25 20 17Z" fill={wings[1]} />
+      <span className="kh-flit kh-flit--l absolute inset-y-0 left-0 block w-1/2">
+        <svg viewBox="0 0 20 32" className="block size-full">
+          <path d="M20 15 C14 2 3 2 3 10 C3 17 12 18 20 15Z" fill={wings[0]} />
+          <path d="M20 16 C13 18 7 24 10 28 C13 31 18 25 20 17Z" fill={wings[1]} />
+        </svg>
+      </span>
+      <span className="kh-flit kh-flit--r absolute inset-y-0 right-0 block w-1/2">
+        <svg viewBox="20 0 20 32" className="block size-full">
+          <path d="M20 15 C26 2 37 2 37 10 C37 17 28 18 20 15Z" fill={wings[0]} />
+          <path d="M20 16 C27 18 33 24 30 28 C27 31 22 25 20 17Z" fill={wings[1]} />
+        </svg>
+      </span>
+      <svg viewBox="0 0 40 32" className="absolute inset-0 block size-full">
         <rect x="19" y="9" width="2" height="15" rx="1" fill="#5b4632" />
         <path d="M20 9 C18 5 16 4 15 3 M20 9 C22 5 24 4 25 3" stroke="#5b4632" strokeWidth="1.2" fill="none" strokeLinecap="round" />
       </svg>
+    </span>
+  );
+}
+
+/**
+ * The sky the 3D birds fly in: a layer over the whole picture with its own
+ * depth (perspective, seen from high up so far birds sit high in the sky).
+ * Bird sizes and paths are in container units of this layer, so they keep
+ * their place on the picture at every size. Decorative.
+ */
+export function BirdSky({ className, children }) {
+  return (
+    <span aria-hidden="true" className={cn('kh-b3d-sky', className)}>
+      {children}
+    </span>
+  );
+}
+
+const BIRD_PATHS = { cross: 'kh-b3d-cross', glide: 'kh-b3d-glide', swoop: 'kh-b3d-swoop' };
+const BIRD_FACING = { right: '0deg', left: '180deg', toward: '-28deg' };
+
+/**
+ * A bird in real 3D (inside a BirdSky): a body and two wings that hinge on
+ * its back and flap through depth - the near wing swings towards you, the far
+ * one away - flying a path through the scene and banking into its turns.
+ *
+ *   path    'cross'  far away, left to right across the top of the sky
+ *           'glide'  a little nearer, right to left (use facing="left")
+ *           'swoop'  out from behind the trees, towards you, growing, and off
+ *   top     extra height for the path (container units, e.g. '6cqh')
+ *   size    the bird's size (container units, e.g. '3cqw', or max(...) with px)
+ *   facing  'right' | 'left' | 'toward' (three-quarters, coming at you)
+ *   flap    one wingbeat ('0.5s'); time / delay: the whole flight
+ */
+export function Bird3D({ path = 'cross', top = '0cqh', size = '3cqw', time = '18s', delay = 0, facing = 'right', flap = '0.5s' }) {
+  return (
+    <span
+      className="kh-b3d"
+      style={{
+        '--kh-b3d-path': BIRD_PATHS[path] ?? BIRD_PATHS.cross,
+        '--kh-b3d-top': top,
+        '--kh-b3d-size': size,
+        '--kh-b3d-time': time,
+        '--kh-b3d-yaw': BIRD_FACING[facing] ?? '0deg',
+        '--kh-b3d-flap': flap,
+        '--kh-delay': `${delay}s`,
+      }}
+    >
+      <span className="kh-b3d-bank">
+        <span className="kh-b3d-wing kh-b3d-wing--far">
+          <svg viewBox="0 0 40 50">
+            <path d="M4 50 C6 34 14 16 30 2 C28 14 30 30 36 50 Z" fill="#2f5577" />
+          </svg>
+        </span>
+        <svg viewBox="0 0 100 100" className="kh-b3d-body">
+          <path d="M30 52 L9 43 L15 52 L9 61 Z" fill="#2f5577" />
+          <path d="M24 53 C34 43 58 41 72 45 C78 42 85 42 88 46 C90 49 86 53 80 54 C70 61 46 63 30 58 Z" fill="#3d6b94" />
+          <path d="M40 57 C52 60 66 58 76 53 C66 57 52 58 40 57 Z" fill="#a9cbe6" />
+          <path d="M88 46 L96 48 L88 50 Z" fill="#f2a33a" />
+          <circle cx="82" cy="46.5" r="2.1" fill="#fff" />
+          <circle cx="82.7" cy="46.5" r="1.1" fill="#1f2d3a" />
+        </svg>
+        <span className="kh-b3d-wing kh-b3d-wing--near">
+          <svg viewBox="0 0 40 50">
+            <path d="M4 50 C6 34 14 16 30 2 C28 14 30 30 36 50 Z" fill="#5b8fbf" />
+            <path d="M12 44 C15 32 20 22 27 12" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+          </svg>
+        </span>
+      </span>
     </span>
   );
 }
