@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LuCamera, LuLifeBuoy, LuMic, LuPencil, LuPlay } from 'react-icons/lu';
+import { LuCamera, LuFootprints, LuLifeBuoy, LuMic, LuPencil, LuPlay } from 'react-icons/lu';
 import { formatTime } from '../../../../utils/date';
 import AddWorkDialog from '../../../planner/components/AddWorkDialog';
 import PendingIntakes from '../../../planner/components/PendingIntakes';
@@ -28,50 +28,64 @@ export function KidPlanCard() {
   const next = plan?.nextActions?.[0] ?? null;
 
   return (
-    <PaperCard as="section" aria-labelledby="kid-plan-title" tone="sheet" className="flex flex-col gap-4 px-6 py-6">
-      <h2 id="kid-plan-title" className="font-kid-display text-lg font-semibold text-kid-ink">
-        My next step
-      </h2>
+    <PaperCard
+      as="section"
+      aria-labelledby="kid-plan-title"
+      tone="sheet"
+      className="flex flex-col gap-4 rounded-[1.4rem] border border-kid-edge/60 px-5 py-5 sm:px-6"
+    >
+      <div className="flex items-center gap-3">
+        <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full bg-kid-lavender text-kid-purple">
+          <LuFootprints className="size-5" strokeWidth={2.2} />
+        </span>
+        <h2 id="kid-plan-title" className="font-kid-display text-lg font-semibold text-kid-ink">
+          My next step
+        </h2>
+      </div>
       {next ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-[1_1_14rem]">
             <p className="font-kid-display text-xl text-kid-ink">{next.title}</p>
             <p className="font-kid-body text-kid-ink-soft">
               {next.date === plan.today ? 'Today' : 'Soon'} at {formatTime(next.startAt, { timeZone: plan.timezone })}
               {next.assignmentTitle && next.assignmentTitle !== next.title ? ` · ${next.assignmentTitle}` : ''}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setTricky(true)}
-            className="inline-flex min-h-12 items-center gap-2 rounded-full border-2 border-kid-paper-deep px-5 font-kid-display text-base text-kid-ink hover:border-kid-teal"
-          >
-            <LuLifeBuoy className="size-5 text-kid-teal" aria-hidden="true" /> It’s tricky
-          </button>
-          {next.assignmentId && (
-            <Link
-              to={`/student/focus?assignment=${next.assignmentId}${next.stepId ? `&step=${next.stepId}` : ''}`}
-              className="inline-flex min-h-12 items-center gap-2 rounded-full bg-kid-teal px-6 font-kid-display text-lg font-semibold text-kid-sheet no-underline hover:bg-kid-teal-deep"
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setTricky(true)}
+              className="group inline-flex min-h-12 items-center gap-2 rounded-full border-2 border-kid-edge bg-kid-sheet px-5 font-kid-display text-base text-kid-ink transition-[transform,border-color] duration-150 hover:-translate-y-0.5 hover:border-kid-teal"
             >
-              <LuPlay className="size-5" aria-hidden="true" /> Start
-            </Link>
-          )}
+              <LuLifeBuoy className="size-5 text-kid-teal transition-transform duration-300 group-hover:rotate-45" aria-hidden="true" /> It’s tricky
+            </button>
+            {next.assignmentId && (
+              <Link
+                to={`/student/focus?assignment=${next.assignmentId}${next.stepId ? `&step=${next.stepId}` : ''}`}
+                className="inline-flex min-h-12 items-center gap-2 rounded-full bg-kid-teal px-6 font-kid-display text-lg font-semibold text-kid-sheet no-underline shadow-[0_4px_0_var(--kid-teal-deep)] transition-transform duration-150 hover:-translate-y-0.5 hover:bg-kid-teal-deep active:translate-y-[3px] active:shadow-[0_1px_0_var(--kid-teal-deep)]"
+              >
+                <LuPlay className="size-5" aria-hidden="true" /> Start
+              </Link>
+            )}
+          </div>
         </div>
       ) : (
         <p className="font-kid-body text-kid-ink-soft">Nothing planned yet. Add some work and we’ll plan it with you.</p>
       )}
 
       <div>
-        <p className="font-kid-display text-base text-kid-ink">Got new work?</p>
-        <div className="mt-2 grid grid-cols-3 gap-3">
+        <p className="font-kid-display text-base font-medium text-kid-ink">Got new work?</p>
+        <div className="mt-2 grid grid-cols-3 gap-2.5 sm:gap-3">
           {WAYS.map(({ key, icon: Icon, label }) => (
             <button
               key={key}
               type="button"
               onClick={() => setAdding(key)}
-              className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-kid-paper-deep bg-kid-paper font-kid-display text-base text-kid-ink hover:border-kid-teal"
+              className="group flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-kid-edge bg-kid-paper/70 px-1 font-kid-display text-base text-kid-ink transition-[transform,border-color,background-color] duration-150 hover:-translate-y-0.5 hover:border-kid-teal hover:bg-kid-sheet"
             >
-              <Icon className="size-7 text-kid-teal" aria-hidden="true" />
+              <span aria-hidden="true" className="grid size-10 place-items-center rounded-full bg-kid-sheet shadow-paper transition-transform duration-200 group-hover:-rotate-12 group-hover:scale-110">
+                <Icon className="size-5 text-kid-teal" />
+              </span>
               {label}
             </button>
           ))}

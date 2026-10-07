@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import heroArt from '../../../../assets/kid/home-hero.webp';
+import heroArtSmall from '../../../../assets/kid/home-hero-1100.webp';
 import { Highlighter } from '../../../../components/ui/highlighter';
-import { TextAnimate } from '../../../../components/ui/text-animate';
 import { getHourInTimezone } from '../../../../utils/date';
 import { useMotionAllowed } from '../../hooks/useKidPreferences';
-import { Bear } from './Bear';
-import { Heart, Landscape, Sun, WoodenSign } from './KidScenery';
+import { DriftingCloud, FallingLeaf, FlyingBird, Sparkle, SpeechBubble, SunGlow, WaveMarks } from './BannerBits';
+import { KidBannerHero } from './KidBannerHero';
 
 /** Morning / afternoon / evening by the student's own clock (utils/date.js), not the browser's. */
 function greetingFor(hour) {
@@ -14,57 +15,49 @@ function greetingFor(hour) {
   return 'Good evening';
 }
 
+/** src/assets/kid/home-hero*.webp - the bear under the tree, with the signpost. */
+const ART = { src: heroArt, srcSmall: heroArtSmall, smallWidth: 1100, bigWidth: 2000, width: 2073, height: 661, sky: '#c7e9fd' };
+
 /**
- * "Good morning, Alex!" over the paper-craft countryside, with the bear
- * waving from beside the signpost. The greeting words drift in once (Magic
- * UI TextAnimate); "You've got this!" gets a hand-drawn underline (Magic UI
- * Highlighter), drawn instantly in calm mode.
+ * The K-5 Home's banner: "Good morning, Alex!" over the paper-craft scene
+ * (KidBannerHero). The overlays sit on what is painted: a glow and sparkles
+ * on the sun, a wandering cloud, birds, leaves falling from the tree, marks
+ * beside the bear's waving paw and its "Hi!". "You have got this." gets a
+ * hand-drawn underline (Highlighter).
  */
 export function HeroScene({ firstName }) {
   // Fixed for the visit - the greeting shouldn't change under the student's eyes.
   const [greeting] = useState(() => greetingFor(getHourInTimezone()));
   const motionAllowed = useMotionAllowed();
-  const text = firstName ? `${greeting}, ${firstName}!` : `${greeting}!`;
 
   return (
-    <section
-      aria-labelledby="kid-greeting"
-      className="relative isolate mx-4 mt-4 overflow-hidden rounded-[2rem] shadow-paper sm:mx-8"
-    >
-      <Landscape className="absolute inset-0 -z-10 size-full" />
-
-      <div className="mx-auto flex min-h-[15rem] max-w-6xl flex-col px-5 pb-16 pt-8 sm:min-h-[17rem] sm:px-8 lg:min-h-[19.5rem] lg:pt-10">
-        {/* From md the signpost and bear stand at the right (about 19rem, 24rem
-            from lg), so the greeting keeps clear of them and wraps instead of
-            running under the sign on a tablet. */}
-        <div className="flex max-w-[40rem] items-start gap-3 md:max-w-[min(40rem,calc(100%-19rem))] lg:max-w-[min(40rem,calc(100%-24rem))]">
-          <TextAnimate
-            as="h1"
-            id="kid-greeting"
-            by="word"
-            animation="blurInUp"
-            startOnView={false}
-            className="font-kid-display text-[clamp(2.1rem,5.2vw,4.25rem)] font-semibold leading-[1.04] text-kid-ink"
-          >
-            {text}
-          </TextAnimate>
-          <Sun className="mt-1 hidden size-16 shrink-0 sm:block lg:size-24" />
-        </div>
-
-        <p className="mt-3 font-kid-hand text-2xl text-kid-ink-soft sm:text-3xl">
+    <KidBannerHero
+      art={ART}
+      titleId="kid-greeting"
+      title={firstName ? `${greeting}, ${firstName}!` : `${greeting}!`}
+      subtitle={
+        <>
           <Highlighter action="underline" color="#f6c445" strokeWidth={3} padding={1} animate={motionAllowed}>
-            You&apos;ve got this!
-          </Highlighter>
-        </p>
-      </div>
-
-      <div className="pointer-events-none absolute bottom-3 right-4 hidden items-end gap-2 md:flex lg:right-10">
-        <WoodenSign className="mb-12 -rotate-6" boardClassName="w-40 text-xl">
-          Small steps, big things happen! <Heart className="inline size-5 align-[-3px]" />
-        </WoodenSign>
-        <Bear className="w-36 lg:w-48" />
-      </div>
-    </section>
+            You have got this.
+          </Highlighter>{' '}
+          Small steps, big things happen.
+        </>
+      }
+    >
+      <SunGlow className="left-[50.2%] top-[33.7%] w-[13%]" />
+      <Sparkle className="left-[43.5%] top-[14%] w-[1.6%]" />
+      <Sparkle className="left-[56.5%] top-[19%] w-[1.2%]" delay={1.1} />
+      <Sparkle className="left-[45%] top-[50%] w-[1%]" delay={2} />
+      <DriftingCloud className="left-[20%] top-[5%] w-[6.5%]" />
+      <FlyingBird className="top-[9%]" delay={2} time="19s" />
+      <FlyingBird className="top-[15%]" size="ml-[3%] w-[1.6%]" delay={9} time="24s" />
+      <FallingLeaf className="left-[60%] top-[38%] w-[1.3%]" delay={0.5} />
+      <FallingLeaf className="left-[72%] top-[30%] w-[1.1%]" delay={3.4} dx="30px" dy="130px" time="8s" tone="#7cb65f" />
+      <FallingLeaf className="left-[66%] top-[42%] w-[1%]" delay={5.8} dx="-16px" dy="95px" tone="#4f8f43" />
+      {/* In the sky just above-left of the raised paw (the paw is at about 69-73%, 60-69%). */}
+      <WaveMarks className="left-[67.6%] top-[49%] h-[9%] -rotate-[32deg]" />
+      <SpeechBubble className="left-[80.5%] top-[20%]">Hi!</SpeechBubble>
+    </KidBannerHero>
   );
 }
 

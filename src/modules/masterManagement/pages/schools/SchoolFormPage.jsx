@@ -1,18 +1,16 @@
 import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { PageHeader, Card, Input, Checkbox, Button, Alert, ButtonGroup, SectionHeader, Loader } from '../../../../components/common';
+import { PageHeader, Card, Input, PhoneInput, Checkbox, Button, Alert, ButtonGroup, SectionHeader, Loader } from '../../../../components/common';
 import { useForm } from '../../../../hooks/useForm';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
 import { required, email as emailRule, phone as phoneRule, postalCode as postalCodeRule } from '../../../../utils/validation';
 import { DEFAULT_COUNTRY } from '../../../../utils/locale';
+import { formatPhoneForDisplay } from '../../../../utils/phone';
+import { isCanadianCountry } from '../../../../utils/address';
 import AddressFields from '../../../auth/components/AddressFields';
 import academicService from '../../services/academic.service';
 import '../../components/masterPages.css';
-
-/** "CA" / "CAN" / "Canada" (any case) - the postal-code validation rule below only applies then. */
-const isCanada = (country) =>
-  !country || ['CA', 'CAN', 'CANADA'].includes(String(country).trim().toUpperCase());
 
 export default function SchoolFormPage() {
   const { id } = useParams();
@@ -27,7 +25,7 @@ export default function SchoolFormPage() {
 
   const form = useForm({
     initialValues: {
-      name: '', schoolCode: '', address: '', city: '', state: '',
+      name: '', schoolCode: '', addressLine2: '', address: '', city: '', state: '',
       country: DEFAULT_COUNTRY === 'CA' ? 'Canada' : '', postalCode: '',
       contactPerson: '', contactEmail: '', contactPhone: '', isActive: true, displayOrder: 0,
     },
@@ -37,12 +35,13 @@ export default function SchoolFormPage() {
       contactPhone: [phoneRule()],
       // Only enforced for a Canadian address - a future non-Canadian school
       // (Phase 3 multi-org onboarding) keeps free-text postal/zip.
-      postalCode: [(value, allValues) => (isCanada(allValues.country) ? postalCodeRule()(value) : null)],
+      postalCode: [(value, allValues) => (isCanadianCountry(allValues.country) ? postalCodeRule()(value) : null)],
     },
     async onSubmit(values) {
       const payload = {
         name: values.name,
         schoolCode: values.schoolCode || null,
+        addressLine2: values.addressLine2 || null,
         address: values.address || null,
         city: values.city || null,
         state: values.state || null,
@@ -70,6 +69,7 @@ export default function SchoolFormPage() {
     form.reset({
       name: existing.name ?? '',
       schoolCode: existing.schoolCode ?? '',
+      addressLine2: existing.addressLine2 ?? '',
       address: existing.address ?? '',
       city: existing.city ?? '',
       state: existing.state ?? '',
@@ -77,7 +77,7 @@ export default function SchoolFormPage() {
       postalCode: existing.postalCode ?? '',
       contactPerson: existing.contactPerson ?? '',
       contactEmail: existing.contactEmail ?? '',
-      contactPhone: existing.contactPhone ?? '',
+      contactPhone: formatPhoneForDisplay(existing.contactPhone),
       isActive: existing.isActive ?? true,
       displayOrder: existing.displayOrder ?? 0,
     });
@@ -103,12 +103,12 @@ export default function SchoolFormPage() {
         <form onSubmit={form.handleSubmit} noValidate>
           <Input label="School name" required {...form.getFieldProps('name')} />
           <Input label="School code" {...form.getFieldProps('schoolCode')} />
-          <AddressFields values={form.values} getProps={form.getFieldProps} setFieldValue={form.setFieldValue} />
+          <AddressFields values={form.values} getProps={form.getFieldProps} setFieldValue={form.setFieldValue} recipient={form.values.name} />
 
           <SectionHeader title="Contact" as="h3" />
           <Input label="Contact person" {...form.getFieldProps('contactPerson')} />
           <Input label="Contact email" type="email" {...form.getFieldProps('contactEmail')} />
-          <Input label="Contact phone" type="tel" {...form.getFieldProps('contactPhone')} />
+          <PhoneInput label="Contact phone" autoComplete="off" {...form.getFieldProps('contactPhone')} />
 
           <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />
           {!isEdit && (

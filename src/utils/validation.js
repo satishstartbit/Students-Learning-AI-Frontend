@@ -1,6 +1,6 @@
 import { validateFile, validateImage } from './file';
 import { isValidDate, toDate } from './date';
-import { isValidPhoneNumber } from './phone';
+import { isValidPhoneNumber, PHONE_EXAMPLE } from './phone';
 import { isValidCanadianPostalCode } from './postalCode';
 
 /**
@@ -89,9 +89,9 @@ export const image = (options) => (value) => {
 export const oneOf = (allowed, message) => (value) =>
   isEmpty(value) || allowed.includes(value) ? null : message || 'Select a valid option';
 
-/** Accepts (416) 555-1234, 416-555-1234, 4165551234, +1 416 555 1234, ... */
+/** Accepts +1 (416) 555-1234, (416) 555-1234, 416-555-1234, 4165551234, +1 416 555 1234, ... */
 export const phone =
-  (message = 'Enter a valid phone number') =>
+  (message = `Enter a valid phone number, e.g. ${PHONE_EXAMPLE}`) =>
   (value) =>
     isEmpty(value) || isValidPhoneNumber(value) ? null : message;
 

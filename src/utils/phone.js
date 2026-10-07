@@ -1,10 +1,19 @@
-import { parsePhoneNumberFromString, AsYouType } from 'libphonenumber-js';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { DEFAULT_COUNTRY } from './locale';
+import {
+  formatPhoneAsYouType as formatAsYouType,
+  formatPhoneForDisplay as formatForDisplay,
+  PHONE_EXAMPLE,
+} from './phoneFormat';
+
+export { PHONE_EXAMPLE };
 
 /**
  * Phone number handling via libphonenumber-js rather than a regex - accepts
- * (416) 555-1234, 416-555-1234, 4165551234 and +1 416 555 1234 alike, and can
- * tell a plausible number from a real one the way a pattern cannot.
+ * +1 (416) 555-1234, (416) 555-1234, 416-555-1234, 4165551234 and
+ * +1 416 555 1234 alike, and can tell a plausible number from a real one the
+ * way a pattern cannot. Every screen shows a Canadian (+1) number as
+ * "+1 (416) 555-1234" (utils/phoneFormat.js); the API stores E.164.
  */
 export function isValidPhoneNumber(raw, defaultCountry = DEFAULT_COUNTRY) {
   if (!raw) return false;
@@ -19,17 +28,14 @@ export function normalizePhoneNumber(raw, defaultCountry = DEFAULT_COUNTRY) {
   return parsed?.isValid() ? parsed.number : null;
 }
 
-/** "(416) 555-1234" as the user types - for a live-formatting phone input. */
-export function formatPhoneAsYouType(raw, defaultCountry = DEFAULT_COUNTRY) {
-  if (!raw) return '';
-  return new AsYouType(defaultCountry).input(String(raw));
+/** "+1 (416) 555-1234" as the user types (PhoneInput's foreign-number field uses it for "+44…"). */
+export function formatPhoneAsYouType(raw) {
+  return formatAsYouType(raw);
 }
 
-/** E.164 -> "(416) 555-1234" for read-only display. */
-export function formatPhoneForDisplay(e164, defaultCountry = DEFAULT_COUNTRY) {
-  if (!e164) return '';
-  const parsed = parsePhoneNumberFromString(String(e164), defaultCountry);
-  return parsed ? parsed.formatNational() : e164;
+/** Stored number -> "+1 (416) 555-1234" for display (other countries: "+44 20 7946 0958"). */
+export function formatPhoneForDisplay(stored, defaultCountry = DEFAULT_COUNTRY) {
+  return formatForDisplay(stored, defaultCountry);
 }
 
 export default {

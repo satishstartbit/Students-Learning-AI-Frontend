@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import AccentPicker from '../../../components/appearance/AccentPicker';
 import { useAppSettings } from '../../../components/appearance/useAppSettings';
-import { Alert, Button, Input, Loader } from '../../../components/common';
+import { Alert, Button, Input, Loader, PhoneInput } from '../../../components/common';
 import { formatPhoneForDisplay } from '../../../utils/phone';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
@@ -25,9 +25,10 @@ function valuesFromMe(me) {
     firstName: me?.firstName ?? '',
     lastName: me?.lastName ?? '',
     email: me?.email ?? '',
-    // Shown the Canadian way, (416) 555-1234; the API stores E.164 either way.
+    // Shown the Canadian way, +1 (416) 555-1234; the API stores E.164 either way.
     phone: formatPhoneForDisplay(me?.phone),
     // No time zone field: it follows this device (hooks/useDeviceTimezone.js).
+    addressLine2: me?.addressLine2 ?? '',
     address: me?.address ?? '',
     city: me?.city ?? '',
     state: me?.state ?? '',
@@ -76,6 +77,7 @@ export default function ParentProfilePage() {
         lastName: values.lastName || null,
         email: values.email,
         phone: values.phone || null,
+        addressLine2: values.addressLine2 || null,
         address: values.address || null,
         city: values.city || null,
         state: values.state || null,
@@ -152,12 +154,18 @@ export default function ParentProfilePage() {
               hint={emailChanged ? "Saving signs you out - we'll email a link to confirm the new address." : undefined}
               {...form.getFieldProps('email')}
             />
-            <Input label="Phone" type="tel" autoComplete="tel" {...form.getFieldProps('phone')} />
+            <PhoneInput label="Phone" {...form.getFieldProps('phone')} />
           </div>
         </ProfileSection>
 
         <ProfileSection title="Address">
-          <AddressFields layout="profile" values={form.values} getProps={form.getFieldProps} setFieldValue={form.setFieldValue} />
+          <AddressFields
+            layout="profile"
+            values={form.values}
+            getProps={form.getFieldProps}
+            setFieldValue={form.setFieldValue}
+            recipient={[form.values.firstName, form.values.lastName].filter(Boolean).join(' ')}
+          />
           <div className="pf-actions">
             <Button type="submit" loading={form.isSubmitting}>
               Save changes

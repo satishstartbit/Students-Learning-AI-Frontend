@@ -41,6 +41,8 @@ const STATUS_OPTIONS = [
  * @param allowDelete false hides the Delete action entirely - for a master
  *                    (e.g. Question Types) whose rows map 1:1 to hardcoded
  *                    application code and has no delete route to call.
+ *                    Built-in rows (`isSystem`, shipped with the platform)
+ *                    never show Delete either.
  */
 export default function CurriculumMasterList({
   title,
@@ -151,7 +153,7 @@ export default function CurriculumMasterList({
               />
             </Tooltip>
           )}
-          {allowDelete && (
+          {allowDelete && !row.isSystem && (
             <Tooltip label="Delete" side="top">
               <IconButton
                 icon={<LuTrash2 aria-hidden="true" />}

@@ -1,0 +1,503 @@
+/*
+ * K-5 Home (pages/kid/KidHomePage.jsx), "Good morning, Alex!" mockup - the
+ * small motions and paper details Tailwind can't express. Prefix `kh-`.
+ *
+ * Every animation here stops in calm mode and follows the OS "reduce
+ * motion" setting (styles/kid-theme.css), so none of them needs its own
+ * switch. They are slow and small on purpose: decoration that lives on the
+ * page, never something that pulls a young student away from the work.
+ */
+
+/* --- Loops ---------------------------------------------------------------- */
+
+@keyframes kh-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--kh-tilt, 0deg));
+  }
+  50% {
+    transform: translateY(-6px) rotate(var(--kh-tilt, 0deg));
+  }
+}
+.kh-float {
+  animation: kh-float 4.2s ease-in-out infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+@keyframes kh-twinkle {
+  0%,
+  100% {
+    transform: rotate(var(--kh-tilt, 0deg)) scale(1);
+  }
+  50% {
+    transform: rotate(calc(var(--kh-tilt, 0deg) + 9deg)) scale(1.1);
+  }
+}
+.kh-twinkle {
+  animation: kh-twinkle 3.2s ease-in-out infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+/* Leaves and sprouts move from their stem. */
+@keyframes kh-sway {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+.kh-sway {
+  /* fill-box: an SVG group sways from its own stem, not the drawing's corner. */
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: kh-sway 3.6s ease-in-out infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+@keyframes kh-beat {
+  0%,
+  64%,
+  100% {
+    transform: scale(1) rotate(var(--kh-tilt, 0deg));
+  }
+  74% {
+    transform: scale(1.16) rotate(var(--kh-tilt, 0deg));
+  }
+  86% {
+    transform: scale(0.96) rotate(var(--kh-tilt, 0deg));
+  }
+}
+.kh-beat {
+  animation: kh-beat 2.6s ease-in-out infinite;
+}
+
+/* Today's day in "This week", and the ring while it waits. */
+@keyframes kh-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--kid-teal) 45%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--kid-teal) 0%, transparent);
+  }
+}
+.kh-pulse {
+  animation: kh-pulse 2.4s ease-out infinite;
+}
+
+@keyframes kh-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+.kh-breathe {
+  animation: kh-breathe 4s ease-in-out infinite;
+}
+
+/* "Let's go →": the arrow points the way on hover. */
+@keyframes kh-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+.group:hover .kh-nudge,
+.group:focus-visible .kh-nudge {
+  animation: kh-nudge 0.9s ease-in-out infinite;
+}
+
+/* --- The hero picture (HeroScene, src/assets/kid/home-hero*.webp) ------------
+   The art is one paper-craft picture; these bring it to life around what is
+   drawn in it. Overlays are placed in % of the picture, so they stay on the
+   sun, the bear's paw and the tree at every size. */
+
+/* The whole scene drifts very slowly closer and back (a slow "Ken Burns"). */
+@keyframes kh-hero-drift {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.035) translateX(-0.6%);
+  }
+}
+.kh-hero-drift {
+  transform-origin: 70% 100%;
+  animation: kh-hero-drift 22s ease-in-out infinite alternate;
+}
+
+/* Warm light breathing around the sun. */
+@keyframes kh-glow {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.12);
+  }
+}
+.kh-sunglow {
+  background: radial-gradient(circle, rgb(255 214 92 / 0.75) 0%, rgb(255 214 92 / 0.32) 42%, rgb(255 214 92 / 0) 70%);
+  animation: kh-glow 3.8s ease-in-out infinite;
+}
+
+/* A small paper cloud wandering across the open sky (never as far as the tree). */
+@keyframes kh-cloud {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--kh-cloud-travel, 260%));
+  }
+}
+.kh-cloud {
+  animation: kh-cloud var(--kh-cloud-time, 32s) ease-in-out infinite alternate;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+/* Birds crossing the sky now and then: the track moves, the wings flap. */
+@keyframes kh-fly {
+  0% {
+    transform: translate(-12%, 0);
+  }
+  50% {
+    transform: translate(45%, -14px);
+  }
+  100% {
+    transform: translate(108%, 6px);
+  }
+}
+.kh-fly {
+  /* At rest (calm mode / reduced motion) the birds wait off the picture. */
+  transform: translate(-12%, 0);
+  animation: kh-fly var(--kh-fly-time, 20s) linear infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+@keyframes kh-flap {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.35);
+  }
+}
+.kh-flap {
+  transform-origin: 50% 60%;
+  animation: kh-flap 0.55s ease-in-out infinite;
+}
+
+/* A leaf letting go of the tree, spinning down, fading out. */
+@keyframes kh-leaf {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  12% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--kh-leaf-x, -34px), var(--kh-leaf-y, 120px)) rotate(240deg);
+  }
+}
+.kh-leaf {
+  opacity: 0;
+  animation: kh-leaf var(--kh-leaf-time, 7s) ease-in infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+/* "Waving" marks beside the bear's paw, flicking in turn. */
+@keyframes kh-wave-mark {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  30%,
+  60% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.kh-wave-mark {
+  opacity: 0;
+  transform-origin: 100% 50%;
+  animation: kh-wave-mark 1.6s ease-in-out infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+/* Light on water: white wave strokes drifting and glinting (BannerBits SeaShimmer). */
+@keyframes kh-shimmer {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translateX(var(--kh-shimmer-x, 12px));
+  }
+}
+.kh-shimmer {
+  opacity: 0.3;
+  animation: kh-shimmer var(--kh-shimmer-time, 4.6s) ease-in-out infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+/* A little boat rocking on the waves (BannerBits Sailboat). */
+@keyframes kh-rock {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(-8%) rotate(5deg);
+  }
+}
+.kh-rock {
+  transform-origin: 50% 90%;
+  animation: kh-rock 3.4s ease-in-out infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+/* A butterfly flitting about the flowers (BannerBits Butterfly): a lazy loop
+   out and back, the wings folding fast. */
+@keyframes kh-flutter {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(-8deg);
+  }
+  25% {
+    transform: translate(var(--kh-flutter-x, 160%), -90%) rotate(6deg);
+  }
+  50% {
+    transform: translate(calc(var(--kh-flutter-x, 160%) * 2), -10%) rotate(10deg);
+  }
+  75% {
+    transform: translate(var(--kh-flutter-x, 160%), 70%) rotate(-4deg);
+  }
+}
+.kh-flutter {
+  animation: kh-flutter var(--kh-flutter-time, 9s) ease-in-out infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+@keyframes kh-flit {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(0.4);
+  }
+}
+.kh-flit {
+  transform-origin: 50% 50%;
+  animation: kh-flit 0.32s ease-in-out infinite;
+}
+
+/* KidBannerHero: from a small tablet the banner takes its picture's shape. */
+@media (min-width: 640px) {
+  .kh-banner {
+    aspect-ratio: var(--kh-art-ratio);
+  }
+}
+
+/* Hearts rising from a happy animal (BannerBits RisingHearts). */
+@keyframes kh-heart {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-160%) scale(1.05) rotate(-12deg);
+  }
+}
+.kh-heart {
+  opacity: 0;
+  animation: kh-heart 4.6s ease-out infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+/* A little wiggle on hover (the week's dashed "+"). */
+@keyframes kh-wiggle {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  25% {
+    transform: rotate(6deg) scale(1.06);
+  }
+  50% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}
+.kh-wiggle:hover,
+.kh-wiggle:focus-visible {
+  animation: kh-wiggle 0.6s ease-in-out;
+}
+
+/* Stars on a card twinkle while it is hovered. */
+.group:hover .kh-star-hover svg {
+  animation: kh-twinkle 1.2s ease-in-out infinite;
+}
+.group:hover .kh-star-hover svg:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.group:hover .kh-star-hover svg:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* K-5 My week: from a tablet to a laptop the five day columns are narrow, so
+   a study time's / busy time's kind line ("⚽ Extracurricular") ends in "…"
+   instead of breaking inside a word. The full words stay in the page for
+   screen readers. (DayAgenda is the planner's, shared - left as it is.) */
+@media (min-width: 768px) and (max-width: 1279.98px) {
+  .kw-agenda .sw-slot__kind {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+/* --- Entrances ------------------------------------------------------------ */
+
+@keyframes kh-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.kh-pop {
+  animation: kh-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+@keyframes kh-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.kh-rise {
+  animation: kh-rise 0.9s ease-out both;
+  animation-delay: var(--kh-delay, 0s);
+}
+
+/* The progress bar fills up from empty when the page opens. */
+@keyframes kh-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+.kh-fill {
+  transform-origin: left center;
+  animation: kh-fill 1.1s cubic-bezier(0.3, 0.8, 0.3, 1) 0.4s both;
+}
+
+/* --- Paper details -------------------------------------------------------- */
+
+/* A strip of masking tape - the label on "Your next task", "This week"… */
+.kh-tape {
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.95rem;
+  border-radius: 4px;
+  font-family: var(--kid-font-display);
+  font-weight: 600;
+  line-height: 1.2;
+  box-shadow: 0 2px 0 rgb(92 70 45 / 0.08);
+  /* Torn-ish ends. */
+  clip-path: polygon(2% 0, 98% 6%, 100% 50%, 97% 100%, 3% 94%, 0 50%);
+}
+.kh-tape--yellow {
+  background: color-mix(in srgb, var(--kid-yellow) 92%, var(--kid-sun));
+  color: #6b4f05;
+}
+.kh-tape--sky {
+  background: color-mix(in srgb, var(--kid-sky) 85%, var(--kid-sheet));
+  color: var(--kid-navy);
+}
+.kh-tape--plain {
+  background: color-mix(in srgb, var(--kid-paper-deep) 80%, transparent);
+}
+.kh-tape--green {
+  background: color-mix(in srgb, var(--kid-green) 88%, var(--kid-green-deep));
+  color: #2c5e29;
+}
+.kh-tape--lavender {
+  background: var(--kid-lavender);
+  color: var(--kid-purple);
+}
+/* A tape label that sits in the flow (a section heading), not on a card's edge. */
+.kh-tape--inline {
+  position: relative;
+}
+
+/* The speech bubble beside a task carried over from before. */
+.kh-bubble {
+  position: relative;
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--kid-sky) 70%, var(--kid-sheet));
+}
+.kh-bubble::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: inherit;
+  transform: rotate(45deg);
+  border-radius: 3px;
+}
+/* Tail up towards the task when the bubble sits under it (phone, laptop),
+   left towards it when beside it (tablet, wide screen) - HomeTaskLists.jsx. */
+.kh-bubble::before {
+  top: -6px;
+  left: 2rem;
+}
+@media (min-width: 640px) and (max-width: 1023.98px), (min-width: 1280px) {
+  .kh-bubble::before {
+    top: 50%;
+    left: -6px;
+    margin-top: -7px;
+  }
+}
+
+/* The meadow at the foot of the page (src/assets/kid/home-meadow.webp, 3:1):
+   its top 44% is clear sky - about 14.7% of its width - so it tucks up under
+   the last cards and the hills start just below them. A margin percentage is
+   of the width, like the picture's height, so this holds at every size. */
+.kh-meadow {
+  margin-top: -12%;
+}

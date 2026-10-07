@@ -1,158 +1,206 @@
-import { useId, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { LuSend } from 'react-icons/lu';
+import workFooter from '../../../../assets/kid/work-footer.webp';
+import workArt from '../../../../assets/kid/work-hero.webp';
+import workArtSmall from '../../../../assets/kid/work-hero-small.webp';
 import { AnimatedCircularProgressBar } from '../../../../components/ui/animated-circular-progress-bar';
-import { BlurFade } from '../../../../components/ui/blur-fade';
-import { cn } from '../../../../lib/utils';
+import AddWorkDialog from '../../../planner/components/AddWorkDialog';
+import { useSchoolwork } from '../../../planner/hooks/useSchoolwork';
 import { useMyTasks } from '../../hooks/useMyTasks';
-import { NotebookIcon, SparkleIcon, StarIcon } from '../../components/kid/KidIcons';
-import { KidPageHeader } from '../../components/kid/KidPageHeader';
-import { KidEmpty, KidOops, KidSkeleton } from '../../components/kid/KidStates';
-import { TaskCard } from '../../components/kid/TaskCard';
+import {
+  DriftingCloud,
+  FallingLeaf,
+  FlyingBird,
+  RisingHearts,
+  Sailboat,
+  SceneryFooter,
+  SeaShimmer,
+  Sparkle,
+  SunGlow,
+} from '../../components/kid/BannerBits';
+import { HomeSticker, HomeTape } from '../../components/kid/home/HomeBits';
+import { KidBannerHero } from '../../components/kid/KidBannerHero';
+import { KidOops, KidSkeleton } from '../../components/kid/KidStates';
+import { AddWorkButton } from '../../components/kid/week/WeekParts';
+import { WorkCard, WorkEmpty } from '../../components/kid/work/WorkParts';
 
-const TABS = [
-  {
-    value: 'toDo',
-    label: 'To do',
-    emptyIcon: StarIcon,
-    emptyTitle: 'Nothing to do right now!',
-    emptyText: 'When your teacher gives you a task, it will show up here.',
-  },
-  {
-    value: 'sent',
-    label: 'Sent to teacher',
-    emptyIcon: SparkleIcon,
-    emptyTitle: 'Nothing waiting',
-    emptyText: 'Work you hand in waits here until your teacher looks at it.',
-  },
-  {
-    value: 'done',
-    label: 'Done',
-    emptyIcon: NotebookIcon,
-    emptyTitle: 'No finished work yet',
-    emptyText: 'When your teacher checks your work, it moves here.',
-  },
-];
+/** src/assets/kid/work-hero*.webp - the turtle on the beach under the palm. */
+const ART = { src: workArt, srcSmall: workArtSmall, smallWidth: 1000, bigWidth: 1033, width: 1033, height: 250, sky: '#bde7fe' };
+/** src/assets/kid/work-footer.webp - the cove with the cliffs (clear sky). */
+const FOOTER = { src: workFooter, width: 1039, height: 148 };
 
-/** How much of the student's work is handed in - a ring, since a fraction means little at five. */
-function ProgressRing({ finished, total }) {
+/** "2 of 7 handed in" with a small ring - a young student reads the words, the ring shows it at a glance. */
+function HandedIn({ finished, total }) {
   if (!total) return null;
-
   return (
-    <div className="flex items-center gap-3">
-      {/* The ring's own percentage is hidden - "2 of 3" beside it is what a young student can read. */}
+    <div className="ml-auto flex items-center gap-2.5">
       <div aria-hidden="true">
         <AnimatedCircularProgressBar
           value={finished}
           max={total}
           gaugePrimaryColor="var(--kid-green-deep)"
           gaugeSecondaryColor="var(--kid-paper-deep)"
-          className="size-16 [&_[data-current-value]]:hidden"
+          className="size-11 [&_[data-current-value]]:hidden"
         />
       </div>
-      <p className="max-w-[9rem] font-kid-display text-lg leading-snug text-kid-ink">
-        {finished} of {total} handed in
+      <p className="font-kid-display text-base font-medium leading-tight text-kid-ink">
+        {finished} of {total}
+        <span className="block font-kid-body text-sm font-normal text-kid-ink-soft">handed in</span>
       </p>
     </div>
   );
 }
 
 /**
- * K-5 Assignments: three simple piles - To do, Sent to teacher, Done - as
- * ARIA tabs (arrow keys move between them), each a grid of big task cards.
- * Opening a card goes to the existing assignment page.
+ * K-5 "My work" (/student/assignments), built to the "My work" mockup: the
+ * turtle banner, then every piece of work in three groups - Still going,
+ * With my teacher (handed in, waiting), Finished - as picture cards with
+ * dots for the steps done, and the cove at the foot. Opening a card goes to
+ * the assignment page, as always; the dashed "+" adds work the easy way
+ * (the same Add work as Home's "Got new work?").
+ *
+ * Steps come from the plan's work list (read only, as on My week); without
+ * them a card still says where the work is. One column on a phone, two from
+ * a tablet (768px), three on a very wide screen.
  */
 export default function KidAssignmentsPage() {
   const tasks = useMyTasks();
-  const [active, setActive] = useState('toDo');
-  const tabRefs = useRef({});
-  const uid = useId();
+  const schoolwork = useSchoolwork('me');
+  const [adding, setAdding] = useState(false);
+
+  // Steps done per assignment, from the plan's work list.
+  const stepsById = useMemo(() => {
+    const map = new Map();
+    for (const w of schoolwork.work) {
+      if (w.kind === 'teacher' && w.stepsTotal > 0) map.set(w.id, { total: w.stepsTotal, done: w.stepsDone ?? 0 });
+    }
+    return map;
+  }, [schoolwork.work]);
 
   const finished = tasks.sent.length + tasks.done.length;
   const total = finished + tasks.toDo.length;
-  const activeTab = TABS.find((t) => t.value === active);
-  const items = tasks[active];
+  const ready = !tasks.isLoading && !tasks.error;
+  const stepsFor = (task) => stepsById.get(task.assignment?.id);
 
-  const onTabKeyDown = (event) => {
-    const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
-    if (!step) return;
-    event.preventDefault();
-    const index = TABS.findIndex((t) => t.value === active);
-    const next = TABS[(index + step + TABS.length) % TABS.length].value;
-    setActive(next);
-    tabRefs.current[next]?.focus();
+  const afterAdding = () => {
+    tasks.reload();
+    schoolwork.reload?.();
   };
 
   return (
-    <div data-kid-page className="kid-ui mx-auto max-w-6xl px-4 py-6 sm:px-8 lg:py-10">
-      <KidPageHeader icon={NotebookIcon} title="My Assignments" subtitle="Tap a task to open it.">
-        {!tasks.isLoading && !tasks.error && <ProgressRing finished={finished} total={total} />}
-      </KidPageHeader>
+    <div data-kid-page className="kid-ui relative flex min-h-full flex-col overflow-x-clip">
+      <KidBannerHero
+        art={ART}
+        titleId="kid-work-title"
+        title="My work"
+        sticker="bookworm"
+        textAt="top"
+        subtitle="Everything you are working on. Tap one to see the steps inside."
+      >
+        <SunGlow className="left-[48.4%] top-[31%] w-[11%]" />
+        <Sparkle className="left-[42.5%] top-[11%] w-[1.5%]" />
+        <Sparkle className="left-[54.5%] top-[14%] w-[1.1%]" delay={1.2} />
+        <Sparkle className="left-[57%] top-[52%] w-[1%]" delay={2.2} />
+        {/* Moving bits stay right of 40%: from a small tablet up the words sit over the left of the picture. */}
+        <DriftingCloud className="left-[58%] top-[3%] w-[5.5%]" travel="160%" time="30s" />
+        <FlyingBird className="top-[9%]" delay={1} time="17s" />
+        <FlyingBird className="top-[17%]" size="ml-[2%] w-[1.6%]" delay={7.5} time="22s" />
+        {/* The sea along the bottom-left, and a boat sailing the horizon under the sun. */}
+        <SeaShimmer className="left-[3%] top-[74%] h-[22%] w-[56%]" waves={4} />
+        <Sailboat motion="drift" className="left-[43%] top-[57%] w-[2.4%]" delay={2} />
+        {/* The palm drops a leaf now and then; hearts float up from the turtle. */}
+        <FallingLeaf className="left-[87%] top-[20%] w-[1.2%]" delay={1.5} dx="-30px" dy="90px" tone="#3f8a3c" />
+        <RisingHearts className="left-[74%] top-[24%] h-[12%] w-[4%]" />
+      </KidBannerHero>
 
-      <div role="tablist" aria-label="My assignments" className="mt-7 flex flex-wrap gap-2.5" onKeyDown={onTabKeyDown}>
-        {TABS.map((tab) => {
-          const selected = tab.value === active;
-          return (
-            <button
-              key={tab.value}
-              ref={(el) => {
-                tabRefs.current[tab.value] = el;
-              }}
-              type="button"
-              role="tab"
-              id={`${uid}-${tab.value}-tab`}
-              aria-selected={selected}
-              aria-controls={`${uid}-panel`}
-              tabIndex={selected ? 0 : -1}
-              onClick={() => setActive(tab.value)}
-              className={cn(
-                'inline-flex h-12 items-center gap-2 rounded-full px-5 font-kid-display text-lg transition-colors',
-                selected
-                  ? 'bg-kid-teal font-semibold text-white shadow-[0_4px_0_var(--kid-teal-deep)]'
-                  : 'bg-kid-sheet text-kid-navy shadow-paper hover:bg-white'
-              )}
-            >
-              {tab.label}
-              {!tasks.isLoading && (
-                <span
-                  className={cn(
-                    'grid min-w-7 place-items-center rounded-full px-1.5 text-base',
-                    selected ? 'bg-white/25' : 'bg-kid-paper-deep'
-                  )}
-                >
-                  {tasks[tab.value].length}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      <div role="tabpanel" id={`${uid}-panel`} aria-labelledby={`${uid}-${active}-tab`} className="mt-6">
+      <div className="relative z-[1] mx-auto w-full max-w-[76rem] px-4 pb-10 pt-6 sm:px-6 lg:px-8">
         {tasks.isLoading ? (
-          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Loading your tasks">
-            {[0, 1, 2].map((i) => (
+          <ul className="mt-2 grid gap-4 md:grid-cols-2" aria-label="Loading your work">
+            {[0, 1, 2, 3].map((i) => (
               <li key={i}>
-                <KidSkeleton className="h-24" />
+                <KidSkeleton className="h-28" />
               </li>
             ))}
           </ul>
         ) : tasks.error ? (
           <KidOops message="We couldn't load your tasks." onRetry={tasks.reload} error={tasks.error} />
-        ) : items.length === 0 ? (
-          <KidEmpty icon={activeTab.emptyIcon} title={activeTab.emptyTitle}>
-            {activeTab.emptyText}
-          </KidEmpty>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {items.map((task, i) => (
-              <li key={task.recipientId}>
-                <BlurFade delay={Math.min(i, 8) * 0.04}>
-                  <TaskCard task={task} />
-                </BlurFade>
-              </li>
-            ))}
-          </ul>
+          <div className="flex flex-col gap-9">
+            <section aria-labelledby="kid-going-title">
+              <div className="flex flex-wrap items-center gap-3">
+                <HomeTape as="h2" id="kid-going-title" tone="sky" className="kh-tape--inline -rotate-2 px-4 py-1.5 text-lg">
+                  Still going
+                </HomeTape>
+                <AddWorkButton onClick={() => setAdding(true)} className="md:mx-0 md:mt-0" />
+                {ready && <HandedIn finished={finished} total={total} />}
+              </div>
+              {tasks.toDo.length > 0 ? (
+                <ul className="mt-4 grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                  {tasks.toDo.map((task, i) => (
+                    <li key={task.recipientId}>
+                      <WorkCard task={task} steps={stepsFor(task)} delay={Math.min(i, 8) * 0.06} />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="mt-4">
+                  <WorkEmpty title="Nothing to do right now!">When your teacher gives you a task, it will show up here.</WorkEmpty>
+                </div>
+              )}
+            </section>
+
+            {tasks.sent.length > 0 && (
+              <section aria-labelledby="kid-sent-title">
+                <HomeTape as="h2" id="kid-sent-title" tone="lavender" className="kh-tape--inline -rotate-1 px-4 py-1.5 text-lg">
+                  <LuSend className="size-4" aria-hidden="true" />
+                  With my teacher
+                </HomeTape>
+                <ul className="mt-4 grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                  {tasks.sent.map((task, i) => (
+                    <li key={task.recipientId}>
+                      <WorkCard task={task} steps={stepsFor(task)} delay={0.1 + Math.min(i, 8) * 0.06} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            <section aria-labelledby="kid-done-title">
+              <div className="flex items-center gap-2">
+                <HomeTape as="h2" id="kid-done-title" tone="green" className="kh-tape--inline -rotate-1 px-4 py-1.5 text-lg">
+                  Finished
+                </HomeTape>
+                <HomeSticker slug="trophy" tilt={-8} delay={0.5} className="relative size-10" />
+              </div>
+              {tasks.done.length > 0 ? (
+                <ul className="mt-4 grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                  {tasks.done.map((task, i) => (
+                    <li key={task.recipientId}>
+                      <WorkCard task={task} steps={stepsFor(task)} delay={0.15 + Math.min(i, 8) * 0.06} />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="mt-4">
+                  <WorkEmpty title="No finished work yet">When your teacher checks your work, it moves here.</WorkEmpty>
+                </div>
+              )}
+            </section>
+          </div>
         )}
       </div>
+
+      {/* The cove sits at the foot even when there is little on the page. */}
+      <div className="flex-1" />
+      <SceneryFooter {...FOOTER} overlap={1}>
+        <SeaShimmer className="left-[24%] top-[52%] h-[36%] w-[42%]" waves={3} />
+        <Sparkle className="left-[36%] top-[66%] w-[1%]" delay={0.6} />
+        <Sparkle className="left-[52%] top-[58%] w-[0.8%]" delay={1.9} />
+        <Sailboat className="left-[44%] top-[22%] w-[3.2%]" delay={0.8} />
+        <FlyingBird className="top-[2%]" size="w-[1.6%]" delay={3} time="21s" />
+      </SceneryFooter>
+
+      <AddWorkDialog key={adding ? 'open' : 'closed'} isOpen={adding} guided onClose={() => setAdding(false)} onAdded={afterAdding} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { LuArrowRight, LuSmilePlus } from 'react-icons/lu';
+import { LuArrowRight, LuPencil, LuSmilePlus } from 'react-icons/lu';
 import { cn } from '../../../../lib/utils';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import { useAuth } from '../../../../hooks/useAuth';
@@ -14,6 +14,7 @@ import { kidCopyFor } from './kidMoodCopy';
 import { MoodCelebration } from './MoodCelebration';
 import { MoodFace } from './MoodFace';
 import { PaperCard, Tape } from './PaperKit';
+import './home/kidHome.css';
 
 /**
  * "Today's check-in" for K-5: how are you feeling, and how much energy do
@@ -134,23 +135,22 @@ export function CheckInCard({ onSaved, variant = 'inline' }) {
   );
 }
 
+/* The two compact cards below share the Home's rail-card look (a soft-edged
+   sheet that lifts on hover) - the "Good morning, Alex!" mockup. */
+const COMPACT_CARD =
+  'group flex w-full items-center gap-3 rounded-[1.4rem] border border-kid-edge/60 px-4 py-4 text-left transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-paper-lg';
+
 function CheckInInvite({ onOpen }) {
   return (
-    <PaperCard
-      as="button"
-      type="button"
-      onClick={onOpen}
-      tone="sheet"
-      className="flex w-full items-center gap-3 px-5 py-5 text-left"
-    >
-      <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-full bg-kid-yellow">
+    <PaperCard as="button" type="button" onClick={onOpen} tone="sheet" className={COMPACT_CARD}>
+      <span aria-hidden="true" className="kh-pulse grid size-11 shrink-0 place-items-center rounded-full bg-kid-yellow">
         <LuSmilePlus className="size-6 text-[#6b4f05]" strokeWidth={2.2} />
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-kid-body text-sm text-kid-ink-soft">Check-in</p>
         <p className="font-kid-display text-lg font-semibold text-kid-ink">Let&apos;s check in!</p>
       </div>
-      <LuArrowRight className="size-5 shrink-0 text-kid-ink-soft" aria-hidden="true" />
+      <LuArrowRight className="kh-nudge size-5 shrink-0 text-kid-ink-soft" aria-hidden="true" />
     </PaperCard>
   );
 }
@@ -164,21 +164,26 @@ function CompactCheckIn({ mood, onChange }) {
       onClick={onChange}
       aria-label={`Change how you're feeling. Currently: ${kidFeeling}.`}
       tone="sheet"
-      className="flex w-full items-center gap-3 px-5 py-5 text-left"
+      className={COMPACT_CARD}
     >
-      {usesLegacyArt(mood) ? (
-        <MoodFace mood={mood.code} className="size-11 shrink-0" />
-      ) : (
-        <AdminMoodTile mood={mood} className="size-11 shrink-0" />
-      )}
+      <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-full bg-kid-green">
+        {usesLegacyArt(mood) ? (
+          <MoodFace mood={mood.code} className="size-8 transition-transform duration-200 group-hover:scale-110" />
+        ) : (
+          <AdminMoodTile mood={mood} className="size-8 transition-transform duration-200 group-hover:scale-110" />
+        )}
+      </span>
       <div className="min-w-0 flex-1">
         <p className="font-kid-body text-sm text-kid-ink-soft">Check-in</p>
         <p aria-live="polite" className="font-kid-display text-lg font-semibold text-kid-ink">
           {kidFeeling}
         </p>
       </div>
-      <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-full text-lg">
-        ✏️
+      <span
+        aria-hidden="true"
+        className="grid size-9 shrink-0 place-items-center rounded-full text-kid-ink-soft transition-colors group-hover:bg-kid-paper-deep group-hover:text-kid-ink"
+      >
+        <LuPencil className="size-4.5" />
       </span>
     </PaperCard>
   );

@@ -1,4 +1,4 @@
-import { Alert, Button, Input, Modal } from '../../../components/common';
+import { Alert, Button, Input, Modal, PhoneInput } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
@@ -79,7 +79,7 @@ export default function AddParentModal({ isOpen, onClose, onCreated }) {
             <Input label="First name" required autoComplete="off" {...form.getFieldProps('firstName')} />
             <Input label="Last name" autoComplete="off" {...form.getFieldProps('lastName')} />
             <Input label="Email" type="email" required autoComplete="off" {...form.getFieldProps('email')} />
-            <Input label="Phone" type="tel" autoComplete="off" {...form.getFieldProps('phone')} />
+            <PhoneInput label="Phone" autoComplete="off" {...form.getFieldProps('phone')} />
           </div>
         </ProfileSection>
       </form>

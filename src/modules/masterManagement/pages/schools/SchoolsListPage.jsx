@@ -7,6 +7,7 @@ import { useApi } from '../../../../hooks/useApi';
 import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
+import { normalizeAddressText } from '../../../../utils/address';
 import academicService from '../../services/academic.service';
 
 const STATUS_OPTIONS = [
@@ -72,7 +73,8 @@ export default function SchoolsListPage() {
   const columns = [
     { key: 'name', header: 'School', sortable: true, render: (row) => <strong>{row.name}</strong> },
     { key: 'schoolCode', header: 'Code', render: (row) => row.schoolCode ?? '—' },
-    { key: 'city', header: 'City', render: (row) => row.city ?? '—' },
+    // Canada Post style, as on the address's city line: "TORONTO ON".
+    { key: 'city', header: 'City / province', render: (row) => [normalizeAddressText(row.city ?? ''), row.state].filter(Boolean).join(' ') || '—' },
     { key: 'country', header: 'Country', render: (row) => row.country ?? '—' },
     { key: 'is_active', header: 'Status', render: (row) => <StatusBadge status={row.isActive ? 'active' : 'inactive'} /> },
     {
@@ -93,9 +95,12 @@ export default function SchoolsListPage() {
               <IconButton icon={<LuToggleRight aria-hidden="true" />} label="Activate" variant="success" size="sm" onClick={() => setConfirm({ type: 'activate', item: row })} />
             </Tooltip>
           )}
-          <Tooltip label="Delete" side="top">
-            <IconButton icon={<LuTrash2 aria-hidden="true" />} label="Delete" variant="danger" size="sm" onClick={() => setConfirm({ type: 'delete', item: row })} />
-          </Tooltip>
+          {/* Built-in rows (the master data the platform ships with) can't be deleted. */}
+          {!row.isSystem && (
+            <Tooltip label="Delete" side="top">
+              <IconButton icon={<LuTrash2 aria-hidden="true" />} label="Delete" variant="danger" size="sm" onClick={() => setConfirm({ type: 'delete', item: row })} />
+            </Tooltip>
+          )}
         </div>
       ),
     },

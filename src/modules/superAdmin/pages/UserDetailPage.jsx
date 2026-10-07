@@ -18,6 +18,7 @@ import { toast } from '../../../hooks/useToast';
 import { formatDateTime } from '../../../utils/date';
 import { formatName } from '../../../utils/format';
 import { formatPhoneForDisplay } from '../../../utils/phone';
+import { formatMailingAddress } from '../../../utils/address';
 import { ROLE_LABELS, USER_ROLES, USER_STATUS, listPathForRole } from '../../../utils/constants';
 import { emailProblemText } from '../../../utils/emailProblem';
 import { getErrorMessage, parseApiError } from '../../../utils/errorHandler';
@@ -117,6 +118,8 @@ export default function UserDetailPage() {
   // Students have no email or phone: they sign in with their username, and
   // their password is set here rather than by an emailed link.
   const isStudent = user.role === USER_ROLES.STUDENT;
+  // Canada Post block: "JANE DOE / 309-11211 85 ST NW / EDMONTON AB  T5G 0G9".
+  const mailingLines = formatMailingAddress(user, { recipient: formatName(user) });
   const needsVerification =
     !user.emailVerified && (user.role === USER_ROLES.TEACHER || user.role === USER_ROLES.PARENT);
   // What the delete dialog asks the admin to type.
@@ -257,6 +260,9 @@ export default function UserDetailPage() {
             </Field>
           )}
           {!isStudent && <Field label="Phone">{formatPhoneForDisplay(user.phone)}</Field>}
+          <Field label="Mailing address">
+            {mailingLines.length ? <span style={{ whiteSpace: 'pre-wrap' }}>{mailingLines.join('\n')}</span> : null}
+          </Field>
           <Field label="Last login">
             {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Never'}
           </Field>

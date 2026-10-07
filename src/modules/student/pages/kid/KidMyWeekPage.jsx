@@ -1,8 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { BlurFade } from '../../../../components/ui/blur-fade';
+import { useNavigate } from 'react-router-dom';
+import meadow from '../../../../assets/kid/home-meadow.webp';
+import weekArt from '../../../../assets/kid/week-hero.webp';
+import weekArtSmall from '../../../../assets/kid/week-hero-small.webp';
+import { useAuth } from '../../../../hooks/useAuth';
 import { cn } from '../../../../lib/utils';
 import { addDaysToKey, formatDateKey, getDateKey } from '../../../../utils/date';
+import AddWorkDialog from '../../../planner/components/AddWorkDialog';
 import DayAgenda from '../../../planner/components/schoolwork/DayAgenda';
 import SchoolworkBoard from '../../../planner/components/schoolwork/SchoolworkBoard';
 import SchoolworkList from '../../../planner/components/schoolwork/SchoolworkList';
@@ -16,64 +20,44 @@ import { VIEW_OPTIONS, eventsByDay } from '../../../planner/schoolwork';
 import '../../../planner/components/schoolwork/schoolwork.css';
 import { useWeekPlan, startOfWeek } from '../../hooks/useWeekPlan';
 import focusService from '../../services/focus.service';
-import { CalendarIcon } from '../../components/kid/KidIcons';
-import { KidButton } from '../../components/kid/KidButton';
-import { KidPageHeader } from '../../components/kid/KidPageHeader';
+import { DriftingCloud, FallingLeaf, FlyingBird, RisingHearts, Sparkle, SunGlow, WaveMarks } from '../../components/kid/BannerBits';
+import { KidBannerHero } from '../../components/kid/KidBannerHero';
 import { KidSkeleton, KidOops } from '../../components/kid/KidStates';
-import { StarRating, SubjectTile } from '../../components/kid/PaperKit';
-import { starsForMinutes } from '../../components/kid/kidFormat';
+import { AddWorkButton, DayOffCard, WeekTaskTile } from '../../components/kid/week/WeekParts';
 
 /** Mon-Fri only - school days, matching "one thing at a time" rather than a full 7-day grid. */
 const WEEKDAY_COUNT = 5;
+/** A day shows the dashed "+" while it has room (and isn't over). */
+const ROOM_FOR_MORE = 3;
 
 /** What K-5 calls the three views. */
 const KID_LABELS = { board: 'Sticky notes', list: 'My list', calendar: 'My week' };
 
-function DayTaskCard({ task, showTime }) {
-  const assignment = task.assignment ?? {};
-  return (
-    <Link
-      to={`/student/assignments/${assignment.id}`}
-      className="flex flex-col items-center gap-2 rounded-[1.5rem] bg-kid-sheet p-4 text-center no-underline shadow-paper transition-transform duration-200 hover:-translate-y-0.5"
-    >
-      {/* In the subject's colour - the same as on the sticky notes and the list. */}
-      <SubjectTile subject={assignment.subject} size="sm" />
-      <span className="font-kid-display text-base font-medium leading-snug text-kid-ink">{assignment.title}</span>
-      {showTime && <StarRating stars={starsForMinutes(assignment.estimatedMinutes)} />}
-    </Link>
-  );
-}
-
-function DayOffCard() {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-[1.5rem] bg-kid-sheet/60 p-4 text-center">
-      <span aria-hidden="true" className="text-2xl text-kid-ink-soft">
-        ♡
-      </span>
-      <span className="font-kid-display text-base text-kid-ink-soft">A day off</span>
-      <span className="font-kid-body text-sm text-kid-ink-soft">Nothing planned</span>
-    </div>
-  );
-}
+/** src/assets/kid/week-hero*.webp - the bunny waving under the tree. */
+const ART = { src: weekArt, srcSmall: weekArtSmall, smallWidth: 1000, bigWidth: 1032, width: 1032, height: 253, sky: '#bee7fd' };
 
 /**
- * K-5 "My week" - the same schoolwork three ways, chosen in Settings and
- * switchable here any time:
+ * K-5 "My week", built to the "My week" mockup - the same schoolwork three
+ * ways, chosen in Settings and switchable here any time:
  *
  *   Sticky notes  work as notes in their subject colours: To Do, Doing, Done
  *   My list       one thing after another, most important first
- *   My week       Monday to Friday: study times, their own plans (practice,
- *                 family time) and what is due each day
+ *   My week       Monday to Friday: what is due each day as picture tiles,
+ *                 study times and their own plans (practice, family time),
+ *                 "A day off!" when there is nothing, a dashed "+" to add work
  *
  * Every view reads the same plan as the Grade 6+ page; this is its kid look.
+ * Laptop and tablet: five columns. Phone: one day under another.
  */
 export default function KidMyWeekPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const settings = useSchoolworkSettings('me');
   const { preferences, colorOf } = settings;
   const [chosenView, setChosenView] = useState(null);
   const view = chosenView ?? preferences.defaultView;
   const [openWork, setOpenWork] = useState(null);
+  const [adding, setAdding] = useState(false);
 
   const weekStart = startOfWeek();
   const { days, isLoading, error, reload } = useWeekPlan(weekStart);
@@ -93,25 +77,63 @@ export default function KidMyWeekPage() {
 
   const openAssignment = (work) => navigate(`/student/assignments/${work.id}`);
   const waitingForSettings = !settings.loaded && settings.isLoading;
+  const afterAdding = () => {
+    plan.reload();
+    reload();
+    schoolwork.reload?.();
+  };
 
   return (
-    <div data-kid-page className="kid-ui min-h-full">
-      <div className="mx-auto max-w-6xl px-4 pb-8 pt-4 sm:px-8">
-        <KidPageHeader icon={CalendarIcon} title="My week" subtitle="Here is what is coming up. One thing at a time." />
+    <div data-kid-page className="kid-ui relative flex min-h-full flex-col overflow-x-clip">
+      <KidBannerHero
+        art={ART}
+        titleId="kid-week-title"
+        title="My week"
+        textAt="top"
+        subtitle={user?.firstName ? `Here is what you are doing this week, ${user.firstName}!` : 'Here is what you are doing this week!'}
+      >
+        <SunGlow className="left-[65.5%] top-[29.6%] w-[10%]" />
+        <Sparkle className="left-[58.5%] top-[10%] w-[1.5%]" />
+        <Sparkle className="left-[72.5%] top-[14%] w-[1.1%]" delay={1.2} />
+        <Sparkle className="left-[60%] top-[52%] w-[1%]" delay={2.1} />
+        <DriftingCloud className="left-[22%] top-[8%] w-[7%]" travel="250%" time="30s" />
+        <FlyingBird className="top-[12%]" delay={1.5} time="18s" />
+        <FlyingBird className="top-[20%]" size="ml-[2%] w-[1.6%]" delay={8} time="23s" />
+        <FallingLeaf className="left-[77%] top-[20%] w-[1.2%]" delay={0.8} dx="-26px" dy="90px" />
+        <FallingLeaf className="left-[94%] top-[28%] w-[1%]" delay={4} dx="-18px" dy="80px" tone="#7cb65f" />
+        {/* Beside the bunny's raised paw (about 77.5%, 63%), over the little cloud. */}
+        <WaveMarks className="left-[74.6%] top-[49%] h-[12%] -rotate-[30deg]" ink="#8a6a52" />
+        <RisingHearts className="left-[80.5%] top-[30%] h-[10%] w-[4%]" />
+      </KidBannerHero>
 
-        <div className="mt-5 flex flex-wrap gap-3" role="group" aria-label="Show my work as">
-          {VIEW_OPTIONS.map((v) => (
-            <KidButton key={v.key} size="md" variant={view === v.key ? 'primary' : 'soft'} aria-pressed={view === v.key} onClick={() => setChosenView(v.key)}>
-              <ViewIcon view={v.key} size={20} />
-              {KID_LABELS[v.key]}
-            </KidButton>
-          ))}
+      <div className="relative z-[1] mx-auto w-full max-w-[76rem] px-4 pb-8 pt-5 sm:px-6 lg:px-8">
+        <div className="flex justify-end">
+          <div role="group" aria-label="Show my work as" className="grid w-full grid-cols-3 rounded-full border border-kid-edge/70 bg-kid-paper-deep/80 p-1 sm:inline-grid sm:w-auto">
+            {VIEW_OPTIONS.map((v) => (
+              <button
+                key={v.key}
+                type="button"
+                aria-pressed={view === v.key}
+                onClick={() => setChosenView(v.key)}
+                className={cn(
+                  'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full px-3 font-kid-display text-sm font-semibold transition-[background-color,color,box-shadow] duration-200 sm:px-4 sm:text-base',
+                  view === v.key ? 'bg-kid-sheet text-kid-ink shadow-paper' : 'text-kid-ink-soft hover:text-kid-ink'
+                )}
+              >
+                {/* The words matter more than the icon on a narrow phone. */}
+                <span className="hidden sm:inline-flex" aria-hidden="true">
+                  <ViewIcon view={v.key} size={18} />
+                </span>
+                {KID_LABELS[v.key]}
+              </button>
+            ))}
+          </div>
         </div>
 
         {waitingForSettings ? (
-          <KidSkeleton className="mt-6 h-64" />
+          <KidSkeleton className="mt-5 h-64" />
         ) : view === 'board' || view === 'list' ? (
-          <div className="mt-6">
+          <div className="mt-5">
             {schoolwork.error && !schoolwork.loaded ? (
               <KidOops onRetry={schoolwork.reload} error={schoolwork.error} />
             ) : !schoolwork.loaded ? (
@@ -149,59 +171,83 @@ export default function KidMyWeekPage() {
             )}
           </div>
         ) : error ? (
-          <div className="mt-6">
+          <div className="mt-5">
             <KidOops onRetry={reload} error={error} />
           </div>
         ) : (
-          <div className="mt-6 grid gap-4 sm:grid-cols-5">
+          <div className="mt-5 grid gap-4 md:grid-cols-5 md:gap-3 lg:gap-4">
             {isLoading
-              ? Array.from({ length: WEEKDAY_COUNT }, (_, i) => <KidSkeleton key={i} className="h-64" />)
+              ? Array.from({ length: WEEKDAY_COUNT }, (_, i) => <KidSkeleton key={i} className="h-40 md:h-[26rem]" />)
               : school.map((day, i) => {
                   const isToday = day.key === todayKey;
+                  const isPast = day.key < todayKey;
                   const dayBlocks = blocks.get(day.key) ?? [];
                   const dayEvents = events.get(day.key) ?? [];
+                  const hasAgenda = dayBlocks.length > 0 || dayEvents.length > 0;
+                  const weekday = formatDateKey(day.key, { weekday: 'long', month: undefined, day: undefined, year: undefined });
                   return (
-                    <BlurFade key={day.key} delay={0.05 * i}>
-                      <section
-                        aria-label={formatDateKey(day.key, { weekday: 'long', month: undefined, day: undefined, year: undefined })}
-                        className={cn('flex h-full flex-col gap-3 rounded-[1.75rem] bg-kid-paper-deep/40 p-3', isToday && 'ring-[3px] ring-kid-teal')}
-                      >
-                        <div className="text-center">
-                          <p className="font-kid-display text-lg font-semibold text-kid-ink">
-                            {formatDateKey(day.key, { weekday: 'long', month: undefined, day: undefined, year: undefined })}
-                          </p>
-                          {isToday && <p className="font-kid-hand text-base text-kid-teal">Today</p>}
-                        </div>
-
-                        {(dayBlocks.length > 0 || dayEvents.length > 0) && (
-                          <div className="rounded-[1.25rem] bg-kid-sheet p-3">
-                            <DayAgenda
-                              blocks={dayBlocks}
-                              events={dayEvents}
-                              timeZone={plan.plan?.timezone}
-                              colorOf={colorOf}
-                              showTypeIcons={preferences.showTypeIcons}
-                              compact
-                            />
-                          </div>
+                    <section
+                      key={day.key}
+                      aria-label={isToday ? `${weekday}, today` : weekday}
+                      className={cn(
+                        'kh-pop relative flex flex-col gap-3 rounded-[1.6rem] border p-3 pb-4 md:min-h-[26rem]',
+                        isToday
+                          ? 'border-kid-teal/25 bg-[color-mix(in_srgb,var(--kid-sky)_70%,var(--kid-sheet))] shadow-[0_10px_24px_-18px_var(--kid-teal)]'
+                          : 'border-kid-edge/70 bg-kid-paper-deep/60'
+                      )}
+                      style={{ '--kh-delay': `${0.08 * i}s` }}
+                    >
+                      <header className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1 md:flex-col md:items-center md:gap-0.5 md:pt-1 md:text-center">
+                        <h2 className="font-kid-display text-lg font-semibold text-kid-ink">{weekday}</h2>
+                        <p className="font-kid-body text-sm text-kid-ink-soft">{formatDateKey(day.key, { month: 'short', day: 'numeric', year: undefined })}</p>
+                        {isToday && (
+                          <span className="kh-pulse rounded-full bg-kid-teal px-3 py-0.5 font-kid-display text-xs font-semibold text-white md:mt-1.5">Today</span>
                         )}
+                      </header>
 
-                        {day.items.length > 0 ? (
-                          <div className="flex flex-1 flex-col gap-3">
-                            {day.items.map((task) => (
-                              <DayTaskCard key={task.recipientId ?? task.id} task={task} showTime={preferences.showEstimatedTime} />
-                            ))}
-                          </div>
-                        ) : dayBlocks.length === 0 && dayEvents.length === 0 ? (
-                          <DayOffCard />
-                        ) : null}
-                      </section>
-                    </BlurFade>
+                      {hasAgenda && (
+                        // kw-agenda: in narrow columns the kind line ends in "…" rather than splitting a word (kidHome.css).
+                        <div className="kw-agenda rounded-[1.1rem] bg-kid-sheet/90 p-2.5 shadow-paper">
+                          <DayAgenda
+                            blocks={dayBlocks}
+                            events={dayEvents}
+                            timeZone={plan.plan?.timezone}
+                            colorOf={colorOf}
+                            showTypeIcons={preferences.showTypeIcons}
+                            compact
+                          />
+                        </div>
+                      )}
+
+                      {day.items.length > 0 ? (
+                        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-1">
+                          {day.items.map((task, j) => (
+                            <li key={task.recipientId ?? task.id}>
+                              <WeekTaskTile task={task} showStars={preferences.showEstimatedTime} delay={0.15 + 0.08 * i + 0.06 * j} />
+                            </li>
+                          ))}
+                        </ul>
+                      ) : !hasAgenda ? (
+                        <DayOffCard />
+                      ) : null}
+
+                      {!isPast && (day.items.length > 0 || hasAgenda) && day.items.length < ROOM_FOR_MORE && (
+                        <AddWorkButton onClick={() => setAdding(true)} />
+                      )}
+                    </section>
                   );
                 })}
           </div>
         )}
       </div>
+
+      {/* The meadow sits at the foot even when there is little on the page. */}
+      <div className="flex-1" />
+      <div aria-hidden="true" className="kh-meadow pointer-events-none relative">
+        <img src={meadow} alt="" loading="lazy" decoding="async" draggable="false" className="kh-rise block w-full select-none" />
+      </div>
+
+      <AddWorkDialog key={adding ? 'open' : 'closed'} isOpen={adding} guided onClose={() => setAdding(false)} onAdded={afterAdding} />
 
       <WorkNoteDialog
         key={openWork?.id ?? 'closed'}

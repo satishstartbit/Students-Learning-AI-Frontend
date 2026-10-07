@@ -73,7 +73,7 @@ export default function RewardActivitiesListPage() {
     { key: 'name', header: 'Activity', sortable: true, render: (row) => <strong>{row.name}</strong> },
     { key: 'activityType', header: 'Key', render: (row) => <code>{row.activityType}</code> },
     { key: 'points', header: 'Points', sortable: false, render: (row) => <Badge variant="primary">{row.points} pts</Badge> },
-    { key: 'is_active', header: 'Status', render: (row) => <StatusBadge status={row.isActive ? 'active' : 'inactive'} /> },
+    // { key: 'is_active', header: 'Status', render: (row) => <StatusBadge status={row.isActive ? 'active' : 'inactive'} /> },
     {
       key: 'actions',
       header: 'Actions',
@@ -83,7 +83,7 @@ export default function RewardActivitiesListPage() {
           <Tooltip label="Edit" side="top">
             <IconButton icon={<LuPencil aria-hidden="true" />} label="Edit" variant="primary" size="sm" onClick={() => navigate(`/admin/masters/reward-activities/${row.id}/edit`)} />
           </Tooltip>
-          {row.isActive ? (
+          {/* {row.isActive ? (
             <Tooltip label="Deactivate" side="top">
               <IconButton icon={<LuToggleLeft aria-hidden="true" />} label="Deactivate" variant="warning" size="sm" onClick={() => setConfirm({ type: 'deactivate', item: row })} />
             </Tooltip>
@@ -94,7 +94,7 @@ export default function RewardActivitiesListPage() {
           )}
           <Tooltip label="Delete" side="top">
             <IconButton icon={<LuTrash2 aria-hidden="true" />} label="Delete" variant="danger" size="sm" onClick={() => setConfirm({ type: 'delete', item: row })} />
-          </Tooltip>
+          </Tooltip> */}
         </div>
       ),
     },
@@ -113,12 +113,12 @@ export default function RewardActivitiesListPage() {
         title="Reward Activities"
         description="Point values earned for platform activities. Change the point value here without touching application code."
         breadcrumbs={[{ label: 'Master Management', to: '/admin/masters' }, { label: 'Reward Activities' }]}
-        actions={<Button as={Link} to="/admin/masters/reward-activities/create">Add activity</Button>}
+        // actions={<Button as={Link} to="/admin/masters/reward-activities/create">Add activity</Button>}
       />
 
       <FilterBar>
         <SearchInput fieldClassName="ui-filterbar__search ui-field--compact" placeholder="Name or key" value={search} onChange={(e) => resetTo(setSearch)(e.target.value)} onClear={() => resetTo(setSearch)('')} />
-        <Select fieldClassName="ui-field--compact" label="Status" options={STATUS_OPTIONS} placeholder="All statuses" value={status} onChange={(e) => resetTo(setStatus)(e.target.value)} />
+        {/* <Select fieldClassName="ui-field--compact" label="Status" options={STATUS_OPTIONS} placeholder="All statuses" value={status} onChange={(e) => resetTo(setStatus)(e.target.value)} /> */}
         <Tooltip label="Clear filters" side="top">
           <IconButton icon={<LuFilterX aria-hidden="true" />} label="Clear filters" size="sm" onClick={clearFilters} disabled={!hasFilters} />
         </Tooltip>

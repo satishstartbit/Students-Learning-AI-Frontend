@@ -389,6 +389,62 @@
   box-shadow: var(--focus-ring);
 }
 
+/* Phone (PhoneInput): "+1" then three boxes, +1 (XXX) XXX-XXXX.
+   The boxes share the row 3 : 3 : 4 like the digits they hold and shrink
+   together, so the whole number fits a 360px phone. */
+.ui-phone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 24rem;
+}
+.ui-phone__code {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--field-height);
+  padding: 0 12px;
+  font-size: var(--field-font-size);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-surface-sunken);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--field-radius);
+}
+.ui-phone__slot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 3 1 0;
+}
+/* The basis covers each slot's bracket/dash, so the boxes themselves get the 3 : 3 : 4. */
+.ui-phone__slot--area {
+  flex-basis: 26px;
+}
+.ui-phone__slot--line {
+  flex: 4 1 13px;
+}
+.ui-phone__sep {
+  flex: none;
+  color: var(--color-text-tertiary);
+  font-size: var(--field-font-size);
+}
+.ui-input.ui-phone__box {
+  min-width: 0;
+  padding-left: 8px;
+  padding-right: 8px;
+  text-align: center;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.ui-field--disabled .ui-phone__code,
+.ui-field--disabled .ui-phone__sep {
+  color: var(--color-text-disabled);
+}
+
 /* choice controls
    Checkbox and Radio are whole rows - control plus optional label - padded
    so the row is a 48px hit target around the 24px control. State colours
