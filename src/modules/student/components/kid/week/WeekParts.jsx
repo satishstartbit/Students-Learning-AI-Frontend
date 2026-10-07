@@ -22,7 +22,11 @@ function opensLabel(startDate) {
   return days < 7 ? `Opens ${weekdayOf(startDate)}` : `Opens ${formatDateKey(startDate, { year: undefined })}`;
 }
 
-/** One task on its day: the subject's big picture, the title, the gold stars (when the student shows time). */
+/**
+ * One task on its day: the subject's big picture, the title, the gold stars
+ * (when the student shows time). In 3D (kh-tile3d): it flips down into place
+ * when the week opens, and tilts towards you, lifted, when pointed at.
+ */
 export function WeekTaskTile({ task, showStars, delay = 0 }) {
   const assignment = task.assignment ?? {};
   const opens = opensLabel(assignment.startDate);
@@ -31,7 +35,7 @@ export function WeekTaskTile({ task, showStars, delay = 0 }) {
     <Link
       to={`/student/assignments/${assignment.id}`}
       className={cn(
-        'kh-pop group relative flex h-full flex-col items-center gap-2 rounded-[1.2rem] border border-kid-edge/50 bg-kid-sheet px-2 pb-3 pt-3 text-center no-underline shadow-paper transition-[transform,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-paper-lg',
+        'kh-tile3d group relative flex h-full flex-col items-center gap-2 rounded-[1.2rem] border border-kid-edge/50 bg-kid-sheet px-2 pb-3 pt-3 text-center no-underline shadow-paper hover:shadow-paper-lg',
         opens && 'bg-kid-sheet/80'
       )}
       style={{ '--kh-delay': `${delay}s` }}

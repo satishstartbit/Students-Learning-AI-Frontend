@@ -25,14 +25,21 @@ import './home/kidHome.css';
  * @param subtitle  the short line (node)
  * @param textAt    'middle' (default) or 'top' - for a picture whose hills
  *                  rise high on the left, the words sit in the upper sky
+ * @param popOut    something in the picture may come out of it towards you,
+ *                  over the page below (My work's turtle): the banner clips
+ *                  only its top and sides (clip-path) instead of all round,
+ *                  and sits above the page's content
  */
-export function KidBannerHero({ art, titleId, title, sticker = 'star', subtitle, textAt = 'middle', children }) {
+export function KidBannerHero({ art, titleId, title, sticker = 'star', subtitle, textAt = 'middle', popOut = false, children }) {
   const ratio = `${art.width} / ${art.height}`;
 
   return (
     <section
       aria-labelledby={titleId}
-      className="kh-banner relative isolate flex flex-col overflow-hidden border-b border-kid-edge/60 sm:max-h-[28rem] sm:min-h-[13rem] sm:flex-row sm:items-center"
+      className={cn(
+        'kh-banner relative isolate flex flex-col border-b border-kid-edge/60 sm:max-h-[28rem] sm:min-h-[13rem] sm:flex-row sm:items-center',
+        popOut ? 'z-[2] [clip-path:inset(0_0_-80%_0)]' : 'overflow-hidden'
+      )}
       style={{ backgroundColor: art.sky, '--kh-art-ratio': ratio }}
     >
       <div
