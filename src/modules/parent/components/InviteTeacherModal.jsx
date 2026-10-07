@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import { Alert, Button, Input, Modal } from '../../../components/common';
+import { Alert, Button, EmailInput, Input, Modal } from '../../../components/common';
 import FieldHelper from '../../../components/common/FieldHelper';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { useApi } from '../../../hooks/useApi';
@@ -7,10 +7,10 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
+import { emailError, normalizeEmail } from '../../../utils/email';
 import invitationService from '../../invitations/services/teacherInvitation.service';
 import parentService from '../services/parent.service';
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_SUBJECTS = 10;
 
 /** "Math", "Math or Science", "Math, English or Science" - for the teacher hint. */
@@ -142,13 +142,8 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
     grade: grade ? null : 'Choose a grade',
     teacherId: byEmail || teacherId ? null : 'Choose a teacher',
     teacherName: !byEmail || teacherName.trim() ? null : "Enter the teacher's name",
-    teacherEmail: !byEmail
-      ? null
-      : !teacherEmail.trim()
-        ? "Enter the teacher's email address"
-        : EMAIL_PATTERN.test(teacherEmail.trim())
-          ? null
-          : 'Enter a valid email address',
+    // The shared email rules (utils/email.js), the same ones the API applies.
+    teacherEmail: byEmail ? emailError(teacherEmail) : null,
   };
   const invalid = Object.values(errors).some(Boolean);
   const pickOptions = picked && !teacherOptions.some((o) => o.value === picked.value) ? [picked, ...teacherOptions] : teacherOptions;
@@ -177,10 +172,10 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
     setError(null);
     try {
       const payload = byEmail
-        ? { teacherName: teacherName.trim(), teacherEmail: teacherEmail.trim(), subjects, grade }
+        ? { teacherName: teacherName.trim(), teacherEmail: normalizeEmail(teacherEmail), subjects, grade }
         : { teacherId, subjects, grade };
       const { data } = await invitationService.invite(child.id, payload);
-      const to = byEmail ? teacherEmail.trim() : picked?.label ?? 'the teacher';
+      const to = byEmail ? normalizeEmail(teacherEmail) : picked?.label ?? 'the teacher';
       if (data?.awaitingApproval) {
         toast.success(`Request sent - we'll review it and email the invitation to ${to}`);
       } else if (data?.emailSent === false) {
@@ -285,15 +280,14 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
               onChange={(e) => setTeacherName(e.target.value)}
               error={attempted ? errors.teacherName : undefined}
             />
-            <Input
+            <EmailInput
               label="Teacher's email"
               name="teacherEmail"
-              type="email"
+              autoComplete="off"
               required
               placeholder="name@school.ca"
               hint="They'll be asked to create an account when they accept. Double-check the address."
               value={teacherEmail}
-              maxLength={255}
               onChange={(e) => setTeacherEmail(e.target.value)}
               error={attempted ? errors.teacherEmail : undefined}
             />

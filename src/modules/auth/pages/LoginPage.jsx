@@ -5,7 +5,7 @@ import { Button, Checkbox, Input, PasswordInput } from '../../../components/comm
 import { useAuth } from '../../../hooks/useAuth';
 import { useForm } from '../../../hooks/useForm';
 import { APP_NAME } from '../../../utils/constants';
-import { required } from '../../../utils/validation';
+import { loginIdentifier, required } from '../../../utils/validation';
 import { AuthSplitLayout } from '../components/AuthSplitLayout';
 import { VerifyEmailStep } from '../components/VerifyEmailStep';
 import authService from '../services/auth.service';
@@ -71,7 +71,8 @@ export default function LoginPage() {
   const form = useForm({
     initialValues: { identifier: '', password: '' },
     validationSchema: {
-      identifier: [required('Enter your username or email')],
+      // Anything with an @ must be a valid email (utils/email.js).
+      identifier: [loginIdentifier('Enter your username or email')],
       password: [required('Enter your password')],
     },
     async onSubmit(values) {

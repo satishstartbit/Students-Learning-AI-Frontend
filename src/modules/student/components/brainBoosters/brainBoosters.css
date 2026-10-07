@@ -36,15 +36,10 @@
 .bb-exercise__progress::-webkit-progress-bar { background: var(--bb-soft); }
 .bb-exercise__progress::-webkit-progress-value { background: var(--bb-accent); border-radius: 99px; }
 .bb-exercise__stage { display: grid; place-items: center; align-content: center; min-height: 280px; text-align: center; border-radius: 18px; background: color-mix(in srgb, var(--bb-accent) 7%, var(--bb-surface)); padding: 24px; margin: 15px 0; }
-.bb-exercise__art { display: grid; place-items: center; width: 95px; height: 95px; border-radius: 50%; background: var(--bb-surface); font-size: 3rem; margin-bottom: 20px; animation-timing-function: linear; animation-fill-mode: both; }
 .bb-exercise__stage h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
 .bb-exercise__stage p { font-size: .83rem; line-height: 1.8; color: var(--bb-muted); max-width: 350px; margin: 0; }
 .bb-exercise__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-@keyframes bb-breathe-in { from { transform: scale(1); } to { transform: scale(1.16); } }
-@keyframes bb-breathe-out { from { transform: scale(1.16); } to { transform: scale(1); } }
 @media (max-width: 600px) { .bb-page--junior { padding: 16px 14px 24px; } .bb-exercise__choices button { flex-basis: 100%; } }
-@media (prefers-reduced-motion: reduce) { .bb-exercise__art { animation: none !important; } }
-.bb-page[data-reduced-motion='true'] .bb-exercise__art { animation: none; }
 .bb-page { overflow-anchor: none; }
 .bb-stat strong { font-variant-numeric: tabular-nums; }
 .bb-exercise__stage { height: 300px; min-height: 300px; }
@@ -55,3 +50,7 @@
   .bb-tracking-controls, .bb-exercise__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bb-tracking-controls > .bb-primary-button, .bb-exercise__actions > .bb-primary-button { grid-column: 1 / -1; }
 }
+/* An exercise's picture (focus/ExerciseIllustration) over each step's words. */
+.bb-exercise__stage--picture { height: auto; min-height: 300px; gap: 14px; padding: 20px; }
+.bb-exercise__picture { width: min(100%, 300px); }
+.bb-exercise__picture .fs-ill__art { max-height: 230px; }

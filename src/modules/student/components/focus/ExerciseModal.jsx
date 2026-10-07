@@ -2,12 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { LuCheck, LuPause, LuPlay } from 'react-icons/lu';
 import { Modal } from '../../../../components/common';
 import { formatClock } from '../../hooks/useFocusTimer';
+import ExerciseMedia from './ExerciseMedia';
+import { exerciseFromTool, toneOf } from './exerciseGroups';
 
 /**
  * A guided run-through of one Regulation Toolkit exercise (Master Management
- * > Regulation Activities): its own instructions as numbered steps, and a
- * countdown for the admin-set duration. Until now "Start exercise" did
- * nothing anywhere in the app.
+ * > Regulation Activities): how to do it on top - its video, picture or
+ * sound, else the built-in picture of the steps (ExerciseMedia, the same as
+ * beside it on Focus; the picture moves while the countdown runs and holds
+ * still when paused or done) - then its own instructions as numbered steps
+ * and a countdown for the admin-set duration.
  *
  * The breathing category gets a slow expanding circle to breathe along with
  * (CSS only, stilled by prefers-reduced-motion).
@@ -45,9 +49,13 @@ function ExerciseRunner({ tool, onDone }) {
   const circumference = 2 * Math.PI * radius;
   const steps = toSteps(tool.instructions || tool.description);
   const isBreathing = /breath/i.test(tool.category ?? '');
+  const exercise = exerciseFromTool(tool);
 
   return (
     <>
+      <div className="fs-exercise__media">
+        <ExerciseMedia exercise={exercise} tone={toneOf(exercise)} paused={!running || finished} />
+      </div>
       <div className="fs-exercise">
         <div>
           {steps.length > 0 ? (

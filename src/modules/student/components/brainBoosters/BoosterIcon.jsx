@@ -1,4 +1,4 @@
-import { LuBrain, LuEye, LuHand, LuMove, LuWind } from 'react-icons/lu';
+import { LuBrain, LuEye, LuHand, LuLeaf, LuMove, LuMusic, LuSparkles, LuTarget, LuWind, LuZap } from 'react-icons/lu';
 
 /** A balloon outline (the icon set has none): the balloon, its knot and a curly string. */
 export function BalloonIcon({ size = 20, className }) {
@@ -11,9 +11,22 @@ export function BalloonIcon({ size = 20, className }) {
   );
 }
 
-const ICONS = { eye: LuEye, balloon: BalloonIcon, brain: LuBrain, wind: LuWind, stretch: LuMove, hand: LuHand };
+const ICONS = {
+  eye: LuEye,
+  balloon: BalloonIcon,
+  brain: LuBrain,
+  wind: LuWind,
+  stretch: LuMove,
+  hand: LuHand,
+  // The kinds of exercise (focus/exerciseGroups.js).
+  leaf: LuLeaf,
+  zap: LuZap,
+  music: LuMusic,
+  target: LuTarget,
+  sparkles: LuSparkles,
+};
 
-/** The picture for a Brain Booster (boosters.js `icon`). Decorative. */
+/** The picture for a Brain Booster (boosters.js `icon`) or a kind of exercise. Decorative. */
 export function BoosterIcon({ name, size = 20, className }) {
   const Icon = ICONS[name] ?? LuBrain;
   return <Icon size={size} className={className} aria-hidden="true" />;

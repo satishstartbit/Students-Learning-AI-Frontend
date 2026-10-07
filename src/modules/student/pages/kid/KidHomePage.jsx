@@ -3,6 +3,7 @@ import { useAuth } from '../../../../hooks/useAuth';
 import meadow from '../../../../assets/kid/home-meadow.webp';
 import { useMyTasks } from '../../hooks/useMyTasks';
 import BrainBoostersTeaser from '../../components/brainBoosters/BrainBoostersTeaser';
+import { Bird3D, BirdSky, Butterfly, FallingLeaf, SeaShimmer, Sparkle } from '../../components/kid/BannerBits';
 import { CheckInCard } from '../../components/kid/CheckInCard';
 import { HeroScene } from '../../components/kid/HeroScene';
 import { KidPlanCard } from '../../components/kid/KidPlanCard';
@@ -105,10 +106,26 @@ export default function KidHomePage() {
         </div>
       </div>
 
-      {/* The meadow sits at the foot even when there is little on the page. */}
+      {/* The meadow sits at the foot even when there is little on the page; it
+          comes alive like the hero: light on the lake, butterflies over the
+          flower and the bushes, a bird, a leaf on the wind (placed in % of the
+          1800x600 picture; a floor in px so they still show on a phone). */}
       <div className="flex-1" />
       <div aria-hidden="true" className="kh-meadow pointer-events-none relative">
-        <img src={meadow} alt="" loading="lazy" decoding="async" draggable="false" className="kh-rise block w-full select-none" />
+        <div className="kh-rise relative">
+          <img src={meadow} alt="" loading="lazy" decoding="async" draggable="false" className="block w-full select-none" />
+          <SeaShimmer className="left-[50%] top-[66.5%] h-[9%] w-[22%]" waves={3} />
+          <Sparkle className="left-[58%] top-[69%] w-[max(0.7%,6px)]" delay={0.4} />
+          <Sparkle className="left-[68%] top-[72%] w-[max(0.6%,5px)]" delay={1.9} />
+          <Butterfly className="left-[37.5%] top-[68%] w-[max(2%,12px)]" travel="140%" delay={0.6} />
+          <Butterfly className="left-[81%] top-[58%] w-[max(1.8%,11px)]" travel="-150%" delay={2.4} time="11s" wings={['#9fc8f2', '#f6c445']} />
+          {/* Birds in 3D over the hills, in the picture's clear sky. */}
+          <BirdSky>
+            <Bird3D path="cross" top="26cqh" size="max(3.4cqw, 20px)" time="21s" delay={-6} />
+            <Bird3D path="glide" top="30cqh" size="max(2.9cqw, 18px)" time="26s" delay={-16} facing="left" flap="0.5s" />
+          </BirdSky>
+          <FallingLeaf className="left-[9%] top-[62%] w-[max(0.8%,6px)]" delay={1.2} dx="40px" dy="50px" time="8s" tone="#9bc26a" />
+        </div>
       </div>
     </div>
   );

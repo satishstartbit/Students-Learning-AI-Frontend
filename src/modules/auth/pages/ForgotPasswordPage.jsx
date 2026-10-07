@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { LuInfo, LuUser } from 'react-icons/lu';
 import { Button, Input } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
-import { required } from '../../../utils/validation';
+import { loginIdentifier } from '../../../utils/validation';
 import { AuthSplitLayout } from '../components/AuthSplitLayout';
 import { CodeInput } from '../components/CodeInput';
 import { NewPasswordStep, PasswordUpdatedStep, ResetAlert } from '../components/PasswordResetSteps';
@@ -87,7 +87,8 @@ export default function ForgotPasswordPage() {
 function RequestStep({ initialIdentifier, onSend }) {
   const form = useForm({
     initialValues: { identifier: initialIdentifier },
-    validationSchema: { identifier: [required('Enter your username or email')] },
+    // Anything with an @ must be a valid email (utils/email.js).
+    validationSchema: { identifier: [loginIdentifier('Enter your username or email')] },
     onSubmit: (values) => onSend(values.identifier.trim()),
   });
 

@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { PageHeader, Card, Input, PhoneInput, Checkbox, Button, Alert, ButtonGroup, SectionHeader, Loader } from '../../../../components/common';
+import { PageHeader, Card, EmailInput, Input, PhoneInput, Checkbox, Button, Alert, ButtonGroup, SectionHeader, Loader } from '../../../../components/common';
 import { useForm } from '../../../../hooks/useForm';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
-import { required, email as emailRule, phone as phoneRule, postalCode as postalCodeRule } from '../../../../utils/validation';
+import { required, emailRules, phone as phoneRule, postalCode as postalCodeRule } from '../../../../utils/validation';
 import { DEFAULT_COUNTRY } from '../../../../utils/locale';
 import { formatPhoneForDisplay } from '../../../../utils/phone';
 import { isCanadianCountry } from '../../../../utils/address';
@@ -31,7 +31,7 @@ export default function SchoolFormPage() {
     },
     validationSchema: {
       name: [required('Enter a school name')],
-      contactEmail: [emailRule()],
+      contactEmail: emailRules({ optional: true }),
       contactPhone: [phoneRule()],
       // Only enforced for a Canadian address - a future non-Canadian school
       // (Phase 3 multi-org onboarding) keeps free-text postal/zip.
@@ -107,7 +107,7 @@ export default function SchoolFormPage() {
 
           <SectionHeader title="Contact" as="h3" />
           <Input label="Contact person" {...form.getFieldProps('contactPerson')} />
-          <Input label="Contact email" type="email" {...form.getFieldProps('contactEmail')} />
+          <EmailInput label="Contact email" autoComplete="off" {...form.getFieldProps('contactEmail')} />
           <PhoneInput label="Contact phone" autoComplete="off" {...form.getFieldProps('contactPhone')} />
 
           <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />

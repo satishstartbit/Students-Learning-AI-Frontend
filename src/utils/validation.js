@@ -2,14 +2,14 @@ import { validateFile, validateImage } from './file';
 import { isValidDate, toDate } from './date';
 import { isValidPhoneNumber, PHONE_EXAMPLE } from './phone';
 import { isValidCanadianPostalCode } from './postalCode';
+import { EMAIL_MESSAGES, emailError } from './email';
 
 /**
  * Form validation primitives plus a small rule runner used by useForm.
  *
  * Each validator returns an error string or null, so rules compose:
- *   { email: [required(), email()], password: [required(), password()] }
+ *   { email: emailRules(), password: [required(), password()] }
  */
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export const isEmpty = (value) =>
   value === null ||
@@ -24,10 +24,33 @@ export const required =
   (value) =>
     isEmpty(value) ? message : null;
 
+/**
+ * Email format (utils/email.js - the same rules as the API): no spaces, one
+ * @, a real-looking domain, 254 characters at most. The message says what to
+ * fix; pass `message` only to replace it. Empty passes - pair with required.
+ */
 export const email =
-  (message = 'Enter a valid email address') =>
-  (value) =>
-    isEmpty(value) || EMAIL_RE.test(String(value).trim()) ? null : message;
+  (message) =>
+  (value) => {
+    if (isEmpty(value)) return null;
+    const error = emailError(value);
+    return error ? message ?? error : null;
+  };
+
+/** Every email field's rules: "Email is required." (unless optional) then the format. */
+export const emailRules = ({ optional = false } = {}) =>
+  optional ? [email()] : [required(EMAIL_MESSAGES.required), email()];
+
+/**
+ * "Username or email" sign-in fields: required, and anything with an @ must
+ * be a valid email ("john@gmail" can never match an account).
+ */
+export const loginIdentifier =
+  (message = 'Enter your username or email') =>
+  (value) => {
+    if (isEmpty(value)) return message;
+    return String(value).includes('@') ? emailError(value) : null;
+  };
 
 export const minLength = (n, message) => (value) =>
   isEmpty(value) || String(value).length >= n
@@ -131,6 +154,8 @@ export default {
   isEmpty,
   required,
   email,
+  emailRules,
+  loginIdentifier,
   password,
   minLength,
   maxLength,

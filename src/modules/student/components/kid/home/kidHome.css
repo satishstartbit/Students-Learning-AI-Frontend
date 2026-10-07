@@ -220,6 +220,35 @@
   animation-delay: var(--kh-delay, 0s);
 }
 
+/* The bear's arm (HeroScene, cut out of the picture and laid back on its
+   place) waves out from the shoulder - the bottom-right of the cut-out, where
+   it goes behind the strap - twice, then rests. Outward only, so it never
+   crosses the bear's head; at rest it is exactly the painted arm. */
+@keyframes kh-paw-wave {
+  0%,
+  46%,
+  100% {
+    transform: rotate(0deg);
+  }
+  8%,
+  24% {
+    transform: rotate(-16deg);
+  }
+  16%,
+  32% {
+    transform: rotate(-3deg);
+  }
+  40% {
+    transform: rotate(-10deg);
+  }
+}
+.kh-paw {
+  transform-origin: 90% 91%;
+  filter: drop-shadow(0 1px 1.5px rgb(80 40 20 / 0.3));
+  animation: kh-paw-wave 3.8s ease-in-out infinite;
+  animation-delay: var(--kh-delay, 0.8s);
+}
+
 /* "Waving" marks beside the bear's paw, flicking in turn. */
 @keyframes kh-wave-mark {
   0%,
@@ -295,18 +324,176 @@
   animation: kh-flutter var(--kh-flutter-time, 9s) ease-in-out infinite;
   animation-delay: var(--kh-delay, 0s);
 }
-@keyframes kh-flit {
+/* Each wing folds on the body in 3D, towards the viewer (its outer edge
+   comes forward) - the left wing hinged on its right edge, the right on its left. */
+@keyframes kh-flit-l {
   0%,
   100% {
-    transform: scaleX(1);
+    transform: perspective(60px) rotateY(0deg);
   }
   50% {
-    transform: scaleX(0.4);
+    transform: perspective(60px) rotateY(68deg);
+  }
+}
+@keyframes kh-flit-r {
+  0%,
+  100% {
+    transform: perspective(60px) rotateY(0deg);
+  }
+  50% {
+    transform: perspective(60px) rotateY(-68deg);
   }
 }
 .kh-flit {
-  transform-origin: 50% 50%;
-  animation: kh-flit 0.32s ease-in-out infinite;
+  animation: kh-flit-l 0.34s ease-in-out infinite;
+}
+.kh-flit--l {
+  transform-origin: 100% 50%;
+}
+.kh-flit--r {
+  transform-origin: 0% 50%;
+  animation-name: kh-flit-r;
+}
+
+/* --- 3D birds (BannerBits BirdSky + Bird3D) -------------------------------
+   The sky layer has its own depth, seen from high up (perspective-origin near
+   the top), so a far bird is small and high and a near one big. Each bird is
+   real 3D: a body and two wings hinged on its back that flap through depth
+   (rotateX - the near wing swings towards you, the far one away), flying a
+   path in x, y and z, banking as it goes. At rest (calm mode, reduced
+   motion) every bird waits off the picture. */
+.kh-b3d-sky {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  pointer-events: none;
+  container-type: size;
+  perspective: 900px;
+  perspective-origin: 50% 8%;
+}
+.kh-b3d {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: var(--kh-b3d-size, 3cqw);
+  aspect-ratio: 1;
+  transform-style: preserve-3d;
+  transform: translate3d(-90cqw, 0, 0);
+  animation: var(--kh-b3d-path, kh-b3d-cross) var(--kh-b3d-time, 18s) linear infinite;
+  animation-delay: var(--kh-delay, 0s);
+}
+@keyframes kh-b3d-cross {
+  0% {
+    transform: translate3d(-45cqw, calc(var(--kh-b3d-top, 0cqh) + 10cqh), -700px);
+  }
+  25% {
+    transform: translate3d(0cqw, calc(var(--kh-b3d-top, 0cqh) + 4cqh), -620px);
+  }
+  50% {
+    transform: translate3d(45cqw, calc(var(--kh-b3d-top, 0cqh) + 9cqh), -540px);
+  }
+  75% {
+    transform: translate3d(92cqw, calc(var(--kh-b3d-top, 0cqh) + 3cqh), -470px);
+  }
+  100% {
+    transform: translate3d(145cqw, calc(var(--kh-b3d-top, 0cqh) + 8cqh), -400px);
+  }
+}
+@keyframes kh-b3d-glide {
+  0% {
+    transform: translate3d(175cqw, calc(var(--kh-b3d-top, 0cqh) + 6cqh), -900px);
+  }
+  50% {
+    transform: translate3d(55cqw, calc(var(--kh-b3d-top, 0cqh) + 13cqh), -820px);
+  }
+  100% {
+    transform: translate3d(-70cqw, calc(var(--kh-b3d-top, 0cqh) + 7cqh), -760px);
+  }
+}
+/* Out from behind the trees, towards you - growing - and off the top corner. */
+@keyframes kh-b3d-swoop {
+  0% {
+    opacity: 0;
+    transform: translate3d(62cqw, calc(var(--kh-b3d-top, 0cqh) + 34cqh), -1800px);
+  }
+  10% {
+    opacity: 1;
+  }
+  45% {
+    transform: translate3d(72cqw, calc(var(--kh-b3d-top, 0cqh) + 16cqh), -800px);
+  }
+  80% {
+    transform: translate3d(86cqw, calc(var(--kh-b3d-top, 0cqh) + 2cqh), -100px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(106cqw, calc(var(--kh-b3d-top, 0cqh) - 20cqh), 260px);
+  }
+}
+.kh-b3d-bank {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform-style: preserve-3d;
+  transform: rotateY(var(--kh-b3d-yaw, 0deg));
+  animation: kh-b3d-bank 3.2s ease-in-out infinite alternate;
+}
+@keyframes kh-b3d-bank {
+  from {
+    transform: rotateY(var(--kh-b3d-yaw, 0deg)) rotateZ(-7deg) rotateX(12deg);
+  }
+  to {
+    transform: rotateY(var(--kh-b3d-yaw, 0deg)) rotateZ(5deg) rotateX(-8deg);
+  }
+}
+.kh-b3d-body {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.kh-b3d-wing {
+  position: absolute;
+  left: 38%;
+  bottom: 53%;
+  display: block;
+  width: 30%;
+  height: 40%;
+  transform-origin: 50% 100%;
+}
+.kh-b3d-wing svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.kh-b3d-wing--near {
+  transform: rotateX(-35deg);
+  animation: kh-b3d-flap-near var(--kh-b3d-flap, 0.5s) ease-in-out infinite;
+}
+.kh-b3d-wing--far {
+  transform: rotateX(35deg);
+  animation: kh-b3d-flap-far var(--kh-b3d-flap, 0.5s) ease-in-out infinite;
+}
+@keyframes kh-b3d-flap-near {
+  0%,
+  100% {
+    transform: rotateX(-18deg);
+  }
+  50% {
+    transform: rotateX(-150deg);
+  }
+}
+@keyframes kh-b3d-flap-far {
+  0%,
+  100% {
+    transform: rotateX(18deg);
+  }
+  50% {
+    transform: rotateX(150deg);
+  }
 }
 
 /* KidBannerHero: from a small tablet the banner takes its picture's shape. */

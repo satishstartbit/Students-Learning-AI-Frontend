@@ -9,6 +9,8 @@ import regulationService from '../../services/regulation.service';
 import '../../components/masterPages.css';
 
 const ACTIVITY_TYPE_HINT = 'e.g. Breathing, Grounding, Movement, Calming Sounds, Music, Mindfulness';
+// Students see this beside the exercise on Focus (student focus/ExerciseMedia.jsx); without one, a built-in picture of the steps.
+const MEDIA_HINT = 'A YouTube or Vimeo link, or a link to a video (.mp4), picture or sound file. Students see it beside the exercise; without one they see a picture of the steps.';
 
 export default function RegulationActivityFormPage() {
   const { id } = useParams();
@@ -92,7 +94,7 @@ export default function RegulationActivityFormPage() {
           <Input label="Activity type" required hint={ACTIVITY_TYPE_HINT} {...form.getFieldProps('toolType')} />
           <Textarea label="Description" {...form.getFieldProps('description')} />
           <Textarea label="Instructions" {...form.getFieldProps('instructions')} />
-          <Input label="Audio / media URL" {...form.getFieldProps('mediaUrl')} />
+          <Input label="Video, picture or sound link" hint={MEDIA_HINT} {...form.getFieldProps('mediaUrl')} />
           <Input label="Recommended duration (minutes)" type="number" {...form.getFieldProps('durationMinutes')} />
           <Input label="Icon" hint="An emoji or icon key" {...form.getFieldProps('icon')} />
           <Input label="Category" {...form.getFieldProps('category')} />

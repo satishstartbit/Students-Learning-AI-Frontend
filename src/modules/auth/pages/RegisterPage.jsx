@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { LuInfo, LuLock, LuMail } from 'react-icons/lu';
-import { Button, Checkbox, Input, Loader, PasswordInput } from '../../../components/common';
+import { Button, Checkbox, EmailInput, Input, Loader, PasswordInput } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
 import { useForm } from '../../../hooks/useForm';
 import { USER_ROLES } from '../../../utils/constants';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { detectBrowserTimezone } from '../../../utils/locale';
-import { required, email as emailRule, password as passwordRule } from '../../../utils/validation';
+import { required, emailRules, password as passwordRule } from '../../../utils/validation';
 import { formatSubjects } from '../../invitations/invitationStatus';
 import invitationService from '../../invitations/services/teacherInvitation.service';
 import { AuthSplitLayout } from '../components/AuthSplitLayout';
@@ -120,7 +120,7 @@ function SignUp({ inviteToken, invite }) {
     validationSchema: {
       role: [required('Choose how you will use the platform')],
       firstName: [required('Enter your first name')],
-      email: [required('Enter your email address'), emailRule()],
+      email: emailRules(),
       password: [required('Choose a password'), passwordRule()],
       agreeToTerms: [(value) => (value ? null : 'Please agree to the Terms of Use and Privacy Policy')],
     },
@@ -249,10 +249,8 @@ function SignUp({ inviteToken, invite }) {
           <Input label="Last name" autoComplete="family-name" {...form.getFieldProps('lastName')} />
         </div>
 
-        <Input
+        <EmailInput
           label="Email"
-          type="email"
-          autoComplete="email"
           placeholder="you@email.com"
           startAdornment={<LuMail />}
           readOnly={Boolean(invite)}
