@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Card, Input, PasswordInput, Button, Alert, Checkbox, Badge } from '../../../components/common';
+import { Card, EmailInput, PasswordInput, Button, Alert, Checkbox, Badge } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
 import { useAuth } from '../../../hooks/useAuth';
-import { required, email as emailRule } from '../../../utils/validation';
+import { required, emailRules } from '../../../utils/validation';
 import authService from '../services/auth.service';
 
 /**
@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
   const form = useForm({
     initialValues: { email: '', password: '' },
     validationSchema: {
-      email: [required('Enter your email address'), emailRule()],
+      email: emailRules(),
       password: [required('Enter your password')],
     },
     async onSubmit(values) {
@@ -45,13 +45,7 @@ export default function AdminLoginPage() {
       )}
 
       <form onSubmit={form.handleSubmit} noValidate>
-        <Input
-          label="Email"
-          type="email"
-          autoComplete="email"
-          required
-          {...form.getFieldProps('email')}
-        />
+        <EmailInput label="Email" required {...form.getFieldProps('email')} />
 
         <PasswordInput label="Password" required {...form.getFieldProps('password')} />
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import AccentPicker from '../../../components/appearance/AccentPicker';
 import { useAppSettings } from '../../../components/appearance/useAppSettings';
-import { Alert, Button, Input, Loader, PhoneInput, Textarea } from '../../../components/common';
+import { Alert, Button, EmailInput, Input, Loader, PhoneInput, Textarea } from '../../../components/common';
 import { formatPhoneForDisplay } from '../../../utils/phone';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
@@ -9,7 +9,7 @@ import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
-import { email as emailRule, phone as phoneRule, required } from '../../../utils/validation';
+import { emailRules, phone as phoneRule, required } from '../../../utils/validation';
 import AddressFields from '../../auth/components/AddressFields';
 import ChangePasswordForm from '../../auth/components/ChangePasswordForm';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
@@ -103,7 +103,7 @@ export default function TeacherProfilePage() {
     initialValues: valuesFromMe(null),
     validationSchema: {
       firstName: [required('Enter your first name')],
-      email: [required('Enter your email address'), emailRule()],
+      email: emailRules(),
       phone: [phoneRule()],
       yearsExperience: [yearsRule],
     },
@@ -182,11 +182,9 @@ export default function TeacherProfilePage() {
           <div className="pf-grid">
             <Input label="First name" required autoComplete="given-name" {...form.getFieldProps('firstName')} />
             <Input label="Last name" autoComplete="family-name" {...form.getFieldProps('lastName')} />
-            <Input
+            <EmailInput
               label="Email"
-              type="email"
               required
-              autoComplete="email"
               hint={emailChanged ? "Saving signs you out - we'll email a link to confirm the new address." : undefined}
               {...form.getFieldProps('email')}
             />

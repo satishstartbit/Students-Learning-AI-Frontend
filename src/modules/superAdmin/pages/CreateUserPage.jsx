@@ -1,9 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { PageHeader, Card, Input, PhoneInput, Button, Alert, SectionHeader, ButtonGroup } from '../../../components/common';
+import { PageHeader, Card, EmailInput, Input, PhoneInput, Button, Alert, SectionHeader, ButtonGroup } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { emailProblemText } from '../../../utils/emailProblem';
-import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
+import { required, emailRules, phone as phoneRule } from '../../../utils/validation';
 import { ROLE_LABELS, USER_ROLES, listPathForRole } from '../../../utils/constants';
 import adminUserService from '../services/adminUser.service';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
@@ -62,7 +62,7 @@ function CreateUserForm({ role }) {
     },
     validationSchema: {
       firstName: [required('Enter a first name')],
-      email: [required('Enter an email address'), emailRule()],
+      email: emailRules(),
       phone: [phoneRule()],
     },
     async onSubmit(values) {
@@ -110,7 +110,7 @@ function CreateUserForm({ role }) {
 
           <Input label="First name" required {...form.getFieldProps('firstName')} />
           <Input label="Last name" {...form.getFieldProps('lastName')} />
-          <Input label="Email" type="email" required {...form.getFieldProps('email')} />
+          <EmailInput label="Email" required autoComplete="off" {...form.getFieldProps('email')} />
           <PhoneInput label="Phone" {...form.getFieldProps('phone')} />
 
           <SectionHeader title={page.profileTitle} as="h3" />

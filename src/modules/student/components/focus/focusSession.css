@@ -825,7 +825,8 @@
   text-underline-offset: 2px;
 }
 
-/* Each booster's paper colour (the sticky-note tokens, light in both modes). */
+/* Each booster's paper colour (the sticky-note tokens, light in both modes).
+   An exercise's picture or video has its own sheet: exerciseMedia.css. */
 .fs-boost-tile,
 .fs-boost-preview--emoji {
   --tile-bg: var(--sticky-lavender);
@@ -977,4 +978,54 @@
   .fs-boost-tile {
     font-size: 11.5px;
   }
+}
+
+/* ------------------------------------------------------------ Exercises
+   The five kinds of exercise (exerciseGroups.js) as tiles - five across,
+   three and two on a phone - and the picked exercise: its words, Start
+   exercise and "Try a different…" on one side, how to do it on the other
+   (ExerciseMedia: video, image or picture), stacked when the card is narrow. */
+.fs-boosters {
+  container-type: inline-size;
+}
+/* All in one row when the card has room (`--cols` = how many kinds, at most
+   six), else rows of three (two when there are four) - never one left alone. */
+.fs-boost-tiles--groups {
+  grid-template-columns: repeat(var(--cols-narrow, 3), minmax(0, 1fr));
+}
+@container (min-width: 500px) {
+  .fs-boost-tiles--groups {
+    grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr));
+  }
+}
+.fs-boost-tiles--groups .fs-boost-tile {
+  min-height: 92px;
+  font-size: 13px;
+}
+.fs-boost-detail--exercise {
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 18px 22px;
+  padding: 20px;
+}
+.fs-boost-detail--exercise .fs-boost-detail__title {
+  font-size: 19px;
+}
+.fs-boost-detail--exercise .fs-boost-detail__blurb {
+  margin-top: 8px;
+  font-size: 13.5px;
+}
+.fs-boost-detail--exercise .fs-boost-detail__meta {
+  font-size: 12.5px;
+}
+.fs-boost-detail--exercise .fs-boost-detail__actions {
+  gap: 10px;
+  margin-top: 16px;
+}
+.fs-boost-detail--exercise .fs-boost-detail__actions .fs-btn {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 14px;
+}
+.fs-boost-detail--exercise .fs-boost-detail__actions .fs-link {
+  font-size: 12px;
 }

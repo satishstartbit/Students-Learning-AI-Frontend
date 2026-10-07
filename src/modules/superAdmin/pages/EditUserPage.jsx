@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   PageHeader,
   Card,
+  EmailInput,
   Input,
   PhoneInput,
   Button,
@@ -17,7 +18,7 @@ import { useApi } from '../../../hooks/useApi';
 import { useForm } from '../../../hooks/useForm';
 import { usePhotoField } from '../../../hooks/usePhotoField';
 import { toast } from '../../../hooks/useToast';
-import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
+import { required, emailRules, phone as phoneRule } from '../../../utils/validation';
 import { formatPhoneForDisplay } from '../../../utils/phone';
 import { ROLE_LABELS, listPathForRole } from '../../../utils/constants';
 import adminUserService from '../services/adminUser.service';
@@ -61,7 +62,7 @@ export default function EditUserPage() {
       firstName: [required('Enter a first name')],
       ...(isStudent
         ? {}
-        : { email: [required('Enter an email address'), emailRule()], phone: [phoneRule()] }),
+        : { email: emailRules(), phone: [phoneRule()] }),
     },
     async onSubmit(values) {
       const payload = {
@@ -158,7 +159,7 @@ export default function EditUserPage() {
           <Input label="Last name" {...form.getFieldProps('lastName')} />
           {!isStudent && (
             <>
-              <Input label="Email" type="email" required {...form.getFieldProps('email')} />
+              <EmailInput label="Email" required autoComplete="off" {...form.getFieldProps('email')} />
               <PhoneInput label="Phone" {...form.getFieldProps('phone')} />
             </>
           )}

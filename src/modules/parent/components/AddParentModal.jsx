@@ -1,7 +1,7 @@
-import { Alert, Button, Input, Modal, PhoneInput } from '../../../components/common';
+import { Alert, Button, EmailInput, Input, Modal, PhoneInput } from '../../../components/common';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
-import { required, email as emailRule, phone as phoneRule } from '../../../utils/validation';
+import { required, emailRules, phone as phoneRule } from '../../../utils/validation';
 import { formatName } from '../../../utils/format';
 import { ProfileSection } from '../../profile/components/ProfileParts';
 import parentService from '../services/parent.service';
@@ -21,7 +21,7 @@ export default function AddParentModal({ isOpen, onClose, onCreated }) {
     initialValues: INITIAL_VALUES,
     validationSchema: {
       firstName: [required('Enter a first name')],
-      email: [required('Enter an email address'), emailRule()],
+      email: emailRules(),
       phone: [phoneRule()],
     },
     async onSubmit(values) {
@@ -78,7 +78,7 @@ export default function AddParentModal({ isOpen, onClose, onCreated }) {
           <div className="pf-grid">
             <Input label="First name" required autoComplete="off" {...form.getFieldProps('firstName')} />
             <Input label="Last name" autoComplete="off" {...form.getFieldProps('lastName')} />
-            <Input label="Email" type="email" required autoComplete="off" {...form.getFieldProps('email')} />
+            <EmailInput label="Email" required autoComplete="off" {...form.getFieldProps('email')} />
             <PhoneInput label="Phone" autoComplete="off" {...form.getFieldProps('phone')} />
           </div>
         </ProfileSection>
