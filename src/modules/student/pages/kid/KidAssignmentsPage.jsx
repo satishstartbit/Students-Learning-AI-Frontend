@@ -3,14 +3,16 @@ import { LuSend } from 'react-icons/lu';
 import workFooter from '../../../../assets/kid/work-footer.webp';
 import workArt from '../../../../assets/kid/work-hero.webp';
 import workArtSmall from '../../../../assets/kid/work-hero-small.webp';
+import workTurtle from '../../../../assets/kid/work-turtle.webp';
 import { AnimatedCircularProgressBar } from '../../../../components/ui/animated-circular-progress-bar';
 import AddWorkDialog from '../../../planner/components/AddWorkDialog';
 import { useSchoolwork } from '../../../planner/hooks/useSchoolwork';
 import { useMyTasks } from '../../hooks/useMyTasks';
 import {
+  Bird3D,
+  BirdSky,
   DriftingCloud,
   FallingLeaf,
-  FlyingBird,
   RisingHearts,
   Sailboat,
   SceneryFooter,
@@ -24,7 +26,12 @@ import { KidOops, KidSkeleton } from '../../components/kid/KidStates';
 import { AddWorkButton } from '../../components/kid/week/WeekParts';
 import { WorkCard, WorkEmpty } from '../../components/kid/work/WorkParts';
 
-/** src/assets/kid/work-hero*.webp - the turtle on the beach under the palm. */
+/**
+ * src/assets/kid/work-hero*.webp - the beach under the palm, with the turtle
+ * painted out; the turtle itself is src/assets/kid/work-turtle.webp (the
+ * picture's pixels 780-986 x 96-249), laid back on exactly that place so it
+ * can walk and come out of the picture.
+ */
 const ART = { src: workArt, srcSmall: workArtSmall, smallWidth: 1000, bigWidth: 1033, width: 1033, height: 250, sky: '#bde7fe' };
 /** src/assets/kid/work-footer.webp - the cove with the cliffs (clear sky). */
 const FOOTER = { src: workFooter, width: 1039, height: 148 };
@@ -96,6 +103,7 @@ export default function KidAssignmentsPage() {
         sticker="bookworm"
         textAt="top"
         subtitle="Everything you are working on. Tap one to see the steps inside."
+        popOut
       >
         <SunGlow className="left-[48.4%] top-[31%] w-[11%]" />
         <Sparkle className="left-[42.5%] top-[11%] w-[1.5%]" />
@@ -103,14 +111,24 @@ export default function KidAssignmentsPage() {
         <Sparkle className="left-[57%] top-[52%] w-[1%]" delay={2.2} />
         {/* Moving bits stay right of 40%: from a small tablet up the words sit over the left of the picture. */}
         <DriftingCloud className="left-[58%] top-[3%] w-[5.5%]" travel="160%" time="30s" />
-        <FlyingBird className="top-[9%]" delay={1} time="17s" />
-        <FlyingBird className="top-[17%]" size="ml-[2%] w-[1.6%]" delay={7.5} time="22s" />
+        {/* Gulls in 3D, far over the sea (the words stay in front of them). */}
+        <BirdSky>
+          <Bird3D path="cross" size="3.6cqw" time="20s" delay={-5} />
+          <Bird3D path="glide" top="4cqh" size="3.2cqw" time="26s" delay={-12} facing="left" flap="0.55s" />
+        </BirdSky>
         {/* The sea along the bottom-left, and a boat sailing the horizon under the sun. */}
         <SeaShimmer className="left-[3%] top-[74%] h-[22%] w-[56%]" waves={4} />
         <Sailboat motion="drift" className="left-[43%] top-[57%] w-[2.4%]" delay={2} />
-        {/* The palm drops a leaf now and then; hearts float up from the turtle. */}
         <FallingLeaf className="left-[87%] top-[20%] w-[1.2%]" delay={1.5} dx="-30px" dy="90px" tone="#3f8a3c" />
-        <RisingHearts className="left-[74%] top-[24%] h-[12%] w-[4%]" />
+        {/* The turtle, back on its painted place: it walks along the sand, turns round in 3D,
+            walks home, and now and then comes out of the picture towards you (kh-turtle).
+            Its hearts go where it goes. */}
+        <span aria-hidden="true" className="kh-turtle absolute left-[75.508%] top-[38.4%] block w-[20.039%]">
+          <span className="kh-turtle-step block">
+            <img src={workTurtle} alt="" draggable="false" decoding="async" className="block w-full select-none" />
+          </span>
+          <RisingHearts className="left-[20%] top-[-22%] h-[38%] w-[18%]" />
+        </span>
       </KidBannerHero>
 
       <div className="relative z-[1] mx-auto w-full max-w-[76rem] px-4 pb-10 pt-6 sm:px-6 lg:px-8">
@@ -197,7 +215,9 @@ export default function KidAssignmentsPage() {
         <Sparkle className="left-[36%] top-[66%] w-[1%]" delay={0.6} />
         <Sparkle className="left-[52%] top-[58%] w-[0.8%]" delay={1.9} />
         <Sailboat className="left-[44%] top-[22%] w-[3.2%]" delay={0.8} />
-        <FlyingBird className="top-[2%]" size="w-[1.6%]" delay={3} time="21s" />
+        <BirdSky>
+          <Bird3D path="cross" top="-4cqh" size="max(3cqw, 16px)" time="22s" delay={-7} />
+        </BirdSky>
       </SceneryFooter>
 
       <AddWorkDialog key={adding ? 'open' : 'closed'} isOpen={adding} guided onClose={() => setAdding(false)} onAdded={afterAdding} />

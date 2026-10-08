@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { LuCheck, LuLock, LuSmile, LuStar } from 'react-icons/lu';
+import rewardsBunny from '../../../../assets/kid/rewards-bunny.webp';
 import rewardsFooter from '../../../../assets/kid/rewards-footer.webp';
 import rewardsArt from '../../../../assets/kid/rewards-hero.webp';
 import { Confetti } from '../../../../components/ui/confetti';
@@ -12,10 +13,11 @@ import { useRewards } from '../../hooks/useRewards';
 import { useStudentSettings } from '../../hooks/useStudentSettings';
 import RewardArt from '../../components/rewards/RewardArt';
 import {
+  Bird3D,
+  BirdSky,
   Butterfly,
   DriftingCloud,
   FallingLeaf,
-  FlyingBird,
   RisingHearts,
   SceneryFooter,
   SeaShimmer,
@@ -41,8 +43,60 @@ import { PaperCard } from '../../components/kid/PaperKit';
  * laptop with the sidebar, six from 1280px.
  */
 
-/** src/assets/kid/rewards-hero.webp - the bunny on its stone, cut from the mockup (words painted out). */
+/**
+ * src/assets/kid/rewards-hero.webp - the meadow, cut from the mockup (words
+ * painted out) with the bunny painted out too; the bunny itself is
+ * src/assets/kid/rewards-bunny.webp (the picture's pixels 901-1062 x 76-331),
+ * laid back on its stone so it can jump.
+ */
 const ART = { src: rewardsArt, width: 1078, height: 344, sky: '#c6eafd' };
+
+/**
+ * The bunny on its stone: it hops while a mouse is over it, and a couple of
+ * times when it's tapped. A hop crouches, springs up with a little 3D twist,
+ * lands with a squash; its shadow on the stone shrinks while it's in the air.
+ * When the pointer leaves it finishes the hop it is in, then sits. Idle, it
+ * breathes. Decorative (aria-hidden); in calm mode it simply sits.
+ */
+function JumpingBunny() {
+  const [jumping, setJumping] = useState(false);
+  const wanted = useRef(false);
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const start = () => {
+    wanted.current = true;
+    setJumping(true);
+  };
+  const stop = () => {
+    wanted.current = false;
+  };
+
+  return (
+    <span
+      aria-hidden="true"
+      className="kh-bunny absolute left-[83.581%] top-[22.093%] block w-[15.028%] cursor-pointer"
+      data-jumping={jumping || undefined}
+      onPointerEnter={(e) => e.pointerType === 'mouse' && start()}
+      onPointerLeave={(e) => e.pointerType === 'mouse' && stop()}
+      onPointerDown={(e) => {
+        if (e.pointerType === 'mouse') return;
+        start();
+        clearTimeout(timer.current);
+        timer.current = setTimeout(stop, 1500);
+      }}
+      onAnimationIteration={(e) => {
+        if (e.animationName === 'kh-bunny-hop' && !wanted.current) setJumping(false);
+      }}
+    >
+      <span className="kh-bunny__shadow" />
+      <span className="kh-bunny__body block">
+        <img src={rewardsBunny} alt="" draggable="false" decoding="async" className="block w-full select-none" />
+      </span>
+      <RisingHearts className="-left-[14%] top-[22%] h-[20%] w-[24%]" />
+    </span>
+  );
+}
 /** src/assets/kid/rewards-footer.webp - pines, hills and a river (clear sky). */
 const FOOTER = { src: rewardsFooter, width: 1178, height: 169 };
 
@@ -99,7 +153,7 @@ function RewardTile({ reward, index }) {
         transition={{ duration: 0.35, delay: 0.04 * index, ease: 'easeOut' }}
         whileHover={reward.collected ? { y: -4 } : undefined}
         className={cn(
-          'relative flex h-full flex-col items-center gap-1 rounded-[1.25rem] border px-2 pb-3.5 pt-5 text-center shadow-paper',
+          'group relative flex h-full flex-col items-center gap-1 rounded-[1.25rem] border px-2 pb-3.5 pt-5 text-center shadow-paper',
           reward.collected ? 'border-kid-edge/70 bg-kid-sheet' : 'border-kid-edge/50 bg-[color-mix(in_srgb,var(--kid-sheet)_60%,var(--kid-paper))]',
           isNew && 'border-2 border-kid-sun'
         )}
@@ -120,7 +174,10 @@ function RewardTile({ reward, index }) {
           </motion.span>
         )}
 
-        <RewardArt imageUrl={reward.imageUrl} size={76} locked={!reward.collected} delay={(index % 6) * 0.3} />
+        {/* A collected sticker flips round in 3D when you point at its tile. */}
+        <span className={cn('inline-block', reward.collected && 'kh-sticker-flip')}>
+          <RewardArt imageUrl={reward.imageUrl} size={76} locked={!reward.collected} delay={(index % 6) * 0.3} />
+        </span>
 
         <span className="mt-1.5 font-kid-display text-[1.05rem] font-semibold leading-tight text-kid-ink">{reward.name}</span>
 
@@ -198,12 +255,17 @@ export default function KidRewardsPage() {
         <Sparkle className="left-[62%] top-[76%] w-[1%]" delay={2.1} />
         {/* Moving bits stay right of 50%: from a small tablet the words sit over the left of the picture. */}
         <DriftingCloud className="left-[52%] top-[7%] w-[6%]" travel="140%" time="30s" />
-        <FlyingBird className="top-[10%]" delay={1} time="18s" />
-        <FlyingBird className="top-[19%]" size="ml-[2%] w-[1.5%]" delay={8} time="23s" />
-        {/* The tree drops a leaf; hearts float up by the bunny; a butterfly visits the tulip. */}
+        {/* Birds in 3D: two far across the top of the sky, one gliding back, one out from
+            behind the hills towards you (the words stay in front of them). */}
+        <BirdSky>
+          <Bird3D path="cross" size="3.8cqw" time="20s" delay={-4} />
+          <Bird3D path="glide" top="3cqh" size="3.4cqw" time="27s" delay={-13} facing="left" flap="0.55s" />
+          <Bird3D path="swoop" size="4cqw" time="13s" delay={3} facing="toward" flap="0.6s" />
+        </BirdSky>
+        {/* The tree drops a leaf; a butterfly visits the tulip; the bunny hops when you point at it. */}
         <FallingLeaf className="left-[88%] top-[14%] w-[1.3%]" delay={2} dx="-36px" dy="100px" tone="#4f9a45" />
-        <RisingHearts className="left-[80%] top-[34%] h-[14%] w-[4%]" />
         <Butterfly className="left-[69%] top-[60%] w-[2.2%]" travel="120%" delay={0.6} />
+        <JumpingBunny />
       </KidBannerHero>
 
       <div className="relative z-[1] mx-auto w-full max-w-6xl px-4 pb-10 pt-6 sm:px-6 lg:px-8">
@@ -311,7 +373,9 @@ export default function KidRewardsPage() {
         <Sparkle className="left-[50%] top-[74%] w-[0.9%]" delay={0.5} />
         <Sparkle className="left-[60%] top-[84%] w-[0.7%]" delay={1.8} />
         <Butterfly className="left-[82%] top-[24%] w-[1.8%]" travel="-140%" delay={1.4} wings={['#9fc8f2', '#f6c445']} />
-        <FlyingBird className="top-[4%]" size="w-[1.5%]" delay={4} time="23s" />
+        <BirdSky>
+          <Bird3D path="cross" top="-2cqh" size="max(3cqw, 16px)" time="22s" delay={-9} />
+        </BirdSky>
       </SceneryFooter>
     </div>
   );

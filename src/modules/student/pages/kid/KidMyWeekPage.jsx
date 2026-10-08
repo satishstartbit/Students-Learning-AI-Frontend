@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import meadow from '../../../../assets/kid/home-meadow.webp';
 import weekArt from '../../../../assets/kid/week-hero.webp';
 import weekArtSmall from '../../../../assets/kid/week-hero-small.webp';
+import weekPaw from '../../../../assets/kid/week-paw.webp';
 import { useAuth } from '../../../../hooks/useAuth';
 import { cn } from '../../../../lib/utils';
 import { addDaysToKey, formatDateKey, getDateKey } from '../../../../utils/date';
@@ -20,8 +20,9 @@ import { VIEW_OPTIONS, eventsByDay } from '../../../planner/schoolwork';
 import '../../../planner/components/schoolwork/schoolwork.css';
 import { useWeekPlan, startOfWeek } from '../../hooks/useWeekPlan';
 import focusService from '../../services/focus.service';
-import { DriftingCloud, FallingLeaf, FlyingBird, RisingHearts, Sparkle, SunGlow, WaveMarks } from '../../components/kid/BannerBits';
+import { Bird3D, BirdSky, Butterfly, DriftingCloud, FallingLeaf, RisingHearts, Sparkle, SunGlow, WaveMarks } from '../../components/kid/BannerBits';
 import { KidBannerHero } from '../../components/kid/KidBannerHero';
+import { MeadowFooter } from '../../components/kid/MeadowFooter';
 import { KidSkeleton, KidOops } from '../../components/kid/KidStates';
 import { AddWorkButton, DayOffCard, WeekTaskTile } from '../../components/kid/week/WeekParts';
 
@@ -33,7 +34,11 @@ const ROOM_FOR_MORE = 3;
 /** What K-5 calls the three views. */
 const KID_LABELS = { board: 'Sticky notes', list: 'My list', calendar: 'My week' };
 
-/** src/assets/kid/week-hero*.webp - the bunny waving under the tree. */
+/**
+ * src/assets/kid/week-hero*.webp - the bunny under the tree, with its raised
+ * paw painted out; the paw (forearm) is src/assets/kid/week-paw.webp (the
+ * picture's pixels 786-833 x 152-215), laid back on its place so it waves.
+ */
 const ART = { src: weekArt, srcSmall: weekArtSmall, smallWidth: 1000, bigWidth: 1032, width: 1032, height: 253, sky: '#bee7fd' };
 
 /**
@@ -97,10 +102,25 @@ export default function KidMyWeekPage() {
         <Sparkle className="left-[72.5%] top-[14%] w-[1.1%]" delay={1.2} />
         <Sparkle className="left-[60%] top-[52%] w-[1%]" delay={2.1} />
         <DriftingCloud className="left-[22%] top-[8%] w-[7%]" travel="250%" time="30s" />
-        <FlyingBird className="top-[12%]" delay={1.5} time="18s" />
-        <FlyingBird className="top-[20%]" size="ml-[2%] w-[1.6%]" delay={8} time="23s" />
+        {/* Birds in 3D: two far across the sky, one gliding back, one out from behind the
+            hills towards you (the words stay in front of them). */}
+        <BirdSky>
+          <Bird3D path="cross" size="3.8cqw" time="20s" delay={-6} />
+          <Bird3D path="glide" top="4cqh" size="3.4cqw" time="27s" delay={-11} facing="left" flap="0.55s" />
+          <Bird3D path="swoop" size="4cqw" time="13s" delay={2.5} facing="toward" flap="0.6s" />
+        </BirdSky>
         <FallingLeaf className="left-[77%] top-[20%] w-[1.2%]" delay={0.8} dx="-26px" dy="90px" />
         <FallingLeaf className="left-[94%] top-[28%] w-[1%]" delay={4} dx="-18px" dy="80px" tone="#7cb65f" />
+        <Butterfly className="left-[69%] top-[72%] w-[2%]" travel="130%" delay={0.5} />
+        {/* The bunny waves: its raised paw, back on its painted place, swings out from the elbow. */}
+        <img
+          src={weekPaw}
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+          decoding="async"
+          className="kh-paw kh-paw--week absolute left-[76.163%] top-[60.079%] w-[4.651%] select-none"
+        />
         {/* Beside the bunny's raised paw (about 77.5%, 63%), over the little cloud. */}
         <WaveMarks className="left-[74.6%] top-[49%] h-[12%] -rotate-[30deg]" ink="#8a6a52" />
         <RisingHearts className="left-[80.5%] top-[30%] h-[10%] w-[4%]" />
@@ -241,11 +261,9 @@ export default function KidMyWeekPage() {
         )}
       </div>
 
-      {/* The meadow sits at the foot even when there is little on the page. */}
+      {/* The meadow sits at the foot even when there is little on the page, alive (lake, butterflies, 3D birds). */}
       <div className="flex-1" />
-      <div aria-hidden="true" className="kh-meadow pointer-events-none relative">
-        <img src={meadow} alt="" loading="lazy" decoding="async" draggable="false" className="kh-rise block w-full select-none" />
-      </div>
+      <MeadowFooter />
 
       <AddWorkDialog key={adding ? 'open' : 'closed'} isOpen={adding} guided onClose={() => setAdding(false)} onAdded={afterAdding} />
 
