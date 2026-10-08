@@ -5,7 +5,7 @@ import { StickerArt } from '../../rewards/StickerArt';
 import './kidHome.css';
 
 /**
- * Small paper pieces the K-5 Home cards share (the "Good morning, Alex!"
+ * Small paper pieces the K-4 Home cards share (the "Good morning, Alex!"
  * mockup). Decoration only - every piece here is aria-hidden or carries its
  * own label.
  */

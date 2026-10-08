@@ -6,7 +6,7 @@ import '../components/rewards/studentRewards.css';
 import { useRewards } from '../hooks/useRewards';
 
 /**
- * /student/rewards for Grade 6+ (K-5 has KidRewardsPage), built to the Grade
+ * /student/rewards for Grade 6+ (K-4 has KidRewardsPage), built to the Grade
  * 6-12 rewards mockup. Rewards are collectibles: a sticker or emoji is
  * collected automatically once earned points reach its level (backend
  * services/reward.service.js) - there's nothing to buy or redeem here.

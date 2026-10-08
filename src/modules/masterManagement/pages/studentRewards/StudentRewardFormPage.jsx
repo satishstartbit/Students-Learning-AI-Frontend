@@ -34,7 +34,7 @@ const EmojiPickerPanel = lazy(() => import('../../../assignments/media/EmojiPick
 /**
  * Add / edit a collectible reward (Master Management -> Student Rewards, also
  * "Rewards -> Stickers & Emojis" in the sidebar). Whatever is saved here is
- * what students see on their Rewards pages (K-5 and Grade 6+) on next load:
+ * what students see on their Rewards pages (K-4 and Grade 6+) on next load:
  * active rewards only, collected automatically once a student's earned points
  * reach "Points required".
  *

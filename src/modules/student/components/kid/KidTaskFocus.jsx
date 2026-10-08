@@ -9,7 +9,7 @@ import { PaperCard } from './PaperKit';
 const LIVE = ['in_progress', 'paused'];
 
 /**
- * "Focus time" on a K-5 task page: once the task is started, the same clock
+ * "Focus time" on a K-4 task page: once the task is started, the same clock
  * as the Focus time page appears right there, already tied to this task -
  * so the focused minutes count towards it without leaving the page.
  *

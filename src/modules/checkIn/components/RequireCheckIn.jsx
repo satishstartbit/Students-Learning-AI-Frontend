@@ -11,7 +11,7 @@ import { useTodayCheckIn } from '../hooks/useTodayCheckIn';
  *
  * Only for the kid band, though: `checkInRequired` (useStudentExperience,
  * from the server's KIDS_UI with VITE_KIDS_UI as the fallback) is true for
- * K-5 and false above it. An older student can still check in whenever they
+ * K-4 and false above it. An older student can still check in whenever they
  * want - Check In stays in their nav and their day still records it - but
  * nothing here blocks their way to the work. Moving KIDS_UI moves which
  * grades are held at this gate, with no code change.

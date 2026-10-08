@@ -20,7 +20,7 @@ import { KidToggle } from '../../components/kid/KidToggle';
 
 const SECTION = 'rounded-[1.75rem] bg-kid-sheet p-5 shadow-paper sm:p-7';
 
-/** The three views in K-5 words (My week = the calendar). */
+/** The three views in K-4 words (My week = the calendar). */
 const KID_VIEW_LABELS = { board: 'Sticky notes', list: 'My list', calendar: 'My week' };
 const KID_SWITCHES = [
   { key: 'showTypeIcons', label: 'Show little pictures for kinds of work' },
@@ -29,7 +29,7 @@ const KID_SWITCHES = [
 ];
 
 /**
- * K-5 Settings: who's signed in, their "about me" answers, Calm mode, and a
+ * K-4 Settings: who's signed in, their "about me" answers, Calm mode, and a
  * big Log out button - classroom devices are shared, so signing out has to be
  * easy to find (this page stays reachable even before onboarding is done).
  */

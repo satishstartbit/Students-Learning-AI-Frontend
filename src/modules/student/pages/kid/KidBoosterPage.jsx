@@ -7,12 +7,12 @@ import { KID_TILE_TONES } from '../../components/kid/kidTileTones';
 import { useMotionAllowed } from '../../hooks/useKidPreferences';
 
 /**
- * K-5: one brain game on its own page (/student/focus/games/:id), opened
+ * K-4: one brain game on its own page (/student/focus/games/:id), opened
  * from Focus time's "Brain games" cards - built to the kids' Finger Follow
  * mockup, in the same frame as the Breathe / Wiggle / Listen pages
  * (KidFocusActivityPage): the game on its coloured paper, "How to play",
  * about how long, "Just for fun! Nothing is scored." and "Maybe later".
- * Exercises are Grade 6+ (K-5 has Calm & move), so those send back to Focus.
+ * Exercises are Grade 6+ (K-4 has Calm & move), so those send back to Focus.
  */
 export default function KidBoosterPage({ kind = 'game' }) {
   const { boosterId } = useParams();

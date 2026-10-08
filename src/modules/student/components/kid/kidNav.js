@@ -10,7 +10,7 @@ import {
 } from 'react-icons/lu';
 
 /**
- * K-5 navigation - deliberately short, with a picture on every entry for
+ * K-4 navigation - deliberately short, with a picture on every entry for
  * students who are still learning to read. Mirrors the Kids Focus mockups:
  * Home, My Week, Assignments, Focus, Rewards, in outline icons, then Settings
  * at the foot. Brain Boosters are part of Focus now.

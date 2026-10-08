@@ -8,7 +8,7 @@ import { StarIcon } from './KidIcons';
 import { PaperCard } from './PaperKit';
 
 /**
- * The K-5 version of the "locked until your family subscribes" screen - gentle
+ * The K-4 version of the "locked until your family subscribes" screen - gentle
  * wording, one clear thing to do (ask a grown-up), and Log out within reach
  * for shared classroom devices.
  */

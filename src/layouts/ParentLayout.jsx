@@ -7,6 +7,7 @@ import {
   LuCreditCard,
   LuLayoutGrid,
   LuSparkles,
+  LuStickyNote,
   LuUser,
   LuUsersRound,
 } from 'react-icons/lu';
@@ -45,6 +46,7 @@ const NAV_ITEMS = [
       { to: '/parent', label: 'Overview', icon: LuLayoutGrid, end: true },
       { to: '/parent/progress', label: 'Progress', icon: LuChartLine },
       { to: '/parent/schedule', label: 'Schedule', icon: LuCalendarDays },
+      { to: '/parent/notes', label: 'Notes', icon: LuStickyNote },
       { to: '/parent/learning-summary', label: 'Learning Summary', icon: LuSparkles },
     ],
   },
@@ -77,10 +79,12 @@ const SUBSCRIPTION_PATH = '/parent/subscription';
 
 /**
  * Parent pages that stay reachable without a subscription: choosing and paying
- * for one, their own account (details, password, log out), and the one-time
- * family form. Everything else redirects to Subscription.
+ * for one, their own account (details, password, log out), the one-time
+ * family form, and Notifications - so billing notices ("Payment refunded…")
+ * reach a parent whose plan has ended (the API doesn't paywall them either).
+ * Everything else redirects to Subscription.
  */
-const SUBSCRIPTION_EXEMPT_PATHS = [SUBSCRIPTION_PATH, '/parent/subscription/checkout', '/parent/profile', ONBOARDING_PATH];
+const SUBSCRIPTION_EXEMPT_PATHS = [SUBSCRIPTION_PATH, '/parent/subscription/checkout', '/parent/profile', ONBOARDING_PATH, '/parent/notifications'];
 
 /**
  * The parent area's shell, and its two gates, in order:
@@ -189,6 +193,8 @@ export function ParentLayout({ children }) {
                 mobileBrandSlot={childrenList.length ? <ViewingChildChip /> : undefined}
                 // "Parent of 3" under the name, as teachers get their school and students their grade.
                 accountSubtitle={activeChildCount ? `Parent of ${activeChildCount}` : undefined}
+                // The bell is a link to Notifications (no dropdown list).
+                notificationsPath="/parent/notifications"
               >
                 {content}
               </AuthenticatedLayout>

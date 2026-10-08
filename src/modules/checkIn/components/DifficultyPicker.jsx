@@ -12,7 +12,7 @@ import './difficultyPicker.css';
  *
  * Nothing about the vocabulary lives here: the groups, the reasons, the
  * wording and the strategy each reason points at are all master data
- * (useDifficultyPicker). The K-5 version reads the same lists through the
+ * (useDifficultyPicker). The K-4 version reads the same lists through the
  * same hook - see kid/KidDifficultyPicker.jsx.
  *
  * What they pick is recorded (services/support - codes only, no free text)

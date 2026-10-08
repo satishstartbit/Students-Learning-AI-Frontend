@@ -18,7 +18,7 @@ function knobTone(checked, disabled) {
 }
 
 /**
- * The K-5 on/off switch. It applies the change straight away - there is no
+ * The K-4 on/off switch. It applies the change straight away - there is no
  * Save step, so inside a form that is submitted use a checkbox instead.
  * Always pair it with a visible label (`aria-labelledby`): the switch alone
  * never says what it controls. `md` is the default; `sm` is for dense

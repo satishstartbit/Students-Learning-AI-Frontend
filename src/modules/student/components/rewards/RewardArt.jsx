@@ -11,7 +11,7 @@ import { resolveRewardImage } from './stickerCatalog';
  *
  *   locked    faded + desaturated, and still (not collected yet)
  *   animate   collected pictures bob gently and wiggle on hover. Honours
- *             <MotionConfig reducedMotion> (K-5 calm mode, Grade 6+
+ *             <MotionConfig reducedMotion> (K-4 calm mode, Grade 6+
  *             Settings -> Reduce motion) and the OS setting automatically.
  *   delay     staggers the idle bob so a grid doesn't move in lockstep
  */

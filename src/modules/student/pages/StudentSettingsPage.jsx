@@ -12,7 +12,7 @@ import { useStudentSettings } from '../hooks/useStudentSettings';
 import '../components/settings/studentSettings.css';
 
 /**
- * /student/settings for Grade 6+ (K-5 has KidSettingsPage), built to the
+ * /student/settings for Grade 6+ (K-4 has KidSettingsPage), built to the
  * student settings mockup. Every control saves straight to /student-settings
  * (StudentSettingsProvider - optimistic, rolled back with a message if the
  * save fails) and the app-wide ones (appearance, larger text, reduce motion)

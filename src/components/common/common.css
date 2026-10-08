@@ -1025,7 +1025,7 @@
    icon in the strong status colour, a bold title, a quieter description and
    a plain grey close cross. Every colour is mixed from the status tokens
    (--color-<status>-bg/-fg) and the surface, so light, dark, accent and the
-   K-5 theme each get their own version. */
+   K-4 theme each get their own version. */
 .ui-alert {
   --ui-alert-tone: var(--color-info-fg);
   --ui-alert-tint: var(--color-info-bg);

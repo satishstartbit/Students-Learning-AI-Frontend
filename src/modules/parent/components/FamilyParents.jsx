@@ -16,7 +16,7 @@ import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import { formatPhoneForDisplay } from '../../../utils/phone';
-import { parentLimitReason, usageLabel } from '../familyLimits';
+import { CHANGE_PLAN_PATH, parentLimitReason, usageLabel } from '../familyLimits';
 import parentService from '../services/parent.service';
 import AddParentModal from './AddParentModal';
 import './parentFamily.css';
@@ -158,6 +158,12 @@ export function ParentsSection({ family, currentUserId, onChanged }) {
           {data.isAccountHolder && blockedReason && (
             <Alert variant="warning" className="pm-notice">
               {blockedReason}
+              {data.plan && (
+                <>
+                  {' '}
+                  <Link to={CHANGE_PLAN_PATH}>See larger plans</Link>
+                </>
+              )}
             </Alert>
           )}
 

@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { LuCalendarClock, LuChevronLeft, LuChevronRight, LuPlus, LuSlidersHorizontal } from 'react-icons/lu';
+import { useNavigate } from 'react-router-dom';
+import { LuChevronLeft, LuChevronRight, LuPlus } from 'react-icons/lu';
 import { ErrorState, Modal } from '../../../components/common';
+import { toast } from '../../../hooks/useToast';
+import { getErrorMessage } from '../../../utils/errorHandler';
 import AddWorkDialog from '../../planner/components/AddWorkDialog';
 import PendingIntakes from '../../planner/components/PendingIntakes';
 import PlanNotices from '../../planner/components/PlanNotices';
@@ -9,43 +11,46 @@ import StudyBlockDialog from '../../planner/components/StudyBlockDialog';
 import SchoolworkBoard from '../../planner/components/schoolwork/SchoolworkBoard';
 import SchoolworkList from '../../planner/components/schoolwork/SchoolworkList';
 import SchoolworkPreferences from '../../planner/components/schoolwork/SchoolworkPreferences';
+import SortMenu from '../../planner/components/schoolwork/SortMenu';
 import ViewSwitcher from '../../planner/components/schoolwork/ViewSwitcher';
 import WorkNoteDialog from '../../planner/components/schoolwork/WorkNoteDialog';
 import { usePlan } from '../../planner/hooks/usePlan';
 import { useSchoolwork } from '../../planner/hooks/useSchoolwork';
 import { useSchoolworkSettings } from '../../planner/hooks/useSchoolworkSettings';
 import { blocksByDay } from '../../planner/planView';
-import { eventsByDay } from '../../planner/schoolwork';
+import { DEFAULT_SORT, blockStats, eventsByDay, sortBlocks, sortOptionsFor } from '../../planner/schoolwork';
+import planService from '../../planner/services/plan.service';
 import '../../planner/planner.css';
 import '../../planner/components/schoolwork/schoolwork.css';
 import OwnTaskModal from '../components/home/OwnTaskModal';
 import '../components/home/studentHome.css';
 import PlanDayColumn from '../components/plan/PlanDayColumn';
 import PlanMonthPicker from '../components/plan/PlanMonthPicker';
-import { DueSoonCard, WeekSummaryCard } from '../components/plan/PlanSideCards';
+import { DueSoonCard, NothingPlannedCard, PlanMoreLinks, WeekSummaryCard } from '../components/plan/PlanSideCards';
 import '../components/plan/studentPlan.css';
 import focusService from '../services/focus.service';
 import { useTodayTasks } from '../hooks/useTodayTasks';
 import { addDaysToKey, formatDateKey, formatDateKeyRange, getDateKey, weekdayOfKey } from '../../../utils/date';
 
-const byPlanOrder = (a, b) => Number(a.done) - Number(b.done) || a.title.localeCompare(b.title);
+const byTitle = (a, b) => Number(a.done) - Number(b.done) || a.title.localeCompare(b.title);
 
 /**
- * Grade 6+ "My Schoolwork" (/student/calendar, nav "Plan") - the same server
- * plan three ways, one chosen on "Customize My Growing Focus" and switchable
- * any time:
+ * Grade 6+ "Plan" (/student/calendar), built to the Plan mockups: the same
+ * server plan three ways - Board, List, Calendar - one chosen on "Customize
+ * views" (or Settings) and switchable any time, a Sort menu for the order in
+ * every view, "+ Add assignment", and the rail ("This week", "Due soon").
  *
- *   Sticky notes  every piece of work as a note in its subject's colour, in
- *                 To Do / Doing / Done (moving one changes its real status);
- *                 open a note to see its steps
- *   List          a checklist, most urgent first (the plan's order: due date
- *                 and urgency); or Next 3 / by due date / by subject
- *   Calendar      the full calendar: the study times the planner placed
- *                 (open one to move or keep it) and personal activities, in
- *                 time order, plus what's due each day - week or day, with a
- *                 month jump
+ *   Board     every piece of work as a taped note in its subject's colour, in
+ *             To do / Doing / Done (moving one changes its real status: drag
+ *             it, or open it); "+ Add assignment" under To do
+ *   List      "Up next" (Start on the first) and "Finished"; tick own work
+ *   Calendar  the week (or a day) of study times the planner placed, as cards
+ *             with Start, what is due each day, personal activities, Add and
+ *             each day's tally; a month picker jumps to any day
  *
- * Every date is a day key in the student's own zone; times come from the plan.
+ * "This week" counts the week's study steps; with none planned it becomes
+ * "Nothing planned yet" (add work, or spread the steps already there). Every
+ * date is a day key in the student's own zone; times come from the plan.
  */
 export default function StudentPlanPage() {
   const plan = useTodayTasks();
@@ -57,9 +62,11 @@ export default function StudentPlanPage() {
   // null = the view they chose in Customize; a click here switches for now.
   const [chosenView, setChosenView] = useState(null);
   const view = chosenView ?? preferences.defaultView;
-  const [order, setOrder] = useState('priority');
+  const [sorts, setSorts] = useState(DEFAULT_SORT);
+  const sort = sorts[view] ?? 'plan';
   const [customizing, setCustomizing] = useState(false);
   const [openWork, setOpenWork] = useState(null);
+  const [spreading, setSpreading] = useState(false);
 
   const [selectedKey, setSelectedKey] = useState(todayKey);
   const [viewMode, setViewMode] = useState('week');
@@ -73,7 +80,8 @@ export default function StudentPlanPage() {
   const weekEndKey = addDaysToKey(weekStartKey, 6);
 
   const schedule = usePlan('me', { from: weekStartKey, to: weekEndKey });
-  const blocks = useMemo(() => blocksByDay(schedule.plan?.blocks ?? []), [schedule.plan]);
+  const weekBlocks = useMemo(() => schedule.plan?.blocks ?? [], [schedule.plan]);
+  const blocks = useMemo(() => blocksByDay(weekBlocks), [weekBlocks]);
   const events = useMemo(() => eventsByDay(schedule.plan?.personalEvents ?? []), [schedule.plan]);
 
   const refreshPlans = () => {
@@ -94,10 +102,11 @@ export default function StudentPlanPage() {
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(task);
     });
-    map.forEach((list) => list.sort(byPlanOrder));
+    map.forEach((list) => list.sort(byTitle));
     return map;
   }, [plan.all]);
 
+  // The month picker: days with work due (dots) and days holding overdue work.
   const counts = useMemo(() => {
     const map = new Map();
     byDay.forEach((list, key) => {
@@ -106,15 +115,11 @@ export default function StudentPlanPage() {
     return map;
   }, [byDay, todayKey]);
 
-  const week = Array.from({ length: 7 }, (_, i) => {
-    const key = addDaysToKey(weekStartKey, i);
-    return { key, items: byDay.get(key) ?? [] };
-  });
-
-  const weekItems = week.flatMap((d) => d.items);
-  const weekDone = weekItems.filter((t) => t.done).length;
-  const weekDue = weekItems.length - weekDone;
-  const weekMinutes = (schedule.plan?.blocks ?? []).filter((b) => b.status !== 'missed').reduce((sum, b) => sum + (b.minutes ?? 0), 0);
+  const weekKeys = Array.from({ length: 7 }, (_, i) => addDaysToKey(weekStartKey, i));
+  const weekDue = weekKeys.flatMap((k) => byDay.get(k) ?? []).filter((t) => !t.done).length;
+  const weekStats = blockStats(weekBlocks);
+  const hasPlannedWeek = weekBlocks.length > 0;
+  const openWorkCount = schoolwork.work.filter((w) => w.progress !== 'done').length;
 
   const dueSoon = useMemo(
     () =>
@@ -124,14 +129,13 @@ export default function StudentPlanPage() {
     [plan.all]
   );
 
-  // Subjects studied this week, for the calendar's colour key.
-  const weekSubjects = useMemo(
-    () => [...new Set((schedule.plan?.blocks ?? []).map((b) => b.subject).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
-    [schedule.plan]
-  );
+  // A study time's work: its due day (the calendar's "Due date" sort) and whether a teacher set it.
+  const workById = useMemo(() => new Map(schoolwork.work.map((w) => [w.id, w])), [schoolwork.work]);
+  const dueOf = (assignmentId) => workById.get(assignmentId)?.dueDate ?? null;
+  const isTeacherWork = (assignmentId) => workById.get(assignmentId)?.kind === 'teacher';
 
   const step = viewMode === 'week' ? 7 : 1;
-  const shownDays = viewMode === 'week' ? week : week.filter((d) => d.key === selectedKey);
+  const shownDays = viewMode === 'week' ? weekKeys : [selectedKey];
   const rangeLabel =
     viewMode === 'week'
       ? formatDateKeyRange(weekStartKey, weekEndKey)
@@ -139,7 +143,9 @@ export default function StudentPlanPage() {
 
   const openOwnTask = (task) => setTaskDialog({ mode: 'edit', task: task.raw });
   const addTask = (dueDate) => setAdding({ dueDate });
+  const addFromToolbar = () => addTask(selectedKey >= todayKey ? selectedKey : todayKey);
   const openAssignment = (work) => navigate(`/student/assignments/${work.id}`);
+  const startWork = (work) => navigate(`/student/focus?assignment=${encodeURIComponent(work.id)}`);
   const editWork = (work) => {
     setOpenWork(null);
     if (work.kind === 'teacher') return openAssignment(work);
@@ -151,9 +157,20 @@ export default function StudentPlanPage() {
     setOpenWork(null);
     await schoolwork.move(work, to);
   };
+  const spreadSteps = async () => {
+    setSpreading(true);
+    try {
+      await planService.replan('me');
+      toast.success('Planning your week - your steps will appear in a moment.');
+      schedule.reload();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setSpreading(false);
+    }
+  };
 
-  // The priority order and the week's plans come from the plan (today + 2 weeks).
-  const priorities = plan.schedule?.priorities ?? schedule.plan?.priorities ?? [];
+  const priorities = schedule.plan?.priorities ?? plan.schedule?.priorities ?? [];
   const upcomingPersonal = plan.schedule?.personalEvents ?? schedule.plan?.personalEvents ?? [];
   const waitingForSettings = !settings.loaded && settings.isLoading;
 
@@ -161,35 +178,113 @@ export default function StudentPlanPage() {
     schoolwork.error && !schoolwork.loaded ? (
       <ErrorState error={schoolwork.error} onRetry={schoolwork.reload} variant="compact" />
     ) : !schoolwork.loaded ? (
-      <p className="pl-muted">Loading your schoolwork…</p>
+      <div className="sp-skeleton" aria-hidden="true" style={{ minHeight: 240 }} />
     ) : (
       content
     );
 
+  let main;
+  if (waitingForSettings) {
+    main = <div className="sp-skeleton" aria-hidden="true" style={{ minHeight: 240 }} />;
+  } else if (view === 'board') {
+    main = (
+      <section className="sp-main" aria-label="Board">
+        {workView(
+          <SchoolworkBoard
+            work={schoolwork.work}
+            priorities={priorities}
+            sort={sort}
+            today={todayKey}
+            colorOf={colorOf}
+            preferences={preferences}
+            personalEvents={upcomingPersonal}
+            busyId={schoolwork.busyId}
+            columnLabels={{ todo: 'To do' }}
+            onAdd={addFromToolbar}
+            onOpen={setOpenWork}
+            onMove={schoolwork.move}
+            onHandIn={openAssignment}
+          />
+        )}
+      </section>
+    );
+  } else if (view === 'list') {
+    main = (
+      <section className="sp-main" aria-label="List">
+        {workView(
+          <SchoolworkList
+            work={schoolwork.work}
+            priorities={priorities}
+            sort={sort}
+            today={todayKey}
+            colorOf={colorOf}
+            preferences={preferences}
+            personalEvents={upcomingPersonal}
+            busyId={schoolwork.busyId}
+            onOpen={setOpenWork}
+            onMove={schoolwork.move}
+            onHandIn={openAssignment}
+            onStart={startWork}
+          />
+        )}
+      </section>
+    );
+  } else {
+    main =
+      schedule.error && !schedule.plan ? (
+        <ErrorState error={schedule.error} onRetry={schedule.reload} />
+      ) : (
+        <section className="sp-main" aria-label="Calendar">
+          <div className="sp-board" data-view={viewMode}>
+            {shownDays.map((key) => (
+              <PlanDayColumn
+                key={key}
+                dayKey={key}
+                layout={viewMode}
+                todayKey={todayKey}
+                selectedKey={selectedKey}
+                isLoading={schedule.isLoading}
+                blocks={sortBlocks(blocks.get(key) ?? [], sort, dueOf)}
+                inTimeOrder={sort === 'plan'}
+                due={byDay.get(key) ?? []}
+                events={events.get(key) ?? []}
+                timeZone={schedule.plan?.timezone}
+                colorOf={colorOf}
+                isTeacherWork={isTeacherWork}
+                onOpenBlock={setOpenBlock}
+                onPickDay={(k) => {
+                  setSelectedKey(k);
+                  setViewMode('day');
+                }}
+                onAdd={addTask}
+                onOpenOwn={openOwnTask}
+                onNextWeek={() => setSelectedKey(addDaysToKey(weekStartKey, 7))}
+              />
+            ))}
+          </div>
+        </section>
+      );
+  }
+
   return (
-    <div className="sh-page sp-page td-page">
+    <div className="sh-page sp-page td-page" data-view={view}>
       <header className="sp-header">
-        <h1 className="sp-header__title">My Schoolwork</h1>
-        <p className="sp-header__summary">Today · {formatDateKey(todayKey, { weekday: 'long', month: 'long', day: 'numeric', year: undefined })}</p>
+        <h1 className="sp-header__title">Plan</h1>
+        <p className="sp-header__summary">Your week, one step at a time.</p>
       </header>
 
-      <div className="sp-toolbar">
-        <ViewSwitcher value={view} onChange={setChosenView} />
+      <div className="sp-toolbar sp-toolbar--views">
+        <ViewSwitcher value={view} onChange={setChosenView} look="pill" labels={{ board: 'Board' }} label="Show my plan as" />
         <div className="sp-toolbar__actions">
-          <button type="button" className="pl-link" onClick={() => setCustomizing(true)} aria-haspopup="dialog">
-            <LuSlidersHorizontal size={15} aria-hidden="true" /> Customize
-          </button>
-          <Link className="pl-link" to="/student/study-times">
-            <LuCalendarClock size={15} aria-hidden="true" /> Study & busy times
-          </Link>
-          <button type="button" className="sp-primary" onClick={() => addTask(selectedKey >= todayKey ? selectedKey : todayKey)}>
+          <SortMenu value={sort} options={sortOptionsFor(view)} onChange={(key) => setSorts((s) => ({ ...s, [view]: key }))} />
+          <button type="button" className="sp-primary sp-toolbar__add" onClick={addFromToolbar}>
             <LuPlus size={16} aria-hidden="true" /> Add assignment
           </button>
         </div>
       </div>
 
       {view === 'calendar' && (
-        <div className="sp-toolbar">
+        <div className="sp-toolbar sp-toolbar--calendar">
           <div className="sp-toolbar__nav">
             <button
               type="button"
@@ -212,14 +307,12 @@ export default function StudentPlanPage() {
             </button>
             <PlanMonthPicker label={rangeLabel} selectedKey={selectedKey} todayKey={todayKey} counts={counts} onPick={setSelectedKey} />
           </div>
-          <div className="sp-toolbar__actions">
-            <div className="sp-segment" role="group" aria-label="Calendar range">
-              {['week', 'day'].map((mode) => (
-                <button key={mode} type="button" aria-pressed={viewMode === mode} onClick={() => setViewMode(mode)}>
-                  {mode === 'week' ? 'Week' : 'Day'}
-                </button>
-              ))}
-            </div>
+          <div className="sp-segment" role="group" aria-label="Calendar range">
+            {['week', 'day'].map((mode) => (
+              <button key={mode} type="button" aria-pressed={viewMode === mode} onClick={() => setViewMode(mode)}>
+                {mode === 'week' ? 'Week' : 'Day'}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -227,94 +320,18 @@ export default function StudentPlanPage() {
       <PlanNotices plan={schedule.plan} studyTimesHref="/student/study-times" />
       <PendingIntakes onChanged={refresh} />
 
-      {waitingForSettings ? (
-        <div className="sp-skeleton" aria-hidden="true" style={{ minHeight: 240 }} />
-      ) : view === 'board' ? (
-        <section className="pl-card" aria-label="Sticky notes">
-          {workView(
-            <SchoolworkBoard
-              work={schoolwork.work}
-              priorities={priorities}
-              today={todayKey}
-              colorOf={colorOf}
-              preferences={preferences}
-              personalEvents={upcomingPersonal}
-              busyId={schoolwork.busyId}
-              onOpen={setOpenWork}
-              onMove={schoolwork.move}
-              onHandIn={openAssignment}
-            />
-          )}
-        </section>
-      ) : (
-        <div className="sp-grid">
-          {view === 'list' ? (
-            <section className="pl-card" aria-label="List">
-              {workView(
-                <SchoolworkList
-                  work={schoolwork.work}
-                  priorities={priorities}
-                  today={todayKey}
-                  colorOf={colorOf}
-                  preferences={preferences}
-                  personalEvents={upcomingPersonal}
-                  order={order}
-                  onOrderChange={setOrder}
-                  busyId={schoolwork.busyId}
-                  onOpen={setOpenWork}
-                  onMove={schoolwork.move}
-                  onHandIn={openAssignment}
-                />
-              )}
-            </section>
-          ) : plan.error && !plan.all.length ? (
-            <ErrorState error={plan.error} onRetry={plan.reload} />
+      <div className="sp-grid" data-view={view}>
+        {main}
+        <aside className="sp-side" aria-label="This week">
+          {schedule.isLoading || hasPlannedWeek ? (
+            <WeekSummaryCard total={weekStats.total} done={weekStats.done} dueCount={weekDue} minutes={weekStats.minutes} isLoading={schedule.isLoading} />
           ) : (
-            <div>
-              <div className="sp-board" data-view={viewMode}>
-                {shownDays.map((day) => (
-                  <PlanDayColumn
-                    key={day.key}
-                    day={day}
-                    layout={viewMode}
-                    todayKey={todayKey}
-                    selectedKey={selectedKey}
-                    isLoading={plan.isLoading}
-                    blocks={blocks.get(day.key) ?? []}
-                    events={events.get(day.key) ?? []}
-                    timeZone={schedule.plan?.timezone}
-                    colorOf={colorOf}
-                    showTypeIcons={preferences.showTypeIcons}
-                    onOpenBlock={setOpenBlock}
-                    onPickDay={(key) => {
-                      setSelectedKey(key);
-                      setViewMode('day');
-                    }}
-                    onAdd={addTask}
-                    onOpenOwn={openOwnTask}
-                    onNextWeek={() => setSelectedKey(addDaysToKey(weekStartKey, 7))}
-                  />
-                ))}
-              </div>
-              {weekSubjects.length > 0 && (
-                <ul className="sw-legend" aria-label="Subject colours this week">
-                  {weekSubjects.map((subject) => (
-                    <li key={subject}>
-                      <span className="sw-legend__swatch" style={colorOf(subject) ? { '--subject-color': colorOf(subject) } : undefined} aria-hidden="true" />
-                      {subject}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <NothingPlannedCard canSpread={openWorkCount > 0} spreading={spreading || Boolean(schedule.plan?.updating)} onAdd={addFromToolbar} onSpread={spreadSteps} />
           )}
-
-          <aside className="sp-side">
-            <WeekSummaryCard total={weekItems.length} done={weekDone} dueCount={weekDue} minutes={weekMinutes} isLoading={plan.isLoading} />
-            <DueSoonCard tasks={dueSoon} isLoading={plan.isLoading} onOpenOwn={openOwnTask} />
-          </aside>
-        </div>
-      )}
+          <DueSoonCard tasks={dueSoon} isLoading={plan.isLoading} onOpenOwn={openOwnTask} />
+          <PlanMoreLinks onCustomize={() => setCustomizing(true)} />
+        </aside>
+      </div>
 
       <Modal isOpen={customizing} onClose={() => setCustomizing(false)} title="Customize My Growing Focus" size="md">
         {customizing && <SchoolworkPreferences store={settings} idPrefix="plan-prefs" />}
@@ -338,15 +355,10 @@ export default function StudentPlanPage() {
         onOpenPage={editWork}
         onFocus={(w) => {
           setOpenWork(null);
-          navigate(`/student/focus?assignment=${w.id}`);
+          startWork(w);
         }}
       />
-      <OwnTaskModal
-        mode={taskDialog?.mode ?? null}
-        task={taskDialog?.task ?? null}
-        onClose={() => setTaskDialog(null)}
-        onChanged={refresh}
-      />
+      <OwnTaskModal mode={taskDialog?.mode ?? null} task={taskDialog?.task ?? null} onClose={() => setTaskDialog(null)} onChanged={refresh} />
       <AddWorkDialog
         key={adding ? `add-${adding.dueDate}` : 'closed'}
         isOpen={Boolean(adding)}

@@ -9,7 +9,7 @@ function ItemLabel({ item }) {
 }
 
 /**
- * K-5 matching: tap a left item, then tap a right item to pair them - no
+ * K-4 matching: tap a left item, then tap a right item to pair them - no
  * dragging. Big touch targets, one thing armed at a time so a young student
  * always knows what their next tap does.
  */

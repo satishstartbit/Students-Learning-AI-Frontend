@@ -6,7 +6,7 @@ import { useSubscriptionAccess } from '../hooks/useSubscriptionAccess';
 
 /**
  * What a Grade 6+ student sees on every page while their family has no
- * subscription in force (K-5 gets KidLockedScreen). Deliberately says nothing
+ * subscription in force (K-4 gets KidLockedScreen). Deliberately says nothing
  * about plans or billing - that's the parent's business - just why, and what
  * will unlock it.
  */

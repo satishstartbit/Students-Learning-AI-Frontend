@@ -14,11 +14,11 @@ import { useRewards } from '../../hooks/useRewards';
 import { useStudentSettings } from '../../hooks/useStudentSettings';
 
 /**
- * K-5 "Make it yours" - the K-5 personalization mockup: pick a buddy, pick
+ * K-4 "Make it yours" - the K-4 personalization mockup: pick a buddy, pick
  * how task cards look, and see the stickers you have collected.
  *
  * Deliberately shorter than the Grade 6+ page (pages/MakeItYoursPage.jsx):
- * no colour theme or dark mode here, since the K-5 shell has its own warm
+ * no colour theme or dark mode here, since the K-4 shell has its own warm
  * paper theme, and anything a grown-up manages stays with the grown-up -
  * hence the closing line.
  */

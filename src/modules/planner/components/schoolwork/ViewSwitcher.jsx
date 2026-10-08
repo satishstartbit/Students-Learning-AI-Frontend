@@ -12,14 +12,15 @@ export function ViewIcon({ view, size = 16 }) {
 
 /**
  * Sticky notes / List / Calendar - switch at any time; the settings screen
- * decides which one opens first. `labels` renames a view (K-5 says "My week").
+ * decides which one opens first. `labels` renames a view (the Plan page says
+ * "Board"); `look="pill"` is the Plan mockup's rounded switch, words only.
  */
-export function ViewSwitcher({ value, onChange, labels = {}, label = 'Show my schoolwork as' }) {
+export function ViewSwitcher({ value, onChange, labels = {}, label = 'Show my schoolwork as', look, showIcons = look !== 'pill' }) {
   return (
-    <div className="sw-views" role="group" aria-label={label}>
+    <div className="sw-views" role="group" aria-label={label} data-look={look}>
       {VIEW_OPTIONS.map((v) => (
         <button key={v.key} type="button" aria-pressed={value === v.key} onClick={() => onChange(v.key)}>
-          <ViewIcon view={v.key} size={15} />
+          {showIcons && <ViewIcon view={v.key} size={15} />}
           {labels[v.key] ?? v.label}
         </button>
       ))}

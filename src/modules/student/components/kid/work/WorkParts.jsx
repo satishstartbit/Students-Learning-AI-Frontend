@@ -6,7 +6,7 @@ import { HomeSticker } from '../home/HomeBits';
 import { SubjectPicture } from '../PaperKit';
 
 /**
- * The K-5 "My work" cards (pages/kid/KidAssignmentsPage.jsx), drawn to the
+ * The K-4 "My work" cards (pages/kid/KidAssignmentsPage.jsx), drawn to the
  * "My work" mockup: the subject's picture, the title and subject, dots for
  * the steps done, and what's next at the end - an arrow, a paper plane once
  * it's with the teacher, a green tick (and a star sticker) when finished.

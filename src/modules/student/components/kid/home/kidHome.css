@@ -1,5 +1,5 @@
 /*
- * K-5 Home (pages/kid/KidHomePage.jsx), "Good morning, Alex!" mockup - the
+ * K-4 Home (pages/kid/KidHomePage.jsx), "Good morning, Alex!" mockup - the
  * small motions and paper details Tailwind can't express. Prefix `kh-`.
  *
  * Every animation here stops in calm mode and follows the OS "reduce
@@ -753,7 +753,7 @@
   animation-delay: 0.3s;
 }
 
-/* K-5 My week: from a tablet to a laptop the five day columns are narrow, so
+/* K-4 My week: from a tablet to a laptop the five day columns are narrow, so
    a study time's / busy time's kind line ("⚽ Extracurricular") ends in "…"
    instead of breaking inside a word. The full words stay in the page for
    screen readers. (DayAgenda is the planner's, shared - left as it is.) */

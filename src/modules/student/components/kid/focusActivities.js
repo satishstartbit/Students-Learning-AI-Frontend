@@ -1,7 +1,7 @@
 import { LuArrowDown, LuArrowUp, LuMusic2, LuRefreshCw, LuWind, LuZap } from 'react-icons/lu';
 
 /**
- * The three K-5 calming activities, shared by the Focus page's tiles and the
+ * The three K-4 calming activities, shared by the Focus page's tiles and the
  * activity screens they open.
  *
  * `categories` points at the real admin-managed regulation-toolkit categories

@@ -212,7 +212,7 @@
   /* --- Field ------------------------------------------------------- */
   /* Text Field: 40px at rest (the medium control height) - the desktop admin
      surfaces (Super Admin/Teacher/Parent) read as a dense SaaS app, not a
-     touch-first one. The K-5 kid theme pins this back to the full 48px
+     touch-first one. The K-4 kid theme pins this back to the full 48px
      touch target (styles/kid-theme.css) since its controls are sized for a
      young child's finger, not a mouse. The helper line under a field is
      always rendered, so its line box counts towards the height every form

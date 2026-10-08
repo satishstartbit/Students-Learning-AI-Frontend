@@ -3,7 +3,7 @@ import { useReducedMotion } from 'motion/react';
 import { local } from '../../../utils/storage';
 
 /**
- * K-5 display preferences, remembered per student on this device.
+ * K-4 display preferences, remembered per student on this device.
  *
  *   calm  switch off moving animations and confetti (Settings -> Calm mode).
  *         The OS "reduce motion" setting is always respected on top of it.

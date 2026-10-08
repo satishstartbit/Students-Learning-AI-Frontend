@@ -17,7 +17,7 @@ const WAYS = [
 ];
 
 /**
- * K-5 / Grades 4-5 plan card (PDF Q14): ONE clear next step from the plan,
+ * K-4 / Grades 4-5 plan card (PDF Q14): ONE clear next step from the plan,
  * and adding work the easy way - voice and photo first, big buttons, and a
  * single simple date question afterwards (the guided intake).
  */

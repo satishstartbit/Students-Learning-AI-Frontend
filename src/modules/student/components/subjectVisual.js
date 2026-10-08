@@ -13,7 +13,7 @@ import {
 
 /**
  * Icon + colour tone for a subject, so a task reads at a glance across
- * Home/Plan/Assignments - Grade 6+'s own version of the K-5 area's
+ * Home/Plan/Assignments - Grade 6+'s own version of the K-4 area's
  * kid/subjectStyle.js (same idea, kept as a separate file rather than
  * shared, matching this codebase's existing per-band convention - e.g.
  * kidNav.js vs StudentLayout's own NAV_ITEMS).

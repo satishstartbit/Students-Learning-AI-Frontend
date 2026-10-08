@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 /**
  * Shared answer-state helpers for a matching question, so the tap-to-pair
- * (K-5) and drag-and-drop (Grade 6+) interactions both write the same
+ * (K-4) and drag-and-drop (Grade 6+) interactions both write the same
  * `{ leftId, rightId }[]` shape and can't disagree on what "matched" means.
  *
  * Setting a pair for a left item that's already matched, or to a right item

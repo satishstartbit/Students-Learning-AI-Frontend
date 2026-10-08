@@ -25,7 +25,7 @@ function greetingFor(hour) {
 const ART = { src: heroArt, srcSmall: heroArtSmall, smallWidth: 1100, bigWidth: 2000, width: 2073, height: 661, sky: '#c7e9fd' };
 
 /**
- * The K-5 Home's banner: "Good morning, Alex!" over the paper-craft scene
+ * The K-4 Home's banner: "Good morning, Alex!" over the paper-craft scene
  * (KidBannerHero). The bear waves: its arm swings out from the shoulder twice,
  * then rests (kh-paw-wave), with "(" marks flicking beside the paw and its
  * "Hi!". Birds fly through the sky in real 3D (BirdSky / Bird3D: wings that

@@ -2,7 +2,7 @@
  * Grade 6+ student area look (the student dashboard mockup): Poppins as the
  * base face. Applied as a class on <body> by StudentLayout.jsx - same reason
  * as superAdminTheme.css: Modal/Drawer/dropdowns portal to document.body, so
- * a wrapping div would never reach them. K-5 (KidLayout) never gets it.
+ * a wrapping div would never reach them. K-4 (KidLayout) never gets it.
  *
  * Colours are untouched on purpose - the mockup's teal is the default Ocean
  * accent family (theme/accent.css), so a student's own accent choice from

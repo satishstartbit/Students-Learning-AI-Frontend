@@ -250,7 +250,7 @@ function StudentWork({ item, assignmentId, reload }) {
  *             overview / next step / resources / notes / details. Handed in:
  *             ReviewBanner ("You got 4 of 6 right", score, what the teacher
  *             said) and AnswerReviewCard (All / Look again), "Status" in the rail.
- *   K-5       KidAssignmentView - the "Busy Bee quiz" page: paper header,
+ *   K-4       KidAssignmentView - the "Busy Bee quiz" page: paper header,
  *             what to do and the work while it's open; once handed in,
  *             "How did you do?", stars, "Your answers" with "This one!", and
  *             the reading scene.
@@ -258,7 +258,7 @@ function StudentWork({ item, assignmentId, reload }) {
  * A task's background sound starts on its own while the task is still to do,
  * with pause and mute always visible. Once the task is started (Start
  * Assignment), a Focus time clock appears above the work, already tied to
- * this task - KidTaskFocus for K-5 (the same card as the Focus time page) and
+ * this task - KidTaskFocus for K-4 (the same card as the Focus time page) and
  * TaskFocusCard for Grade 6+.
  */
 export default function AssignmentDetailPage() {

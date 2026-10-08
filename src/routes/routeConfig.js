@@ -55,7 +55,9 @@ const StudentPlanPage = lazy(() => import('../modules/student/pages/StudentPlanP
 const FocusTimerPage = lazy(() => import('../modules/student/pages/FocusTimerPage'));
 const BoosterPage = lazy(() => import('../modules/student/pages/BoosterPage'));
 const RewardsPage = lazy(() => import('../modules/student/pages/RewardsPage'));
-const NotificationsPage = lazy(() => import('../modules/student/pages/NotificationsPage'));
+const StudentNotesPage = lazy(() => import('../modules/student/pages/StudentNotesPage'));
+// One notifications page for students (Grade 6+), teachers and parents.
+const NotificationsPage = lazy(() => import('../modules/notifications/pages/NotificationsPage'));
 const MakeItYoursPage = lazy(() => import('../modules/student/pages/MakeItYoursPage'));
 const StudentSettingsPage = lazy(() => import('../modules/student/pages/StudentSettingsPage'));
 const StudentHelpPage = lazy(() => import('../modules/student/pages/StudentHelpPage'));
@@ -79,6 +81,7 @@ const LearningSessionPage = lazy(() => import('../modules/aiAssistant/pages/Lear
 const LearningHistoryPage = lazy(() => import('../modules/aiAssistant/pages/LearningHistoryPage'));
 const TeacherLearningActivityPage = lazy(() => import('../modules/aiAssistant/pages/TeacherLearningActivityPage'));
 const ParentLearningSummaryPage = lazy(() => import('../modules/aiAssistant/pages/ParentLearningSummaryPage'));
+const ParentNotesPage = lazy(() => import('../modules/parent/pages/ParentNotesPage'));
 const MasterDashboardPage = lazy(() => import('../modules/masterManagement/pages/MasterDashboardPage'));
 const MasterListPage = lazy(() => import('../modules/masterManagement/pages/MasterListPage'));
 const MasterFormPage = lazy(() => import('../modules/masterManagement/pages/MasterFormPage'));
@@ -371,13 +374,13 @@ export const STUDENT_ROUTES = {
   requiresAuth: true,
   allowedRoles: [USER_ROLES.STUDENT],
   /*
-   * K-5 students (Kindergarten-Grade 5) get the "My Learning Space" pages;
+   * K-4 students (Kindergarten-Grade 5) get the "My Learning Space" pages;
    * everyone else keeps the standard ones. GradeBandPage picks per route -
-   * `junior` for K-5, `standard` (or the placeholder) for Grade 6+. See
+   * `junior` for K-4, `standard` (or the placeholder) for Grade 6+. See
    * layouts/StudentLayout.jsx for how the grade band is decided.
    *
    * Every screen where work starts carries `guards: [RequireCheckIn]`, which
-   * holds only the kid band: no work before today's check-in for K-5, while
+   * holds only the kid band: no work before today's check-in for K-4, while
    * an older student is let straight through and checks in when they choose.
    * Which grades that covers is KIDS_UI/VITE_KIDS_UI - see
    * modules/checkIn/components/RequireCheckIn.jsx and utils/gradeBand.js.
@@ -469,7 +472,7 @@ export const STUDENT_ROUTES = {
     /*
      * One Brain Booster on its own page, opened from the Focus page with
      * "Back to Focus". Brain games for both bands; exercises are Grade 6+
-     * (K-5 has Breathe / Wiggle / Listen, so KidBoosterPage sends an
+     * (K-4 has Breathe / Wiggle / Listen, so KidBoosterPage sends an
      * exercise back to Focus). Declared before `focus/:activityKey`, though
      * the extra segment already keeps them apart.
      */
@@ -490,7 +493,7 @@ export const STUDENT_ROUTES = {
       guards: [RequireCheckIn],
     },
     {
-      // K-5 only - the Breathe/Wiggle/Listen tiles on KidFocusPage each open
+      // K-4 only - the Breathe/Wiggle/Listen tiles on KidFocusPage each open
       // here. Grade 6+ has no matching screen (their Regulation Toolkit
       // shows tool detail inline), so send them back to Focus instead.
       path: 'focus/:activityKey',
@@ -507,21 +510,27 @@ export const STUDENT_ROUTES = {
       component: GradeBandPage,
       props: { junior: KidRewardsPage, standard: RewardsPage },
     },
-    // K-5: calm mode + log out; Grade 6+: learning profile (from the account menu).
+    // Every note the student has written, with filters - Home shows only yesterday onwards.
+    {
+      path: 'notes',
+      label: 'Notes',
+      component: StudentNotesPage,
+    },
+    // K-4: calm mode + log out; Grade 6+: learning profile (from the account menu).
     {
       path: 'settings',
       label: 'Settings',
       component: GradeBandPage,
       props: { junior: KidSettingsPage, standard: StudentSettingsPage },
     },
-    // Grade 6+ "Help and how-to" (linked from Settings); K-5 goes back to its own Settings.
+    // Grade 6+ "Help and how-to" (linked from Settings); K-4 goes back to its own Settings.
     {
       path: 'help',
       label: 'Help and how-to',
       component: GradeBandPage,
       props: { junior: KidSettingsPage, standard: StudentHelpPage },
     },
-    // Grade 6+ only - not part of K-5's nav (kidNav.js). "Make it yours"
+    // Grade 6+ only - not part of K-4's nav (kidNav.js). "Make it yours"
     // below is the exception: both bands have it, with a page each.
     {
       path: 'notifications',
@@ -599,6 +608,13 @@ export const TEACHER_ROUTES = {
       permissions: [PERMISSIONS.PROFILE_READ],
       component: TeacherProfilePage,
     },
+    // The bell links here (no dropdown list) - the notifications module's shared page.
+    {
+      path: 'notifications',
+      label: 'Notifications',
+      permissions: [PERMISSIONS.NOTIFICATION_READ],
+      component: NotificationsPage,
+    },
   ],
 };
 
@@ -651,6 +667,13 @@ export const PARENT_ROUTES = {
       component: ParentStudyTimesPage,
     },
     {
+      // The viewing child's own notes, read-only, with filters (the Overview shows yesterday onwards).
+      path: 'notes',
+      label: 'Notes',
+      permissions: [PERMISSIONS.PROGRESS_READ],
+      component: ParentNotesPage,
+    },
+    {
       path: 'learning-summary',
       label: 'Learning Summary',
       permissions: [PERMISSIONS.LEARNING_SUMMARY_READ],
@@ -668,11 +691,12 @@ export const PARENT_ROUTES = {
       permissions: [PERMISSIONS.SUBSCRIPTION_CREATE],
       component: CheckoutPage,
     },
+    // The bell links here (no dropdown list); reachable without a subscription (ParentLayout).
     {
       path: 'notifications',
       label: 'Notifications',
       permissions: [PERMISSIONS.NOTIFICATION_READ],
-      element: null,
+      component: NotificationsPage,
     },
   ],
 };

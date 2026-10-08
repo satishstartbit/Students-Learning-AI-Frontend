@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LuEllipsisVertical, LuPlus } from 'react-icons/lu';
 import {
   Alert,
@@ -25,7 +25,7 @@ import { formatSubjects } from '../../invitations/invitationStatus';
 import { SubjectChips } from '../../teacher/components/students/StudentBits';
 import { useViewingChild } from '../hooks/useViewingChild';
 import parentService from '../services/parent.service';
-import { childLimitReason } from '../familyLimits';
+import { CHANGE_PLAN_PATH, childLimitReason } from '../familyLimits';
 import { ParentsSection, PlanUsage } from '../components/FamilyParents';
 import AddChildModal from '../components/AddChildModal';
 import EditChildModal from '../components/EditChildModal';
@@ -294,6 +294,12 @@ export default function ParentChildrenPage() {
         {limitReason && (
           <Alert variant="warning" className="pm-notice">
             {limitReason}
+            {family.data?.isAccountHolder && (
+              <>
+                {' '}
+                <Link to={CHANGE_PLAN_PATH}>See larger plans</Link>
+              </>
+            )}
           </Alert>
         )}
 

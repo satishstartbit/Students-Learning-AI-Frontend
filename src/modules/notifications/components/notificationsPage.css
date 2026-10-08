@@ -1,8 +1,11 @@
 /*
- * Grade 6+ Notifications page (NotificationsPage.jsx), built to the student
+ * The notifications page (notifications/pages/NotificationsPage.jsx) for
+ * students (Grade 6+), teachers and parents, built to the student
  * notifications mockup: filter chips, then "Today" / "Earlier" cards of rows.
  * Unread rows are tinted with the accent and carry a dot. Theme tokens
- * throughout; the per-category icon tints are illustration colours.
+ * throughout (the student and portal themes both define them); the
+ * per-category icon tints are illustration colours. Prefix `sn-` (from when
+ * it was the student's page).
  */
 .sn-page {
   /* Centred like the other student pages (Home, Plan, Make it yours), so the
@@ -176,14 +179,16 @@
 .sn-row[data-unread='true'] .sn-row__title {
   font-weight: 600;
 }
+/* Up to two lines - teachers' and parents' notices say who and what. */
 .sn-row__message {
-  display: block;
+  display: -webkit-box;
   margin-top: 2px;
   overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font-size: 11.5px;
+  line-height: 1.45;
   color: var(--color-text-secondary);
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 .sn-row__side {
   display: flex;

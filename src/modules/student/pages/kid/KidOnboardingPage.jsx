@@ -24,7 +24,7 @@ function MasterStep({ type, name, legend, multiple, value, onChange }) {
 }
 
 /**
- * The K-5 questions, one per screen. `required` steps can't be skipped (the
+ * The K-4 questions, one per screen. `required` steps can't be skipped (the
  * backend needs them); the rest have a "Skip" so a young student never gets
  * stuck on a question they can't answer.
  */
@@ -76,7 +76,7 @@ function KidOnboardingFlow({ onboarding, onSaved }) {
         strengths: state.strengths,
         challenges: state.challenges,
         learningPreferences: {
-          // Grade 6+ questions a K-5 student isn't asked keep whatever was there.
+          // Grade 6+ questions a K-4 student isn't asked keep whatever was there.
           bestStudyTimes: prefs.bestStudyTimes,
           distractions: prefs.distractions,
           taskApproach: prefs.taskApproach ?? null,
@@ -198,7 +198,7 @@ function KidOnboardingFlow({ onboarding, onSaved }) {
 }
 
 /**
- * K-5 /student/onboarding - "Let's get to know you", one tap-to-answer
+ * K-4 /student/onboarding - "Let's get to know you", one tap-to-answer
  * question per screen. Required once (the student layout sends a student
  * here until it's done); reopened from Settings to change answers.
  */

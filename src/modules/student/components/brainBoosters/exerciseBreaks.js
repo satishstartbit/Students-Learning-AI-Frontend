@@ -1,5 +1,5 @@
 /**
- * The Grade 6+ Brain Booster exercises (built-in content, like the K-5
+ * The Grade 6+ Brain Booster exercises (built-in content, like the K-4
  * Breathe / Wiggle / Listen activities): each a short list of timed,
  * gentle steps. Run by ExerciseBreak.jsx#ExerciseSession on the exercise's
  * own page (pages/BoosterPage.jsx); listed on Focus via boosters.js.

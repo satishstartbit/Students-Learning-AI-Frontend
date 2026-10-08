@@ -16,8 +16,10 @@ test('usage label shows the plan limit, or no limit', () => {
   assert.equal(usageLabel({ used: 4, max: null }, 'child', 'children'), '4 children · no limit');
 });
 
-test('add child is explained only when the plan is full', () => {
-  assert.match(childLimitReason(family()), /Family plan covers up to 2 children, and you have 2/);
+test('add child is explained only when the plan is full, with the way out', () => {
+  assert.match(childLimitReason(family()), /Family plan covers up to 2 children, and you have 2\. Change to a larger plan/);
+  // An extra parent can't change the plan themselves.
+  assert.match(childLimitReason(family({ isAccountHolder: false })), /The account holder can change to a larger plan/);
   assert.equal(childLimitReason(family({ children: { used: 1, max: 2, canAdd: true } })), null);
   assert.equal(childLimitReason(null), null);
 });

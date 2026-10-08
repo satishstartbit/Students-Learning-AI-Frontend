@@ -39,7 +39,7 @@ function Initials({ size = 32 }) {
   );
 }
 
-/** Grade 6+ students read notifications on their own page, so the bell is a link there. */
+/** Students, teachers and parents read notifications on their own page, so the bell is a link there. */
 function NotificationsLink({ to }) {
   const { unreadCount } = useNotifications({ limit: 1 });
   return (
@@ -101,7 +101,7 @@ function MoreSheet({ isOpen, onClose, items, accountSubtitle }) {
 /**
  * @param navItems          the role's sidebar entries (flat or grouped)
  * @param mobileTabs        the five tab destinations
- * @param notificationsPath a page to link the bell to (students); otherwise the bell dropdown
+ * @param notificationsPath a page to link the bell to (students, teachers, parents); otherwise the bell dropdown
  */
 /**
  * `brandSlot` (parents: the viewing-child chip) takes the place of the app

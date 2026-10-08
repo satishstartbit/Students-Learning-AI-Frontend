@@ -15,7 +15,7 @@ import { dueDayKey, todayDayKey } from '../../components/kid/home/homeDates';
 import { groupHomeTasks } from '../../components/kid/home/homeTasks';
 
 /**
- * K-5 Home - "My Day", built to the "Good morning, Alex!" mockup.
+ * K-4 Home - "My Day", built to the "Good morning, Alex!" mockup.
  *
  *   hero          greeting, bear, sun (HeroScene)
  *   main column   Your next task · Still to finish · Other tasks today ·

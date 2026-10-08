@@ -30,8 +30,8 @@ import { KidOops, KidSkeleton } from '../../components/kid/KidStates';
 import { PaperCard } from '../../components/kid/PaperKit';
 
 /**
- * K-5 Rewards - "Collect stickers, earn stars and unlock new rewards!", built
- * to the K-5 Rewards mockup: the bunny banner, the stars card (ring, "Next
+ * K-4 Rewards - "Collect stickers, earn stars and unlock new rewards!", built
+ * to the K-4 Rewards mockup: the bunny banner, the stars card (ring, "Next
  * up", a bar), Stickers / Emojis, a grid of reward tiles, the forest and
  * river at the foot. Points are called stars here. Rewards are collectibles,
  * unlocked automatically when a student's stars reach their level (backend

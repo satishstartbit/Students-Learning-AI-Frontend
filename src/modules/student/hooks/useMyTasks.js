@@ -13,7 +13,7 @@ import assignmentService from '../../assignments/services/assignment.service';
  *   done  checked by the teacher
  *
  * One request for everything - the API caps a page at 100, far more open work
- * than one K-5 student has - so the groups and counts come from the same data.
+ * than one K-4 student has - so the groups and counts come from the same data.
  */
 const TO_DO = [STATUS.ASSIGNED, STATUS.IN_PROGRESS, STATUS.RETURNED];
 const SENT = [STATUS.SUBMITTED];

@@ -13,7 +13,7 @@ import { KidTaskFocus } from './KidTaskFocus';
 import { DueChip, PaperCard, SubjectTile } from './PaperKit';
 
 /**
- * The K-5 assignment page (pages/AssignmentDetailPage.jsx), built to the
+ * The K-4 assignment page (pages/AssignmentDetailPage.jsx), built to the
  * "Busy Bee quiz" mockup: "Back to my work", the task on a paper header
  * (subject picture, title, subject · topic, one dot per step done), then
  *

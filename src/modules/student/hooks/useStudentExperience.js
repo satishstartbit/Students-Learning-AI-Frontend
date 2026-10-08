@@ -6,7 +6,7 @@ import { createContext, useContext } from 'react';
  * they get. Provided once by layouts/StudentLayout.jsx, so pages read it
  * instead of each fetching the profile again.
  *
- *   isJunior         Kindergarten-Grade 5 - the K-5 "My Learning Space" UI
+ *   isJunior         Kindergarten-Grade 5 - the K-4 "My Learning Space" UI
  *   checkInRequired  must they check in before the work screens open? True
  *                    for the kid band, false above it - the server's own
  *                    answer for their grade (KIDS_UI), with VITE_KIDS_UI as

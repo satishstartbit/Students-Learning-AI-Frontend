@@ -1,5 +1,18 @@
 import { ASSIGNMENT_RECIPIENT_STATUS as STATUS } from '../../../../utils/constants';
-import { daysUntil, formatDate } from '../../../../utils/date';
+import { daysUntil, daysUntilDateKey, formatDate, formatDateKey, isDateKey } from '../../../../utils/date';
+
+/**
+ * "Opens Friday" / "Opens Oct 20" when work's start day is still ahead (a
+ * teacher can schedule work to start later); null once it has opened.
+ */
+export function opensLabel(startDate) {
+  if (!isDateKey(startDate)) return null;
+  const days = daysUntilDateKey(startDate);
+  if (days === null || days <= 0) return null;
+  return days < 7
+    ? `Opens ${formatDateKey(startDate, { weekday: 'long', month: undefined, day: undefined, year: undefined })}`
+    : `Opens ${formatDateKey(startDate, { year: undefined })}`;
+}
 
 /**
  * Wording for young readers. "Overdue by 3 days" and "In progress" are

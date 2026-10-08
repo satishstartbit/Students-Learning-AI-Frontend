@@ -1,5 +1,5 @@
 /**
- * The soft paper colours of the K-5 Focus cards ("Calm & move", "Brain
+ * The soft paper colours of the K-4 Focus cards ("Calm & move", "Brain
  * games") and of a brain game's own page: lighter than PaperCard's full
  * tones, as in the Focus time mockups. Kid craft tokens only.
  *

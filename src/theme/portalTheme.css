@@ -7,7 +7,7 @@
    Applied as `portal-theme` on <body> by TeacherLayout and ParentLayout -
    same reason as studentTheme.css / superAdminTheme.css: Modal, Drawer and
    dropdowns portal to document.body, so a wrapping div would never reach
-   them. Every rule is prefixed `body.portal-theme`, so the Student, K-5
+   them. Every rule is prefixed `body.portal-theme`, so the Student, K-4
    and Super Admin areas are untouched.
 
    Colours come from the shared tokens (variables.css / accent.css) rather

@@ -8,14 +8,14 @@ import { KidButton } from './KidButton';
 import { KidOops, KidSkeleton } from './KidStates';
 
 /**
- * "What's making it tricky?" - the K-5 version of the Grade 6+ difficulty
+ * "What's making it tricky?" - the K-4 version of the Grade 6+ difficulty
  * picker, in this band's own paper-and-ink world: bigger targets, fewer
  * words, one group at a time so a long list never lands on a young reader
  * all at once.
  *
  * Same master data as the older students' dialog, through the same hook -
  * Super Admin writes the groups, the reasons and the strategies once and
- * both bands follow. No note field here: typing is the thing a stuck K-5
+ * both bands follow. No note field here: typing is the thing a stuck K-4
  * student is least likely to want to do.
  *
  * What they tap is recorded (codes only) so ideas can favour what helped

@@ -11,6 +11,7 @@ import {
   LuListChecks,
   LuPalette,
   LuSettings2,
+  LuStickyNote,
   LuTimer,
   LuTrophy,
 } from 'react-icons/lu';
@@ -18,6 +19,7 @@ import { useApi } from '../hooks/useApi';
 import { getMe } from '../modules/auth/services/auth.service';
 import { TodayCheckInProvider } from '../modules/checkIn/components/TodayCheckInProvider';
 import { KidLockedScreen } from '../modules/student/components/kid/KidLockedScreen';
+import NoteReminderHost from '../modules/student/components/NoteReminderHost';
 import StudentSettingsProvider from '../modules/student/components/StudentSettingsProvider';
 import SchoolworkSettingsProvider from '../modules/planner/components/SchoolworkSettingsProvider';
 import { StudentExperienceContext } from '../modules/student/hooks/useStudentExperience';
@@ -30,7 +32,7 @@ import KidLayout from './KidLayout';
 import '../theme/studentTheme.css';
 
 /**
- * Navigation for the student area (/student/*) - Grade 6 and up. K-5 nav
+ * Navigation for the student area (/student/*) - Grade 6 and up. K-4 nav
  * lives in modules/student/components/kid/kidNav.js.
  *
  * The primary learning activities live at the top (the Focus mockup's Home,
@@ -52,6 +54,7 @@ const NAV_ITEMS = [
       { to: '/student/assignments', label: 'Assignments', icon: LuListChecks },
       { to: '/student/focus', label: 'Focus', icon: LuTimer },
       { to: '/student/rewards', label: 'Rewards', icon: LuTrophy },
+      { to: '/student/notes', label: 'Notes', icon: LuStickyNote },
     ],
   },
   {
@@ -80,7 +83,7 @@ const MOBILE_TABS = [
 
 /**
  * Reachable before onboarding is finished: the questionnaire itself, and
- * Settings - where a K-5 student on a shared device finds Log out.
+ * Settings - where a K-4 student on a shared device finds Log out.
  */
 const ONBOARDING_EXEMPT_PATHS = ['/student/onboarding', '/student/settings'];
 
@@ -97,7 +100,7 @@ function StudentShellLoading() {
 /**
  * The student area's shell, chosen by grade band:
  *
- *   Kindergarten-Grade 5  KidLayout - the K-5 "My Learning Space" experience
+ *   Kindergarten-Grade 5  KidLayout - the K-4 "My Learning Space" experience
  *   Grade 6+ / unknown    AuthenticatedLayout - the standard student UI
  *
  * The grade lives on the student profile, which the login response doesn't
@@ -209,6 +212,8 @@ export function StudentLayout({ children }) {
           <TodayCheckInProvider>
             {/* How they see their schoolwork and their subject colours, for every screen (both bands). */}
             <SchoolworkSettingsProvider>{shell}</SchoolworkSettingsProvider>
+            {/* Note reminders pop up on any page - on time, or as soon as the student is back. */}
+            <NoteReminderHost />
           </TodayCheckInProvider>
         )}
       </SubscriptionAccessContext.Provider>

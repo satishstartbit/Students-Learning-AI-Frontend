@@ -1,9 +1,13 @@
 import { Link } from 'react-router-dom';
-import { LuCalendarDays, LuChevronRight, LuClock3 } from 'react-icons/lu';
-import { daysUntilDateKey, formatDateKey, formatDurationLong } from '../../../../utils/date';
+import { LuCalendarClock, LuCalendarDays, LuChevronRight, LuClock3, LuPlus, LuSlidersHorizontal, LuSparkles } from 'react-icons/lu';
+import { daysUntilDateKey, formatDateKey } from '../../../../utils/date';
 import { getActiveLocale } from '../../../../utils/locale';
+import { shortMinutes } from '../../../planner/components/schoolwork/schoolworkFormat';
 
-/** The pinned "This week" note: steps done, what's still due, and time planned. */
+/**
+ * The pinned "This week" note (the Plan mockup): study steps done of the
+ * week's planned ones, the work still due this week, and the time planned.
+ */
 export function WeekSummaryCard({ total, done, dueCount, minutes, isLoading }) {
   const pct = total ? Math.round((done / total) * 100) : 0;
   return (
@@ -12,9 +16,7 @@ export function WeekSummaryCard({ total, done, dueCount, minutes, isLoading }) {
       <p id="sp-week-title" className="sp-eyebrow">
         This week
       </p>
-      <p className="sp-weeknote__count">
-        {isLoading ? '…' : total === 0 ? 'Nothing planned yet' : `${done} of ${total} ${total === 1 ? 'step' : 'steps'} done`}
-      </p>
+      <p className="sp-weeknote__count">{isLoading ? '…' : `${done} of ${total} ${total === 1 ? 'step' : 'steps'} done`}</p>
       <span className="sp-bar sp-bar--lg" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={`${pct}% of this week done`}>
         <span className="sp-bar__fill" style={{ width: `${pct}%` }} />
       </span>
@@ -23,10 +25,51 @@ export function WeekSummaryCard({ total, done, dueCount, minutes, isLoading }) {
           <LuCalendarDays size={12} aria-hidden="true" /> {dueCount} {dueCount === 1 ? 'assignment' : 'assignments'} due
         </span>
         <span>
-          <LuClock3 size={12} aria-hidden="true" /> {minutes > 0 ? `${formatDurationLong(minutes)} planned` : 'No time planned'}
+          <LuClock3 size={12} aria-hidden="true" /> {minutes > 0 ? `${shortMinutes(minutes)} planned` : 'No time planned'}
         </span>
       </div>
     </section>
+  );
+}
+
+/**
+ * Instead of "This week" when nothing is on the calendar (the empty Plan
+ * mockup): add work, or - when there is open work - ask the planner to spread
+ * its steps over the week (POST …/replan; `spreading` while it runs).
+ */
+export function NothingPlannedCard({ canSpread, spreading, onAdd, onSpread }) {
+  return (
+    <section className="sh-card sp-empty" aria-labelledby="sp-empty-title">
+      <span className="sp-empty__icon" aria-hidden="true">
+        <LuCalendarDays size={20} />
+      </span>
+      <h2 id="sp-empty-title" className="sp-empty__title">
+        Nothing planned yet
+      </h2>
+      <p className="sp-empty__text">Your assignments are not on the calendar yet. Add one, or let us spread the steps you already have.</p>
+      <button type="button" className="sp-primary sp-empty__add" onClick={onAdd}>
+        <LuPlus size={16} aria-hidden="true" /> Add assignment
+      </button>
+      {canSpread && (
+        <button type="button" className="sp-empty__spread" onClick={onSpread} disabled={spreading}>
+          <LuSparkles size={14} aria-hidden="true" /> {spreading ? 'Planning your week…' : 'Spread my steps'}
+        </button>
+      )}
+    </section>
+  );
+}
+
+/** The quieter ways in under the rail: how the views look, and the times the planner may use. */
+export function PlanMoreLinks({ onCustomize }) {
+  return (
+    <nav className="sp-more" aria-label="Plan settings">
+      <button type="button" className="sp-more__link" onClick={onCustomize} aria-haspopup="dialog">
+        <LuSlidersHorizontal size={14} aria-hidden="true" /> Customize views
+      </button>
+      <Link className="sp-more__link" to="/student/study-times">
+        <LuCalendarClock size={14} aria-hidden="true" /> Study & busy times
+      </Link>
+    </nav>
   );
 }
 

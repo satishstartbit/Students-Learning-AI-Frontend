@@ -130,6 +130,7 @@ function ChildSchedule({ child }) {
               preferences={preferences}
               personalEvents={plan?.personalEvents ?? []}
               canMove={parentMay}
+              showActions
               busyId={schoolwork.busyId}
               onOpen={setOpenWork}
               onMove={schoolwork.move}

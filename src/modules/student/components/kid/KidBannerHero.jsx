@@ -4,7 +4,7 @@ import { HomeSticker } from './home/HomeBits';
 import './home/kidHome.css';
 
 /**
- * The paper-craft picture banner at the top of a K-5 page (Home, My week):
+ * The paper-craft picture banner at the top of a K-4 page (Home, My week):
  * the title, a sticker and one short line over the picture's open sky on the
  * left, the scene on the right.
  *

@@ -22,16 +22,29 @@ export const listPlans = () => api.get('/subscriptions/plans');
 export const validateCoupon = ({ planId, code }) =>
   api.post('/subscriptions/coupons/validate', { planId, code });
 
-/** Opens a PaymentIntent and returns its client secret for Stripe Elements. */
+/**
+ * Starts checkout. `data.mode`: 'payment' (a PaymentIntent's client secret for
+ * Stripe Elements), 'setup' (a free trial: a SetupIntent that saves the card
+ * without charging it) or 'none' (nothing to pay - `data.subscription` is
+ * already active).
+ */
 export const startCheckout = ({ planId, code }) =>
   api.post('/subscriptions/checkout', { planId, code });
 
 /**
- * Tells the server Stripe reported success. The server re-reads the intent
- * from Stripe itself, so this only makes activation instant - it can't fake it.
+ * Tells the server Stripe reported success: `{ paymentIntentId }` for a
+ * payment (checkout or plan change), `{ setupIntentId }` for a free trial.
+ * The server re-reads the intent from Stripe itself, so this only makes
+ * activation instant - it can't fake it.
  */
-export const confirmCheckout = (paymentIntentId) =>
-  api.post('/subscriptions/checkout/confirm', { paymentIntentId });
+export const confirmCheckout = ({ paymentIntentId, setupIntentId }) =>
+  api.post('/subscriptions/checkout/confirm', paymentIntentId ? { paymentIntentId } : { setupIntentId });
+
+/** What moving to another plan costs today: { credit, dueToday, total, periodEnd, coupon, couponDropped, trial, ... } */
+export const getPlanChangeQuote = (planId) => api.post('/subscriptions/me/change/quote', { planId });
+
+/** Changes plan: `data.mode` 'payment' (pay the difference at checkout) or 'none' (changed now, `data.subscription`). */
+export const startPlanChange = (planId) => api.post('/subscriptions/me/change', { planId });
 
 /** { subscription (in force or null), latestSubscription, access: { hasAccess, reason } } */
 export const getMySubscription = () => api.get('/subscriptions/me');
@@ -91,6 +104,8 @@ export default {
   validateCoupon,
   startCheckout,
   confirmCheckout,
+  getPlanChangeQuote,
+  startPlanChange,
   getMySubscription,
   listMyPayments,
   cancelMySubscription,

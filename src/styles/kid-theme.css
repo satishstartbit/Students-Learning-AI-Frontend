@@ -1,5 +1,5 @@
 /* =====================================================================
-   K-5 "My Learning Space" theme.
+   K-4 "My Learning Space" theme.
 
    The warm cut-paper look from the student mockup, for students in
    Kindergarten to Grade 5. Everything is scoped to `.kid-theme` (set by
@@ -188,11 +188,11 @@
 }
 
 /* =====================================================================
-   The colour theme, chosen on "My colours" (K-5) or "Make it yours"
+   The colour theme, chosen on "My colours" (K-4) or "Make it yours"
    (Grade 6+) and stamped on <html> as data-accent by theme/index.js.
 
    Ocean is the default family and sets no attribute, so the first block is
-   this area's own craft teal - the palette the K-5 design was drawn in,
+   this area's own craft teal - the palette the K-4 design was drawn in,
    unchanged. Pick any other family and the second block takes over: the
    kid space's own "teal" tokens re-point at that family, so every
    bg-kid-teal button, tick and highlight follows, and the --accent-* tokens

@@ -9,7 +9,7 @@ import { DueChip, StatusCircle, SubjectTile } from '../PaperKit';
 import { EarnedStars, HomeSticker } from './HomeBits';
 
 /**
- * The K-5 Home's task lists, from the "Good morning, Alex!" mockup:
+ * The K-4 Home's task lists, from the "Good morning, Alex!" mockup:
  * "Still to finish" (each with a speech bubble saying why it's there),
  * "Other tasks today", and the "Want to do more?" card.
  */
@@ -18,7 +18,7 @@ import { EarnedStars, HomeSticker } from './HomeBits';
 export function HomeTaskCard({ task, className }) {
   const assignment = task.assignment ?? {};
   const minutes = formatMinutes(assignment.estimatedMinutes);
-  // "Make it yours" -> My card style, the same as the other K-5 task cards (TaskCard).
+  // "Make it yours" -> My card style, the same as the other K-4 task cards (TaskCard).
   const { settings } = useStudentSettings();
   const cardStyle = settings?.cardStyle ?? 'taped';
 

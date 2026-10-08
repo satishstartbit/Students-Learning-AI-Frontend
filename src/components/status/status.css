@@ -2,7 +2,7 @@
    Status views: offline, can't reach the server, server error, 404, a page
    that crashed (StatusView.jsx, NetworkStatusBanner.jsx, pages/status/*).
    Prefix: st-. Colours are theme tokens only, so every accent theme, dark
-   mode and the K-5 shell draw them in their own colours.
+   mode and the K-4 shell draw them in their own colours.
    ===================================================================== */
 
 .st-view {

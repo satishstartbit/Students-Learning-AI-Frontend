@@ -15,7 +15,6 @@ import {
   Textarea,
   EmptyState,
   ErrorState,
-  Toast,
 } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
@@ -26,6 +25,7 @@ import { planFitReason } from '../../parent/familyLimits';
 import { useViewingChild } from '../../parent/hooks/useViewingChild';
 import BillingHistory from '../components/BillingHistory';
 import PaymentMethodCard from '../components/PaymentMethodCard';
+import PriceSummary from '../components/PriceSummary';
 import { useSubscriptionAccess } from '../hooks/useSubscriptionAccess';
 import subscriptionService from '../services/subscription.service';
 import { describeCard } from '../stripe';
@@ -38,54 +38,62 @@ const PLAN_STATUS = {
   past_due: { label: 'Payment due', variant: 'warning' },
 };
 
-/** One selectable plan. `fitReason` = why it can't hold the family as it is now (it can't be chosen). */
-function PlanCard({ plan, selected, onSelect, fitReason }) {
-  const childLimit =
-    plan.minChildren && plan.maxChildren && plan.minChildren !== plan.maxChildren
-      ? `${plan.minChildren}–${plan.maxChildren} children`
-      : plan.maxChildren
-        ? `Up to ${plan.maxChildren} ${plan.maxChildren === 1 ? 'child' : 'children'}`
-        : 'Unlimited children';
-  const parentLimit = plan.maxParents
-    ? `Up to ${plan.maxParents} ${plan.maxParents === 1 ? 'parent' : 'parents'}`
-    : 'Unlimited parents';
+const per = (plan) => (plan?.billingCycle === 'yearly' ? 'year' : 'month');
+
+/** "Up to 3 children" / "Unlimited children" - a blank plan limit means no limit. */
+const limitText = (max, one, many) => (max ? `Up to ${max} ${max === 1 ? one : many}` : `Unlimited ${many}`);
+
+/**
+ * One selectable plan. `fitReason` = why it can't hold the family as it is
+ * now; `current` = the plan the family is already on. Neither can be chosen.
+ * The trial badge only shows to a family that would get the trial (their first subscription).
+ */
+function PlanCard({ plan, selected, onSelect, fitReason, current = false, trialEligible = true }) {
+  let label = 'Choose this plan';
+  if (current) label = 'Your current plan';
+  else if (selected) label = 'Selected';
+  else if (fitReason) label = 'Too small for your family';
 
   return (
     <Card
-      className="ui-field"
+      className={`ui-field${current ? ' sub-plancard--current' : ''}`}
       style={selected ? { borderColor: 'var(--accent-base)', borderWidth: 2 } : undefined}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--spacing-sm)' }}>
+        <div className="min-w-0">
           <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>{plan.name}</div>
           {plan.description && <p className="ui-hint">{plan.description}</p>}
         </div>
-        {plan.trialDays > 0 && <Badge variant="success">{plan.trialDays}-day trial</Badge>}
+        {current ? (
+          <Badge variant="primary">Your plan</Badge>
+        ) : (
+          trialEligible && plan.trialDays > 0 && <Badge variant="success">{plan.trialDays}-day free trial</Badge>
+        )}
       </div>
 
       <div style={{ margin: 'var(--spacing-md) 0', fontSize: '1.5rem', fontWeight: 700 }}>
         {formatCurrency(plan.price, plan.currency)}
         <span className="ui-hint" style={{ fontSize: '0.9rem', fontWeight: 400 }}>
           {' '}
-          / {plan.billingCycle === 'yearly' ? 'year' : 'month'}
+          / {per(plan)}
         </span>
       </div>
 
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        <Badge variant="neutral">{childLimit}</Badge>
-        <Badge variant="neutral">{parentLimit}</Badge>
+        <Badge variant="neutral">{limitText(plan.maxChildren, 'child', 'children')}</Badge>
+        <Badge variant="neutral">{limitText(plan.maxParents, 'parent', 'parents')}</Badge>
       </div>
 
       <div style={{ marginTop: 'var(--spacing-lg)' }}>
         <Button
           fullWidth
           variant={selected ? 'primary' : 'secondary'}
-          disabled={Boolean(fitReason)}
+          disabled={current || Boolean(fitReason)}
           onClick={() => onSelect(plan)}
         >
-          {selected ? 'Selected' : fitReason ? 'Too small for your family' : 'Choose this plan'}
+          {label}
         </Button>
-        {fitReason && <p className="ui-hint">{fitReason}</p>}
+        {fitReason && !current && <p className="ui-hint">{fitReason}</p>}
       </div>
     </Card>
   );
@@ -109,32 +117,45 @@ function lockMessage(access, latest) {
  * /parent/subscription
  *
  * The parent's subscription hub, and where the paywall sends them: current
- * status (or why they're locked out), auto-renewal, the saved card, the plan
- * picker when nothing is in force, and billing history. Card details are
- * never entered on this page itself - they go into Stripe Elements, either on
- * the checkout step or in the card dialog.
+ * status (or why they're locked out), the plan's limits, auto-renewal,
+ * changing plan, the saved card, the plan picker when nothing is in force,
+ * and billing history. Prices always come from the server (plan, code, free
+ * trial, credit for a plan change) - this page never decides an amount. Card
+ * details are never entered here: they go into Stripe Elements, on the
+ * checkout step or in the card dialog. `?change=1` opens the plan options
+ * (My Children links here when the plan is full).
  */
 export default function ParentSubscriptionPage() {
   const navigate = useNavigate();
   const { refresh: refreshAccess } = useSubscriptionAccess();
   const { viewingChild } = useViewingChild();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const overview = useApi(subscriptionService.getMySubscription);
   const payments = useApi(subscriptionService.listMyPayments);
   const plans = useApi(subscriptionService.listPlans);
   const paymentMethod = useApi(subscriptionService.getPaymentMethod);
 
+  // Choosing a first plan.
   const [selectedPlan, setSelectedPlan] = useState(null);
   // Mirrors selectedPlan synchronously (setSelectedPlan itself only takes
-  // effect on the next render) so an in-flight coupon request can tell,
-  // right when its response lands, whether the user has since switched to a
-  // different plan.
+  // effect on the next render) so an in-flight price request can tell, right
+  // when its response lands, whether the user has since picked another plan.
   const selectedPlanRef = useRef(null);
   const [couponCode, setCouponCode] = useState('');
-  const [quote, setQuote] = useState(null);
+  const [baseQuote, setBaseQuote] = useState(null); // the plan without a code: trial, due today
+  const [quote, setQuote] = useState(null); // with the applied code
   const [couponError, setCouponError] = useState(null);
   const [checkingCoupon, setCheckingCoupon] = useState(false);
   const [startingCheckout, setStartingCheckout] = useState(false);
+
+  // Changing plan while subscribed (the account holder).
+  const [changeOpen, setChangeOpen] = useState(() => searchParams.get('change') === '1');
+  const [changeTarget, setChangeTarget] = useState(null);
+  const changeTargetRef = useRef(null);
+  const [changeQuote, setChangeQuote] = useState(null);
+  const [changeQuoteError, setChangeQuoteError] = useState(null);
+  const [startingChange, setStartingChange] = useState(false);
 
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
@@ -159,13 +180,14 @@ export default function ParentSubscriptionPage() {
   }, [refreshAccess]);
 
   // Coming back from a Stripe redirect (3-D Secure / bank authentication):
-  // a checkout appends payment_intent, the card dialog appends setup_intent.
-  // Confirm once (the server re-reads the intent from Stripe), then strip the
-  // params so a refresh doesn't repeat it.
-  const [searchParams, setSearchParams] = useSearchParams();
+  // a checkout appends payment_intent, the card dialog and a free trial
+  // append setup_intent (a trial also carries ?checkout=trial). Confirm once
+  // (the server re-reads the intent from Stripe), then strip the params so a
+  // refresh doesn't repeat it.
   const returnedIntent = searchParams.get('payment_intent');
   const returnedSetup = searchParams.get('setup_intent');
   const redirectStatus = searchParams.get('redirect_status');
+  const trialReturn = searchParams.get('checkout') === 'trial';
   const handledReturn = useRef(false);
 
   useEffect(() => {
@@ -180,17 +202,26 @@ export default function ParentSubscriptionPage() {
       if (returnedSetup) {
         if (redirectStatus === 'succeeded') {
           try {
-            await subscriptionService.confirmSetupIntent(returnedSetup);
-            toast.success('Card saved');
+            if (trialReturn) {
+              await subscriptionService.confirmCheckout({ setupIntentId: returnedSetup });
+              toast.success('Your free trial has started');
+            } else {
+              await subscriptionService.confirmSetupIntent(returnedSetup);
+              toast.success('Card saved');
+            }
           } catch (err) {
             toast.error(getErrorMessage(err));
           }
         } else {
-          toast.error('Your card was not saved. Please try again.');
+          toast.error(
+            trialReturn
+              ? 'Your card was not saved, so the free trial has not started. Please try again.'
+              : 'Your card was not saved. Please try again.'
+          );
         }
       } else if (redirectStatus === 'succeeded') {
         try {
-          await subscriptionService.confirmCheckout(returnedIntent);
+          await subscriptionService.confirmCheckout({ paymentIntentId: returnedIntent });
           toast.success('Payment received — your subscription is active');
         } catch {
           toast.info('Payment received. Your subscription will activate shortly.');
@@ -208,7 +239,7 @@ export default function ParentSubscriptionPage() {
       await refreshAccess();
     };
     finish();
-  }, [returnedIntent, returnedSetup, redirectStatus, load, setSearchParams, refreshAccess]);
+  }, [returnedIntent, returnedSetup, redirectStatus, trialReturn, load, setSearchParams, refreshAccess]);
 
   const current = overview.data?.subscription ?? null;
   const latest = overview.data?.latestSubscription ?? null;
@@ -217,7 +248,7 @@ export default function ParentSubscriptionPage() {
   const hasSubscription = Boolean(current);
 
   // Extra parents share the account holder's plan, read-only: no plan picker,
-  // renewal, cancel, card or billing history.
+  // renewal, cancel, change, card or billing history.
   const familyInfo = overview.data?.family ?? null;
   const isAccountHolder = familyInfo?.isAccountHolder !== false;
   const holderName = formatName(familyInfo?.accountHolder, { fallback: 'the account holder' });
@@ -227,48 +258,89 @@ export default function ParentSubscriptionPage() {
       ? `Your family's plan is not active. Ask ${holderName}, the account holder, to renew it.`
       : null;
 
-  const applyCoupon = async () => {
-    if (!selectedPlan) return;
-    const requestedPlanId = selectedPlan.id;
-    setCheckingCoupon(true);
+  // ---- choosing a first plan
+
+  /** The server's price for the selected plan with `code` (or none); undefined if the parent picked another plan meanwhile. */
+  const priceSelected = async (plan, code) => {
+    const { data } = await subscriptionService.validateCoupon({ planId: plan.id, code: code || null });
+    return selectedPlanRef.current?.id === plan.id ? data : undefined;
+  };
+
+  const resetChoice = () => {
+    selectedPlanRef.current = null;
+    setSelectedPlan(null);
+    setCouponCode('');
+    setQuote(null);
+    setBaseQuote(null);
     setCouponError(null);
-    try {
-      const { data } = await subscriptionService.validateCoupon({
-        planId: requestedPlanId,
-        code: couponCode.trim() || null,
-      });
-      // The parent may have switched plans while this request was in
-      // flight - a stale quote for the old plan must not be applied now.
-      if (selectedPlanRef.current?.id !== requestedPlanId) return;
-      setQuote(data);
-      if (couponCode.trim()) toast.success('Discount applied');
-    } catch (err) {
-      if (selectedPlanRef.current?.id !== requestedPlanId) return;
-      setQuote(null);
-      setCouponError(getErrorMessage(err));
-    } finally {
-      setCheckingCoupon(false);
-    }
   };
 
   const selectPlan = (plan) => {
     selectedPlanRef.current = plan;
     setSelectedPlan(plan);
     setQuote(null);
+    setBaseQuote(null);
     setCouponError(null);
+    // Trial and what's due today come from the server; until then the plan's own price shows.
+    priceSelected(plan, null)
+      .then((data) => data && setBaseQuote(data))
+      .catch(() => {});
   };
+
+  /** Applies the typed code. True when the new price is showing. */
+  const applyCoupon = async () => {
+    if (!selectedPlan) return false;
+    const plan = selectedPlan;
+    setCheckingCoupon(true);
+    setCouponError(null);
+    try {
+      const data = await priceSelected(plan, couponCode.trim());
+      if (data === undefined) return false;
+      setQuote(data);
+      if (couponCode.trim()) toast.success('Discount applied');
+      return true;
+    } catch (err) {
+      if (selectedPlanRef.current?.id === plan.id) {
+        setQuote(null);
+        setCouponError(getErrorMessage(err));
+      }
+      return false;
+    } finally {
+      setCheckingCoupon(false);
+    }
+  };
+
+  const shown = quote ?? baseQuote;
+  const appliedCode = quote?.coupon?.code ?? null;
+  const typedCode = couponCode.trim();
+  const codePending = Boolean(typedCode) && typedCode.toLowerCase() !== (appliedCode ?? '').toLowerCase();
+  const trialDays = shown?.trialDays ?? 0;
+  const nothingToPay = Boolean(shown) && shown.total === 0;
+  let checkoutLabel = 'Continue to payment';
+  if (trialDays > 0) checkoutLabel = 'Start free trial';
+  else if (nothingToPay) checkoutLabel = 'Start plan';
 
   const goToCheckout = async () => {
     if (!selectedPlan) return;
+    // A code typed but not applied yet: apply it first, so the new total is
+    // seen before anything is paid.
+    if (codePending) {
+      await applyCoupon();
+      return;
+    }
     setStartingCheckout(true);
     try {
-      const { data } = await subscriptionService.startCheckout({
-        planId: selectedPlan.id,
-        code: couponCode.trim() || null,
-      });
+      const { data } = await subscriptionService.startCheckout({ planId: selectedPlan.id, code: appliedCode });
+      if (data.mode === 'none') {
+        toast.success(`${selectedPlan.name} is active. There's nothing to pay.`, { title: 'Subscription active' });
+        resetChoice();
+        await reload();
+        return;
+      }
       // The client secret is handed to Stripe Elements on the next screen; it
-      // is single-use and scoped to this one payment. The saved card (if any)
-      // travels too, so checkout can offer to pay with it.
+      // is single-use and scoped to this one payment (or, for a free trial, to
+      // saving the card). The saved card (if any) travels too, so checkout can
+      // offer to use it.
       navigate('/parent/subscription/checkout', { state: { checkout: data, savedCard: card } });
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -276,6 +348,48 @@ export default function ParentSubscriptionPage() {
       setStartingCheckout(false);
     }
   };
+
+  // ---- changing plan
+
+  const closeChange = () => {
+    setChangeOpen(false);
+    changeTargetRef.current = null;
+    setChangeTarget(null);
+    setChangeQuote(null);
+    setChangeQuoteError(null);
+  };
+
+  const pickChange = (plan) => {
+    changeTargetRef.current = plan;
+    setChangeTarget(plan);
+    setChangeQuote(null);
+    setChangeQuoteError(null);
+    subscriptionService
+      .getPlanChangeQuote(plan.id)
+      .then(({ data }) => changeTargetRef.current?.id === plan.id && setChangeQuote(data))
+      .catch((err) => changeTargetRef.current?.id === plan.id && setChangeQuoteError(getErrorMessage(err)));
+  };
+
+  const confirmChange = async () => {
+    if (!changeTarget || !changeQuote) return;
+    setStartingChange(true);
+    try {
+      const { data } = await subscriptionService.startPlanChange(changeTarget.id);
+      if (data.mode === 'none') {
+        toast.success(`You're now on ${changeTarget.name}.`, { title: 'Plan changed' });
+        closeChange();
+        await reload();
+        return;
+      }
+      navigate('/parent/subscription/checkout', { state: { checkout: data, savedCard: card } });
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setStartingChange(false);
+    }
+  };
+
+  // ---- cancel and renewal
 
   const submitCancel = async () => {
     setCancelling(true);
@@ -310,19 +424,23 @@ export default function ParentSubscriptionPage() {
   }
 
   const periodEnd = current?.currentPeriodEnd ? formatDate(current.currentPeriodEnd) : 'the end of the current period';
+  const trialing = current?.status === 'trialing';
   let autoRenewDescription = '';
   if (current?.cancelledAt) {
     autoRenewDescription = `Cancelled on ${formatDate(current.cancelledAt)} - access ends ${periodEnd}. You can subscribe again once it ends.`;
   } else if (current?.autoRenew) {
+    const when = trialing ? `Your free trial ends on ${periodEnd}, then your plan starts` : `Your plan renews on ${periodEnd}`;
     autoRenewDescription = card
-      ? `On. Your plan renews on ${periodEnd} and charges ${describeCard(card)}.`
-      : `On. Your plan renews on ${periodEnd} - add a card, or the renewal payment will fail.`;
+      ? `On. ${when} and charges ${describeCard(card)}.`
+      : `On. ${when} - add a card, or the payment will fail.`;
   } else if (current) {
     autoRenewDescription = `Off. Access ends ${periodEnd}. Turn it back on any time before then to keep your plan.`;
   }
 
   const allPayments = payments.data ?? [];
   const planStatus = current ? (PLAN_STATUS[current.status] ?? { label: formatStatus(current.status), variant: 'neutral' }) : null;
+  // The free trial is for a family's first subscription (the server decides; this only hides the badge).
+  const trialEligible = !latest;
 
   return (
     <div className="td-page">
@@ -373,7 +491,7 @@ export default function ParentSubscriptionPage() {
                 </h2>
                 <p className="sub-plan__price">
                   {formatCurrency(current.plan?.price, current.plan?.currency)}
-                  <span className="sub-plan__cycle">/ {current.plan?.billingCycle === 'yearly' ? 'year' : 'month'}</span>
+                  <span className="sub-plan__cycle">/ {per(current.plan)}</span>
                 </p>
                 <div className="sub-plan__badges">
                   <Badge variant={planStatus.variant} className="sub-badge">
@@ -396,10 +514,16 @@ export default function ParentSubscriptionPage() {
                     </Badge>
                   )}
                 </div>
+                <p className="sub-card__subtitle">
+                  {limitText(current.plan?.maxChildren, 'child', 'children')} ·{' '}
+                  {limitText(current.plan?.maxParents, 'parent', 'parents')}
+                </p>
               </div>
 
               <div className="sub-plan__when">
-                <span className="sub-plan__when-label">{current.autoRenew ? 'Renews on' : 'Access ends'}</span>
+                <span className="sub-plan__when-label">
+                  {!current.autoRenew ? 'Access ends' : trialing ? 'Trial ends' : 'Renews on'}
+                </span>
                 <span className="sub-plan__when-date">{current.currentPeriodEnd ? formatDate(current.currentPeriodEnd) : '—'}</span>
               </div>
             </div>
@@ -436,17 +560,98 @@ export default function ParentSubscriptionPage() {
               </div>
             )}
 
-            {isAccountHolder && !current.cancelledAt && (
+            {isAccountHolder && (
               <div className="sub-plan__actions">
-                <Button variant="secondary" onClick={() => setCancelOpen(true)}>
-                  Cancel subscription
+                <Button variant="secondary" aria-expanded={changeOpen} onClick={changeOpen ? closeChange : () => setChangeOpen(true)}>
+                  {changeOpen ? 'Close plan options' : 'Change plan'}
                 </Button>
+                {!current.cancelledAt && (
+                  <Button variant="secondary" onClick={() => setCancelOpen(true)}>
+                    Cancel subscription
+                  </Button>
+                )}
               </div>
             )}
           </section>
 
           {isAccountHolder && <PaymentMethodCard card={card} autoRenewing={Boolean(current.autoRenew)} onChanged={reload} />}
         </div>
+      )}
+
+      {hasSubscription && isAccountHolder && changeOpen && (
+        <section className="sub-change" aria-label="Change plan">
+          <SectionHeader
+            title="Change plan"
+            as="h2"
+            description={
+              trialing
+                ? 'Your free trial carries on with the plan you choose.'
+                : 'The new plan starts today. The unused part of what you paid for this period comes off the price.'
+            }
+          />
+          <div className="sub-plans">
+            {(plans.data ?? []).map((plan) => (
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                current={plan.id === current.plan?.id}
+                selected={changeTarget?.id === plan.id}
+                onSelect={pickChange}
+                fitReason={planFitReason(plan, familyInfo)}
+                trialEligible={false}
+              />
+            ))}
+          </div>
+
+          {changeTarget && (
+            <Card className="ui-field sub-change">
+              <SectionHeader title={`Change to ${changeTarget.name}`} as="h3" />
+              {changeQuoteError ? (
+                <Alert variant="error">{changeQuoteError}</Alert>
+              ) : !changeQuote ? (
+                <Loader message="Working out the price…" />
+              ) : (
+                <>
+                  <PriceSummary
+                    currency={changeQuote.currency}
+                    rows={[
+                      { label: `${changeTarget.name} (per ${per(changeTarget)})`, value: changeQuote.subtotal },
+                      changeQuote.discount > 0 && {
+                        label: `Discount (${changeQuote.coupon?.code ?? 'code'})`,
+                        value: changeQuote.discount,
+                        saving: true,
+                      },
+                      changeQuote.credit > 0 && {
+                        label: `Unused time on ${changeQuote.currentPlan?.name ?? 'your plan'}`,
+                        value: changeQuote.credit,
+                        saving: true,
+                      },
+                      { label: 'Due today', value: changeQuote.dueToday, total: true },
+                    ]}
+                  />
+                  <p className="sub-note">
+                    {changeQuote.trial
+                      ? `Your free trial carries on until ${formatDate(changeQuote.periodEnd)}, then ${formatCurrency(changeQuote.total, changeQuote.currency)} a ${per(changeTarget)}.`
+                      : `${changeTarget.name} starts today and renews on ${formatDate(changeQuote.periodEnd)} at ${formatCurrency(changeQuote.total, changeQuote.currency)} a ${per(changeTarget)}.`}
+                    {!changeQuote.trial && changeQuote.credit > changeQuote.total && ' The rest of your credit adds time to the new plan.'}
+                  </p>
+                  {changeQuote.couponDropped && (
+                    <p className="sub-note">
+                      Your code {current.discountCode?.code} doesn't apply to {changeTarget.name}, so it won't carry over.
+                    </p>
+                  )}
+                  <div style={{ marginTop: 'var(--spacing-lg)' }}>
+                    <Button onClick={confirmChange} loading={startingChange}>
+                      {changeQuote.dueToday > 0
+                        ? `Pay ${formatCurrency(changeQuote.dueToday, changeQuote.currency)} and change plan`
+                        : 'Change plan'}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </Card>
+          )}
+        </section>
       )}
 
       {!hasSubscription && isAccountHolder && (
@@ -459,13 +664,7 @@ export default function ParentSubscriptionPage() {
               description="There are no active subscription plans to choose from right now."
             />
           ) : (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: 'var(--spacing-lg)',
-              }}
-            >
+            <div className="sub-plans">
               {(plans.data ?? []).map((plan) => (
                 <PlanCard
                   key={plan.id}
@@ -473,6 +672,7 @@ export default function ParentSubscriptionPage() {
                   selected={selectedPlan?.id === plan.id}
                   onSelect={selectPlan}
                   fitReason={planFitReason(plan, familyInfo)}
+                  trialEligible={trialEligible}
                 />
               ))}
             </div>
@@ -517,36 +717,34 @@ export default function ParentSubscriptionPage() {
                 </Button>
               </div>
 
-              <div style={{ marginTop: 'var(--spacing-lg)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Subtotal</span>
-                  <span>{formatCurrency(quote?.subtotal ?? selectedPlan.price, selectedPlan.currency)}</span>
-                </div>
-                {quote?.discount > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-success-fg)' }}>
-                    <span>Discount {quote.coupon ? `(${quote.coupon.code})` : ''}</span>
-                    <span>−{formatCurrency(quote.discount, selectedPlan.currency)}</span>
-                  </div>
-                )}
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontWeight: 700,
-                    fontSize: '1.1rem',
-                    marginTop: 'var(--spacing-sm)',
-                    paddingTop: 'var(--spacing-sm)',
-                    borderTop: '1px solid var(--color-border-default)',
-                  }}
-                >
-                  <span>Total due today</span>
-                  <span>{formatCurrency(quote?.total ?? selectedPlan.price, selectedPlan.currency)}</span>
-                </div>
-              </div>
+              <PriceSummary
+                currency={selectedPlan.currency}
+                rows={[
+                  { label: 'Subtotal', value: shown?.subtotal ?? selectedPlan.price },
+                  shown?.discount > 0 && {
+                    label: `Discount${shown.coupon ? ` (${shown.coupon.code})` : ''}`,
+                    value: shown.discount,
+                    saving: true,
+                  },
+                  trialDays > 0 && { label: 'Free trial', text: `${trialDays} days` },
+                  { label: 'Total due today', value: shown?.dueToday ?? selectedPlan.price, total: true },
+                ]}
+              />
+              {trialDays > 0 && (
+                <p className="sub-note">
+                  Then {formatCurrency(shown.total, selectedPlan.currency)} a {per(selectedPlan)} from{' '}
+                  {formatDate(shown.trialEndsAt)}. Your card is saved now and only charged when the trial ends - cancel
+                  before then and you pay nothing.
+                </p>
+              )}
+              {nothingToPay && <p className="sub-note">There's nothing to pay, so no card is needed.</p>}
+              {codePending && !couponError && (
+                <p className="sub-note">Your code is applied when you continue - you'll see the new total first.</p>
+              )}
 
               <div style={{ marginTop: 'var(--spacing-lg)' }}>
-                <Button onClick={goToCheckout} loading={startingCheckout}>
-                  Continue to payment
+                <Button onClick={goToCheckout} loading={startingCheckout || checkingCoupon}>
+                  {checkoutLabel}
                 </Button>
               </div>
             </Card>
@@ -570,7 +768,11 @@ export default function ParentSubscriptionPage() {
         title="Cancel your subscription?"
         confirmLabel="Cancel subscription"
         cancelLabel="Keep it"
-        message={`You will keep access until ${periodEnd}, and you will not be charged again. Unlike turning off auto-renewal, a cancellation can't be undone - you can subscribe again once it ends.`}
+        message={
+          trialing
+            ? `Your free trial carries on until ${periodEnd}, and you will not be charged. A cancellation can't be undone - you can subscribe again once it ends.`
+            : `You will keep access until ${periodEnd}, and you will not be charged again. Unlike turning off auto-renewal, a cancellation can't be undone - you can subscribe again once it ends.`
+        }
       >
         <Textarea
           label="Reason (optional)"
@@ -591,8 +793,6 @@ export default function ParentSubscriptionPage() {
         cancelLabel="Keep it on"
         message={`Your subscription will end on ${periodEnd} and you won't be charged again. You and your children keep access until then, and you can turn auto-renewal back on any time before that date.`}
       />
-
-      <Toast />
     </div>
   );
 }

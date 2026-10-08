@@ -4,6 +4,7 @@ import {
   COLUMNS,
   VIEW_OPTIONS,
   agendaItems,
+  blockStats,
   boardColumns,
   canTick,
   dueInfo,
@@ -11,8 +12,13 @@ import {
   listSections,
   moveActions,
   orderByPlan,
+  planSections,
+  sortBlocks,
+  sortOptionsFor,
+  sortWork,
   upcomingEvents,
   weekKeys,
+  workByDueDay,
 } from './schoolwork.js';
 
 const TODAY = '2026-09-25';
@@ -133,4 +139,61 @@ test('the full calendar day: study times and personal events in time order (the 
 
 test('a week of day keys', () => {
   assert.deepEqual(weekKeys('2026-09-28', 3), ['2026-09-28', '2026-09-29', '2026-09-30']);
+});
+
+// --- The Sort menu (Plan page, both bands) -------------------------------------------------
+const SORTABLE = [
+  w('m', { title: 'Map quiz', subject: 'History', dueDate: '2026-10-07' }),
+  w('b', { title: 'Book response', subject: 'English', dueDate: '2026-09-26' }),
+  w('k', { title: 'Worksheet 12', subject: 'Mathematics', dueDate: '2026-09-25', progress: 'doing' }),
+  w('n', { title: 'No subject yet', subject: null, dueDate: null }),
+  w('s', { title: 'Spanish vocabulary', subject: 'Languages', progress: 'done', completedAt: '2026-09-24T10:00:00Z' }),
+  w('p', { title: 'Poetry response', subject: 'English', progress: 'done', completedAt: '2026-09-25T10:00:00Z' }),
+];
+const RANK = [{ assignmentId: 'b' }, { assignmentId: 'm' }, { assignmentId: 'k' }];
+
+test('sort options: Grade 6+ words, K-4 words, "next 3" on the 6+ list only', () => {
+  assert.deepEqual(sortOptionsFor('board').map((o) => o.label), ['Recommended', 'Due date', 'Subject']);
+  assert.deepEqual(sortOptionsFor('list').map((o) => o.key), ['plan', 'due', 'subject', 'next3']);
+  assert.deepEqual(sortOptionsFor('list', { kid: true }).map((o) => o.label), ['What’s next', 'Due first', 'Subject']);
+});
+
+test('sortWork: the plan, due date (undated last), subject (none last) - ties keep the plan order', () => {
+  assert.deepEqual(sortWork(SORTABLE, RANK, 'plan').map((x) => x.id), ['b', 'm', 'k', 'n', 'p', 's'], 'unranked and undated: by title');
+  assert.deepEqual(sortWork(SORTABLE, RANK, 'due').map((x) => x.id), ['k', 'b', 'm', 'n', 'p', 's']);
+  assert.deepEqual(sortWork(SORTABLE, RANK, 'subject').map((x) => x.id), ['b', 'p', 'm', 's', 'k', 'n']);
+});
+
+test('board columns follow the sort; Done stays most recently finished first', () => {
+  const cols = boardColumns(SORTABLE, RANK, 'due');
+  assert.deepEqual(cols.todo.map((x) => x.id), ['b', 'm', 'n']);
+  assert.deepEqual(cols.doing.map((x) => x.id), ['k']);
+  assert.deepEqual(cols.done.map((x) => x.id), ['p', 's']);
+});
+
+test('plan sections: open in the sort order (three for next3), finished apart', () => {
+  const plan = planSections(SORTABLE, RANK, 'plan');
+  assert.deepEqual(plan.open.map((x) => x.id), ['b', 'm', 'k', 'n']);
+  assert.deepEqual(plan.done.map((x) => x.id), ['p', 's']);
+  assert.deepEqual(planSections(SORTABLE, RANK, 'next3').open.map((x) => x.id), ['b', 'm', 'k']);
+});
+
+test('a day of study times: by time, by the work due soonest, or by subject', () => {
+  const blocks = [
+    { id: 1, assignmentId: 'm', subject: 'History', startAt: '2026-09-25T19:00:00Z', minutes: 20, status: 'scheduled' },
+    { id: 2, assignmentId: 'k', subject: 'Mathematics', startAt: '2026-09-25T20:00:00Z', minutes: 20, status: 'done' },
+    { id: 3, assignmentId: 'b', subject: 'English', startAt: '2026-09-25T21:00:00Z', minutes: 25, status: 'missed' },
+  ];
+  const due = { m: '2026-10-07', k: '2026-09-25', b: '2026-09-26' };
+  assert.deepEqual(sortBlocks(blocks, 'plan').map((b) => b.id), [1, 2, 3]);
+  assert.deepEqual(sortBlocks(blocks, 'due', (id) => due[id]).map((b) => b.id), [2, 3, 1]);
+  assert.deepEqual(sortBlocks(blocks, 'subject').map((b) => b.id), [3, 1, 2]);
+  assert.deepEqual(blockStats(blocks), { total: 3, done: 1, minutes: 40 }, 'a missed time is not planned time');
+  assert.deepEqual(blockStats([]), { total: 0, done: 0, minutes: 0 });
+});
+
+test('work by its due day, in the sort order; undated work is left out', () => {
+  const map = workByDueDay(SORTABLE, RANK, 'plan');
+  assert.deepEqual([...map.keys()].sort(), ['2026-09-25', '2026-09-26', '2026-10-07']);
+  assert.deepEqual(map.get('2026-09-25').map((x) => x.id), ['k']);
 });

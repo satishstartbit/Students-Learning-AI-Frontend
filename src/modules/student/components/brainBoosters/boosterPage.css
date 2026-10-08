@@ -96,5 +96,5 @@
 .bb-booster__pace p { margin: 0; color: var(--color-text-secondary); font-size: 12.5px; line-height: 1.55; }
 .bb-booster__pace p + p { margin-top: 6px; }
 
-/* The K-5 page puts the game on a coloured paper panel (pages/kid/KidBoosterPage.jsx). */
+/* The K-4 page puts the game on a coloured paper panel (pages/kid/KidBoosterPage.jsx). */
 .bb-kid-game .bb-follow-field { height: 280px; }

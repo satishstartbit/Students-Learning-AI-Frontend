@@ -1,5 +1,5 @@
 /**
- * How the K-5 Home lays out the student's to-do work - pure (no React, no
+ * How the K-4 Home lays out the student's to-do work - pure (no React, no
  * locale config), so node:test can check it. The page passes today's day key
  * in the student's own timezone and a function that turns a due date into a
  * day key (utils/date.js), so nothing here reads a clock.

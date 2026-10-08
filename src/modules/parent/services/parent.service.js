@@ -66,6 +66,13 @@ export const getDashboard = () => api.get('/parent/dashboard');
  */
 export const getChildOverview = (childId) => api.get(`/parent/children/${childId}/overview`);
 
+/**
+ * One child's own notes, read-only - the same filters as the student's Notes
+ * page (`range`, `from`/`to`, `status`, `search`, `page`, `limit`), plus
+ * `generalOnly` for the Overview card (their Home board: `range: 'home'`).
+ */
+export const listChildNotes = (childId, params = {}) => api.get(`/parent/children/${childId}/notes`, { params });
+
 /** Marks a child's check-in alert as seen by this parent (teachers keep their own). */
 export const markAlertSeen = (childId, alertId) => api.post(`/parent/children/${childId}/alerts/${alertId}/seen`);
 
@@ -141,6 +148,7 @@ export default {
   setChildPassword,
   getDashboard,
   getChildOverview,
+  listChildNotes,
   markAlertSeen,
   getProgress,
   getChildProgress,

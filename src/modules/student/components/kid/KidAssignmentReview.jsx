@@ -8,7 +8,7 @@ import { personName } from '../assignment/assignmentLabels';
 import { PaperCard, StarRating } from './PaperKit';
 
 /**
- * The K-5 assignment page once the work is handed in - the "Busy Bee quiz"
+ * The K-4 assignment page once the work is handed in - the "Busy Bee quiz"
  * mockup: "Your teacher checked your work! You got 4 of 6 right!" with a
  * star for each right answer and what the teacher said, then "Your answers":
  * each question with the pick ("You got it!"), and for a miss the right one

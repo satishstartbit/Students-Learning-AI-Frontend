@@ -4,7 +4,8 @@ import { PageHeader, Card, Input, Textarea, Select, MultiSelect, DatePicker, Che
 import { useForm } from '../../../../hooks/useForm';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
-import { required, max } from '../../../../utils/validation';
+import { required, max, min, pattern } from '../../../../utils/validation';
+import { toDateInputValue } from '../../../../utils/date';
 import billingService from '../../services/billing.service';
 import '../../components/masterPages.css';
 
@@ -20,6 +21,16 @@ const DISCOUNT_TYPE_OPTIONS = [
  */
 const percentageMax = (message = 'Percentage discounts cannot exceed 100') => (value, allValues = {}) =>
   allValues.discountType === 'percentage' ? max(100, message)(value) : null;
+
+/** Blank = no limit; otherwise a whole number of at least 1 (0 would make a code nobody can use). */
+const limitOrBlank = (value) =>
+  value === '' || value == null || (Number.isInteger(Number(value)) && Number(value) >= 1)
+    ? null
+    : 'Enter a whole number of 1 or more, or leave blank for no limit';
+
+/** Day keys compare as text ("2026-10-31"). */
+const notBeforeStart = (value, allValues = {}) =>
+  value && allValues.startDate && value < allValues.startDate ? 'The expiry date cannot be before the start date' : null;
 
 export default function DiscountCodeFormPage() {
   const { id } = useParams();
@@ -39,12 +50,17 @@ export default function DiscountCodeFormPage() {
   const form = useForm({
     initialValues: {
       code: '', name: '', description: '', discountType: 'percentage', discountValue: '',
-      startDate: '', expiresAt: '', maxRedemptions: '', displayOrder: 0, isActive: true,
+      startDate: '', expiresAt: '', maxRedemptions: '', maxRedemptionsPerUser: '1', displayOrder: 0, isActive: true,
     },
     validationSchema: {
-      code: isEdit ? [] : [required('Enter a discount code')],
+      code: isEdit
+        ? []
+        : [required('Enter a discount code'), pattern(/^[A-Za-z0-9_-]+$/, 'Use letters, numbers, - or _ only, with no spaces')],
       name: [required('Enter a name')],
-      discountValue: [required('Enter the discount value'), percentageMax()],
+      discountValue: [required('Enter the discount value'), min(0, 'The discount cannot be negative'), percentageMax()],
+      expiresAt: [notBeforeStart],
+      maxRedemptions: [limitOrBlank],
+      maxRedemptionsPerUser: [limitOrBlank],
     },
     async onSubmit(values) {
       const payload = {
@@ -53,8 +69,10 @@ export default function DiscountCodeFormPage() {
         discountType: values.discountType,
         discountValue: Number(values.discountValue) || 0,
         startDate: values.startDate || null,
+        // A day: the server keeps the code working to the end of it, in your time zone.
         expiresAt: values.expiresAt || null,
         maxRedemptions: values.maxRedemptions === '' ? null : Number(values.maxRedemptions),
+        maxRedemptionsPerUser: values.maxRedemptionsPerUser === '' ? null : Number(values.maxRedemptionsPerUser),
         applicablePlans,
         displayOrder: Number(values.displayOrder) || 0,
       };
@@ -90,8 +108,10 @@ export default function DiscountCodeFormPage() {
       discountType: existing.discountType ?? 'percentage',
       discountValue: existing.discountValue ?? '',
       startDate: existing.startDate ?? '',
-      expiresAt: existing.expiresAt ? String(existing.expiresAt).slice(0, 10) : '',
+      // The day it ends where you are - slicing the UTC date showed the next day for an evening expiry.
+      expiresAt: existing.expiresAt ? toDateInputValue(existing.expiresAt) : '',
       maxRedemptions: existing.maxRedemptions ?? '',
+      maxRedemptionsPerUser: existing.maxRedemptionsPerUser ?? '',
       displayOrder: existing.displayOrder ?? 0,
       isActive: existing.isActive ?? true,
     });
@@ -115,14 +135,41 @@ export default function DiscountCodeFormPage() {
         {form.submitError && <Alert variant="error" className="ui-field">{form.submitError}</Alert>}
 
         <form onSubmit={form.handleSubmit} noValidate>
-          {!isEdit && <Input label="Discount code" required {...form.getFieldProps('code')} />}
+          {!isEdit && (
+            <Input
+              label="Discount code"
+              required
+              hint="Letters, numbers, - or _. Parents can type it in any case."
+              {...form.getFieldProps('code')}
+            />
+          )}
           <Input label="Name" required {...form.getFieldProps('name')} />
           <Textarea label="Description" {...form.getFieldProps('description')} />
           <Select label="Discount type" options={DISCOUNT_TYPE_OPTIONS} required {...form.getFieldProps('discountType')} />
-          <Input label="Discount value" type="number" required {...form.getFieldProps('discountValue')} />
-          <DatePicker label="Start date" {...form.getFieldProps('startDate')} />
-          <DatePicker label="Expiry date" {...form.getFieldProps('expiresAt')} />
-          <Input label="Usage limit" type="number" hint="Leave blank for unlimited" {...form.getFieldProps('maxRedemptions')} />
+          <Input
+            label="Discount value"
+            type="number"
+            min={0}
+            required
+            hint="100% or more than the price makes the plan free - no card is asked for."
+            {...form.getFieldProps('discountValue')}
+          />
+          <DatePicker label="Start date" hint="Works from the start of this day." {...form.getFieldProps('startDate')} />
+          <DatePicker label="Expiry date" hint="Works until the end of this day." {...form.getFieldProps('expiresAt')} />
+          <Input
+            label="Usage limit"
+            type="number"
+            min={1}
+            hint="How many families can use it in total. Leave blank for unlimited."
+            {...form.getFieldProps('maxRedemptions')}
+          />
+          <Input
+            label="Uses per family"
+            type="number"
+            min={1}
+            hint="How many times one family can use it. Leave blank for unlimited."
+            {...form.getFieldProps('maxRedemptionsPerUser')}
+          />
           <MultiSelect
             label="Applicable plans"
             options={planOptions}

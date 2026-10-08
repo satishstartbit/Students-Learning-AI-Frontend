@@ -1,0 +1,103 @@
+/* The Notes page list (NotesListView) - student and parent. Prefix nl-. */
+
+.nl-view {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.nl-filters {
+  align-items: flex-end;
+}
+
+.nl-problem {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-danger-fg);
+}
+
+.nl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: var(--spacing-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Each note on its own paper colour, as on the board. */
+.nl-card {
+  --nl-paper: var(--sticky-yellow);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--nl-paper);
+  color: var(--sticky-ink);
+  box-shadow: 0 1px 2px rgba(46, 35, 20, 0.12);
+}
+.nl-card[data-tone='pink'] { --nl-paper: var(--sticky-pink); }
+.nl-card[data-tone='blue'] { --nl-paper: var(--sticky-blue); }
+.nl-card[data-tone='green'] { --nl-paper: var(--sticky-green); }
+.nl-card[data-tone='lavender'] { --nl-paper: var(--sticky-lavender); }
+.nl-card[data-tone='orange'] { --nl-paper: var(--sticky-orange); }
+
+.nl-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+.nl-card__title {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.nl-card__done {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.nl-card__text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.nl-card[data-done='true'] .nl-card__title,
+.nl-card[data-done='true'] .nl-card__text {
+  color: color-mix(in srgb, var(--sticky-ink) 62%, transparent);
+}
+.nl-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: auto 0 0;
+  padding-top: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: color-mix(in srgb, var(--sticky-ink) 78%, transparent);
+}
+.nl-card__when {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+.nl-card__on a {
+  color: inherit;
+  font-weight: 600;
+}
+.nl-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding-top: var(--spacing-xs);
+}
+.nl-card__tools {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: auto;
+}

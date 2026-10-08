@@ -9,6 +9,7 @@
  * per call; every function here defaults to the active user preference.
  */
 import { getActiveLocale, getActiveTimezone } from './locale';
+import { zonedWallTimeToDate } from './zonedTime';
 
 export function toDate(value) {
   if (!value) return null;
@@ -215,6 +216,35 @@ export function toTimeInputValue(value, { timeZone } = {}) {
   return `${parts.hour}:${parts.minute}`;
 }
 
+/**
+ * A picked date (`<input type="date">`) and time (`type="time"`) on the
+ * user's own wall clock -> the UTC ISO string to send to the API. The
+ * reverse of toDateInputValue/toTimeInputValue. '' when either is missing.
+ */
+export function zonedDateTimeToIso(dateKey, hhmm, { timeZone } = {}) {
+  const instant = zonedWallTimeToDate(dateKey, hhmm, timeZone ?? getActiveTimezone());
+  return instant ? instant.toISOString() : '';
+}
+
+/**
+ * A moment close to now in words, in the user's timezone: "Today, 3:00 p.m.",
+ * "Tomorrow, 8:00 a.m.", "Yesterday, 9:15 a.m.", else "Thu, Oct 9, 3:00 p.m."
+ * (with the year when it isn't this year). For reminders and other times a
+ * person set themselves.
+ */
+export function formatNearDateTime(value, { locale, timeZone } = {}) {
+  const d = toDate(value);
+  if (!d) return '';
+  const time = formatTime(d, { locale, timeZone });
+  const days = daysUntil(d, { timeZone });
+  if (days === 0) return `Today, ${time}`;
+  if (days === 1) return `Tomorrow, ${time}`;
+  if (days === -1) return `Yesterday, ${time}`;
+  const sameYear = getDateKey(d, { timeZone }).slice(0, 4) === getDateKey(new Date(), { timeZone }).slice(0, 4);
+  const day = formatDate(d, { locale, timeZone, weekday: 'short', year: sameYear ? undefined : 'numeric' });
+  return `${day}, ${time}`;
+}
+
 export const startOfDay = (value = new Date()) => {
   const d = toDate(value);
   if (!d) return null;
@@ -342,6 +372,8 @@ export default {
   formatDateKey,
   toDateInputValue,
   toTimeInputValue,
+  zonedDateTimeToIso,
+  formatNearDateTime,
   daysUntil,
   isOverdue,
   isToday,

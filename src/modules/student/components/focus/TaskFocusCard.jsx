@@ -13,7 +13,7 @@ const RING_RADIUS = 64;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
 /**
- * "Focus time" on a Grade 6+ assignment page (K-5: KidTaskFocus). Once the
+ * "Focus time" on a Grade 6+ assignment page (K-4: KidTaskFocus). Once the
  * task is started, the focus clock sits right above the student's work,
  * already tied to this task - pick a length, start, and the focused minutes
  * count towards it without leaving the page. The full Focus page (steps,

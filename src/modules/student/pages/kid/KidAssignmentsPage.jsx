@@ -59,7 +59,7 @@ function HandedIn({ finished, total }) {
 }
 
 /**
- * K-5 "My work" (/student/assignments), built to the "My work" mockup: the
+ * K-4 "My work" (/student/assignments), built to the "My work" mockup: the
  * turtle banner, then every piece of work in three groups - Still going,
  * With my teacher (handed in, waiting), Finished - as picture cards with
  * dots for the steps done, and the cove at the foot. Opening a card goes to

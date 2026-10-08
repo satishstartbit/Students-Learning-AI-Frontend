@@ -6,7 +6,7 @@ import { MOOD_TILE } from './kidMoodTiles';
 /**
  * A mood's tile - the icon on its own coloured circle.
  *
- * One component for every place a K-5 mood is shown (the check-in picker and
+ * One component for every place a K-4 mood is shown (the check-in picker and
  * the reveal that follows it), so what a student picks is exactly what they
  * then see. Moods are admin-editable, so the rule is the same one
  * `usesLegacyArt` sets everywhere else:

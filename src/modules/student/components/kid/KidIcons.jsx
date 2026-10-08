@@ -1,5 +1,5 @@
 /**
- * Filled, colourful icons for the K-5 navigation - the cut-paper icons in
+ * Filled, colourful icons for the K-4 navigation - the cut-paper icons in
  * the mockup. Each is decorative (aria-hidden): the visible label beside it
  * carries the meaning. Colours are part of the drawing, so they don't follow
  * the text colour.

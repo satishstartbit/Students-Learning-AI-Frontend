@@ -1,5 +1,6 @@
 import {
   LuActivity,
+  LuBell,
   LuChartLine,
   LuFileText,
   LuHandshake,
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
       { to: '/teacher/progress', label: 'Progress', icon: LuChartLine },
       { to: '/teacher/learning-activity', label: 'Learning Activity', icon: LuSparkles },
       { to: '/teacher/profile', label: 'My Profile', icon: LuUser },
+      { to: '/teacher/notifications', label: 'Notifications', icon: LuBell },
     ],
   },
 ];
@@ -70,7 +72,16 @@ export function TeacherLayout({ children }) {
     <AppSettingsProvider>
       {/* The admin's subject colours, so a subject looks the same to teachers as to their students. */}
       <SubjectColorsProvider>
-        <AuthenticatedLayout navItems={NAV_ITEMS} mobileTabs={MOBILE_TABS} title="Teacher Portal" subtitle="Teacher" brand="TP" accountSubtitle={school}>
+        {/* The bell is a link to Notifications (no dropdown list). */}
+        <AuthenticatedLayout
+          navItems={NAV_ITEMS}
+          mobileTabs={MOBILE_TABS}
+          title="Teacher Portal"
+          subtitle="Teacher"
+          brand="TP"
+          accountSubtitle={school}
+          notificationsPath="/teacher/notifications"
+        >
           {children}
         </AuthenticatedLayout>
       </SubjectColorsProvider>

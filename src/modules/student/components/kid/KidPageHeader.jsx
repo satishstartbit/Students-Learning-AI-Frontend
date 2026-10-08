@@ -1,4 +1,4 @@
-/** The paper banner at the top of each K-5 page: picture, title, one short line. */
+/** The paper banner at the top of each K-4 page: picture, title, one short line. */
 export function KidPageHeader({ icon: Icon, title, subtitle, children }) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-5 rounded-[1.75rem] bg-kid-sheet p-5 shadow-paper sm:p-7">

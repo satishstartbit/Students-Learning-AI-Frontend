@@ -219,11 +219,12 @@
   background: var(--color-warning-bg);
   color: var(--sp-warn);
 }
-.sp-picker__day[data-today='true'] {
-  border-color: var(--accent-base);
+/* The mockup: today is the filled day, the day you're looking at is outlined. */
+.sp-picker__day[data-selected='true'] {
+  border-color: var(--color-text-primary);
   font-weight: 700;
 }
-.sp-picker__day[data-selected='true'] {
+.sp-picker__day[data-today='true'] {
   border-color: var(--accent-base);
   background: var(--accent-base);
   color: var(--accent-on);
@@ -241,7 +242,7 @@
   background: currentColor;
   opacity: 0.8;
 }
-.sp-picker__day[data-has='true']:not([data-selected='true']):not([data-overdue='true']) .sp-picker__dots i {
+.sp-picker__day[data-has='true']:not([data-today='true']):not([data-overdue='true']) .sp-picker__dots i {
   background: var(--accent-base);
 }
 .sp-picker__foot {
@@ -269,9 +270,175 @@
 /* ------------------------------------------------------------------ layout */
 .sp-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 228px;
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 256px;
+  gap: 20px;
   align-items: start;
+}
+/* "Due soon" in the narrow rail: the heading on one line, the link beside it. */
+.sp-duesoon .sh-card__head {
+  align-items: center;
+  gap: 8px;
+}
+.sp-duesoon .sh-card__heading {
+  flex: 1;
+}
+.sp-duesoon .sh-card__title,
+.sp-duesoon .sh-card__subtitle,
+.sp-duesoon .sh-card__link {
+  white-space: nowrap;
+}
+.sp-duesoon .sh-deadline {
+  padding-left: 6px;
+}
+.sp-main {
+  min-width: 0;
+}
+
+/* The views row: Board / List / Calendar on the left, Sort and Add on the right. */
+.sp-toolbar--views .sp-toolbar__actions {
+  gap: 10px;
+}
+.sp-toolbar--calendar {
+  margin-top: -6px;
+}
+
+/* What is due on a calendar day - a small line above the study times. */
+.sp-dueflags {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sp-dueflag {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: 5px 7px;
+  border: 1px dashed color-mix(in srgb, var(--accent-base) 45%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-soft) 60%, transparent);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+.sp-dueflag:hover {
+  border-style: solid;
+}
+.sp-dueflag[data-late='true'] {
+  border-color: #f0a35e;
+  background: var(--color-warning-bg);
+}
+.sp-dueflag__label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-base);
+}
+.sp-dueflag[data-late='true'] .sp-dueflag__label {
+  color: var(--sp-warn);
+}
+.sp-dueflag__title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.sp-event .sw-event {
+  padding: 6px 8px;
+}
+.sp-event .sw-event__title {
+  font-size: 12px;
+}
+
+/* "Nothing planned yet" in the rail. */
+.sp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 22px 16px 18px;
+  text-align: center;
+}
+.sp-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--color-bg-surface-sunken);
+  color: var(--color-text-secondary);
+}
+.sp-empty__title {
+  margin: 4px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.sp-empty__text {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+.sp-empty__add {
+  margin-top: 6px;
+}
+.sp-empty__spread {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent-base);
+  cursor: pointer;
+}
+.sp-empty__spread:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+.sp-empty__spread:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+/* Customize views · Study & busy times, quietly under the rail. */
+.sp-more {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sp-more__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.sp-more__link:hover {
+  background: var(--color-bg-surface-sunken);
+  color: var(--color-text-primary);
 }
 .sp-board {
   display: grid;
@@ -458,6 +625,7 @@
 }
 .sp-task__top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   max-width: 100%;
@@ -533,9 +701,13 @@
   font-size: 11px;
   color: var(--color-text-secondary);
 }
-.sp-task__time[data-overdue='true'] {
+.sp-task__time[data-overdue='true'],
+.sp-task__time[data-missed='true'] {
   color: var(--sp-warn);
   font-weight: 500;
+}
+.sp-task[data-missed='true'] {
+  border-style: dashed;
 }
 .sp-task__done {
   margin-bottom: 0;
@@ -703,12 +875,74 @@ button.sp-rest:hover {
   .sp-board[data-view='week'] .sp-day__foot {
     padding-top: 6px;
   }
+  /* The phone mockup: the month picker is a bottom sheet with a grab handle. */
   .sp-picker__pop {
     position: fixed;
-    top: 50%;
+    z-index: 60;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 22px 16px calc(14px + env(safe-area-inset-bottom));
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -18px 40px -16px rgba(46, 35, 20, 0.4);
+  }
+  .sp-picker__pop::before {
+    content: '';
+    position: absolute;
+    top: 8px;
     left: 50%;
-    width: min(320px, calc(100vw - 32px));
-    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--color-border-strong);
+    transform: translateX(-50%);
+  }
+  .sp-picker__day {
+    height: 42px;
+  }
+
+  /* Views full width; Sort under them on the left; Add across the page. */
+  .sp-toolbar--views {
+    gap: 12px;
+  }
+  .sp-toolbar--views .sw-views {
+    width: 100%;
+  }
+  .sp-toolbar--views .sw-views button {
+    flex: 1;
+    min-width: 0;
+    padding: 0 8px;
+  }
+  .sp-toolbar--views .sp-toolbar__actions {
+    width: 100%;
+  }
+  .sp-toolbar__add {
+    flex: 1 1 100%;
+    justify-content: center;
+    height: 44px;
+  }
+  .sp-header__title {
+    font-size: 26px;
+  }
+
+  /* The phone calendar: "This week" above the days, "Due soon" under them. */
+  .sp-grid[data-view='calendar'] .sp-side {
+    display: contents;
+  }
+  .sp-grid[data-view='calendar'] :is(.sp-weeknote, .sp-empty) {
+    order: -1;
+  }
+  .sp-grid[data-view='calendar'] .sp-weeknote {
+    margin-top: 8px;
+  }
+  /* A full-width tilted card would poke past the page edge. */
+  .sp-weeknote {
+    margin-inline: 4px;
+    transform: rotate(0.6deg);
   }
 }
 

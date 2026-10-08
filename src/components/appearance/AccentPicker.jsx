@@ -9,7 +9,7 @@ import './accentPicker.css';
  * each hand-tuned for light and dark, and the backend validates a saved
  * choice against the same list.
  *
- * `variant="kid"` is the same picker with bigger targets for the K-5 page.
+ * `variant="kid"` is the same picker with bigger targets for the K-4 page.
  * Saving is the caller's job, so this works with either settings provider.
  */
 export function AccentPicker({ value, onChange, disabled = false, variant, label = 'Colour theme' }) {

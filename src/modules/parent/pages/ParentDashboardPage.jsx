@@ -15,9 +15,16 @@ import { checkInWhen, fullName, partOfDayPhrase } from '../../teacher/components
 import { activityLine, alertLine, attentionLine, lowerFirst } from '../components/dashboard/overviewText';
 import { useViewingChild } from '../hooks/useViewingChild';
 import parentService from '../services/parent.service';
+import NotesBoard from '../../student/components/home/NotesBoard';
+import { HOME_RANGE, toBoardNote } from '../../student/notesQuery';
+import '@fontsource/patrick-hand/400.css';
+import '../../student/components/home/studentHome.css';
 import '../../teacher/components/students/teacherStudents.css';
 import '../../teacher/components/dashboard/teacherDashboard.css';
 import '../components/dashboard/parentDashboard.css';
+
+/** The child's Home board, as they see it: Home notes, yesterday onwards. */
+const CHILD_BOARD_QUERY = { generalOnly: true, range: HOME_RANGE };
 
 /*
  * The parent's Overview (/parent), for the child picked in the sidebar's
@@ -333,7 +340,36 @@ function Overview({ data, onReload }) {
           <RecentActivity items={recentActivity} firstName={first} />
         </div>
       </div>
+
+      <ChildNotesBoard childId={child.id} firstName={first} />
     </div>
+  );
+}
+
+/**
+ * The child's own "My Notes" board, read-only - exactly what they see on
+ * their Home: their Home notes from yesterday onwards (a note's date is its
+ * reminder, else when it was written). Older ones: the Notes page.
+ */
+function ChildNotesBoard({ childId, firstName }) {
+  const { data, error, isLoading, run } = useApi(parentService.listChildNotes);
+  const load = useCallback(() => run(childId, CHILD_BOARD_QUERY).catch(() => {}), [run, childId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return (
+    <NotesBoard
+      readOnly
+      title={`${firstName}’s notes`}
+      notes={(data ?? []).map(toBoardNote)}
+      isLoading={isLoading && !data}
+      error={error}
+      onRetry={load}
+      allNotesTo="/parent/notes"
+      emptyText={`No notes from ${firstName} for yesterday, today or coming up.`}
+    />
   );
 }
 

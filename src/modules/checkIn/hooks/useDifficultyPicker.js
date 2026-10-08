@@ -9,7 +9,7 @@ import lookupService from '../../../services/lookup.service';
  * which resolves that mapping so no screen has to).
  *
  * Both students' versions read it through this hook - the Grade 6+ dialog
- * and the K-5 one - so adding, rewording or deactivating any of it is a
+ * and the K-4 one - so adding, rewording or deactivating any of it is a
  * Super Admin edit, never a release.
  *
  * `strategiesFor(codes)` answers the other half: given what a student

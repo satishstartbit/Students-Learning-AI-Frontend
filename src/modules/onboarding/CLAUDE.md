@@ -5,7 +5,7 @@ The first-login questionnaires: students (about themselves and how they work) an
 ## Where it lives
 | Frontend | Purpose |
 |---|---|
-| `pages/StudentOnboardingPage.jsx` | Grade 6+ questionnaire (`/student/onboarding`, standard band). The K-5 version is `student/pages/kid/KidOnboardingPage.jsx`. |
+| `pages/StudentOnboardingPage.jsx` | Grade 6+ questionnaire (`/student/onboarding`, standard band). The K-4 version is `student/pages/kid/KidOnboardingPage.jsx`. |
 | `pages/ParentOnboardingPage.jsx` (`/parent/onboarding`) | Family form, required before the rest of the parent portal |
 | `components/ParentFamilyForm.jsx` | The family form, reused on Parent My Profile ("About your family") |
 | `components/CheckboxGroup.jsx`, `options.js`, `hooks/useOnboardingLookup.js` | Choice lists. Master-backed ones load via `GET /onboarding/lookups/:type`. |

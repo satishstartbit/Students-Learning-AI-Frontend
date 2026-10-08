@@ -16,4 +16,11 @@ export const update = (id, payload) => api.patch(`/notes/${id}`, payload);
 
 export const remove = (id) => api.delete(`/notes/${id}`);
 
-export default { list, create, update, remove };
+/**
+ * Delivers the student's due note reminders (each once) and says when the
+ * next one is: `{ delivered: Note[] (with `missed`), next: { id, remindAt } | null }`.
+ * `remindAt` on create/update is a UTC ISO string, or null for no reminder.
+ */
+export const deliverReminders = () => api.post('/notes/reminders/deliver');
+
+export default { list, create, update, remove, deliverReminders };

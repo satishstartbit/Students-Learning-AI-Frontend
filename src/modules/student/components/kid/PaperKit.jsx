@@ -7,7 +7,7 @@ import { getSubjectStyle } from './subjectStyle';
 import { STATUS_WORDS, getDueInfo } from './kidFormat';
 
 /**
- * The flat, soft-illustration building blocks of the K-5 theme: cards,
+ * The flat, soft-illustration building blocks of the K-4 theme: cards,
  * pill badges, subject tiles, status circles and due-date chips. Tailwind
  * only, on the kid tokens from styles/kid-theme.css.
  */
@@ -21,7 +21,7 @@ const PAPER_TONES = {
   lavender: 'bg-kid-lavender',
 };
 
-/** A plain, softly-shadowed rounded card - the base surface for every K-5 panel. */
+/** A plain, softly-shadowed rounded card - the base surface for every K-4 panel. */
 export function PaperCard({ as: Component = 'div', tone = 'sheet', className, children, ...props }) {
   return (
     <Component className={cn('relative rounded-[1.75rem] shadow-paper', PAPER_TONES[tone], className)} {...props}>
@@ -103,7 +103,7 @@ export function SubjectTile({ subject, size = 'md', className }) {
 
 /**
  * The subject's big picture (an emoji drawing - book, flask, calculator,
- * globe…) on a rounded square of the subject's colour: the K-5 "My week"
+ * globe…) on a rounded square of the subject's colour: the K-4 "My week"
  * tiles. Decorative - the title is printed under it.
  */
 export function SubjectPicture({ subject, className }) {

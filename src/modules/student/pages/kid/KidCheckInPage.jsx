@@ -14,7 +14,7 @@ import { PaperCard } from '../../components/kid/PaperKit';
 const CheckInIcon = (props) => <MoodFace mood="ready_to_focus" {...props} />;
 
 /**
- * K-5 /student/check-in - where every work screen sends a student who hasn't
+ * K-4 /student/check-in - where every work screen sends a student who hasn't
  * checked in yet (checkIn/components/RequireCheckIn.jsx). One card to fill
  * in, then one big button back to what they were doing.
  */

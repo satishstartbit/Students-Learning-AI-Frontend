@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  LuAlarmClock,
   LuBookOpen,
   LuClock3,
   LuFileText,
@@ -12,7 +13,8 @@ import {
   LuTimer,
 } from 'react-icons/lu';
 import { toast } from '../../../../hooks/useToast';
-import { formatDate, formatDateKey, formatDurationLong } from '../../../../utils/date';
+import { formatDate, formatDateKey, formatDurationLong, formatNearDateTime } from '../../../../utils/date';
+import { reminderStatus } from '../../noteReminders';
 import { formatFileSize } from '../../../../utils/format';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import assignmentService from '../../../assignments/services/assignment.service';
@@ -212,6 +214,14 @@ export function NotesCard({ notes, onAdd, onOpen }) {
               <button type="button" className="ad-note" data-tone={note.tone} data-done={note.done || undefined} onClick={() => onOpen(note)}>
                 {note.title ? <strong style={{ display: 'block' }}>{note.title}</strong> : null}
                 {note.content}
+                {reminderStatus(note) !== 'none' && (
+                  <span
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4, fontSize: 12, fontWeight: reminderStatus(note) === 'due' ? 800 : 600 }}
+                  >
+                    <LuAlarmClock size={12} aria-hidden="true" />
+                    {formatNearDateTime(note.remindAt)}
+                  </span>
+                )}
               </button>
             </li>
           ))}

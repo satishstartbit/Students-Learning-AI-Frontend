@@ -12,30 +12,46 @@ import {
 } from 'react-icons/lu';
 import { Alert, Button } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
+import { useAuth } from '../../../hooks/useAuth';
 import { toast } from '../../../hooks/useToast';
 import { formatTimeAgo, isTodayInTimezone } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
-import notificationService from '../../notifications/services/notification.service';
-import { studentNotificationPath } from '../../notifications/studentNotificationPath';
-import '../components/notifications/studentNotifications.css';
+import { NOTIFICATIONS_CHANGED_EVENT, notificationPathFor } from '../notificationPath';
+import notificationService from '../services/notification.service';
+import '../components/notificationsPage.css';
 
 /**
- * /student/notifications (Grade 6+), built to the student notifications
- * mockup. The only place students see notifications - the header bell is
- * switched off for them (StudentLayout).
+ * The notifications page - /student/notifications (Grade 6+),
+ * /teacher/notifications and /parent/notifications - built to the student
+ * notifications mockup. For these roles it is the only list of
+ * notifications: their header bell is a link here, not a dropdown
+ * (AuthenticatedLayout `notificationsPath`). Super Admin keeps the dropdown.
  *
  * Filters run on the server (`unreadOnly`, `category`), so "Deadlines" and
- * "Rewards" are exact, not just whatever happened to be on the first page.
- * Opening a notification marks it read and goes where it points
- * (studentNotificationPath).
+ * "Rewards" (students) are exact, not just whatever happened to be on the
+ * first page. Opening a notification marks it read and goes where it points
+ * for the reader's role (notificationPath.js); reading tells the bell's badge
+ * to look again.
  */
 
-const FILTERS = [
-  { key: 'all', label: 'All', query: {} },
-  { key: 'unread', label: 'Unread', query: { unreadOnly: true } },
-  { key: 'deadlines', label: 'Deadlines', query: { category: 'deadlines' } },
-  { key: 'rewards', label: 'Rewards', query: { category: 'rewards' } },
-];
+const UNREAD = { key: 'unread', label: 'Unread', query: { unreadOnly: true } };
+const ALL = { key: 'all', label: 'All', query: {} };
+const FILTERS_BY_ROLE = {
+  STUDENT: [ALL, UNREAD, { key: 'deadlines', label: 'Deadlines', query: { category: 'deadlines' } }, { key: 'rewards', label: 'Rewards', query: { category: 'rewards' } }],
+  TEACHER: [ALL, UNREAD],
+  PARENT: [ALL, UNREAD],
+};
+
+const EMPTY_ALL = {
+  STUDENT: 'Updates about your work, reminders and rewards will show up here.',
+  TEACHER: 'Updates about your students, their work and invitations will show up here.',
+  PARENT: 'Updates about your children, their teachers and your subscription will show up here.',
+};
+const EMPTY = {
+  unread: { title: 'You’re all caught up', text: 'Nothing new since you last looked.' },
+  deadlines: { title: 'No deadline updates', text: 'New assignments and due-date reminders will show up here.' },
+  rewards: { title: 'No rewards yet', text: 'Points you earn and rewards you unlock will show up here.' },
+};
 
 const PAGE_SIZE = 20;
 // The API caps one request at 100 rows - more than enough history to scroll.
@@ -47,13 +63,6 @@ const CATEGORY_ICON = {
   plan: LuCalendarDays,
   checkin: LuSmile,
   info: LuInfo,
-};
-
-const EMPTY = {
-  all: { title: 'No notifications yet', text: 'Updates about your work, reminders and rewards will show up here.' },
-  unread: { title: 'You’re all caught up', text: 'Nothing new since you last looked.' },
-  deadlines: { title: 'No deadline updates', text: 'New assignments and due-date reminders will show up here.' },
-  rewards: { title: 'No rewards yet', text: 'Points you earn and rewards you unlock will show up here.' },
 };
 
 function NotificationRow({ notification, onOpen }) {
@@ -103,15 +112,19 @@ function Section({ title, items, onOpen }) {
   );
 }
 
+const announce = () => window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED_EVENT));
+
 export default function NotificationsPage() {
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const filters = FILTERS_BY_ROLE[role] ?? FILTERS_BY_ROLE.PARENT;
   const [filterKey, setFilterKey] = useState('all');
   const [limit, setLimit] = useState(PAGE_SIZE);
   // Ids read on this visit - applied over the fetched list so a row un-tints instantly.
   const [readIds, setReadIds] = useState(() => new Set());
   const [markingAll, setMarkingAll] = useState(false);
 
-  const filter = FILTERS.find((f) => f.key === filterKey);
+  const filter = filters.find((f) => f.key === filterKey) ?? filters[0];
   const query = { page: 1, limit, ...filter.query };
   const list = useApi(notificationService.listNotifications, { immediate: true, args: [query] });
   const unread = useApi(notificationService.getUnreadCount, { immediate: true });
@@ -134,11 +147,14 @@ export default function NotificationsPage() {
   const handleOpen = async (notification) => {
     if (!notification.read) {
       setReadIds((prev) => new Set(prev).add(notification.id));
-      notificationService.markNotificationRead(notification.id).catch(() => {
-        // Not fatal - it will just show as unread again next visit.
-      });
+      notificationService
+        .markNotificationRead(notification.id)
+        .then(announce)
+        .catch(() => {
+          // Not fatal - it will just show as unread again next visit.
+        });
     }
-    const path = studentNotificationPath(notification);
+    const path = notificationPathFor(role, notification);
     if (path) navigate(path);
   };
 
@@ -147,6 +163,7 @@ export default function NotificationsPage() {
     try {
       await notificationService.markAllNotificationsRead();
       setReadIds(new Set());
+      announce();
       await Promise.all([list.run(query), unread.run()]);
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -156,7 +173,7 @@ export default function NotificationsPage() {
   };
 
   const loading = list.isLoading && !list.data;
-  const empty = EMPTY[filterKey];
+  const empty = filterKey === 'all' ? { title: 'No notifications yet', text: EMPTY_ALL[role] ?? EMPTY_ALL.PARENT } : EMPTY[filterKey];
 
   return (
     <div className="sn-page td-page">
@@ -171,7 +188,7 @@ export default function NotificationsPage() {
       </header>
 
       <div className="sn-chips" role="group" aria-label="Filter notifications">
-        {FILTERS.map((f) => (
+        {filters.map((f) => (
           <button key={f.key} type="button" className="sn-chip" aria-pressed={filterKey === f.key} onClick={() => chooseFilter(f.key)}>
             {filterKey === f.key && <LuCheck size={13} aria-hidden="true" />}
             {f.label}

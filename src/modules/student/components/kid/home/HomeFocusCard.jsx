@@ -15,7 +15,7 @@ const RING_RADIUS = 44;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
 /**
- * "Focus time" on the K-5 Home, from the mockup: a clock ring, "How long do
+ * "Focus time" on the K-4 Home, from the mockup: a clock ring, "How long do
  * you want to focus?" (5 / 10 / 15 min) and Start focus. Starting opens a
  * real focus session (the same API the Focus page uses), tied to the next
  * task like the Focus page's "Up next", then takes the student to the Focus

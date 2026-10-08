@@ -7,7 +7,7 @@ import { celebrationFor } from './moodCelebrationConfig';
 import './moodCelebration.css';
 
 /**
- * The moment after a K-5 check-in: the mood they picked, big, with a ring
+ * The moment after a K-4 check-in: the mood they picked, big, with a ring
  * filling around it and a line written for that feeling.
  *
  * What it shows is the mood's own master row (name, emoji or uploaded icon)

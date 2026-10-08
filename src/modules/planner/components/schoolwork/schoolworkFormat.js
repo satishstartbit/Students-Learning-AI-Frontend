@@ -28,6 +28,52 @@ export function dueText(dueDate, today) {
   }
 }
 
+/** The Plan mockup's due line: "Due today", "Due tomorrow", "Due in 4 days", "Overdue"; null without a date. */
+export function dueInText(dueDate, today) {
+  const info = dueInfo(dueDate, today);
+  switch (info.kind) {
+    case 'none':
+      return null;
+    case 'overdue':
+      return info.days === 1 ? 'Overdue · 1 day' : `Overdue · ${info.days} days`;
+    case 'today':
+      return 'Due today';
+    case 'tomorrow':
+      return 'Due tomorrow';
+    default:
+      return `Due in ${info.days} days`;
+  }
+}
+
+/** K-4's day chip: "Today", "Tomorrow", "Thursday" (this week), "Oct 20" (later), "Late"; null without a date. */
+export function kidDayText(dueDate, today) {
+  const info = dueInfo(dueDate, today);
+  switch (info.kind) {
+    case 'none':
+      return null;
+    case 'overdue':
+      return 'Late';
+    case 'today':
+      return 'Today';
+    case 'tomorrow':
+      return 'Tomorrow';
+    case 'soon':
+      return formatDateKey(dueDate, { weekday: 'long', month: undefined, day: undefined, year: undefined });
+    default:
+      return formatDateKey(dueDate, { month: 'short', day: 'numeric', year: undefined });
+  }
+}
+
+/** "40 min", "1 hr 20 min", "4 hr" - the mockups' short duration; '' for nothing. */
+export function shortMinutes(minutes) {
+  const total = Math.round(Number(minutes) || 0);
+  if (total <= 0) return '';
+  if (total < 60) return `${total} min`;
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return m ? `${h} hr ${m} min` : `${h} hr`;
+}
+
 /** The time a piece of work should take: its estimate, else what its steps have left. */
 export function estimateOf(work) {
   const minutes = Number(work?.estimatedMinutes) || Number(work?.remainingMinutes) || 0;

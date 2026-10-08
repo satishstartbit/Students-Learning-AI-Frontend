@@ -1,0 +1,99 @@
+/* Note reminders: the pop-up (NoteReminderHost) and the "Remind me" fields in NoteEditorModal. Prefix nr-. */
+
+.nr-list {
+  display: grid;
+  gap: var(--spacing-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Each reminder on its own note colour, so it reads as that note. */
+.nr-item {
+  --nr-paper: var(--sticky-yellow);
+  display: grid;
+  justify-items: start;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--nr-paper);
+  color: var(--sticky-ink);
+}
+.nr-item[data-tone='pink'] { --nr-paper: var(--sticky-pink); }
+.nr-item[data-tone='blue'] { --nr-paper: var(--sticky-blue); }
+.nr-item[data-tone='green'] { --nr-paper: var(--sticky-green); }
+.nr-item[data-tone='lavender'] { --nr-paper: var(--sticky-lavender); }
+.nr-item[data-tone='orange'] { --nr-paper: var(--sticky-orange); }
+
+.nr-item__when {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+.nr-item__title {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.nr-item__text {
+  margin: 0 0 var(--spacing-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* "Remind me" in the note dialog: date and time side by side, one under the other on a phone. */
+.nr-when {
+  min-width: 0;
+  margin: var(--spacing-md) 0 0;
+  padding: 0;
+  border: 0;
+}
+.nr-when__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--spacing-xs);
+  padding: 0;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.nr-when__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+}
+.nr-when__foot {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+.nr-when__foot > .ui-hint,
+.nr-when__foot > .nr-when__error {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.nr-when__foot > button {
+  flex-shrink: 0;
+  margin: 0;
+}
+.nr-when__hint {
+  margin: 0;
+}
+.nr-when__error {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-danger-fg);
+}
+@media (max-width: 400px) {
+  .nr-when__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

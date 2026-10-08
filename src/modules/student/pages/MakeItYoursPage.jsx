@@ -23,7 +23,7 @@ import { useStudentSettings } from '../hooks/useStudentSettings';
  *   Your stickers      the rewards this student has actually collected
  *
  * Everything saves as you go, through StudentSettingsProvider (optimistic,
- * rolled back with a message if the save fails). K-5 has its own, simpler
+ * rolled back with a message if the save fails). K-4 has its own, simpler
  * version of this page: pages/kid/KidMakeItYoursPage.jsx.
  */
 

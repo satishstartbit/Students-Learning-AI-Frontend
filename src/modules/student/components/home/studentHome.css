@@ -6,13 +6,17 @@
  * the handful of literal values below are illustration colours with no token.
  */
 
-.sh-page {
+/* The notes card carries the variables too, so the parent Overview can show it outside .sh-page. */
+.sh-page,
+.sh-notes {
   --sh-card-radius: 14px;
   --sh-row-radius: 10px;
   --sh-gap: 20px;
   --sh-done: var(--color-success-fg);
   --sh-muted: var(--color-text-secondary);
   --sh-hairline: var(--color-border-default);
+}
+.sh-page {
   max-width: 1180px;
   margin: 0 auto;
   padding: 8px 4px 32px;
@@ -783,6 +787,26 @@
 .sh-note[data-done='true'] .sh-note__text {
   color: color-mix(in srgb, var(--sticky-ink) 50%, transparent);
 }
+/* Reminder time at the foot of the note (NotesBoard); bolder once it's due. */
+.sh-note__remind {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: color-mix(in srgb, var(--sticky-ink) 72%, transparent);
+}
+.sh-note__remind[data-state='due'] {
+  color: var(--sticky-ink);
+  font-weight: 800;
+}
+.sh-note__remind[data-state='done'] {
+  color: color-mix(in srgb, var(--sticky-ink) 45%, transparent);
+  text-decoration: line-through;
+}
 
 /* Decoration: tape strip across the top. */
 .sh-note__tape {
@@ -850,11 +874,20 @@
   opacity: 0;
   transition: opacity 0.15s, background-color 0.15s, color 0.15s;
 }
-.sh-note__check[aria-pressed='true'] {
+.sh-note__check[aria-pressed='true'],
+.sh-note__check--done {
   border-color: #7a1f3d;
   background: #7a1f3d;
   color: #fff;
   opacity: 1;
+}
+/* Done is final - the tick is a badge, not a button. */
+.sh-note__check--done {
+  cursor: default;
+}
+/* Read-only board (the parent Overview): paper you read, not press. */
+.sh-note[data-readonly='true'] .sh-note__paper {
+  cursor: default;
 }
 .sh-note__delete {
   position: absolute;

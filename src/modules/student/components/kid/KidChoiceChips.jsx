@@ -2,7 +2,7 @@ import { LuCheck } from 'react-icons/lu';
 import { cn } from '../../../../lib/utils';
 
 /**
- * Big tappable answer chips for K-5 questions. Real radio/checkbox inputs
+ * Big tappable answer chips for K-4 questions. Real radio/checkbox inputs
  * underneath (visually hidden), so keyboard, screen readers and switch access
  * work without custom key handling - same approach as the check-in card.
  *

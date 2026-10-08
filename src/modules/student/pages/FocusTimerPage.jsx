@@ -20,7 +20,7 @@ import { useTodayTasks } from '../hooks/useTodayTasks';
 
 /**
  * Grade 6+ "Focus - Take a breath, choose what you need, and get to it."
- * (K-5 has KidFocusPage). Built to the Focus mockup, with what used to be the
+ * (K-4 has KidFocusPage). Built to the Focus mockup, with what used to be the
  * separate Brain Boosters page folded in:
  *
  *   Focus Timer      pick a task and a length, or just start the clock; the
