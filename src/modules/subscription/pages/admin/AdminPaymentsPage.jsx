@@ -516,6 +516,14 @@ export default function AdminPaymentsPage() {
                   −{formatCurrency(detailsTarget.discountApplied, detailsTarget.currency)} coupon applied
                 </p>
               )}
+              {/* Sales tax included in the amount (migration 122). */}
+              {detailsTarget.taxLines?.length > 0 && (
+                <p className="ui-hint" style={{ margin: '4px 0 0' }}>
+                  {formatCurrency(detailsTarget.preTaxAmount, detailsTarget.currency)} before tax ·{' '}
+                  {detailsTarget.taxLines.map((line) => `${line.name} ${formatCurrency(line.amount, detailsTarget.currency)}`).join(' · ')}
+                  {detailsTarget.taxRegion ? ` (${detailsTarget.taxRegion})` : ''}
+                </p>
+              )}
             </div>
 
             <div>

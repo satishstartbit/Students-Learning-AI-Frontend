@@ -27,6 +27,7 @@ import FormSection from '../components/assignmentForm/FormSection';
 import PublishPanel from '../components/assignmentForm/PublishPanel';
 import RosterPicker from '../components/assignmentForm/RosterPicker';
 import TagListInput from '../components/assignmentForm/TagListInput';
+import PhotoFillCard from '../components/assignmentForm/PhotoFillCard';
 import '../../assignments/components/assignmentForm.css';
 
 const AUTOSAVE_DELAY_MS = 1500;
@@ -453,6 +454,35 @@ function AssignmentEditor({ initial }) {
 
   const cancelTo = saved.id && isEdit ? `/teacher/assignments/${saved.id}` : '/teacher/assignments';
 
+  /**
+   * Values read from a photo/PDF of the assignment (PhotoFillCard): fills
+   * what was found, keeps what the teacher already typed in the instructions,
+   * and picks a subject / task type only when it's one of this form's options.
+   */
+  const fillFromPhoto = (data) => {
+    const f = data.fields ?? {};
+    const pick = (options, field) => {
+      if (!field?.value && !field?.id) return null;
+      const byId = field.id && options.find((o) => o.value === field.id);
+      const name = String(field.value ?? '').trim().toLowerCase();
+      return (byId ?? options.find((o) => o.label.trim().toLowerCase() === name))?.value ?? null;
+    };
+    const subjectId = pick(subjectOptions, f.subject);
+    const taskTypeId = pick(taskTypeOptions, f.taskType);
+    setForm((cur) => ({
+      ...cur,
+      title: f.title?.value || cur.title,
+      description: cur.description.trim() ? cur.description : data.instructions || cur.description,
+      dueDate: f.dueDate?.value || cur.dueDate,
+      estimatedMinutes: f.estimatedMinutes?.value ?? cur.estimatedMinutes,
+      ...(subjectId ? { subjectId, topicId: '', legacySubject: '' } : {}),
+      ...(taskTypeId ? { taskTypeId } : {}),
+    }));
+    if (f.title?.value) setErrors((er) => (er.title ? { ...er, title: undefined } : er));
+    setOpen((o) => ({ ...o, details: true, curriculum: true }));
+    return true;
+  };
+
   return (
     <div className="af-page td-page">
       <Link to="/teacher/assignments" className="af-back">
@@ -466,6 +496,9 @@ function AssignmentEditor({ initial }) {
           Archived assignments can&apos;t be edited.
         </Alert>
       )}
+
+      {/* Phase 1: a teacher can start from a photo or PDF of the assignment. */}
+      {!isEdit && !isArchived && <PhotoFillCard grade={form.grade} onFill={fillFromPhoto} />}
 
       <div className="af-layout">
         <fieldset disabled={isArchived} className="af-sections" style={{ border: 'none', padding: 0, margin: 0 }}>

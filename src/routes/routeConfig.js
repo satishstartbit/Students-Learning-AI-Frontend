@@ -29,14 +29,17 @@ const TeacherInvitationsAdminPage = lazy(() => import('../modules/superAdmin/pag
 const AdminProfilePage = lazy(() => import('../modules/superAdmin/pages/AdminProfilePage'));
 const PlatformSettingsPage = lazy(() => import('../modules/platform/pages/PlatformSettingsPage'));
 const PlatformSettingPage = lazy(() => import('../modules/platform/pages/PlatformSettingPage'));
-const SystemStatusPage = lazy(() => import('../modules/platform/pages/SystemStatusPage'));
-const AiUsagePage = lazy(() => import('../modules/platform/pages/AiUsagePage'));
+// System status and AI usage are switched off in the admin for now (their
+// routes and nav items are commented out below); uncomment all three together.
+// const SystemStatusPage = lazy(() => import('../modules/platform/pages/SystemStatusPage'));
+// const AiUsagePage = lazy(() => import('../modules/platform/pages/AiUsagePage'));
 const ParentChildrenPage = lazy(() => import('../modules/parent/pages/ParentChildrenPage'));
 const ParentProfilePage = lazy(() => import('../modules/parent/pages/ParentProfilePage'));
 const ParentProgressPage = lazy(() => import('../modules/parent/pages/ParentProgressPage'));
 const ParentDashboardPage = lazy(() => import('../modules/parent/pages/ParentDashboardPage'));
 const StudentOnboardingPage = lazy(() => import('../modules/onboarding/pages/StudentOnboardingPage'));
 const ParentOnboardingPage = lazy(() => import('../modules/onboarding/pages/ParentOnboardingPage'));
+const LegalPage = lazy(() => import('../pages/legal/LegalPage'));
 const CheckInPage = lazy(() => import('../modules/checkIn/pages/CheckInPage'));
 const TeacherDashboardPage = lazy(() => import('../modules/teacher/pages/TeacherDashboardPage'));
 const MyStudentsPage = lazy(() => import('../modules/teacher/pages/MyStudentsPage'));
@@ -162,7 +165,12 @@ export const PUBLIC_ROUTES = {
 export const OPEN_ROUTES = {
   layout: PublicLayout,
   requiresAuth: false,
-  routes: [{ path: '/invitations/teacher/:token', label: 'Teacher invitation', component: TeacherInvitationPage }],
+  routes: [
+    { path: '/invitations/teacher/:token', label: 'Teacher invitation', component: TeacherInvitationPage },
+    // The admin's Privacy Policy and Terms of Use (Platform settings), readable signed in or out.
+    { path: '/privacy', label: 'Privacy Policy', component: LegalPage, props: { doc: 'privacy' }, fullPage: true },
+    { path: '/terms', label: 'Terms of Use', component: LegalPage, props: { doc: 'terms' }, fullPage: true },
+  ],
 };
 
 export const SUPER_ADMIN_ROUTES = {

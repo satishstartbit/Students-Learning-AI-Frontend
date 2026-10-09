@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { LuCalendarDays, LuChevronLeft, LuHouse, LuListChecks, LuSettings2, LuStickyNote, LuTimer, LuTrophy } from 'react-icons/lu';
+import LegalLinks from '../../../components/legal/LegalLinks';
 import '../components/settings/studentSettings.css';
 
 /**
@@ -107,6 +108,8 @@ export default function StudentHelpPage() {
           </li>
         ))}
       </ul>
+      {/* How Growing Focus looks after their information (age-appropriate notice, Phase 1 §12). */}
+      <LegalLinks prefix="How we look after your information:" className="ss-legal" />
     </div>
   );
 }

@@ -22,6 +22,12 @@ In-app notifications for every role: the header bell, unread count, mark read, t
 - Wording is plain and addressed to the reader. Family-facing notices about Super Admin changes say **what** changed and never the internal reason.
 - Emails are separate (`services/email`). Safety and check-in alerts email parents directly, not filtered by notification preferences.
 
+## Phase 1 gaps (2026-10-09)
+- **Preferences per type and channel:** `GET/PATCH /notifications/preferences` (`services/notificationPreferences.service.js` CATALOG per role; safety, check-in and payment types are locked on). Emails go through `emailEvents.emailAllowed`. UI: `components/NotificationSettingsModal.jsx` (`sn-set`, `sn-switch`) from the Notifications page header "Settings".
+- **Browser push (Web Push + VAPID, no vendor):** `push_subscriptions` (migration 123; **129** renames 034's `p256dh_key`/`auth_key` and adds `failure_count`/`last_sent_at` - 123 had been a silent no-op on databases that ran 034), `services/push.service.js`; `notify()`/`notifyMany()` also push. Routes `GET /notifications/push`, `POST /notifications/push/subscriptions`, `POST /notifications/push/unsubscribe`. Frontend `hooks/usePush.js`, `public/sw.js` push + notificationclick. Off (and not offered) until `VAPID_*` env is set (`npm run push:keys`).
+- **Only in-app rows are listed** (`notification.repository#listForUser`/`countUnread` filter `channel = in_app`). `parentWorkNotices.service#tellOrRemember` writes a hidden `email`-channel row when a parent switched in-app off, so "already told" still works without showing them anything. "Finished work" is told once per piece of work in 12 hours (ticking done / undone / done).
+- Tests: `scenarios/notification-settings.mjs`; backend `push.itest.js`, `parentNotices.itest.js`; real backend `functional/notices-push-service.mjs` (real VAPID keys, sends captured), `functional/phase1-ui.mjs`.
+
 ## Verify
 - `npm test` (`notificationPath.test.js`).
 - UI: `.claude/testing/scenarios/notifications-pages.mjs` - teacher/parent bell is a link with the count (no dropdown), sidebar link, the page (sections, filters, unread tint), each row's destination, badge drops after reading, Mark all as read, a parent without a plan can still open it, phones, Super Admin keeps the dropdown, students keep Deadlines/Rewards.

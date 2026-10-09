@@ -30,6 +30,7 @@ import { useTodayTasks } from '../hooks/useTodayTasks';
 import focusService from '../services/focus.service';
 import noteService from '../services/note.service';
 import rewardService from '../services/reward.service';
+import DashboardStickers from '../components/stickers/DashboardStickers';
 
 /** The Home board: the student's own (non-assignment) notes, yesterday onwards. */
 const BOARD_QUERY = { generalOnly: true, range: HOME_RANGE };
@@ -171,6 +172,8 @@ export default function StudentHomePage() {
         </div>
 
         <div className="sh-col sh-col--side">
+          {/* The collected stickers they chose to show (Make it yours). */}
+          <DashboardStickers />
           <ProgressCard
             totalPoints={summary.data?.totalPoints ?? 0}
             rewards={catalog.data ?? []}

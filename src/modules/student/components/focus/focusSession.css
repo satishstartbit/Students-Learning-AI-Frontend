@@ -1029,3 +1029,16 @@
 .fs-boost-detail--exercise .fs-boost-detail__actions .fs-link {
   font-size: 12px;
 }
+
+/* A project's stage (PDF Q5) above its steps - StepsPanel. */
+.fs-milestone {
+  margin: 4px 0 -2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.fs-milestone:first-child {
+  margin-top: 0;
+}

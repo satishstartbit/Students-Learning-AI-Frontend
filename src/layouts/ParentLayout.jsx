@@ -16,6 +16,7 @@ import { Loader } from '../components/common';
 import SubjectColorsProvider from '../components/subjects/SubjectColorsProvider';
 import { useApi } from '../hooks/useApi';
 import onboardingService from '../modules/onboarding/services/onboarding.service';
+import ConsentGate from '../components/legal/ConsentGate';
 import { ParentOnboardingContext } from '../modules/parent/hooks/useParentOnboarding';
 import ViewingChildPicker from '../modules/parent/components/ViewingChildPicker';
 import ViewingChildChip from '../modules/parent/components/ViewingChildChip';
@@ -196,7 +197,8 @@ export function ParentLayout({ children }) {
                 // The bell is a link to Notifications (no dropdown list).
                 notificationsPath="/parent/notifications"
               >
-                {content}
+                {/* Terms/Privacy and consent for each child come first (Phase 1 §12). */}
+                <ConsentGate>{content}</ConsentGate>
               </AuthenticatedLayout>
             </SubjectColorsProvider>
           </AppSettingsProvider>

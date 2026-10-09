@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LuArrowRight, LuBrain, LuChevronRight, LuClock3 } from 'react-icons/lu';
 import { Modal } from '../../../../components/common';
@@ -86,7 +86,14 @@ export function FocusBoostersCard({ initialTab = 'games', scrollIntoView = false
 
   const pickGroup = (key) => setExPick((p) => ({ ...p, group: key }));
   const tryAnother = () => setExPick((p) => ({ group: group.key, index: { ...p.index, [group.key]: (exIndex + 1) % group.exercises.length } }));
-  const pickSuggested = () => setExPick((p) => ({ group: exSuggestion.group, index: { ...p.index, [exSuggestion.group]: exSuggestion.index } }));
+  const pickHit = (hit) => setExPick((p) => ({ group: hit.group, index: { ...p.index, [hit.group]: hit.index } }));
+  // The server suggests a few (client: 2-3 at a time); the others are offered after the first.
+  const alsoSuggested = exSuggestion
+    ? (rec?.suggestions ?? [])
+        .filter((t) => t.id !== exSuggestion.exercise.id)
+        .map((t) => pickSuggestion(groups, { tool: t }))
+        .filter((hit) => hit && hit.exercise.source === 'toolkit')
+    : [];
 
   // --- Brain games
   const gameSuggestion = checkedIn ? suggestBooster(rec?.categories ?? [], BRAIN_GAMES) : null;
@@ -151,10 +158,24 @@ export function FocusBoostersCard({ initialTab = 'games', scrollIntoView = false
               <span>
                 You checked in feeling {moodName}
                 {freeMinutes ? ` with ${freeMinutes} free` : ''} —{' '}
-                <button type="button" className="fs-link fs-link--inline" onClick={pickSuggested}>
+                <button type="button" className="fs-link fs-link--inline" onClick={() => pickHit(exSuggestion)}>
                   {exSuggestion.exercise.name}
                 </button>{' '}
                 is a good place to start.
+                {alsoSuggested.length > 0 && (
+                  <>
+                    {' '}Or try{' '}
+                    {alsoSuggested.map((hit, i) => (
+                      <Fragment key={hit.exercise.key}>
+                        {i > 0 && (i === alsoSuggested.length - 1 ? ' or ' : ', ')}
+                        <button type="button" className="fs-link fs-link--inline" onClick={() => pickHit(hit)}>
+                          {hit.exercise.name}
+                        </button>
+                      </Fragment>
+                    ))}
+                    .
+                  </>
+                )}
               </span>
             </p>
           )}

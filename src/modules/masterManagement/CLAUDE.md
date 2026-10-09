@@ -29,6 +29,11 @@ Super Admin's master data: every admin-editable list the app reads (moods, subje
 - A pre-existing bug fixed earlier: `masterAppearance.service#pickFields` didn't copy `name`. When adding fields to a dedicated master, check the service's field pick-list.
 - UI conventions: compact `FilterBar`, icon row actions (edit/view accent, activate green, deactivate amber, delete red), `ConfirmationModal` for delete/deactivate, `.ms-form` two-column forms.
 
+## Phase 1 gaps (2026-10-09)
+- **Difficulty Reasons** have three more fields (migration 126): Short label (first screen), Order on the first screen, First reply. Set on the client's six.
+- **Regulation Activities:** 13 built-in (migration 127 added physiological sigh, belly breathing, sensory grounding, body scan, progressive muscle relaxation, guided imagery, self-compassion break).
+- **Assignment Types:** Exam Preparation, Research, Other and Practice switched off (migration 128; own work moved to Test or quiz preparation / Research assignment / Other / custom task), list in the client's order. Task Types' nine older rows were already off.
+
 ## Verify
 - UI: harness with `USERS.superAdmin`. List + create + edit for the master you changed, at 1366px and 390px.
 - Backend: api-tester. `extra` validation, delete refused when in use, lookup allowlist returns 404 for unknown types, deactivated items hidden from lookups.

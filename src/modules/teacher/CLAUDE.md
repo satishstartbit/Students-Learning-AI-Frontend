@@ -31,6 +31,11 @@ Services: `services/dashboard.service.js` (`GET /dashboard`), `teacherStudent.se
 - Assignment-list tabs: All / Published / Scheduled / Drafts / Completed, and Archived only when it has rows. The row actions sit in a ⋮ menu.
 - Lookups for pickers come from `/teacher/lookups/*` (master data). Don't call `/admin/master`.
 
+## Phase 1 gaps (2026-10-09)
+- **Fill from a photo/PDF** (new assignments): `components/assignmentForm/PhotoFillCard.jsx` ("Have it on paper?") → `POST /assignments/read-photo` (multer `file`, `services/assignmentPhoto.service.js`, intake workflow in memory - nothing saved) fills title, subject, task type, due date, time needed.
+- `TeacherLayout` is wrapped in `ConsentGate` (new Terms version → accept again).
+- Tests: `scenarios/teacher-photo-fill.mjs`; backend `assignmentPhoto.itest.js`.
+
 ## Verify
 - `npx eslint src/modules/teacher` · `npm run build`
 - UI: harness with `USERS.teacher`. Mock `/dashboard`, `/teacher/roster`, `/assignments` with the real response shapes (read the service mappers).

@@ -183,6 +183,11 @@
   font-size: 12px;
   opacity: 0.85;
 }
+.lg-hero__foot a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 /* ------------------------------------------------------------------ form side */
 .lg-main {
@@ -535,6 +540,10 @@
 }
 .lg-terms {
   margin: 4px 0 18px;
+}
+.lg-terms__links {
+  margin: 2px 0 0;
+  padding-left: 36px;
 }
 .lg-foot {
   margin: 18px 0 0;

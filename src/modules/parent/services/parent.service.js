@@ -66,6 +66,11 @@ export const getDashboard = () => api.get('/parent/dashboard');
  */
 export const getChildOverview = (childId) => api.get(`/parent/children/${childId}/overview`);
 
+/** The family's optional "check new work" for one child (PDF Q14/Q15): { enabled, items }. */
+export const getWorkReview = (childId) => api.get(`/parent/children/${childId}/work-review`);
+export const setWorkReview = (childId, enabled) => api.patch(`/parent/children/${childId}/work-review`, { enabled });
+export const markWorkChecked = (childId, workId) => api.post(`/parent/children/${childId}/work-review/${workId}/checked`);
+
 /**
  * One child's own notes, read-only - the same filters as the student's Notes
  * page (`range`, `from`/`to`, `status`, `search`, `page`, `limit`), plus
@@ -105,6 +110,10 @@ export const addFamilyParent = (payload) => api.post('/parent/family/parents', p
 /** Account holder only: the parent loses the family's children and plan; their account is kept. */
 export const removeFamilyParent = (id) => api.delete(`/parent/family/parents/${id}`);
 
+/** Account holder only: off = no place on the plan and no access (always allowed); on = needs a free place. */
+export const deactivateFamilyParent = (id) => api.post(`/parent/family/parents/${id}/deactivate`);
+export const activateFamilyParent = (id) => api.post(`/parent/family/parents/${id}/activate`);
+
 // --- teachers ---------------------------------------------------------------
 // Teachers are connected by invitation (modules/invitations - the teacher has
 // to accept); a parent can remove a connected teacher here.
@@ -141,6 +150,9 @@ export const listAcademicYears = (params = {}) =>
   api.get('/parent/lookups/academic-years', { params: dropEmpty(params) });
 
 export default {
+  getWorkReview,
+  setWorkReview,
+  markWorkChecked,
   listChildren,
   getChild,
   addChild,
@@ -158,6 +170,8 @@ export default {
   getFamily,
   addFamilyParent,
   removeFamilyParent,
+  deactivateFamilyParent,
+  activateFamilyParent,
   removeTeacherAssignment,
   listMasterOptions,
   masterOptionsFetcher,

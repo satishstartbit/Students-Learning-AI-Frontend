@@ -43,6 +43,8 @@ export default function CheckInPage() {
 
   const mood = findMood(moods, checkIn?.mood);
   const tool = recommendation.data?.tool ?? null;
+  // A few to choose from (client: 2-3 at a time; how many is the admin's, Settings > Daily check-in).
+  const suggestions = recommendation.data?.suggestions?.length ? recommendation.data.suggestions : tool ? [tool] : [];
 
   return (
     <div className="td-page">
@@ -85,13 +87,37 @@ export default function CheckInPage() {
         )}
 
         {checkedIn && (
-          <Card title="What might help" subtitle={tool ? 'Matched to how you said you feel.' : undefined}>
-            {tool ? (
-              <p style={{ marginTop: 0 }}>
-                Suggested for how you feel: <strong>{tool.name}</strong>
-                {tool.durationMinutes ? ` (${tool.durationMinutes} min)` : ''}. You can try it in Focus, pick a
-                different tool, or skip straight to work.
-              </p>
+          <Card title="What might help" subtitle={suggestions.length ? 'Matched to how you said you feel.' : undefined}>
+            {suggestions.length > 0 ? (
+              <>
+                <p style={{ marginTop: 0 }}>
+                  {suggestions.length > 1 ? 'A few ideas for how you feel' : 'An idea for how you feel'} - try one in Focus,
+                  pick something else, or skip straight to work.
+                </p>
+                <ul aria-label="Suggested calming tools" style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-md)', display: 'grid', gap: 'var(--spacing-xs)' }}>
+                  {suggestions.map((s) => (
+                    <li
+                      key={s.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-sm)',
+                        padding: 'var(--spacing-sm) var(--spacing-md)',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--color-bg-surface-sunken)',
+                      }}
+                    >
+                      {s.icon && <span aria-hidden="true">{s.icon}</span>}
+                      <strong style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{s.name}</strong>
+                      {s.durationMinutes ? (
+                        <span style={{ marginLeft: 'auto', whiteSpace: 'nowrap', color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+                          {s.durationMinutes} min
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </>
             ) : (
               <p style={{ marginTop: 0 }}>You&apos;re all set. Pick up where you left off.</p>
             )}
@@ -100,7 +126,7 @@ export default function CheckInPage() {
               <Button as={Link} to={next ?? '/student/assignments'}>
                 {next ? `Continue to ${describeNextPath(next)}` : 'Go to my work'}
               </Button>
-              {tool && !next?.startsWith('/student/focus') && (
+              {suggestions.length > 0 && !next?.startsWith('/student/focus') && (
                 <Button as={Link} to="/student/focus" variant="secondary">
                   Try a calming tool first
                 </Button>

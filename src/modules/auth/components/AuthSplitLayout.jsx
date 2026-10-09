@@ -82,7 +82,7 @@ function Hero() {
       </div>
 
       <p className="lg-hero__foot">
-        © {new Date().getFullYear()} {APP_NAME} · Privacy · Terms
+        © {new Date().getFullYear()} {APP_NAME} · <Link to="/privacy">Privacy</Link> · <Link to="/terms">Terms</Link>
       </p>
     </aside>
   );

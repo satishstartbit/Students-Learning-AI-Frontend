@@ -24,6 +24,13 @@ The student's daily check-in (how they feel, energy, where they feel it, how muc
 - **Wellbeing alerts:** a mood whose `extra.intensity_level` ≥ `env.checkinAlerts.minIntensity` (default 5) raises one alert per check-in: parents are emailed (direct, not preference-filtered) and teachers get a `checkin_alert` notification and a flag on My Students until marked seen. Changing the answer later sends no second email.
 - The K-4 mood celebration (`MoodCelebration`) and Grade 6+ tiles read icons from the picked mood item, never from a name map.
 
+## Phase 1 gaps (2026-10-09)
+- **Required up to Grade 6** (client: K-6 mandatory), admin `checkin.policy.requiredUpTo`; backend `utils/gradeBand#isCheckInRequiredFor` feeds `/auth/me gradeBand.checkInRequired`. Older students going to work without a check-in get `components/SkipCheckInPrompt.jsx` once a day (client's exact message, "Check in now" / "Continue to my work"); `POST /check-ins/skip` records it (`checkin_skips`, migration 124) and Home shows `laterInvite`. `TodayCheckInProvider` exposes `skipped`, `skipPrompt`, `laterInvite`, `skip()`.
+- **Short "What's making it hard?" list** (client note): Difficulty Reasons carry `quick_label`, `quick_order`, `reply` (migration 126 adds the fields + the client's six). `GET /lookups/difficulty-picker` returns `quick` and each reason's `reply`; `useDifficultyPicker` → `quick`, `replyFor(codes)`. `DifficultyPicker` (6+) and `student/components/kid/KidDifficultyPicker` (K-4) open on the short list + "Something else…" (full groups, "Back to the short list"); the help screen's title is the picked reason's reply. Empty `quick` = the old full list.
+- **Calming suggestions, 2-3 at a time:** `/regulation-toolkit/recommendation` `suggestions` is capped by `checkin.policy.suggestionCount` (3), best of each mood category first (`regulationToolkit.service#suggestForCheckIn`, `tool` unchanged). `pages/CheckInPage` lists them; K-4 `KidCheckInPage` names them.
+- Check-in notes are safety-screened (see `student` → Safety).
+- Tests: `scenarios/checkin-skip.mjs`, `difficulty-quick.mjs`, `calming-suggestions.mjs`; backend `checkinSkip.itest.js`, `tests/utils/checkInRule.test.js`, `tests/masters/calmingSuggestions.test.js`.
+
 ## Verify
 - UI: harness with `USERS.kid` (the gate redirects to check-in when `/check-ins/today` returns `{ data: null }`) and `USERS.student` (modal).
 - Backend: api-tester. Same-day update, points once, invalid mood code refused, alert once per check-in (email stubbed).

@@ -8,6 +8,7 @@ import { formatDate } from '../../../utils/date';
 import { formatCurrency } from '../../../utils/format';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import PriceSummary from '../components/PriceSummary';
+import { hasTax, taxRows } from '../components/taxRows';
 import { useSubscriptionAccess } from '../hooks/useSubscriptionAccess';
 import subscriptionService from '../services/subscription.service';
 import {
@@ -243,13 +244,15 @@ export default function CheckoutPage() {
                   saving: true,
                 },
               kind === 'trial' && { label: 'Free trial', text: `${checkout.trialDays} days` },
+              // Sales tax on what is paid today (nothing during a trial).
+              ...(kind === 'trial' ? [] : taxRows(checkout.tax)),
               { label: 'Total due today', value: checkout.amount, total: true },
             ]}
           />
 
           <p className="ui-hint" style={{ marginTop: 'var(--spacing-md)' }}>
             {kind === 'trial' &&
-              `When the trial ends on ${formatDate(checkout.trialEndsAt)}, this card is charged ${formatCurrency(checkout.total, checkout.currency)} and the plan renews each ${cycle}. Cancel any time before then and you won't be charged.`}
+              `When the trial ends on ${formatDate(checkout.trialEndsAt)}, this card is charged ${formatCurrency(checkout.totalWithTax ?? checkout.total, checkout.currency)}${hasTax(checkout.tax) ? ' (tax included)' : ''} and the plan renews each ${cycle}. Cancel any time before then and you won't be charged.`}
             {kind === 'change' &&
               `${checkout.plan?.name} starts today and renews on ${formatDate(checkout.periodEnd)} with the card you pay with. You can turn off auto-renewal or cancel any time on the Subscription page.`}
             {kind === 'payment' &&

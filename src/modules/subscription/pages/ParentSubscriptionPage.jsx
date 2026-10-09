@@ -26,6 +26,7 @@ import { useViewingChild } from '../../parent/hooks/useViewingChild';
 import BillingHistory from '../components/BillingHistory';
 import PaymentMethodCard from '../components/PaymentMethodCard';
 import PriceSummary from '../components/PriceSummary';
+import { hasTax, taxRows } from '../components/taxRows';
 import { useSubscriptionAccess } from '../hooks/useSubscriptionAccess';
 import subscriptionService from '../services/subscription.service';
 import { describeCard } from '../stripe';
@@ -252,11 +253,15 @@ export default function ParentSubscriptionPage() {
   const familyInfo = overview.data?.family ?? null;
   const isAccountHolder = familyInfo?.isAccountHolder !== false;
   const holderName = formatName(familyInfo?.accountHolder, { fallback: 'the account holder' });
-  const lock = isAccountHolder
-    ? lockMessage(access, latest)
-    : access && !access.hasAccess
-      ? `Your family's plan is not active. Ask ${holderName}, the account holder, to renew it.`
-      : null;
+  let lock = null;
+  if (access?.reason === 'deactivated') {
+    // An extra parent the account holder (or Super Admin) switched off: off the plan, no access.
+    lock = `${holderName} has turned off your access to the family plan, so you can't use the app for now. Ask them to activate you again.`;
+  } else if (isAccountHolder) {
+    lock = lockMessage(access, latest);
+  } else if (access && !access.hasAccess) {
+    lock = `Your family's plan is not active. Ask ${holderName}, the account holder, to renew it.`;
+  }
 
   // ---- choosing a first plan
 
@@ -626,13 +631,14 @@ export default function ParentSubscriptionPage() {
                         value: changeQuote.credit,
                         saving: true,
                       },
+                      ...taxRows(changeQuote.tax),
                       { label: 'Due today', value: changeQuote.dueToday, total: true },
                     ]}
                   />
                   <p className="sub-note">
                     {changeQuote.trial
                       ? `Your free trial carries on until ${formatDate(changeQuote.periodEnd)}, then ${formatCurrency(changeQuote.total, changeQuote.currency)} a ${per(changeTarget)}.`
-                      : `${changeTarget.name} starts today and renews on ${formatDate(changeQuote.periodEnd)} at ${formatCurrency(changeQuote.total, changeQuote.currency)} a ${per(changeTarget)}.`}
+                      : `${changeTarget.name} starts today and renews on ${formatDate(changeQuote.periodEnd)} at ${formatCurrency(changeQuote.total, changeQuote.currency)} a ${per(changeTarget)}${hasTax(changeQuote.tax) ? ', plus tax' : ''}.`}
                     {!changeQuote.trial && changeQuote.credit > changeQuote.total && ' The rest of your credit adds time to the new plan.'}
                   </p>
                   {changeQuote.couponDropped && (
@@ -727,12 +733,15 @@ export default function ParentSubscriptionPage() {
                     saving: true,
                   },
                   trialDays > 0 && { label: 'Free trial', text: `${trialDays} days` },
+                  // Sales tax on what is paid today (none during a trial).
+                  ...(trialDays > 0 ? [] : taxRows(shown?.tax)),
                   { label: 'Total due today', value: shown?.dueToday ?? selectedPlan.price, total: true },
                 ]}
               />
               {trialDays > 0 && (
                 <p className="sub-note">
-                  Then {formatCurrency(shown.total, selectedPlan.currency)} a {per(selectedPlan)} from{' '}
+                  Then {formatCurrency(shown.totalWithTax ?? shown.total, selectedPlan.currency)}
+                  {hasTax(shown.tax) ? ' (tax included)' : ''} a {per(selectedPlan)} from{' '}
                   {formatDate(shown.trialEndsAt)}. Your card is saved now and only charged when the trial ends - cancel
                   before then and you pay nothing.
                 </p>

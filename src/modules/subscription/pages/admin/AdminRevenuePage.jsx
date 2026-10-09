@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { LuFilterX, LuHandCoins, LuTrendingUp, LuUndo2, LuUsers } from 'react-icons/lu';
+import { LuFilterX, LuHandCoins, LuLandmark, LuTrendingUp, LuUndo2, LuUsers } from 'react-icons/lu';
 import {
   PageHeader,
   Card,
@@ -48,6 +48,8 @@ export default function AdminRevenuePage() {
 
   const totals = data?.totals;
   const byPlan = useMemo(() => data?.byPlan ?? [], [data]);
+  // Sales tax (setting "Sales tax (GST/HST)"): shown once any has been collected.
+  const showTax = (totals?.taxCollected ?? 0) > 0;
 
   const distinctCurrencies = useMemo(
     () => [...new Set(byPlan.map((row) => row.currency).filter(Boolean))],
@@ -90,6 +92,16 @@ export default function AdminRevenuePage() {
       align: 'right',
       render: (row) => <strong>{formatCurrency(row.netRevenue, row.currency)}</strong>,
     },
+    ...(showTax
+      ? [
+          {
+            key: 'taxCollected',
+            header: 'Of which tax',
+            align: 'right',
+            render: (row) => formatCurrency(row.taxCollected ?? 0, row.currency),
+          },
+        ]
+      : []),
   ];
 
   const statGridStyle = {
@@ -160,6 +172,14 @@ export default function AdminRevenuePage() {
               value={formatCurrency(totals?.refunded ?? 0, currency)}
               hint="Returned to parents"
             />
+            {showTax && (
+              <StatCard
+                label="Sales tax collected"
+                icon={<LuLandmark aria-hidden="true" />}
+                value={formatCurrency(totals.taxCollected, currency)}
+                hint={`Owed to the government, not revenue · ${formatCurrency(totals.netRevenueBeforeTax ?? 0, currency)} before tax`}
+              />
+            )}
             <StatCard
               label="Active subscribers"
               icon={<LuUsers aria-hidden="true" />}

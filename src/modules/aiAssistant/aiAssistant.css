@@ -140,3 +140,11 @@
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: var(--spacing-md);
 }
+
+/* Help lines under a safety reply (components/safety/HelpLines). */
+.ai-bubble__help {
+  white-space: normal;
+}
+.ai-bubble__help .sf-lines__item {
+  background: var(--color-bg-surface);
+}

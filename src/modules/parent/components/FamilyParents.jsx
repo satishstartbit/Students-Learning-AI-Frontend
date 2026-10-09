@@ -16,7 +16,7 @@ import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import { formatPhoneForDisplay } from '../../../utils/phone';
-import { CHANGE_PLAN_PATH, parentLimitReason, usageLabel } from '../familyLimits';
+import { CHANGE_PLAN_PATH, hasRoomFor, parentLimitReason, usageLabel } from '../familyLimits';
 import parentService from '../services/parent.service';
 import AddParentModal from './AddParentModal';
 import './parentFamily.css';
@@ -63,10 +63,11 @@ export function PlanUsage({ family }) {
   );
 }
 
-function MemberCard({ member, isYou, canRemove, onRemove }) {
+function MemberCard({ member, isYou, canManage, canActivate, activateReason, onRemove, onDeactivate, onActivate }) {
   const name = formatName(member);
+  const inactive = member.active === false;
   return (
-    <article className="pm-card">
+    <article className={`pm-card${inactive ? ' pm-card--inactive' : ''}`}>
       <div className="pm-head">
         <Avatar name={name} size="lg" />
         <div className="pm-head__body">
@@ -79,7 +80,11 @@ function MemberCard({ member, isYou, canRemove, onRemove }) {
       <div className="pm-chips">
         {member.isAccountHolder ? <Badge variant="primary">Account holder</Badge> : <Badge>Parent</Badge>}
         {isYou && <Badge variant="info">You</Badge>}
-        {member.emailVerified ? (
+        {inactive ? (
+          <Badge variant="neutral" dot>
+            Inactive - no access
+          </Badge>
+        ) : member.emailVerified ? (
           <Badge variant="success" dot>
             Signed up
           </Badge>
@@ -90,8 +95,17 @@ function MemberCard({ member, isYou, canRemove, onRemove }) {
         )}
       </div>
 
-      {canRemove && (
+      {canManage && (
         <div className="pm-foot">
+          {inactive ? (
+            <Button size="sm" variant="secondary" onClick={() => onActivate(member)} disabled={!canActivate} title={canActivate ? undefined : activateReason}>
+              Activate
+            </Button>
+          ) : (
+            <Button size="sm" variant="secondary" onClick={() => onDeactivate(member)}>
+              Deactivate
+            </Button>
+          )}
           <Button size="sm" variant="ghost" onClick={() => onRemove(member)}>
             Remove from family
           </Button>
@@ -110,14 +124,39 @@ function MemberCard({ member, isYou, canRemove, onRemove }) {
 export function ParentsSection({ family, currentUserId, onChanged }) {
   const addModal = useModal();
   const removeModal = useModal();
+  const deactivateModal = useModal();
   const data = family.data;
   const blockedReason = parentLimitReason(data);
+  // Switching a parent back on needs a free place, like adding one.
+  const canActivate = hasRoomFor(data?.parents, data);
+  const activateReason = canActivate ? null : parentLimitReason({ ...data, parents: { ...data?.parents, canAdd: false } });
 
   const handleRemove = async () => {
     try {
       await parentService.removeFamilyParent(removeModal.payload.id);
       toast.success(`${formatName(removeModal.payload)} removed from your family`);
       removeModal.close();
+      await onChanged();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  const handleDeactivate = async () => {
+    try {
+      await parentService.deactivateFamilyParent(deactivateModal.payload.id);
+      toast.success(`${formatName(deactivateModal.payload)} no longer takes a place on your plan.`, { title: 'Parent deactivated' });
+      deactivateModal.close();
+      await onChanged();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  const handleActivate = async (member) => {
+    try {
+      await parentService.activateFamilyParent(member.id);
+      toast.success(`${formatName(member)} can use your family plan again.`, { title: 'Parent activated' });
       await onChanged();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -157,12 +196,11 @@ export function ParentsSection({ family, currentUserId, onChanged }) {
 
           {data.isAccountHolder && blockedReason && (
             <Alert variant="warning" className="pm-notice">
-              {blockedReason}
-              {data.plan && (
-                <>
-                  {' '}
-                  <Link to={CHANGE_PLAN_PATH}>See larger plans</Link>
-                </>
+              {blockedReason}{' '}
+              {data.planInForce === false || !data.plan ? (
+                <Link to="/parent/subscription">Choose a plan</Link>
+              ) : (
+                <Link to={CHANGE_PLAN_PATH}>See larger plans</Link>
               )}
             </Alert>
           )}
@@ -173,8 +211,12 @@ export function ParentsSection({ family, currentUserId, onChanged }) {
                 key={member.id}
                 member={member}
                 isYou={member.id === currentUserId}
-                canRemove={data.isAccountHolder && !member.isAccountHolder}
+                canManage={data.isAccountHolder && !member.isAccountHolder}
+                canActivate={canActivate}
+                activateReason={activateReason}
                 onRemove={removeModal.open}
+                onDeactivate={deactivateModal.open}
+                onActivate={handleActivate}
               />
             ))}
           </div>
@@ -182,6 +224,19 @@ export function ParentsSection({ family, currentUserId, onChanged }) {
       )}
 
       <AddParentModal isOpen={addModal.isOpen} onClose={addModal.close} onCreated={onChanged} />
+
+      <ConfirmationModal
+        isOpen={deactivateModal.isOpen}
+        onClose={deactivateModal.close}
+        onConfirm={handleDeactivate}
+        title="Deactivate this parent?"
+        message={
+          deactivateModal.payload
+            ? `${formatName(deactivateModal.payload)} stays in your family but no longer takes a place on your plan, and can't use the app until you activate them again. Their account is kept.`
+            : ''
+        }
+        confirmLabel="Deactivate"
+      />
 
       <ConfirmationModal
         isOpen={removeModal.isOpen}

@@ -23,6 +23,9 @@ Components: `ChatBubble`, `ChatInput`, `PracticeQuestionCard`, `SessionProgressS
 - Every model call goes through `services/ai` (`ai.service` → provider). Never import an SDK in a controller or feature service. AI requests are recorded (`AiRequest`).
 - **No `OPENAI_API_KEY` in this dev environment.** Model-backed endpoints return a clean 500 "AI service is temporarily unavailable". Real generated content can't be verified here. Say so when reporting.
 
+## Phase 1 gaps (2026-10-09)
+- A `safety_block` reply shows the help lines (`components/safety/HelpLines`, `.ai-bubble__help`) from `GET /content/safety`.
+
 ## Verify
 - UI: harness with `USERS.student` (mock sessions and messages), `USERS.parent` (`/parent/learning-summary`), `USERS.teacher`.
 - Backend: api-tester. Safety fail-closed path (stub the classifier to throw → blocked, no model call), a parent/teacher can't read another family's student, summaries contain no message text.

@@ -27,13 +27,16 @@ import { KidOops, KidSkeleton } from './KidStates';
  * many reasons a group has. Escape or a tap outside closes it.
  */
 export function KidDifficultyPicker({ isOpen, onClose, onHelp, assignmentId, stepId, onChanged }) {
-  const { groups, strategiesFor, isLoading, error, reload } = useDifficultyPicker({ immediate: isOpen });
+  const { groups, quick, replyFor, strategiesFor, isLoading, error, reload } = useDifficultyPicker({ immediate: isOpen });
   const support = useSupport({ assignmentId, stepId, onChanged });
 
   const [picked, setPicked] = useState([]);
   const [groupIndex, setGroupIndex] = useState(0);
   const [showing, setShowing] = useState('reasons');
   const [answer, setAnswer] = useState(null);
+  // The short list first (client: never all sixty at once); "Something else…" opens the groups.
+  const [full, setFull] = useState(false);
+  const showFull = full || quick.length === 0;
 
   const localStrategies = useMemo(() => strategiesFor(picked), [picked, strategiesFor]);
   const strategies = answer?.ideas ?? localStrategies;
@@ -45,6 +48,7 @@ export function KidDifficultyPicker({ isOpen, onClose, onHelp, assignmentId, ste
     setGroupIndex(0);
     setAnswer(null);
     setShowing('reasons');
+    setFull(false);
     onClose?.();
   };
 
@@ -78,7 +82,8 @@ export function KidDifficultyPicker({ isOpen, onClose, onHelp, assignmentId, ste
   const container = document.querySelector('.kid-theme') ?? document.body;
 
   const helping = showing === 'help' && !isLoading && !error;
-  const title = helping ? 'Thanks for telling me!' : "What's making it tricky?";
+  // The first words back depend on what they picked (admin-edited, e.g. "Let's find the first tiny step.").
+  const title = helping ? replyFor(picked) ?? 'Thanks for telling me!' : "What's making it tricky?";
 
   return createPortal(
     <div
@@ -122,7 +127,7 @@ export function KidDifficultyPicker({ isOpen, onClose, onHelp, assignmentId, ste
         </header>
 
         {/* Only this part scrolls; a new group starts at its top (keyed). */}
-        <div key={helping ? 'help' : groupIndex} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-1 sm:px-7">
+        <div key={helping ? 'help' : showFull ? groupIndex : 'quick'} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-1 sm:px-7">
           {isLoading ? (
             <KidSkeleton className="h-64" />
           ) : error ? (
@@ -143,6 +148,45 @@ export function KidDifficultyPicker({ isOpen, onClose, onHelp, assignmentId, ste
                 </li>
               ))}
             </ul>
+          ) : !showFull ? (
+            <div className="flex flex-col gap-2.5">
+              {quick.map((reason) => {
+                const selected = picked.includes(reason.code);
+                return (
+                  <button
+                        key={reason.code ?? reason.id}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => toggle(reason.code)}
+                        className={cn(
+                          'flex min-h-12 w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left font-kid-body text-base text-kid-ink',
+                          selected ? 'border-kid-teal bg-kid-sky/40' : 'border-[#ece4d4] bg-kid-paper'
+                        )}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            'grid size-6 shrink-0 place-items-center rounded-full border-2',
+                            selected ? 'border-kid-teal bg-kid-teal text-white' : 'border-[#d9cdb6]'
+                          )}
+                        >
+                          {selected && <LuCheck className="size-3.5" strokeWidth={3.5} />}
+                        </span>
+                        <span className="min-w-0 break-words">{reason.quickLabel}</span>
+                      </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => {
+                  setGroupIndex(0);
+                  setFull(true);
+                }}
+                className="flex min-h-12 w-full items-center gap-3 rounded-2xl border-2 border-dashed border-[#d9cdb6] px-4 py-3 text-left font-kid-body text-base text-kid-ink-soft"
+              >
+                Something else…
+              </button>
+            </div>
           ) : (
             group && (
               // A plain group: no browser fieldset frame around the reasons.
@@ -194,16 +238,16 @@ export function KidDifficultyPicker({ isOpen, onClose, onHelp, assignmentId, ste
               <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                 <span className="font-kid-body text-base text-kid-ink-soft">
                   {picked.length} picked
-                  {groups.length > 1 ? ` · ${groupIndex + 1} of ${groups.length}` : ''}
+                  {showFull && groups.length > 1 ? ` · ${groupIndex + 1} of ${groups.length}` : ''}
                 </span>
 
                 <div className="ml-auto flex items-center gap-2">
-                  {groupIndex > 0 && (
-                    <KidButton size="md" variant="soft" onClick={() => setGroupIndex((i) => i - 1)}>
+                  {showFull && (groupIndex > 0 || quick.length > 0) && (
+                    <KidButton size="md" variant="soft" onClick={() => (groupIndex > 0 ? setGroupIndex((i) => i - 1) : setFull(false))}>
                       Back
                     </KidButton>
                   )}
-                  {isLast ? (
+                  {!showFull || isLast ? (
                     <KidButton size="md" onClick={finish} disabled={picked.length === 0 || Boolean(support.busy)}>
                       Help me
                     </KidButton>

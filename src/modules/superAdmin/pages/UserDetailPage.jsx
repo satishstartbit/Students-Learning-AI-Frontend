@@ -23,7 +23,7 @@ import { ROLE_LABELS, USER_ROLES, USER_STATUS, listPathForRole } from '../../../
 import { emailProblemText } from '../../../utils/emailProblem';
 import { getErrorMessage, parseApiError } from '../../../utils/errorHandler';
 import adminUserService from '../services/adminUser.service';
-import ParentChildrenPanel from '../components/ParentChildrenPanel';
+import ParentFamilyPanel from '../components/ParentFamilyPanel';
 import SetChildPasswordModal from '../../parent/components/SetChildPasswordModal';
 
 /** One labelled value in the detail grid. */
@@ -75,6 +75,15 @@ export default function UserDetailPage() {
     });
   }, [load]);
 
+  // A parent's family: plan, places, children and parents (also decides whether they can be deleted).
+  const family = useApi(adminUserService.getParentFamily);
+  const { run: runFamily } = family;
+  const isParentRecord = user?.role === USER_ROLES.PARENT;
+  const loadFamily = useCallback(() => runFamily(id), [runFamily, id]);
+  useEffect(() => {
+    if (isParentRecord) loadFamily().catch(() => {});
+  }, [isParentRecord, loadFamily]);
+
   /** Runs an admin action, refreshing the record afterwards. */
   const act = async (fn, successMessage) => {
     setBusy(true);
@@ -124,6 +133,16 @@ export default function UserDetailPage() {
     !user.emailVerified && (user.role === USER_ROLES.TEACHER || user.role === USER_ROLES.PARENT);
   // What the delete dialog asks the admin to type.
   const confirmValue = user.email ?? user.username ?? '';
+  // A family's account holder is deleted last: their children and other
+  // parents first (the API refuses otherwise - deleting them used to orphan the children).
+  const familyData = isParentRecord ? family.data : null;
+  const familyLeft =
+    familyData?.isAccountHolder
+      ? [
+          familyData.children?.total ? `${familyData.children.total} ${familyData.children.total === 1 ? 'child' : 'children'}` : null,
+          familyData.parents?.total > 1 ? `${familyData.parents.total - 1} other ${familyData.parents.total - 1 === 1 ? 'parent' : 'parents'}` : null,
+        ].filter(Boolean)
+      : [];
 
   /*
    * The reset link is created and the user signed out whatever happens to
@@ -212,7 +231,9 @@ export default function UserDetailPage() {
       {resetIssue && (
         <Alert variant="error" title="The reset email didn't go out" className="ui-field" onDismiss={() => setResetIssue(null)}>
           {emailProblemText(resetIssue)} {formatName(user)} has been signed out everywhere and can&apos;t sign in until a
-          reset email reaches them. Once email works, send the reset again. <Link to="/admin/system">Check email on System status</Link>
+          reset email reaches them. Once email works, send the reset again.
+          {/* System status (/admin/system) is switched off for now; put back
+              <Link to="/admin/system">Check email on System status</Link> when its route returns. */}
         </Alert>
       )}
 
@@ -271,14 +292,47 @@ export default function UserDetailPage() {
         </div>
       </Card>
 
+      {/* Phase 1 §12: who agreed to which version of the Terms/Privacy, and a child's guardian consent. */}
+      {user.consents && user.role !== USER_ROLES.SUPER_ADMIN && (
+        <Card title="Consent" subtitle={`Current documents: version ${user.consents.currentVersion}`} className="ui-field">
+          <div style={GRID}>
+            {isStudent ? (
+              <Field label="Parent's consent">
+                {user.consents.guardian ? (
+                  <Badge variant={user.consents.guardian.current ? 'success' : 'warning'} dot>
+                    {[user.consents.guardian.by, formatDateTime(user.consents.guardian.consentedAt), `v${user.consents.guardian.version}`].filter(Boolean).join(' · ')}
+                  </Badge>
+                ) : (
+                  <Badge variant="warning" dot>
+                    Not given yet
+                  </Badge>
+                )}
+              </Field>
+            ) : (
+              <Field label="Terms of Use and Privacy Policy">
+                {user.consents.terms ? (
+                  <Badge variant={user.consents.terms.current ? 'success' : 'warning'} dot>
+                    {`Agreed ${formatDateTime(user.consents.terms.acceptedAt)} · v${user.consents.terms.version}`}
+                  </Badge>
+                ) : (
+                  <Badge variant="warning" dot>
+                    Not agreed yet - asked on their next visit
+                  </Badge>
+                )}
+              </Field>
+            )}
+          </div>
+        </Card>
+      )}
+
 
 
       {/*
         A parent's children are managed here rather than on the relationships
         page, because adding a child creates the account and the link together.
       */}
-      {user.role === USER_ROLES.PARENT && (
-        <ParentChildrenPanel parentId={user.id} parentName={formatName(user)} />
+      {isParentRecord && (
+        <ParentFamilyPanel parent={user} family={family.data} familyError={family.error} onChanged={loadFamily} />
       )}
 
 
@@ -331,11 +385,19 @@ export default function UserDetailPage() {
         variant="danger"
         loading={busy}
         // Typing the exact email is the guard against an accidental delete.
-        confirmDisabled={!confirmValue || confirmEmail.trim().toLowerCase() !== confirmValue.toLowerCase()}
+        confirmDisabled={familyLeft.length > 0 || !confirmValue || confirmEmail.trim().toLowerCase() !== confirmValue.toLowerCase()}
       >
-        <Alert variant="error" title="This cannot be undone" className="ui-field">
-          The account, its profile, relationships, sessions and consent records will be removed.
-        </Alert>
+        {familyLeft.length > 0 ? (
+          <Alert variant="warning" title="Empty the family first" className="ui-field">
+            {formatName(user)} still has {familyLeft.join(' and ')} in their family (active or not). Delete them in the
+            Children and Parents sections below first - a parent can only be deleted once their family is empty, so no
+            child is ever left without a parent.
+          </Alert>
+        ) : (
+          <Alert variant="error" title="This cannot be undone" className="ui-field">
+            The account, its profile, relationships, sessions and consent records will be removed.
+          </Alert>
+        )}
 
         {deleteBlockers.length > 0 && (
           <Alert variant="warning" title="This account still owns records" className="ui-field">

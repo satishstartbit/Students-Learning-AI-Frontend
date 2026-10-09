@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { LuArrowDown, LuArrowUp, LuCheck, LuClock3, LuEllipsis, LuPencil, LuPlus, LuTrash2 } from 'react-icons/lu';
 import { Button, Dropdown } from '../../../../components/common';
+import { milestoneHeadings } from './milestoneHeadings';
 
 /**
  * "Task breakdown" on the Grade 6+ assignment page: the student's own steps
@@ -101,6 +102,7 @@ export function TaskBreakdown({ steps, activeStepId, onSelectStep }) {
   const [editing, setEditing] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const total = steps.steps.length;
+  const headings = milestoneHeadings(steps.steps);
   const totalMinutes = steps.steps.reduce((sum, s) => sum + (s.estimatedMinutes ?? 0), 0);
 
   const addStep = async (event) => {
@@ -144,8 +146,14 @@ export function TaskBreakdown({ steps, activeStepId, onSelectStep }) {
       ) : (
         <ol className="ad-steps">
           {steps.steps.map((step, index) => (
+            <Fragment key={step.id}>
+            {/* A project's stages (PDF Q5) as headings, when there is more than one. */}
+            {headings.has(step.id) && (
+              <li role="presentation" className="ad-milestone">
+                <span role="heading" aria-level={3}>{headings.get(step.id)}</span>
+              </li>
+            )}
             <StepRow
-              key={step.id}
               step={step}
               index={index}
               total={total}
@@ -154,6 +162,7 @@ export function TaskBreakdown({ steps, activeStepId, onSelectStep }) {
               editing={editing}
               onSelect={onSelectStep}
             />
+            </Fragment>
           ))}
         </ol>
       )}

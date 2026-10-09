@@ -11,4 +11,7 @@ export const submitCheckIn = (payload) => api.post('/check-ins', payload);
 /** @param {{ studentId?, from?, to?, page?, limit? }} params */
 export const getHistory = (params = {}) => api.get('/check-ins/history', { params });
 
-export default { getToday, submitCheckIn, getHistory };
+/** "Continue to my work" without checking in (older students) - recorded once a day. */
+export const skipCheckIn = () => api.post('/check-ins/skip');
+
+export default { getToday, submitCheckIn, getHistory, skipCheckIn };

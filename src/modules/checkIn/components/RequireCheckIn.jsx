@@ -3,18 +3,18 @@ import { ErrorState, Loader } from '../../../components/common';
 import { useStudentExperience } from '../../student/hooks/useStudentExperience';
 import { KidOops, KidSkeleton } from '../../student/components/kid/KidStates';
 import { useTodayCheckIn } from '../hooks/useTodayCheckIn';
+import SkipCheckInPrompt from './SkipCheckInPrompt';
 
 /**
  * Route guard: work screens (Assignments, Plan, Focus, AI Assistant) need
  * today's check-in first. Without one, the student is sent to Check In with
  * `?next=` set, and returned here once they've checked in.
  *
- * Only for the kid band, though: `checkInRequired` (useStudentExperience,
- * from the server's KIDS_UI with VITE_KIDS_UI as the fallback) is true for
- * K-4 and false above it. An older student can still check in whenever they
- * want - Check In stays in their nav and their day still records it - but
- * nothing here blocks their way to the work. Moving KIDS_UI moves which
- * grades are held at this gate, with no code change.
+ * Only for the grades the "Daily check-in" setting names (`checkInRequired`
+ * from GET /auth/me - the client's rule is Kindergarten to Grade 6). An older
+ * student is never blocked: the first time each day they go to work without
+ * checking in, SkipCheckInPrompt asks gently ("Check in now" / "Continue to
+ * my work"), and a skip is recorded so Home can invite them back later.
  *
  * Applied per route through `guards` in routes/routeConfig.js.
  */
@@ -23,9 +23,16 @@ export function RequireCheckIn({ children }) {
   const { isJunior, checkInRequired } = useStudentExperience();
   const location = useLocation();
 
-  // Optional for this student: straight through, and no waiting on the
-  // check-in lookup to decide it.
-  if (!checkInRequired) return children;
+  // Optional for this student: straight through, no waiting on the lookup -
+  // just the once-a-day gentle question on top (client answers, 4).
+  if (!checkInRequired) {
+    return (
+      <>
+        {children}
+        <SkipCheckInPrompt />
+      </>
+    );
+  }
 
   if (isLoading) {
     return isJunior ? (

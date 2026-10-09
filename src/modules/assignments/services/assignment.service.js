@@ -29,6 +29,17 @@ export const getAssignment = (id) => api.get(`/assignments/${id}`);
 /** @param {object} payload - { title, description, subject, grade, academicYearId, startDate, dueDate, estimatedMinutes, status, studentIds } */
 export const createAssignment = (payload) => api.post('/assignments', payload);
 
+/**
+ * Suggested values for a new assignment from a photo or PDF of it (teacher).
+ * Read on the server, nothing stored; `grade` narrows the subject/task type match.
+ */
+export const readAssignmentPhoto = (file, { grade } = {}) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (grade) formData.append('grade', grade);
+  return api.upload('/assignments/read-photo', formData);
+};
+
 export const updateAssignment = (id, payload) => api.patch(`/assignments/${id}`, payload);
 
 export const publishAssignment = (id) => api.patch(`/assignments/${id}/publish`);
@@ -88,6 +99,7 @@ export default {
   getAssignmentCounts,
   getAssignment,
   createAssignment,
+  readAssignmentPhoto,
   updateAssignment,
   publishAssignment,
   unpublishAssignment,

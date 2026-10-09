@@ -24,6 +24,7 @@ Client session: `store/slices/authSlice.js` + `utils/auth.js`. Tokens and user a
 **Backend:** `routes/auth.routes.js` → `controllers/auth.controller.js` → `services/auth.service.js` (sessions, refresh tokens, verification, reset) + `services/user.service.js#updateUser` (for `PATCH /auth/me`). Models: `User`, `UserSession`, `EmailVerification`, `PasswordReset`, `Role`, profile tables. Postal: `routes/postalLookup.routes.js`.
 
 ## Rules - read before changing
+- **No family plan, no sign-in for its members (2026-10-09):** a child or extra parent whose family has no plan in force gets 403 `FAMILY_PLAN_INACTIVE` at sign-in (LoginPage shows "No active subscription plan" + the server's words) and on any request once signed in: `utils/apiClient.js` remembers the reason (`utils/signOutReason.js`, sessionStorage, read once), clears the session and LoginPage says why (it also listens for `SIGN_OUT_REASON_EVENT`, because a parallel request can reach /login first). The account holder always signs in. Scenario `family-plan-signin.mjs`.
 - `GET /auth/me` returns the full user (profile, photo URL, relationships, `timezone`, `locale`) and, for students, `gradeBand`. Layouts depend on this shape, so change it only with every consumer updated (`StudentLayout`, `AuthenticatedLayout`'s locale sync).
 - `PATCH /auth/me` is self-only (always `req.user.id`, never an id from the body or URL) and allow-listed (`PROFILE_FIELDS`). Teacher/Parent/Super Admin only.
 - Only hashes are stored for passwords, refresh tokens, reset and verification tokens. Change password revokes all sessions.
@@ -51,6 +52,11 @@ Client session: `store/slices/authSlice.js` + `utils/auth.js`. Tokens and user a
 - **Email fields (2026-10-07):** every email input is `EmailInput` with `emailRules()`; the rules and messages live in `utils/email.js` and match the backend's `validators/common.js#email` (one @, no spaces, a domain like example.com, 254 characters, lower case). "Username or email" on Sign in and Forgot password use `loginIdentifier()` (frontend) / `loginIdentifier` (backend): a value with an @ must be a valid email, a username or phone is untouched. A duplicate on register, Super Admin create/edit, add parent or a profile email change is a 409 "This email is already registered." on the `email` field (register keeps its "You already have an account" alert). Test `.claude/testing/scenarios/email-validation.mjs`.
 - `RoleProfileFields`/`AddressFields` are shared by several callers. New options must default to the current behaviour (e.g. `layout='stacked'`).
 - **Students sign in with their username only** (`utils/username.js`). They have no email or phone (migration 104 made `users.email` nullable); an older student's email or phone is answered exactly like an unknown name, before the password is checked (`auth.service#authenticate`). Teachers and parents still use username, email or phone.
+
+## Phase 1 gaps (2026-10-09)
+- **Consent at sign-up:** `POST /auth/register` requires `acceptTerms: true` (label from `legal.documents.signupConsentLabel`, `components/legal/LegalLinks`); recorded in `terms_acceptances` (migration 121) with version and IP. `/auth/me` returns `consent` ({ required, version, termsAccepted, children }); `POST /auth/me/consent` (teacher/parent) accepts a new version (`components/legal/ConsentGate` in Teacher/Parent layouts).
+- **Public legal pages:** `/privacy`, `/terms` (`pages/legal/LegalPage.jsx`, full-page open routes) from `GET /content/legal` (`legal.documents`). Links in `AuthSplitLayout` footer and student Help.
+- Tests: `scenarios/consent-legal.mjs`; backend `consent.itest.js`. Test fixtures create consent rows unless `consented: false`; registration tests send `acceptTerms: true`.
 
 ## Verify
 - `npx eslint src/modules/auth` · `npm run build`

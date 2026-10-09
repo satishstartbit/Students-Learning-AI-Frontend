@@ -15,8 +15,10 @@ const INITIAL_VALUES = { firstName: '', lastName: '', email: '', phone: '' };
 /**
  * "Add parent" (account holder only): creates another parent account in the
  * family. The backend links them to every child and to the family's plan.
+ * Super Admin reuses it on a parent's record with its own `save`
+ * (POST /admin/users/:id/family/parents) and `familyName`.
  */
-export default function AddParentModal({ isOpen, onClose, onCreated }) {
+export default function AddParentModal({ isOpen, onClose, onCreated, save = parentService.addFamilyParent, familyName = null }) {
   const form = useForm({
     initialValues: INITIAL_VALUES,
     validationSchema: {
@@ -25,14 +27,14 @@ export default function AddParentModal({ isOpen, onClose, onCreated }) {
       phone: [phoneRule()],
     },
     async onSubmit(values) {
-      const { data } = await parentService.addFamilyParent({
+      const { data } = await save({
         firstName: values.firstName,
         lastName: values.lastName || null,
         email: values.email,
         phone: values.phone || null,
       });
 
-      toast.success(`${formatName(data)} added to your family`);
+      toast.success(`${formatName(data)} added to ${familyName ? `${familyName}'s` : 'your'} family`);
       handleClose();
       onCreated?.();
     },
@@ -48,7 +50,11 @@ export default function AddParentModal({ isOpen, onClose, onCreated }) {
       isOpen={isOpen}
       onClose={handleClose}
       title="Add a parent"
-      description="Give another parent or guardian their own sign-in for your family."
+      description={
+        familyName
+          ? `Give another parent or guardian their own sign-in for ${familyName}'s family.`
+          : 'Give another parent or guardian their own sign-in for your family.'
+      }
       size="lg"
       className="pc-childform"
       footer={
@@ -69,8 +75,9 @@ export default function AddParentModal({ isOpen, onClose, onCreated }) {
       )}
 
       <Alert variant="info" className="pc-childform__alert">
-        They'll be emailed a link to set their own password. Once they sign in they'll see all your
-        children and share your plan. Only you can change the plan or the parents in your family.
+        {familyName
+          ? `They'll be emailed a link to set their own password. Once they sign in they'll see all of ${familyName}'s children and share the family plan, taking one parent place on it.`
+          : "They'll be emailed a link to set their own password. Once they sign in they'll see all your children and share your plan. Only you can change the plan or the parents in your family."}
       </Alert>
 
       <form onSubmit={form.handleSubmit} noValidate>

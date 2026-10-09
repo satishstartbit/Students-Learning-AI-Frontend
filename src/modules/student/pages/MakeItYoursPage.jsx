@@ -6,6 +6,7 @@ import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { ACCENTS } from '../../../theme';
 import { RewardArt } from '../components/rewards/RewardArt';
+import { placedIds, toggleSticker } from '../components/stickers/stickerPicks';
 import { AvatarPicture } from '../components/personalize/AvatarPicture';
 import '../components/personalize/makeItYours.css';
 import '../components/settings/studentSettings.css';
@@ -81,6 +82,14 @@ export default function MakeItYoursPage() {
   const noteStyle = settings.noteStyle ?? 'classic';
   const isDark = settings.appearance === 'dark';
   const collected = rewards.stickers.filter((s) => s.collected);
+  // Stickers on Home (Phase 1 "Sticker library"): tap one to put it on, or take it off.
+  const stickerLimit = settings.dashboardStickerLimit ?? 0;
+  const onHome = placedIds(settings);
+  const tapSticker = (id) => {
+    const next = toggleSticker(onHome, id, stickerLimit);
+    if (next.full) toast.info(`You can show up to ${stickerLimit} stickers on Home - take one off first.`);
+    else save({ dashboardStickers: next.ids });
+  };
   const firstName = settings.preferredName || settings.about?.firstName || user?.firstName || 'friend';
 
   return (
@@ -191,19 +200,45 @@ export default function MakeItYoursPage() {
         </ul>
       </Section>
 
-      <Section title="Your stickers" hint="Only the ones you have unlocked. Earn more on the Rewards page.">
+      <Section
+        title="Your stickers"
+        hint={
+          stickerLimit
+            ? `Tap a sticker to put it on your Home (up to ${stickerLimit}). Earn more on the Rewards page.`
+            : 'Only the ones you have unlocked. Earn more on the Rewards page.'
+        }
+      >
         {rewards.isLoading ? (
           <p className="my-empty">Loading your stickers…</p>
         ) : collected.length === 0 ? (
           <p className="my-empty">No stickers yet. Finish some work to earn your first one.</p>
         ) : (
           <ul className="my-stickers">
-            {collected.map((sticker) => (
-              <li key={sticker.id} className="my-sticker">
-                <RewardArt imageUrl={sticker.imageUrl} size={52} />
-                <span>{sticker.name}</span>
-              </li>
-            ))}
+            {collected.map((sticker) => {
+              const on = onHome.includes(sticker.id);
+              return (
+                <li key={sticker.id}>
+                  {stickerLimit ? (
+                    <button
+                      type="button"
+                      className="my-sticker my-sticker--pick"
+                      aria-pressed={on}
+                      aria-label={`${sticker.name}${on ? ', on your Home' : ''}`}
+                      onClick={() => tapSticker(sticker.id)}
+                    >
+                      <RewardArt imageUrl={sticker.imageUrl} size={52} />
+                      <span>{sticker.name}</span>
+                      {on && <span className="my-sticker__on">On Home</span>}
+                    </button>
+                  ) : (
+                    <div className="my-sticker">
+                      <RewardArt imageUrl={sticker.imageUrl} size={52} />
+                      <span>{sticker.name}</span>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
         <Link to="/student/rewards" className="my-footlink">

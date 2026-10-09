@@ -57,8 +57,17 @@ export function useDifficultyPicker({ immediate = true } = {}) {
     [byCode]
   );
 
+  /** The first reply for what they picked: the first picked reason that has one (admin-edited). */
+  const replyFor = useMemo(
+    () => (codes = []) => codes.map((code) => byCode.get(code)?.reply).find(Boolean) ?? null,
+    [byCode]
+  );
+
   return {
     groups,
+    // The short first screen: reasons with a short label, in the admin's order.
+    quick: data?.quick ?? [],
+    replyFor,
     reasonByCode: byCode,
     // Every active strategy - to name one by its code (e.g. "Did that help?").
     strategies: data?.strategies ?? [],

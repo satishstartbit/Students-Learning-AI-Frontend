@@ -33,11 +33,18 @@ export function TodayCheckInProvider({ children }) {
   const save = useCallback(
     async (values) => {
       const { data } = await checkInService.submitCheckIn(values);
-      setData({ date: data.checkIn.date, checkedIn: true, checkIn: data.checkIn });
+      setData((prev) => ({ ...(prev ?? {}), date: data.checkIn.date, checkedIn: true, checkIn: data.checkIn, skipped: false }));
       return data;
     },
     [setData]
   );
+
+  // An older student chose "Continue to my work": recorded, and not asked again today.
+  const skip = useCallback(async () => {
+    const { data } = await checkInService.skipCheckIn();
+    setData(data);
+    return data;
+  }, [setData]);
 
   const refresh = useCallback(() => run().catch(() => {}), [run]);
 
@@ -46,6 +53,11 @@ export function TodayCheckInProvider({ children }) {
       checkedIn: Boolean(today.data?.checkedIn),
       checkIn: today.data?.checkIn ?? null,
       date: today.data?.date ?? null,
+      // Older students: skipped today, the "before you start" words, and the invite to come back.
+      skipped: Boolean(today.data?.skipped),
+      skipPrompt: today.data?.skipPrompt ?? null,
+      laterInvite: today.data?.laterInvite ?? null,
+      skip,
       // Only the first load blocks; a background refresh keeps showing what we had.
       isLoading: today.isLoading && !today.data,
       error: today.data ? null : today.error,
@@ -54,7 +66,7 @@ export function TodayCheckInProvider({ children }) {
       moods,
       moodsLoading: moodsApi.isLoading && !moodsApi.data,
     }),
-    [today.data, today.isLoading, today.error, save, refresh, moods, moodsApi.isLoading, moodsApi.data]
+    [today.data, today.isLoading, today.error, save, skip, refresh, moods, moodsApi.isLoading, moodsApi.data]
   );
 
   return <TodayCheckInContext.Provider value={value}>{children}</TodayCheckInContext.Provider>;

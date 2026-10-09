@@ -15,6 +15,7 @@ import { KidChoiceChips } from '../../components/kid/KidChoiceChips';
 import { StarIcon } from '../../components/kid/KidIcons';
 import { KidOops, KidSkeleton } from '../../components/kid/KidStates';
 import { PaperCard } from '../../components/kid/PaperKit';
+import SafetyNoticeCard from '../../../../components/safety/SafetyNoticeCard';
 
 /** A question whose answers come from a Master Management list. */
 function MasterStep({ type, name, legend, multiple, value, onChange }) {
@@ -112,6 +113,8 @@ function KidOnboardingFlow({ onboarding, onSaved }) {
             You&apos;re in {onboarding.answers.grade}
           </p>
         )}
+        {/* Phase 1 §4: told, in kid words, that a grown-up hears if they need help. */}
+        <SafetyNoticeCard audience="kid" variant="kid" className="max-w-md" />
         <KidButton className="mt-2" onClick={() => setStepIndex(0)}>
           Let&apos;s start!
           <LuArrowRight className="size-6" aria-hidden="true" />

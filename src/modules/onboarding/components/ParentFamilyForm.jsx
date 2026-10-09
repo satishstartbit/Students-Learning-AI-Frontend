@@ -5,6 +5,7 @@ import { useOnboardingLookup } from '../hooks/useOnboardingLookup';
 import { HOMEWORK_HELPERS, asOptions } from '../options';
 import onboardingService from '../services/onboarding.service';
 import CheckboxGroup from './CheckboxGroup';
+import SafetyNoticeCard from '../../../components/safety/SafetyNoticeCard';
 
 function valuesFrom(answers) {
   return {
@@ -102,6 +103,9 @@ export function ParentFamilyForm({ answers, submitLabel = 'Save', onSaved }) {
         {...form.getFieldProps('familyContext')}
       />
       <Textarea label="About your child" rows={3} {...form.getFieldProps('childContext')} />
+
+      {/* Phase 1 §4: parents are told how their child's writing is screened and when they're alerted. */}
+      <SafetyNoticeCard audience="parent" className="ui-field" />
 
       <Button type="submit" loading={form.isSubmitting}>
         {submitLabel}

@@ -15,6 +15,7 @@ import {
 import { useEffect } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getMe } from '../modules/auth/services/auth.service';
+import ConsentGate from '../components/legal/ConsentGate';
 import AppSettingsProvider from '../components/appearance/AppSettingsProvider';
 import SubjectColorsProvider from '../components/subjects/SubjectColorsProvider';
 import AuthenticatedLayout from './AuthenticatedLayout';
@@ -82,7 +83,8 @@ export function TeacherLayout({ children }) {
           accountSubtitle={school}
           notificationsPath="/teacher/notifications"
         >
-          {children}
+          {/* Agree to the current Terms/Privacy before anything else (Phase 1 §12). */}
+          <ConsentGate>{children}</ConsentGate>
         </AuthenticatedLayout>
       </SubjectColorsProvider>
     </AppSettingsProvider>

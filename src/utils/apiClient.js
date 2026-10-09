@@ -3,6 +3,8 @@ import { getAccessToken, getRefreshToken, setTokens, clearAuthStorage } from './
 import { parseApiError } from './errorHandler';
 import { SUBSCRIPTION_REQUIRED_EVENT } from './constants';
 import { setServerReachable } from './connectivity';
+import { announceSafetyNotice } from '../components/safety/safetyEvents';
+import { familyPlanProblem, rememberSignOutReason } from './signOutReason';
 
 /**
  * The single HTTP entry point for the app.
@@ -107,15 +109,32 @@ apiClient.interceptors.response.use(
         const token = await refreshPromise;
         original.headers.Authorization = `Bearer ${token}`;
         return apiClient(original);
-      } catch {
+      } catch (refreshError) {
+        signOutForFamilyPlan(refreshError.response?.data);
         clearAuthStorage();
         onSessionExpired();
       }
     }
 
+    // A child or extra parent whose family has no plan in force: the server has
+    // already ended their sessions; sign out here and say why on /login.
+    // (Not the sign-in itself: the sign-in page shows that answer directly.)
+    if (status === 403 && !original?.url?.includes('/auth/login') && signOutForFamilyPlan(error.response?.data)) {
+      clearAuthStorage();
+      onSessionExpired();
+    }
+
     return Promise.reject(error);
   }
 );
+
+/** Remembers the FAMILY_PLAN_INACTIVE reason from a response body; true when it was one. */
+function signOutForFamilyPlan(body) {
+  const problem = familyPlanProblem(body?.errors);
+  if (!problem) return false;
+  rememberSignOutReason({ code: problem.code, message: body?.message });
+  return true;
+}
 
 /** Unwraps the standard { success, message, data, meta } envelope. */
 function unwrap(response) {
@@ -128,7 +147,13 @@ function unwrap(response) {
 
 async function request(config) {
   try {
-    return unwrap(await apiClient.request(config));
+    const result = unwrap(await apiClient.request(config));
+    // A safety-screened save (note, check-in, step, answer) that raised a
+    // concern: SafetyNoticeHost shows it, whichever screen saved it.
+    if (result.data && typeof result.data === 'object' && result.data.safetyNotice) {
+      announceSafetyNotice(result.data.safetyNotice);
+    }
+    return result;
   } catch (error) {
     const parsed = parseApiError(error);
     if (parsed.status === 403 && parsed.errors.some((e) => e?.code === 'SUBSCRIPTION_REQUIRED')) {

@@ -25,7 +25,7 @@ function summaryLine({ openCount, minutesLeft, isLoading }) {
 
 /** The pinned "Today's check-in" card over the landscape. Opens the real check-in form. */
 function CheckInPeek({ onOpen }) {
-  const { checkIn, isLoading, moods } = useTodayCheckIn();
+  const { checkIn, isLoading, moods, skipped, laterInvite } = useTodayCheckIn();
   const mood = checkIn ? findMood(moods, checkIn.mood) : null;
 
   return (
@@ -61,6 +61,8 @@ function CheckInPeek({ onOpen }) {
             </span>
             How are you today?
           </span>
+          {/* Skipped earlier today ("Continue to my work"): invited back, gently. */}
+          {skipped && laterInvite && <p className="sh-checkin__meta">{laterInvite}</p>}
           <span className="sh-checkin__cta">Check in →</span>
         </>
       )}

@@ -63,6 +63,11 @@ Used by: `student` (Home: Next up, check-back, pending, Add assignment → AddWo
 - **Default view** comes from the settings; switching views on a page is for now only. Nobody's view is chosen for them except by the student or their parent.
 - **Dates:** plan `from`/`to` and busy-time days are day keys validated by `planning.validator#dateKey` (kept as strings; the old `isoDate()` rule turned them into timestamps and refused every week request - fixed 2026-09-30). Busy-time HH:MM display: `utils/date#formatClockTime`.
 
+## Phase 1 gaps (2026-10-09)
+- **Conflicts shown:** `PlanNotices` lists up to 3 `plan.conflicts` with the viewer's hint (`plan.conflictHints`, from `planner.copy.conflictHintStudent/Parent`) and a Change study times link.
+- **Tailored breakdowns:** `breakdown.service` passes `learnerBlock` (`services/planner/learnerProfile.js`; no name or free text) into the `task_breakdown` prompt for own work and "Break it down more"; teacher assignments stay class-level. Switch: `planner.policy.personalize { useProfile, useCheckIn }`.
+- Tests: `growing-focus-planner.mjs`; backend `tests/planner/learnerProfile.test.js`, `learnerProfile.itest.js`.
+
 ## Verify
 - `npm test` (`planView.test.js`, `schoolwork.test.js`, `components/subjects/subjectColor.test.js`) · `npx eslint src/modules/planner` · `npm run build`
 - UI: `.claude/testing/scenarios/plan-page.mjs` (the student Plan page, both bands, every view and sort, cards, picker, Spread my steps, empty state, 1280-360px, dark contrast, calm; fixture `planPageFixture.mjs`), `growing-focus-planner.mjs` (student, K-4, parent, teacher, support, billing, archive; mocked API) and `scenarios/schoolwork-views.mjs` (board moves by button and drag, note steps, list order and ticks, full-calendar order, Customize, Settings, K-4, parent, busy-time category, kind of work, teacher colours, admin task-type icon; 390px and dark mode).

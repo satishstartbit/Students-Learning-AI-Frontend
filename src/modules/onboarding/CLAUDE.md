@@ -21,6 +21,9 @@ The first-login questionnaires: students (about themselves and how they work) an
 - A new lookup type must be added to `LOOKUP_TYPES` (backend). The client can't widen what it reads.
 - Parent family context is edited in two places (onboarding and My Profile) through the same `ParentFamilyForm`. Keep them as one component so the two can't drift.
 
+## Phase 1 gaps (2026-10-09)
+- Student onboarding, the parent family form and the K-4 intro show `components/safety/SafetyNoticeCard` (what is checked for safety and who is told; text from `safety.monitoring` notices).
+
 ## Verify
 - UI: harness. Return `{ completed: false }` from `/onboarding/me` (parent) or omit `onboarding_completed_at` (student) to land on the form.
 - Backend: api-tester. First save stamps the date, a re-save keeps it, and unknown values are refused.

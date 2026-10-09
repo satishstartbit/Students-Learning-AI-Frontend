@@ -30,7 +30,7 @@ import './difficultyPicker.css';
  * @param onChanged     called when an idea changed their plan (smaller steps, replan)
  */
 export function DifficultyPicker({ isOpen, onClose, onHelp, assignmentId, stepId, onChanged }) {
-  const { groups, strategiesFor, isLoading, error, reload } = useDifficultyPicker({ immediate: isOpen });
+  const { groups, quick, replyFor, strategiesFor, isLoading, error, reload } = useDifficultyPicker({ immediate: isOpen });
   const support = useSupport({ assignmentId, stepId, onChanged });
 
   const [picked, setPicked] = useState([]);
@@ -39,6 +39,9 @@ export function DifficultyPicker({ isOpen, onClose, onHelp, assignmentId, stepId
   const [asking, setAsking] = useState(false);
   // The server's answer: { eventId, ideas, disclaimer } - or null when it couldn't be reached.
   const [answer, setAnswer] = useState(null);
+  // The short list first (client: "never display all of these at the same time"); "Something else…" opens the rest.
+  const [full, setFull] = useState(false);
+  const showFull = full || quick.length === 0;
 
   const toggle = (code) =>
     setPicked((current) => (current.includes(code) ? current.filter((c) => c !== code) : [...current, code]));
@@ -61,7 +64,10 @@ export function DifficultyPicker({ isOpen, onClose, onHelp, assignmentId, stepId
     setPicked([]);
     setAnswer(null);
     setShowing('reasons');
+    setFull(false);
   };
+  // What they picked first decides the first words back (admin-edited, e.g. "Let's find the first tiny step.").
+  const reply = replyFor(picked);
 
   const tryIdea = async (idea) => {
     const ok = await support.run({ strategyCode: idea.code, eventId: answer?.eventId });
@@ -91,9 +97,9 @@ export function DifficultyPicker({ isOpen, onClose, onHelp, assignmentId, stepId
             <span className="dp-face" aria-hidden="true">
               <LuLifeBuoy size={18} />
             </span>
-            <h2 className="dp-title">Thanks for telling us</h2>
+            <h2 className="dp-title">{reply ?? 'Thanks for telling us'}</h2>
             <p className="dp-empathy">
-              That sounds hard, and noticing it is the difficult part - well done. Here{' '}
+              {reply ? 'Thanks for telling us. ' : 'That sounds hard, and noticing it is the difficult part - well done. '}Here{' '}
               {strategies.length === 1 ? 'is something' : strategies.length === 2 ? 'are a couple of things' : 'are a few things'} that might help
               right now.
             </p>
@@ -145,7 +151,32 @@ export function DifficultyPicker({ isOpen, onClose, onHelp, assignmentId, stepId
             <p className="dp-lead">Pick as many as you like. There are no wrong answers.</p>
           </div>
 
+          {!showFull ? (
+            <div className="dp-chips dp-quick">
+              {quick.map((reason) => {
+                const selected = picked.includes(reason.code);
+                return (
+                  <button key={reason.code} type="button" className="dp-chip" aria-pressed={selected} onClick={() => toggle(reason.code)}>
+                    {selected && (
+                      <span className="dp-chip__tick" aria-hidden="true">
+                        <LuCheck size={9} strokeWidth={3.5} />
+                      </span>
+                    )}
+                    {reason.quickLabel}
+                  </button>
+                );
+              })}
+              <button type="button" className="dp-chip dp-chip--more" onClick={() => setFull(true)}>
+                Something else…
+              </button>
+            </div>
+          ) : (
           <div className="dp-groups">
+            {quick.length > 0 && (
+              <button type="button" className="dp-reasons-back" onClick={() => setFull(false)}>
+                Back to the short list
+              </button>
+            )}
             {groups.map((group) => {
               const count = countIn(group);
               return (
@@ -180,6 +211,7 @@ export function DifficultyPicker({ isOpen, onClose, onHelp, assignmentId, stepId
               );
             })}
           </div>
+          )}
 
           <Checkbox
             className="dp-consent"

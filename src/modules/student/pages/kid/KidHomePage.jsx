@@ -13,6 +13,7 @@ import { HomeRememberCard, HomeWeekCard } from '../../components/kid/home/HomeRa
 import { MoreToDoCard, OtherTasks, StillToFinish } from '../../components/kid/home/HomeTaskLists';
 import { dueDayKey, todayDayKey } from '../../components/kid/home/homeDates';
 import { groupHomeTasks } from '../../components/kid/home/homeTasks';
+import DashboardStickers from '../../components/stickers/DashboardStickers';
 
 /**
  * K-4 Home - "My Day", built to the "Good morning, Alex!" mockup.
@@ -91,6 +92,10 @@ export default function KidHomePage() {
             </BlurFade>
             <BlurFade delay={0.3} className="order-9 min-w-0">
               <HomeRememberCard finishedCount={doneCount} />
+            </BlurFade>
+            {/* The collected stickers they chose to show (Make it yours). */}
+            <BlurFade delay={0.35} className="order-10 min-w-0">
+              <DashboardStickers kid />
             </BlurFade>
           </div>
         </div>

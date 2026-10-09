@@ -7,6 +7,7 @@ import { formatCurrency, formatName } from '../../../utils/format';
 import { describeCard } from '../stripe';
 import PaymentStatusBadge from './PaymentStatusBadge';
 import { paymentStatusLabel } from './paymentStatus';
+import { formatRate } from './taxRows';
 
 /**
  * A receipt for one billing-history row, from the payment the page already
@@ -30,6 +31,9 @@ export default function ReceiptModal({ payment, onClose }) {
 
   const currency = payment.currency;
   const discount = payment.discountApplied > 0 ? payment.discountApplied : 0;
+  // Sales tax (when this charge had any): the price before tax, then each tax.
+  const taxLines = payment.taxLines ?? [];
+  const beforeTax = payment.preTaxAmount ?? payment.amount;
   const charged = payment.status !== 'failed' && payment.status !== 'pending';
   const card = payment.cardLast4 ? describeCard({ brand: payment.cardBrand, last4: payment.cardLast4 }) : null;
   const billedTo = [formatName(user), user?.email].filter(Boolean).join(' · ');
@@ -83,12 +87,26 @@ export default function ReceiptModal({ payment, onClose }) {
           <>
             <div className="sub-receipt__row">
               <dt>Price</dt>
-              <dd>{formatCurrency(payment.amount + discount, currency)}</dd>
+              <dd>{formatCurrency(beforeTax + discount, currency)}</dd>
             </div>
             <div className="sub-receipt__row">
               <dt>Discount</dt>
               <dd>−{formatCurrency(discount, currency)}</dd>
             </div>
+          </>
+        )}
+        {taxLines.length > 0 && (
+          <>
+            <div className="sub-receipt__row">
+              <dt>Before tax</dt>
+              <dd>{formatCurrency(beforeTax, currency)}</dd>
+            </div>
+            {taxLines.map((line) => (
+              <div key={line.name} className="sub-receipt__row">
+                <dt>{`${line.name} (${formatRate(line.rate)}%)`}</dt>
+                <dd>{formatCurrency(line.amount, currency)}</dd>
+              </div>
+            ))}
           </>
         )}
         <div className="sub-receipt__row sub-receipt__total">
@@ -109,6 +127,12 @@ export default function ReceiptModal({ payment, onClose }) {
               {payment.failureReason ? ` - ${payment.failureReason}` : ''}.{' '}
               {payment.status === 'failed' ? 'Nothing was charged.' : 'Not charged yet.'}
             </dd>
+          </div>
+        )}
+        {taxLines.length > 0 && payment.taxNumber && (
+          <div className="sub-receipt__row">
+            <dt>GST/HST number</dt>
+            <dd>{payment.taxNumber}</dd>
           </div>
         )}
         <div className="sub-receipt__row">

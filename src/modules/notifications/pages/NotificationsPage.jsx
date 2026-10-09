@@ -7,6 +7,7 @@ import {
   LuChevronRight,
   LuClock3,
   LuInfo,
+  LuSettings2,
   LuSmile,
   LuTrophy,
 } from 'react-icons/lu';
@@ -18,6 +19,7 @@ import { formatTimeAgo, isTodayInTimezone } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { NOTIFICATIONS_CHANGED_EVENT, notificationPathFor } from '../notificationPath';
 import notificationService from '../services/notification.service';
+import NotificationSettingsModal from '../components/NotificationSettingsModal';
 import '../components/notificationsPage.css';
 
 /**
@@ -123,6 +125,7 @@ export default function NotificationsPage() {
   // Ids read on this visit - applied over the fetched list so a row un-tints instantly.
   const [readIds, setReadIds] = useState(() => new Set());
   const [markingAll, setMarkingAll] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const filter = filters.find((f) => f.key === filterKey) ?? filters[0];
   const query = { page: 1, limit, ...filter.query };
@@ -182,10 +185,17 @@ export default function NotificationsPage() {
           <h1 className="sn-title">Notifications</h1>
           <p className="sn-subtitle">What&apos;s new, and what needs you.</p>
         </div>
-        <button type="button" className="sn-markall" onClick={handleMarkAll} disabled={markingAll || unreadCount === 0}>
-          Mark all as read <LuChevronRight size={13} aria-hidden="true" />
-        </button>
+        <div className="sn-head__actions">
+          {/* What they hear about, and how (in app / email / browser push). */}
+          <button type="button" className="sn-settings-btn" onClick={() => setSettingsOpen(true)}>
+            <LuSettings2 size={13} aria-hidden="true" /> Settings
+          </button>
+          <button type="button" className="sn-markall" onClick={handleMarkAll} disabled={markingAll || unreadCount === 0}>
+            Mark all as read <LuChevronRight size={13} aria-hidden="true" />
+          </button>
+        </div>
       </header>
+      <NotificationSettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       <div className="sn-chips" role="group" aria-label="Filter notifications">
         {filters.map((f) => (

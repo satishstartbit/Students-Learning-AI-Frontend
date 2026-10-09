@@ -846,3 +846,16 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* A project's stage (PDF Q5) above its steps - TaskBreakdown. */
+.ad-milestone {
+  margin: 6px 0 -2px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.ad-milestone:first-child {
+  margin-top: 0;
+}

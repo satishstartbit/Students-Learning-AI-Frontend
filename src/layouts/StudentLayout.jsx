@@ -20,6 +20,7 @@ import { getMe } from '../modules/auth/services/auth.service';
 import { TodayCheckInProvider } from '../modules/checkIn/components/TodayCheckInProvider';
 import { KidLockedScreen } from '../modules/student/components/kid/KidLockedScreen';
 import NoteReminderHost from '../modules/student/components/NoteReminderHost';
+import SafetyNoticeHost from '../components/safety/SafetyNoticeHost';
 import StudentSettingsProvider from '../modules/student/components/StudentSettingsProvider';
 import SchoolworkSettingsProvider from '../modules/planner/components/SchoolworkSettingsProvider';
 import { StudentExperienceContext } from '../modules/student/hooks/useStudentExperience';
@@ -214,6 +215,8 @@ export function StudentLayout({ children }) {
             <SchoolworkSettingsProvider>{shell}</SchoolworkSettingsProvider>
             {/* Note reminders pop up on any page - on time, or as soon as the student is back. */}
             <NoteReminderHost />
+            {/* Something they saved raised a safety concern: where to get help (Phase 1 §4). */}
+            <SafetyNoticeHost kid={isJunior} />
           </TodayCheckInProvider>
         )}
       </SubscriptionAccessContext.Provider>

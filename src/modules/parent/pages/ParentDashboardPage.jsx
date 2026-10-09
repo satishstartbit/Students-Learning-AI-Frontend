@@ -13,6 +13,7 @@ import { TodayCards } from '../../progress/components/StudentProgressDetail';
 import { StudentAvatar } from '../../teacher/components/students/StudentBits';
 import { checkInWhen, fullName, partOfDayPhrase } from '../../teacher/components/students/studentFormat';
 import { activityLine, alertLine, attentionLine, lowerFirst } from '../components/dashboard/overviewText';
+import WorkToCheckPanel from '../components/dashboard/WorkToCheckPanel';
 import { useViewingChild } from '../hooks/useViewingChild';
 import parentService from '../services/parent.service';
 import NotesBoard from '../../student/components/home/NotesBoard';
@@ -336,6 +337,8 @@ function Overview({ data, onReload }) {
           />
         </div>
         <div className="pd-col">
+          {/* The family's optional review of new work (PDF Q14/Q15). */}
+          {!child.archived && <WorkToCheckPanel key={child.id} childId={child.id} firstName={first} />}
           <NeedsAttention items={attention} firstName={first} />
           <RecentActivity items={recentActivity} firstName={first} />
         </div>

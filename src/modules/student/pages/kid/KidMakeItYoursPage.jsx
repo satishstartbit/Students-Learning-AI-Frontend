@@ -12,6 +12,7 @@ import RewardArt from '../../components/rewards/RewardArt';
 import { useAvatarChoices } from '../../hooks/useAvatarChoices';
 import { useRewards } from '../../hooks/useRewards';
 import { useStudentSettings } from '../../hooks/useStudentSettings';
+import { placedIds, toggleSticker } from '../../components/stickers/stickerPicks';
 
 /**
  * K-4 "Make it yours" - the K-4 personalization mockup: pick a buddy, pick
@@ -89,6 +90,14 @@ export default function KidMakeItYoursPage() {
   const cardStyle = settings.cardStyle ?? 'taped';
   const accent = settings.accent ?? DEFAULT_ACCENT;
   const collected = rewards.stickers.filter((s) => s.collected);
+  // Stickers on Home (Phase 1 "Sticker library"): tap one to put it on, or take it off.
+  const stickerLimit = settings.dashboardStickerLimit ?? 0;
+  const onHome = placedIds(settings);
+  const tapSticker = (id) => {
+    const next = toggleSticker(onHome, id, stickerLimit);
+    if (next.full) toast.info(`Your Home can show ${stickerLimit} stickers. Take one off first!`);
+    else save({ dashboardStickers: next.ids });
+  };
 
   return (
     <div data-kid-page className="kid-ui mx-auto flex max-w-4xl flex-col gap-6 px-4 py-6 sm:px-8 lg:py-10">
@@ -185,7 +194,11 @@ export default function KidMakeItYoursPage() {
         <h2 id="kid-stickers-heading" className="font-kid-display text-2xl font-semibold text-kid-ink">
           My stickers
         </h2>
-        <p className="mt-1 text-lg text-kid-ink-soft">Stickers you have collected. Earn more stars to get more!</p>
+        <p className="mt-1 text-lg text-kid-ink-soft">
+          {stickerLimit
+            ? `Tap a sticker to put it on your Home (up to ${stickerLimit}). Earn more stars to get more!`
+            : 'Stickers you have collected. Earn more stars to get more!'}
+        </p>
 
         {rewards.isLoading ? (
           <p className="mt-5 text-lg text-kid-ink-soft">Finding your stickers…</p>
@@ -196,21 +209,33 @@ export default function KidMakeItYoursPage() {
           </p>
         ) : (
           <ul className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-6">
-            {collected.map((sticker, index) => (
-              <li
-                key={sticker.id}
-                className="flex flex-col items-center gap-1.5 rounded-[1.25rem] border-2 border-[#eadfca] bg-[#fffaf0] px-2 pb-3 pt-4 text-center"
-              >
+            {collected.map((sticker, index) => {
+              const on = onHome.includes(sticker.id);
+              return (
+              <li key={sticker.id}>
+                <button
+                  type="button"
+                  disabled={!stickerLimit}
+                  aria-pressed={stickerLimit ? on : undefined}
+                  aria-label={`${sticker.name}${on ? ', on my Home' : ''}`}
+                  onClick={() => tapSticker(sticker.id)}
+                  className={cn(
+                    'flex w-full flex-col items-center gap-1.5 rounded-[1.25rem] border-2 px-2 pb-3 pt-4 text-center transition-transform enabled:hover:-translate-y-0.5 disabled:cursor-default',
+                    on ? 'border-kid-teal bg-kid-sky' : 'border-[#eadfca] bg-[#fffaf0]'
+                  )}
+                >
                 <RewardArt imageUrl={sticker.imageUrl} size={60} delay={(index % 6) * 0.3} />
                 <span className="font-kid-display text-base font-semibold leading-tight text-kid-ink">{sticker.name}</span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-[#e3f3e6] px-2 py-0.5 font-kid-body text-xs font-bold text-[#1f7a3a]">
                   <span className="grid size-3.5 place-items-center rounded-full bg-[#2e9a4e] text-white">
                     <LuCheck className="size-2.5" strokeWidth={4} aria-hidden="true" />
                   </span>
-                  Collected
+                  {on ? 'On my Home' : 'Collected'}
                 </span>
+                </button>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
 
