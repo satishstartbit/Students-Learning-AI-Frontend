@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { LuCamera, LuCircleCheck, LuFileText, LuMic, LuPencil, LuX } from 'react-icons/lu';
 import { Alert, Button, Input, Modal, Select, Spinner, Textarea } from '../../../components/common';
 import { getErrorMessage } from '../../../utils/errorHandler';
-import { useOnboardingLookup } from '../../onboarding/hooks/useOnboardingLookup';
+import { useStudentProfileOptions } from '../../profile/hooks/useStudentProfileOptions';
 import { useIntakeProgress } from '../hooks/useIntakeProgress';
 import { useWorkTypeOptions } from '../hooks/useWorkTypeOptions';
 import intakeService from '../services/intake.service';
@@ -15,7 +15,7 @@ const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/heic,image/heif';
 
 /** Grade 6+ quick-add (Q14): title and optional facts, created at once with no reading. */
 function QuickAddForm({ studentId, defaultDueDate, onCreated, onBack }) {
-  const subjects = useOnboardingLookup('subjects');
+  const subjects = useStudentProfileOptions(studentId);
   const workTypes = useWorkTypeOptions();
   const [title, setTitle] = useState('');
   const [dueDate, setDueDate] = useState(defaultDueDate ?? '');
@@ -73,7 +73,7 @@ function QuickAddForm({ studentId, defaultDueDate, onCreated, onBack }) {
       />
       <div className="grid gap-x-4 sm:grid-cols-2">
         <Input label="Due date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-        <Select label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} options={subjects.options} placeholder="No subject" loading={subjects.loading} />
+        <Select label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} options={subjects.subjectOptions} placeholder="No subject" loading={subjects.loading} hint="Only subjects selected in the student profile." error={subjects.error ? 'Could not load profile subjects' : undefined} />
       </div>
       <Select
         label="Kind of work"

@@ -15,6 +15,48 @@
   color: var(--color-danger-fg);
 }
 
+/* Parent listing: standard portal surface, body font and compact type scale.
+   Table supplies the shared mobile row layout below 768px. */
+.nl-table {
+  min-width: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+}
+.nl-table .ui-table {
+  table-layout: fixed;
+}
+.nl-table .ui-table td {
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.nl-table__note,
+.nl-table__related,
+.nl-table__date {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  line-height: 1.5;
+}
+.nl-table__title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+.nl-table__text {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  white-space: pre-wrap;
+  color: var(--color-text-secondary);
+}
+.nl-table__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
 .nl-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));

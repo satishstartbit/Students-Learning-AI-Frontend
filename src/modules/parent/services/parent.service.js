@@ -121,6 +121,9 @@ export const activateFamilyParent = (id) => api.post(`/parent/family/parents/${i
 export const removeTeacherAssignment = (childId, relationshipId) =>
   api.delete(`/parent/children/${childId}/teachers/${relationshipId}`);
 
+export const disconnectTeacher = (childId, teacherId) =>
+  api.delete(`/parent/children/${childId}/teacher-connections/${teacherId}`);
+
 // --- lookups (read-only, parent-safe master data) ---------------------------
 
 /**
@@ -134,8 +137,8 @@ export const listMasterOptions = (type, params = {}) =>
 /**
  * Master options shaped for RoleProfileFields' `lookupFetcher` prop
  * ({ value, label }[]). Add Child / Edit Child pass this so their Grade /
- * Subjects / Strengths / Challenges / Interests fields use the same
- * dropdowns the Invite Teacher modal and the Super Admin forms use.
+ * Subjects / Strengths / Challenges / Interests fields offer the catalogue.
+ * Invite Teacher instead reads this child's saved profile choices.
  */
 export const masterOptionsFetcher = (type) =>
   listMasterOptions(type).then((res) =>
@@ -150,6 +153,7 @@ export const listAcademicYears = (params = {}) =>
   api.get('/parent/lookups/academic-years', { params: dropEmpty(params) });
 
 export default {
+  disconnectTeacher,
   getWorkReview,
   setWorkReview,
   markWorkChecked,

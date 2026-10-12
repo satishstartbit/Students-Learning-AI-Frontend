@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   LuBell,
   LuCalendarDays,
@@ -11,7 +11,7 @@ import {
   LuSmile,
   LuTrophy,
 } from 'react-icons/lu';
-import { Alert, Button } from '../../../components/common';
+import { Alert, Button, Pagination } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { useAuth } from '../../../hooks/useAuth';
 import { toast } from '../../../hooks/useToast';
@@ -34,6 +34,10 @@ import '../components/notificationsPage.css';
  * first page. Opening a notification marks it read and goes where it points
  * for the reader's role (notificationPath.js); reading tells the bell's badge
  * to look again.
+ *
+ * Paged on the server, 20 a page (the shared Pagination, as on Notes). The
+ * filter and page live in the address (?filter=unread&page=2), so coming back
+ * from a notification lands on the same page.
  */
 
 const UNREAD = { key: 'unread', label: 'Unread', query: { unreadOnly: true } };
@@ -56,8 +60,12 @@ const EMPTY = {
 };
 
 const PAGE_SIZE = 20;
-// The API caps one request at 100 rows - more than enough history to scroll.
-const MAX_LIMIT = 100;
+
+/** ?page= as a whole number from 1; anything else is page 1. */
+const pageFrom = (value) => {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 1 ? n : 1;
+};
 
 const CATEGORY_ICON = {
   deadlines: LuClock3,
@@ -120,19 +128,23 @@ export default function NotificationsPage() {
   const navigate = useNavigate();
   const { role } = useAuth();
   const filters = FILTERS_BY_ROLE[role] ?? FILTERS_BY_ROLE.PARENT;
-  const [filterKey, setFilterKey] = useState('all');
-  const [limit, setLimit] = useState(PAGE_SIZE);
+  const [params, setParams] = useSearchParams();
+  const topRef = useRef(null);
   // Ids read on this visit - applied over the fetched list so a row un-tints instantly.
   const [readIds, setReadIds] = useState(() => new Set());
   const [markingAll, setMarkingAll] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const filter = filters.find((f) => f.key === filterKey) ?? filters[0];
-  const query = { page: 1, limit, ...filter.query };
+  const filter = filters.find((f) => f.key === params.get('filter')) ?? filters[0];
+  const filterKey = filter.key;
+  const page = pageFrom(params.get('page'));
+  const query = { page, limit: PAGE_SIZE, ...filter.query };
   const list = useApi(notificationService.listNotifications, { immediate: true, args: [query] });
   const unread = useApi(notificationService.getUnreadCount, { immediate: true });
 
-  const total = list.meta?.total ?? list.meta?.pagination?.total ?? 0;
+  const meta = list.meta ?? {};
+  const total = meta.total ?? meta.pagination?.total ?? 0;
+  const totalPages = meta.totalPages ?? Math.ceil(total / PAGE_SIZE);
   const notifications = useMemo(
     () => (list.data ?? []).map((n) => (readIds.has(n.id) ? { ...n, read: true } : n)),
     [list.data, readIds]
@@ -142,9 +154,19 @@ export default function NotificationsPage() {
   // readIds only ever holds rows that were unread when opened, so this stays exact.
   const unreadCount = Math.max(0, (unread.data?.count ?? 0) - readIds.size);
 
-  const chooseFilter = (key) => {
-    setFilterKey(key);
-    setLimit(PAGE_SIZE);
+  /** Filter and page in the address; page 1 and "All" are left out. */
+  const show = (key, nextPage = 1) => {
+    const next = new URLSearchParams(params);
+    if (key === 'all') next.delete('filter');
+    else next.set('filter', key);
+    if (nextPage > 1) next.set('page', String(nextPage));
+    else next.delete('page');
+    setParams(next, { replace: true });
+  };
+  const chooseFilter = (key) => show(key, 1);
+  const goToPage = (next) => {
+    show(filterKey, Math.min(Math.max(1, next), Math.max(1, totalPages)));
+    topRef.current?.scrollIntoView({ block: 'start' });
   };
 
   const handleOpen = async (notification) => {
@@ -167,7 +189,13 @@ export default function NotificationsPage() {
       await notificationService.markAllNotificationsRead();
       setReadIds(new Set());
       announce();
-      await Promise.all([list.run(query), unread.run()]);
+      // On "Unread" every page just emptied: back to the first (the address change reloads it).
+      if (filterKey === 'unread' && page > 1) {
+        show(filterKey, 1);
+        await unread.run();
+      } else {
+        await Promise.all([list.run(query), unread.run()]);
+      }
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -179,7 +207,7 @@ export default function NotificationsPage() {
   const empty = filterKey === 'all' ? { title: 'No notifications yet', text: EMPTY_ALL[role] ?? EMPTY_ALL.PARENT } : EMPTY[filterKey];
 
   return (
-    <div className="sn-page td-page">
+    <div className="sn-page td-page" ref={topRef}>
       <header className="sn-head">
         <div>
           <h1 className="sn-title">Notifications</h1>
@@ -221,6 +249,14 @@ export default function NotificationsPage() {
             ))}
           </div>
         </section>
+      ) : notifications.length === 0 && page > 1 && total > 0 ? (
+        // A page that no longer exists (fewer notifications than when it was linked).
+        <div className="sn-empty">
+          <p className="sn-empty__title">Nothing on this page</p>
+          <Button variant="secondary" size="sm" onClick={() => goToPage(1)}>
+            Go to the first page
+          </Button>
+        </div>
       ) : notifications.length === 0 ? (
         <div className="sn-empty">
           <span className="sn-empty__icon" aria-hidden="true">
@@ -231,19 +267,19 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <>
-          <Section title="Today" items={today} onOpen={handleOpen} />
-          <Section title="Earlier" items={earlier} onOpen={handleOpen} />
-          {notifications.length < total && limit < MAX_LIMIT && (
-            <Button
-              className="sn-more"
-              variant="secondary"
-              size="sm"
-              loading={list.isLoading}
-              onClick={() => setLimit((l) => Math.min(l + PAGE_SIZE, MAX_LIMIT))}
-            >
-              Show older
-            </Button>
-          )}
+          <div aria-busy={list.isLoading || undefined}>
+            <Section title="Today" items={today} onOpen={handleOpen} />
+            <Section title="Earlier" items={earlier} onOpen={handleOpen} />
+          </div>
+          <Pagination
+            className="sn-pagination"
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            from={(page - 1) * PAGE_SIZE + 1}
+            to={(page - 1) * PAGE_SIZE + notifications.length}
+            onPageChange={goToPage}
+          />
         </>
       )}
     </div>

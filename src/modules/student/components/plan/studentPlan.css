@@ -4,9 +4,20 @@
  * shared theme tokens, so accent switching and dark mode still apply.
  */
 
-.sp-page {
+.sp-page,
+.sp-cal {
   --sp-radius: 10px;
   --sp-warn: #c2410c;
+}
+/*
+ * The same calendar outside the student's page - the parent's Schedule
+ * (planner ParentSchedulePage) - brings the Home tokens it reads with it.
+ */
+.sp-cal {
+  --sh-muted: var(--color-text-secondary);
+  --sh-hairline: var(--color-border-default);
+  --sh-done: var(--color-success-fg);
+  min-width: 0;
 }
 
 /* ------------------------------------------------------------------ header */
@@ -118,7 +129,9 @@
 }
 
 .sp-page button:focus-visible,
-.sp-page a:focus-visible {
+.sp-page a:focus-visible,
+.sp-cal button:focus-visible,
+.sp-cal a:focus-visible {
   outline: 2px solid var(--accent-ring, var(--accent-base));
   outline-offset: 2px;
 }

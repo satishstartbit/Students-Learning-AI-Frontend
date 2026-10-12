@@ -90,11 +90,44 @@ export const adminGetPaymentStats = (params = {}) =>
 export const adminExportPayments = (params = {}) =>
   api.get('/subscriptions/admin/payments/export', { params: clean(params), responseType: 'text' });
 
-export const adminRefundPayment = (id, { amount, reason }) =>
-  api.post(`/subscriptions/admin/payments/${id}/refund`, clean({ amount, reason }));
+/**
+ * A refund. `reasonCode` is required (duplicate | parent_request |
+ * service_problem | other); `requestKey` is the dialog's idempotency key, so a
+ * repeated click refunds once; `cancelSubscription: false` keeps the family
+ * subscribed after a full refund. `data.refundOutcome.status` is
+ * refunded | pending | failed.
+ */
+export const adminRefundPayment = (id, { amount, reasonCode, note, requestKey, cancelSubscription }) =>
+  api.post(`/subscriptions/admin/payments/${id}/refund`, clean({ amount, reasonCode, note, requestKey, cancelSubscription }));
 
+/** One payment for the refund dialog / View Details: card (brand, last 4, expiry), refunds with who and why, `refundable`, its subscription. */
+export const adminGetPayment = (id) => api.get(`/subscriptions/admin/payments/${id}`);
+
+/** Past-due row: charge the saved card now (`data.outcome` renewed | failed). */
+export const adminRetryPayment = (id, requestKey) =>
+  api.post(`/subscriptions/admin/subscriptions/${id}/retry-payment`, { requestKey });
+
+/** Past-due row: email the parent to update their card (once an hour at most). */
+export const adminRemindCard = (id) => api.post(`/subscriptions/admin/subscriptions/${id}/remind-card`);
+
+/** "Apply discount code": every active code with { available, reason, nextPayment } for this subscription. */
+export const adminGetCouponOptions = (id) => api.get(`/subscriptions/admin/subscriptions/${id}/coupons`);
+
+/** Puts a code on the subscription from its next payment; rejects with the reason when it can't be used. */
+export const adminApplyCoupon = (id, { discountCodeId, note }) =>
+  api.post(`/subscriptions/admin/subscriptions/${id}/coupon`, { discountCodeId, note: note || null });
+
+/** The Subscriptions list as CSV text (same filters). */
+export const adminExportSubscriptions = (params = {}) =>
+  api.get('/subscriptions/admin/subscriptions/export', { params: clean(params), responseType: 'text' });
+
+/** Revenue: by plan, totals vs the previous period, over time, MRR, trials, discounts. `from`/`to` are day keys. */
 export const adminGetStats = (params = {}) =>
   api.get('/subscriptions/admin/stats', { params: clean(params) });
+
+/** Sales tax per charge and refund with totals (CSV) - for the GST/HST return. */
+export const adminExportTax = (params = {}) =>
+  api.get('/subscriptions/admin/stats/tax-export', { params: clean(params), responseType: 'text' });
 
 export const adminListCouponRedemptions = (couponId) =>
   api.get(`/subscriptions/admin/coupons/${couponId}/redemptions`);
@@ -122,6 +155,13 @@ export default {
   adminGetPaymentStats,
   adminExportPayments,
   adminRefundPayment,
+  adminGetPayment,
+  adminRetryPayment,
+  adminRemindCard,
+  adminGetCouponOptions,
+  adminApplyCoupon,
+  adminExportSubscriptions,
   adminGetStats,
+  adminExportTax,
   adminListCouponRedemptions,
 };

@@ -1,5 +1,7 @@
 # planner module
 
+Student profile selections (2026-10-12): `AddWorkDialog`, `IntakeConfirm` and the student's `OwnTaskModal` use `profile/hooks/useStudentProfileOptions`; backend intake/own-task services reject new subjects outside that student's active saved profile. Historical work retains its subject, and subject-colour settings include subjects already on work. Profile forms keep the full catalogue.
+
 Growing Focus planning, shared by the student (both bands), the parent and the teacher: the server-computed plan, adding work any way, study/busy times, help when work gets hard, and sharing own work with a teacher. **Roles:** STUDENT (own plan), PARENT (their children's), TEACHER (checkpoints/steps on their own assignments, work shared with them). CSS prefix `pl-` (`planner.css`).
 
 ## Where it lives
@@ -21,7 +23,7 @@ Growing Focus planning, shared by the student (both bands), the parent and the t
 | `components/NeedHelpDialog.jsx`, `SupportCheckBack.jsx`, `SupportSummaryCard.jsx` | Quick help (Keep going, Break it down more, Explain, Re-plan, Ask an adult, No longer needed), "Did that help?", the parent's counts-only summary |
 | `components/ShareWithTeacher.jsx` | On an own task (OwnTaskModal): share with one linked teacher / stop sharing |
 | `components/ProvenanceBadge.jsx`, `planView.js` (+ `planView.test.js`) | Pure grouping/labels; provenance never claims a teacher |
-| `pages/ParentSchedulePage.jsx` (`/parent/schedule`, sidebar "Schedule") | The viewing child's schoolwork in the same three views (board: a parent moves only parent-added work; list with who added what; read-only week `ScheduleWeek`), Customize for the child, add work for them, take family-added work off the plan (from the note dialog), Coming up, support summary |
+| `pages/ParentSchedulePage.jsx` (`/parent/schedule`, sidebar "Schedule") | The viewing child's schoolwork in the same three views (board: a parent moves only parent-added work; list with who added what; calendar), Customize for the child, add work for them, take family-added work off the plan (from the note dialog), Coming up, support summary. **Calendar = the child's own (2026-10-12, user request):** the student Plan page's pieces - ‹ Today › + `PlanMonthPicker`, Week / Day, `PlanDayColumn` with `viewer="parent"` (study-time cards `PlanBlockCard` without Start, due lines open the note via `onOpenDue`, personal plans, "Catch up" / "Plan ahead" in parent words, + Add = the quick form pre-dated for that day, x / y done), in the student page's `.sp-grid` (calendar + 256px rail); wrapped in `.sp-cal`, which carries the tokens `studentPlan.css` needs outside `.sp-page`. `ScheduleWeek` is now unreferenced (kept). |
 
 ### Schoolwork views (Growing Focus views PDF: sticky notes, list, calendar)
 Every view shows the **same server plan** (same work, priority order, deadlines, subject colours, details); only the layout changes. CSS prefix `sw-` (`components/schoolwork/schoolwork.css`).

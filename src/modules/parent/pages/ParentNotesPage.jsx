@@ -16,7 +16,7 @@ function ChildNotes({ child }) {
         title={`${first}’s notes`}
         description={`The notes ${first} keeps - reminders, things to remember, notes on their work. You can read them here; only ${first} can change them.`}
       />
-      <NotesListView load={load} readOnly ownerName={first} />
+      <NotesListView load={load} readOnly ownerName={first} layout="list" />
     </div>
   );
 }

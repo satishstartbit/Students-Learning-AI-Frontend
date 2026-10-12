@@ -78,7 +78,38 @@
   font-size: 14px;
 }
 .al-search input {
-  padding: 0 12px 0 36px;
+  /* Room on the right for the clear button. */
+  padding: 0 36px 0 36px;
+}
+/* The one clear button (the browser's own is hidden app-wide, index.css). */
+.al-search__clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.al-search__clear:hover {
+  background: var(--color-bg-surface-sunken);
+  color: var(--color-text-primary);
+}
+.al-search__clear:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+/* .al-search svg places the magnifier; the clear button's icon sits in its button. */
+.al-search__clear svg {
+  position: static;
+  transform: none;
 }
 .al-search input::placeholder {
   color: var(--color-text-tertiary);

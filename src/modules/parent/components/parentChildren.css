@@ -214,60 +214,9 @@
   min-height: 80px;
 }
 
-/* --- Invite a teacher: subjects as tap-to-toggle chips (the mobile mockup) */
-.pc-chipfield {
-  min-width: 0;
-  margin: 0 0 var(--spacing-lg);
-  padding: 0;
-  border: 0;
-}
-/* The grade and teacher pickers draw their own .ui-field inside the
-   form's wrapper - one field's worth of space between them, not two. */
+/* Nested grade and teacher fields keep one field spacing. */
 .pc-inviteform > .ui-field > .ui-field {
   margin-bottom: 0;
-}
-.pc-chipfield > .ui-label {
-  padding: 0;
-  margin-bottom: 8px;
-}
-.pc-chipfield__loading {
-  margin: 0;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-.pc-chips-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.pc-pick {
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: 9999px;
-  background: var(--color-bg-surface);
-  color: var(--color-text-primary);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.pc-pick:hover:not(:disabled) {
-  background: var(--color-bg-surface-sunken);
-}
-.pc-pick[aria-pressed='true'] {
-  border-color: var(--accent-border);
-  background: var(--accent-soft);
-  color: var(--color-text-primary);
-  font-weight: 600;
-}
-.pc-pick:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.pc-pick:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
 }
 
 /* --- Phones: compact actions, left-aligned; up to four of them ("View as"

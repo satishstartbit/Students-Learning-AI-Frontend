@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LuCalendarClock, LuChevronLeft, LuChevronRight, LuPlus, LuSlidersHorizontal } from 'react-icons/lu';
 import { Button, ConfirmationModal, EmptyState, ErrorState, Loader, Modal, PageHeader } from '../../../components/common';
@@ -13,7 +13,6 @@ import AddWorkDialog from '../components/AddWorkDialog';
 import NextActionsCard from '../components/NextActionsCard';
 import PendingIntakes from '../components/PendingIntakes';
 import PlanNotices from '../components/PlanNotices';
-import ScheduleWeek from '../components/schoolwork/ScheduleWeek';
 import SchoolworkBoard from '../components/schoolwork/SchoolworkBoard';
 import SchoolworkList from '../components/schoolwork/SchoolworkList';
 import SchoolworkPreferences from '../components/schoolwork/SchoolworkPreferences';
@@ -22,9 +21,13 @@ import WorkNoteDialog from '../components/schoolwork/WorkNoteDialog';
 import { usePlan } from '../hooks/usePlan';
 import { useSchoolwork } from '../hooks/useSchoolwork';
 import { useSchoolworkSettings } from '../hooks/useSchoolworkSettings';
-import { weekKeys } from '../schoolwork';
+import { blocksByDay } from '../planView';
+import { eventsByDay, sortBlocks, weekKeys } from '../schoolwork';
+import PlanDayColumn from '../../student/components/plan/PlanDayColumn';
+import PlanMonthPicker from '../../student/components/plan/PlanMonthPicker';
 import '../planner.css';
 import '../components/schoolwork/schoolwork.css';
+import '../../student/components/plan/studentPlan.css';
 
 /** A parent moves only the work a parent added; everything else is the child's (the server enforces it too). */
 const parentMay = (work) => work.source === 'parent';
@@ -40,15 +43,19 @@ function ChildSchedule({ child }) {
   const [order, setOrder] = useState('priority');
   const [customizing, setCustomizing] = useState(false);
   const [openWork, setOpenWork] = useState(null);
-  const [adding, setAdding] = useState(false);
+  // Add work: null = closed, else { dueDate } (a day's "+ Add" opens straight on Type it for that day).
+  const [adding, setAdding] = useState(null);
   const [removing, setRemoving] = useState(null);
   const [busy, setBusy] = useState(false);
 
   // The child's own days (they may be in another time zone than the parent).
   const todayKey = plan?.today ?? getDateKey();
-  const [weekOffset, setWeekOffset] = useState(0);
-  const thisWeek = addDaysToKey(todayKey, -weekdayOfKey(todayKey));
-  const weekStartKey = addDaysToKey(thisWeek, weekOffset * 7);
+  // The calendar works like the child's own (student Plan page): a picked day
+  // (null = the child's today), shown as its week or alone.
+  const [pickedKey, setPickedKey] = useState(null);
+  const selectedKey = pickedKey ?? todayKey;
+  const [viewMode, setViewMode] = useState('week');
+  const weekStartKey = addDaysToKey(selectedKey, -weekdayOfKey(selectedKey));
   const weekEndKey = addDaysToKey(weekStartKey, 6);
   const week = usePlan(child.id, { from: weekStartKey, to: weekEndKey });
 
@@ -64,6 +71,34 @@ function ChildSchedule({ child }) {
     week.reload();
     schoolwork.reload();
   };
+
+  // The calendar's pieces, the same as on the child's Plan page: study times
+  // and personal plans per day, and what is due each day (from the work list).
+  const blocks = useMemo(() => blocksByDay(week.plan?.blocks ?? []), [week.plan]);
+  const events = useMemo(() => eventsByDay(week.plan?.personalEvents ?? []), [week.plan]);
+  const workById = useMemo(() => new Map(schoolwork.work.map((w) => [w.id, w])), [schoolwork.work]);
+  const dueByDay = useMemo(() => {
+    const map = new Map();
+    for (const w of schoolwork.work) {
+      if (!w.dueDate) continue;
+      const key = String(w.dueDate).slice(0, 10);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push({ key: w.id, title: w.title, done: w.progress === 'done', work: w });
+    }
+    return map;
+  }, [schoolwork.work]);
+  // The month picker: days with work due (dots) and days holding overdue work.
+  const dueCounts = useMemo(() => {
+    const map = new Map();
+    dueByDay.forEach((list, key) => map.set(key, { total: list.length, overdue: key < todayKey && list.some((t) => !t.done) }));
+    return map;
+  }, [dueByDay, todayKey]);
+  const step = viewMode === 'week' ? 7 : 1;
+  const shownDays = viewMode === 'week' ? weekKeys(weekStartKey, 7) : [selectedKey];
+  const rangeLabel =
+    viewMode === 'week'
+      ? formatDateKeyRange(weekStartKey, weekEndKey)
+      : formatDateKey(selectedKey, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
   // "No longer needed" for work the family added (teacher work stays the teacher's call - Q1).
   const remove = async () => {
@@ -102,7 +137,7 @@ function ChildSchedule({ child }) {
             <Button as={Link} to="/parent/schedule/study-times" variant="secondary" startIcon={<LuCalendarClock aria-hidden="true" />}>
               Study & busy times
             </Button>
-            <Button type="button" startIcon={<LuPlus aria-hidden="true" />} onClick={() => setAdding(true)}>
+            <Button type="button" startIcon={<LuPlus aria-hidden="true" />} onClick={() => setAdding({})}>
               Add work for {first}
             </Button>
           </div>
@@ -142,7 +177,8 @@ function ChildSchedule({ child }) {
           </p>
         </section>
       ) : (
-        <div className="pl-grid">
+        // The calendar takes the width and a narrow rail, like the child's Plan page (it drops below under 1100px).
+        <div className={view === 'calendar' ? 'sp-grid' : 'pl-grid'}>
           {view === 'list' ? (
             <section className="pl-card" aria-label="List">
               {workView(
@@ -165,41 +201,77 @@ function ChildSchedule({ child }) {
               )}
             </section>
           ) : (
-            <section className="pl-card" aria-label="Calendar">
-              <div className="pl-card__head">
-                <div className="pl-row">
-                  <Button type="button" variant="secondary" size="sm" aria-label="Previous week" onClick={() => setWeekOffset((w) => w - 1)}>
-                    <LuChevronLeft aria-hidden="true" />
-                  </Button>
-                  <Button type="button" variant="secondary" size="sm" onClick={() => setWeekOffset(0)} disabled={weekOffset === 0}>
-                    This week
-                  </Button>
-                  <Button type="button" variant="secondary" size="sm" aria-label="Next week" onClick={() => setWeekOffset((w) => w + 1)}>
-                    <LuChevronRight aria-hidden="true" />
-                  </Button>
+            // The child's own calendar (student Plan page): ‹ Today › and a month
+            // picker, Week / Day, day columns with study-time cards (read-only: no
+            // Start), what is due, personal plans, + Add for that day and each
+            // day's tally. A day's header opens it on its own.
+            <section className="sp-cal" aria-label="Calendar">
+              <div className="sp-toolbar sp-toolbar--calendar">
+                <div className="sp-toolbar__nav">
+                  <button
+                    type="button"
+                    className="sp-iconbtn"
+                    onClick={() => setPickedKey(addDaysToKey(selectedKey, -step))}
+                    aria-label={viewMode === 'week' ? 'Previous week' : 'Previous day'}
+                  >
+                    <LuChevronLeft size={18} aria-hidden="true" />
+                  </button>
+                  <button type="button" className="sp-textbtn" onClick={() => setPickedKey(null)} disabled={selectedKey === todayKey}>
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    className="sp-iconbtn"
+                    onClick={() => setPickedKey(addDaysToKey(selectedKey, step))}
+                    aria-label={viewMode === 'week' ? 'Next week' : 'Next day'}
+                  >
+                    <LuChevronRight size={18} aria-hidden="true" />
+                  </button>
+                  <PlanMonthPicker label={rangeLabel} selectedKey={selectedKey} todayKey={todayKey} counts={dueCounts} onPick={setPickedKey} />
                 </div>
-                <p className="pl-card__sub" style={{ margin: 0 }}>
-                  {formatDateKeyRange(weekStartKey, weekEndKey)}
-                </p>
+                <div className="sp-segment" role="group" aria-label="Calendar range">
+                  {['week', 'day'].map((mode) => (
+                    <button key={mode} type="button" aria-pressed={viewMode === mode} onClick={() => setViewMode(mode)}>
+                      {mode === 'week' ? 'Week' : 'Day'}
+                    </button>
+                  ))}
+                </div>
               </div>
               {week.error && !week.plan ? (
                 <ErrorState error={week.error} onRetry={week.reload} variant="compact" />
-              ) : !week.plan ? (
-                <p className="pl-muted">Loading…</p>
               ) : (
-                <ScheduleWeek
-                  days={weekKeys(weekStartKey, 7)}
-                  plan={week.plan}
-                  work={schoolwork.work}
-                  colorOf={colorOf}
-                  showTypeIcons={preferences.showTypeIcons}
-                  onOpenWork={setOpenWork}
-                />
+                <div className="sp-board" data-view={viewMode}>
+                  {shownDays.map((key) => (
+                    <PlanDayColumn
+                      key={key}
+                      dayKey={key}
+                      layout={viewMode}
+                      todayKey={todayKey}
+                      selectedKey={selectedKey}
+                      isLoading={!week.plan}
+                      blocks={sortBlocks(blocks.get(key) ?? [], 'plan')}
+                      inTimeOrder
+                      due={dueByDay.get(key) ?? []}
+                      events={events.get(key) ?? []}
+                      timeZone={week.plan?.timezone}
+                      colorOf={colorOf}
+                      isTeacherWork={(assignmentId) => workById.get(assignmentId)?.kind === 'teacher'}
+                      onPickDay={(k) => {
+                        setPickedKey(k);
+                        setViewMode('day');
+                      }}
+                      onAdd={(dueDate) => setAdding({ dueDate })}
+                      onOpenDue={(task) => setOpenWork(task.work)}
+                      onNextWeek={() => setPickedKey(addDaysToKey(weekStartKey, 7))}
+                      viewer="parent"
+                    />
+                  ))}
+                </div>
               )}
             </section>
           )}
 
-          <div className="pl-stack">
+          <div className={view === 'calendar' ? 'pl-stack sp-side' : 'pl-stack'}>
             <NextActionsCard plan={plan} isLoading={isLoading} error={error} onRetry={reload} canStart={false} title="Coming up" />
             <SupportSummaryCard studentId={child.id} firstName={first} />
           </div>
@@ -244,7 +316,16 @@ function ChildSchedule({ child }) {
         confirmLabel="Take it off"
       />
 
-      <AddWorkDialog isOpen={adding} onClose={() => setAdding(false)} onAdded={refresh} studentId={child.id} childName={first} />
+      <AddWorkDialog
+        key={adding ? `add-${adding.dueDate ?? 'any'}` : 'closed'}
+        isOpen={Boolean(adding)}
+        method={adding?.dueDate ? 'quick' : null}
+        defaultDueDate={adding?.dueDate}
+        onClose={() => setAdding(null)}
+        onAdded={refresh}
+        studentId={child.id}
+        childName={first}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { LuCheck, LuEllipsisVertical, LuEye, LuFilter, LuPlus, LuSearch, LuSend, LuArchive, LuTrash2, LuUndo2 } from 'react-icons/lu';
+import { LuCheck, LuEllipsisVertical, LuEye, LuFilter, LuPlus, LuSearch, LuSend, LuArchive, LuTrash2, LuUndo2, LuX } from 'react-icons/lu';
 import { PageHeader, DataTable, Button, ConfirmationModal, Dropdown, Toast } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
@@ -372,6 +372,11 @@ export default function AssignmentsListPage() {
             <span className="ui-sr-only">Search by title</span>
             <LuSearch size={16} aria-hidden="true" />
             <input type="search" placeholder="Search by title" value={search} onChange={(e) => withReset(setSearch)(e.target.value)} />
+            {search && (
+              <button type="button" className="al-search__clear" aria-label="Clear search" onClick={() => withReset(setSearch)('')}>
+                <LuX size={14} aria-hidden="true" />
+              </button>
+            )}
           </label>
           <button
             type="button"

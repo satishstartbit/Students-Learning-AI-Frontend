@@ -14,6 +14,7 @@ The first-login questionnaires: students (about themselves and how they work) an
 **Backend:** `routes/onboarding.routes.js` (mounted with `authenticate` + `requireActiveSubscription({ roles: [STUDENT] })`) → `controllers/onboarding.controller.js` → `services/onboarding.service.js`. Lookup allowlist: `validators/onboarding.validator.js#LOOKUP_TYPES`. Data: `student_profiles` (grade, subjects, interests, strengths, challenges as CSV text; `learning_preferences` JSONB), `parent_profiles` (`family_context`, `child_context`, `family_onboarding` JSONB), `onboarding_completed_at`.
 
 ## Rules - read before changing
+- Subjects, Strengths, Challenges and Interests use searchable multiselect dropdowns in both student bands (2026-10-12). This profile is the source of choices elsewhere; `/students/:id/profile-options` returns only saved active selections. The profile editor itself retains the full catalogue.
 - **Gates:** `StudentLayout` sends a student without `profile.onboarding_completed_at` to `/student/onboarding` (exempt: onboarding, settings). `ParentLayout` sends a parent to `/parent/onboarding` until `GET /onboarding/me` says `completed`.
 - `onboarding_completed_at` is stamped on the first save and kept on later edits. It means "ever finished", not "last edited".
 - Student answers share columns with the parent/Super Admin child forms (CSV text), so all three stay in sync. Keep the CSV convention (`auth/components/profilePayload.js`).

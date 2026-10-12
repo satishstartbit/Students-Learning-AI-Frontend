@@ -1,27 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { LuCheck, LuSmile } from 'react-icons/lu';
 import { Alert, Button, Loader, Modal } from '../../../components/common';
-import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
-import lookupService from '../../../services/lookup.service';
 import { ENERGY_LEVELS } from '../moods';
 import { useTodayCheckIn } from '../hooks/useTodayCheckIn';
-import CheckInFigure from './CheckInFigure';
 import MoodGlyph from './MoodGlyph';
 import './studentCheckIn.css';
 
 /**
  * The Grade 6+ daily check-in, as a dialog.
  *
- * Everything it asks is master data a Super Admin owns, fetched live rather
- * than listed here: Emotional States (through the shared check-in provider),
- * Body Areas and Available Time (/lookups). Add a mood, reword a time range
- * or deactivate a body area and this dialog follows, with no release - which
- * is why nothing below assumes six moods or four ranges.
- *
- * Mood and energy are required; where they feel it, how much time they have
- * and the note are optional, matching the mockup's own wording.
+ * Moods come from Emotional States through the shared check-in provider.
+ * Mood and energy are required; the note is optional. The retired body-area
+ * and time pickers are no longer fetched or submitted by this form.
  */
 
 /** Tints used for moods whose master row sets no background colour. */
@@ -62,11 +54,9 @@ function MoodTile({ mood, tint, selected, onSelect }) {
  * initial state, with the dialog remounting it per opening (see the `key`
  * below), rather than being pushed in by an effect.
  */
-function CheckInForm({ initial, moods, areaItems, timeItems, onSubmit, onClose }) {
+function CheckInForm({ initial, moods, onSubmit, onClose }) {
   const [mood, setMood] = useState(initial?.mood ?? null);
   const [energy, setEnergy] = useState(initial?.energy ?? null);
-  const [areas, setAreas] = useState(initial?.bodyAreas ?? []);
-  const [minutes, setMinutes] = useState(initial?.availableMinutes ?? null);
   const [note, setNote] = useState(initial?.note ?? '');
   const [attempted, setAttempted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -79,14 +69,6 @@ function CheckInForm({ initial, moods, areaItems, timeItems, onSubmit, onClose }
     );
     return (code) => byCode.get(code);
   }, [moods]);
-
-  const figureParts = areaItems
-    .filter((item) => areas.includes(item.code))
-    .map((item) => item.extra?.figure_part)
-    .filter(Boolean);
-
-  const toggleArea = (code) =>
-    setAreas((current) => (current.includes(code) ? current.filter((c) => c !== code) : [...current, code]));
 
   const missing = [!mood && 'how you feel', !energy && 'your energy'].filter(Boolean);
 
@@ -102,8 +84,6 @@ function CheckInForm({ initial, moods, areaItems, timeItems, onSubmit, onClose }
       await onSubmit({
         mood,
         energy,
-        availableMinutes: minutes,
-        bodyAreas: areas,
         note: note.trim() || null,
       });
       onClose?.();
@@ -142,33 +122,6 @@ function CheckInForm({ initial, moods, areaItems, timeItems, onSubmit, onClose }
         </div>
       </fieldset>
 
-      {areaItems.length > 0 && (
-        <>
-          <div className="ci-rule" />
-          <fieldset className="ci-fieldset">
-            <legend className="ci-legend">Where do you feel it in your body?</legend>
-            <p className="ci-hint">Optional. Noticing it helps you learn what your body is telling you.</p>
-
-            <div className="ci-body">
-              <CheckInFigure parts={figureParts} />
-              <div className="ci-chips">
-                {areaItems.map((item) => (
-                  <button
-                    key={item.code ?? item.id}
-                    type="button"
-                    className="ci-chip"
-                    aria-pressed={areas.includes(item.code)}
-                    onClick={() => toggleArea(item.code)}
-                  >
-                    {item.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </fieldset>
-        </>
-      )}
-
       <div className="ci-rule" />
 
       <div className="ci-split">
@@ -200,29 +153,6 @@ function CheckInForm({ initial, moods, areaItems, timeItems, onSubmit, onClose }
           </div>
         </fieldset>
 
-        {timeItems.length > 0 && (
-          <fieldset className="ci-fieldset">
-            <legend className="ci-legend">How much time do you have?</legend>
-            <p className="ci-hint">A rough idea is fine. We size the plan to fit.</p>
-
-            <div className="ci-chips ci-chips--grid">
-              {timeItems.map((item) => {
-                const value = item.extra?.minutes ?? null;
-                return (
-                  <button
-                    key={item.code ?? item.id}
-                    type="button"
-                    className="ci-chip"
-                    aria-pressed={value != null && minutes === value}
-                    onClick={() => setMinutes(value)}
-                  >
-                    {item.name}
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
-        )}
       </div>
 
       <div className="ci-rule" />
@@ -264,19 +194,6 @@ function CheckInForm({ initial, moods, areaItems, timeItems, onSubmit, onClose }
 export function StudentCheckInModal({ isOpen, onClose, onSaved }) {
   const { checkIn, save, moods, moodsLoading } = useTodayCheckIn();
 
-  // The two lists this dialog owns. Fetched when it first opens rather than
-  // with the page, since most visits to Home never open it.
-  const bodyAreas = useApi(lookupService.listLookup);
-  const timeOptions = useApi(lookupService.listLookup);
-  const { run: runBodyAreas } = bodyAreas;
-  const { run: runTimeOptions } = timeOptions;
-
-  useEffect(() => {
-    if (!isOpen) return;
-    runBodyAreas('body_areas').catch(() => {});
-    runTimeOptions('available_time').catch(() => {});
-  }, [isOpen, runBodyAreas, runTimeOptions]);
-
   const handleSubmit = async (values) => {
     const result = await save(values);
 
@@ -301,8 +218,6 @@ export function StudentCheckInModal({ isOpen, onClose, onSaved }) {
           key={`${isOpen}-${checkIn?.updatedAt ?? 'new'}`}
           initial={checkIn}
           moods={moods}
-          areaItems={bodyAreas.data ?? []}
-          timeItems={timeOptions.data ?? []}
           onSubmit={handleSubmit}
           onClose={onClose}
         />

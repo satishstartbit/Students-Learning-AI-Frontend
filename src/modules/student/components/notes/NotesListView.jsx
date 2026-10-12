@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LuAlarmClock, LuCheck, LuFilterX, LuPencil, LuTrash2 } from 'react-icons/lu';
-import { Badge, Button, DatePicker, EmptyState, ErrorState, FilterBar, IconButton, Loader, Pagination, SearchInput, Select } from '../../../../components/common';
+import { Badge, Button, DatePicker, EmptyState, ErrorState, FilterBar, IconButton, Loader, Pagination, SearchInput, Select, Table } from '../../../../components/common';
 import { useApi } from '../../../../hooks/useApi';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { formatNearDateTime } from '../../../../utils/date';
@@ -70,15 +70,74 @@ function NoteCard({ note, readOnly, assignmentPath, onEdit, onMarkDone, onDelete
   );
 }
 
+/** The parent's read-only listing uses the same table and type as the portal. */
+function NotesTable({ notes, isLoading, assignmentPath }) {
+  const columns = [
+    {
+      key: 'note',
+      header: 'Note',
+      render: (note) => (
+        <div className="nl-table__note">
+          {note.title && <span className="nl-table__title">{note.title}</span>}
+          <p className="nl-table__text">{note.content}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'assignment',
+      header: 'Related to',
+      width: '22%',
+      render: (note) => {
+        const linkTo = note.assignment ? assignmentPath?.(note) : null;
+        return note.assignment ? (
+          <div className="nl-table__related">
+            <span className="nl-table__label">Assignment</span>
+            {linkTo ? <Link to={linkTo}>{note.assignment.title}</Link> : <span>{note.assignment.title}</span>}
+          </div>
+        ) : <span className="nl-table__label">Home note</span>;
+      },
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      width: '26%',
+      render: (note) => {
+        const when = noteWhen(note);
+        return (
+          <div className="nl-table__date">
+            <span className="nl-table__label">
+              {when.kind === 'reminder' ? <><LuAlarmClock size={14} aria-hidden="true" /> Reminder</> : 'Written'}
+            </span>
+            {when.at ? <time dateTime={when.at}>{formatNearDateTime(when.at)}</time> : <span>Not recorded</span>}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      width: '104px',
+      render: (note) => <Badge variant={note.done ? 'success' : 'neutral'}>{note.done ? 'Done' : 'Not done'}</Badge>,
+    },
+  ];
+
+  return (
+    <div className="nl-table" aria-busy={isLoading || undefined}>
+      <Table columns={columns} data={notes} rowKey="id" caption="Notes" />
+    </div>
+  );
+}
+
 /**
  * Every note, filtered and paged - the body of the student's Notes page and
  * the parent's. `load(params)` fetches one page (GET /notes or
  * GET /parent/children/:id/notes); `readOnly` (parents) hides Edit, Mark done
  * and Delete. `reloadToken` changes to fetch again after an edit elsewhere.
+ * `layout="list"` gives read-only parent pages the portal table layout.
  * Filters: search, When (all / upcoming / today / last 7, 30, 365 days /
  * pick dates) and Status.
  */
-export function NotesListView({ load, readOnly = false, ownerName, assignmentPath, onEdit, onMarkDone, onDelete, reloadToken = 0 }) {
+export function NotesListView({ load, readOnly = false, ownerName, assignmentPath, onEdit, onMarkDone, onDelete, reloadToken = 0, layout = 'cards' }) {
   const [filters, setFilters] = useState(DEFAULT_NOTE_FILTERS);
   const [page, setPage] = useState(1);
   const search = useDebounce(filters.search, 350);
@@ -111,6 +170,8 @@ export function NotesListView({ load, readOnly = false, ownerName, assignmentPat
   else if (!data && isLoading) body = <Loader message="Loading notes…" />;
   else if (!notes.length)
     body = <EmptyState icon="🗒️" title={filtered ? 'No notes found' : 'No notes yet'} description={emptyNotesText(filters, { name: ownerName })} />;
+  else if (readOnly && layout === 'list')
+    body = <NotesTable notes={notes} isLoading={isLoading} assignmentPath={assignmentPath} />;
   else
     body = (
       <ul className="nl-grid" aria-busy={isLoading || undefined}>

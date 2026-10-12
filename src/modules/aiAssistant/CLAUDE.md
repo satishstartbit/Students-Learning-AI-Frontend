@@ -17,6 +17,7 @@ Components: `ChatBubble`, `ChatInput`, `PracticeQuestionCard`, `SessionProgressS
 `GET /learning-assistant/subjects` · `POST|GET /learning-assistant/sessions` · `GET /sessions/active` · `GET /sessions/:id` · `POST /sessions/:id/end|messages|explain|hint|practice-questions|practice-questions/answer`
 
 ## Rules - read before changing
+- Subjects come only from the student's saved active profile selections (2026-10-12), never teacher links or a catalogue fallback. Empty choices point to Settings > Learning profile. `assistant.policy.subjectSource` is retired; old published versions retain all other settings. Existing session history remains readable.
 - **Safety screening is mandatory and fails closed.** Every student message goes through `services/safety` (`checkText`) **before** any model call. On a concern (or a classifier failure), the AI run stops, a safety event is recorded, the parent is emailed, and the student gets a fixed supportive response, never a model-generated one. Never add a path that sends student text to a model without this.
 - **Parents and teachers never see raw conversation content.** Their endpoints return aggregates only (sessions, time, subjects, practice results). Keep it that way. There's a negative-access check for this.
 - Access: a parent sees their own children, a teacher their linked students (`studentAccess.service.js`).

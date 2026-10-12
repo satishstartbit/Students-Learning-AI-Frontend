@@ -16,11 +16,13 @@ import { StarIcon } from '../../components/kid/KidIcons';
 import { KidOops, KidSkeleton } from '../../components/kid/KidStates';
 import { PaperCard } from '../../components/kid/PaperKit';
 import SafetyNoticeCard from '../../../../components/safety/SafetyNoticeCard';
+import { MultiSelect } from '../../../../components/common';
 
 /** A question whose answers come from a Master Management list. */
 function MasterStep({ type, name, legend, multiple, value, onChange }) {
   const { options, loading } = useOnboardingLookup(type);
   if (loading) return <KidSkeleton className="h-48" />;
+  if (multiple) return <MultiSelect name={name} label={legend} options={options} value={value ?? []} onChange={onChange} searchable placeholder="Choose your answers" />;
   return <KidChoiceChips name={name} legend={legend} options={options} value={value} onChange={onChange} multiple={multiple} />;
 }
 

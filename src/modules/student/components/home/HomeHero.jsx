@@ -87,8 +87,8 @@ export function HomeHero({ firstName, openCount, minutesLeft, isLoading }) {
         <CheckInPeek onOpen={() => setCheckInOpen(true)} />
       </div>
 
-      {/* The check-in itself is a dialog of its own (mood tiles, body areas,
-          energy, time, note) - the card used to be dropped into a generic
+      {/* The check-in itself is a dialog of its own (mood tiles,
+          energy, note) - the card used to be dropped into a generic
           Modal here, which framed a card inside a dialog. */}
       <StudentCheckInModal isOpen={checkInOpen} onClose={() => setCheckInOpen(false)} />
     </section>

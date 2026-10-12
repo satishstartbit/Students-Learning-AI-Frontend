@@ -33,6 +33,7 @@ import ChildDetailsModal from '../components/ChildDetailsModal';
 import InviteTeacherModal from '../components/InviteTeacherModal';
 import SetChildPasswordModal from '../components/SetChildPasswordModal';
 import '../components/parentChildren.css';
+import { splitCsv } from '../../auth/components/profilePayload';
 
 /**
  * A connected teacher and an invited one, as the same row shape.
@@ -52,6 +53,7 @@ function teacherRows(child) {
       subjects: [],
       year: t.academicYear?.name ?? null,
     };
+    if (t.status !== 'active') return;
     if (t.subject && !entry.subjects.includes(t.subject)) entry.subjects.push(t.subject);
     byTeacher.set(key, entry);
   });
@@ -88,13 +90,7 @@ function teacherRows(child) {
 function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvite, onView, onViewAs, onRemove, onArchive, onRestore }) {
   const rows = useMemo(() => teacherRows(child), [child]);
 
-  // Subjects follow the teachers - the ones already teaching this child plus
-  // the ones invited to - rather than being set on the child directly.
-  const subjects = useMemo(() => {
-    const fromTeachers = (child.teachers ?? []).map((t) => t.subject);
-    const fromInvites = (child.invitations ?? []).flatMap((inv) => inv.subjects ?? []);
-    return [...new Set([...fromTeachers, ...fromInvites].filter(Boolean))];
-  }, [child.teachers, child.invitations]);
+  const subjects = splitCsv(child.subjects);
 
   const name = formatName(child);
 
@@ -150,7 +146,7 @@ function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvi
             <SubjectChips subjects={subjects} />
           </div>
         ) : (
-          <p className="pc-section__empty">Added by the teacher once they connect.</p>
+          <p className="pc-section__empty">Select subjects in this child's profile using Edit.</p>
         )}
       </section>
 
@@ -361,6 +357,7 @@ export default function ParentChildrenPage() {
       />
 
       <ChildDetailsModal
+        key={`details-${detailsModal.payload ?? 'none'}-${detailsModal.isOpen}`}
         isOpen={detailsModal.isOpen}
         childId={detailsModal.payload}
         onClose={detailsModal.close}

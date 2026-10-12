@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Badge, Button, ButtonGroup, ConfirmationModal } from '../../../components/common';
 import { useModal } from '../../../hooks/useModal';
 import { toast } from '../../../hooks/useToast';
-import { formatDate } from '../../../utils/date';
+import { formatDate, formatDateTime } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatSubjects, invitationStatusOf } from '../../invitations/invitationStatus';
 import invitationService from '../../invitations/services/teacherInvitation.service';
@@ -106,6 +106,21 @@ export default function TeacherInvitationsList({ invitations, onChanged }) {
                 <div className="ui-hint" style={{ margin: '2px 0 0' }}>
                   {whenLine(inv)}
                 </div>
+                <details className="ui-hint mt-2">
+                  <summary className="cursor-pointer">Invitation details</summary>
+                  <dl className="mt-2 grid gap-1">
+                    {[
+                      ['Requested', inv.createdAt ? formatDateTime(inv.createdAt) : null],
+                      ['Invited by', inv.invitedBy?.name],
+                      ['Approved', inv.approvedAt ? formatDateTime(inv.approvedAt) : null],
+                      ['Last sent', inv.sentCount > 0 && inv.lastSentAt ? formatDateTime(inv.lastSentAt) : null],
+                      ['Responded', inv.respondedAt ? formatDateTime(inv.respondedAt) : null],
+                      ['Academic year', inv.academicYear?.name],
+                    ].filter(([, value]) => value).map(([label, value]) => (
+                      <div key={label}><dt className="inline font-semibold">{label}: </dt><dd className="m-0 inline">{value}</dd></div>
+                    ))}
+                  </dl>
+                </details>
                 {inv.status === 'rejected' && inv.reviewNote && (
                   <div className="ui-hint" style={{ margin: '4px 0 0', color: 'var(--color-text-primary)' }}>
                     Our note: &ldquo;{inv.reviewNote}&rdquo; You can send a new request with the details corrected.

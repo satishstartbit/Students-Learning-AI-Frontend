@@ -19,13 +19,13 @@ import {
   StatCard,
   StatusBadge,
   Badge,
-  Modal,
   Drawer,
   Dropdown,
   IconButton,
-  Textarea,
   Input,
   Alert,
+  Loader,
+  ErrorState,
   Toast,
 } from '../../../../components/common';
 import { Tooltip } from '../../../../components/ui/tooltip';
@@ -33,16 +33,27 @@ import { useApi } from '../../../../hooks/useApi';
 import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
-import { formatDate } from '../../../../utils/date';
+import { formatDate, formatDateTime } from '../../../../utils/date';
+import { dateRangeLimits, dateRangeProblem } from '../../../../utils/dateRange';
 import { formatCurrency, formatName, formatNumber, titleCase } from '../../../../utils/format';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import { downloadTextFile } from '../../../../utils/file';
-import { describeCard } from '../../stripe';
 import subscriptionService from '../../services/subscription.service';
+import RefundDialog from '../../components/admin/RefundDialog';
+import TransactionId from '../../components/admin/TransactionId';
+import {
+  cardLabel,
+  paymentStatusLabel,
+  paymentStatusTone,
+  refundReasonLabel,
+  trendOf,
+} from '../../components/admin/adminBilling';
+import '../../components/admin/adminBilling.css';
 
 const STATUS_OPTIONS = [
   { value: 'succeeded', label: 'Succeeded' },
-  { value: 'failed', label: 'Failed' },
+  { value: 'failed', label: 'Failed (payment or refund)' },
+  { value: 'pending', label: 'Refund pending' },
   { value: 'refunded', label: 'Refunded' },
   { value: 'partially_refunded', label: 'Partially refunded' },
 ];
@@ -53,23 +64,145 @@ const TYPE_OPTIONS = [
   { value: 'failed_payment', label: 'Failed payment' },
 ];
 
-/** "pi_3Oa...b7f2" - short enough for a table cell; the full id is still in the title attribute and the details drawer. */
-const shortId = (id) => (id ? `${id.slice(0, 10)}…${id.slice(-4)}` : null);
-
-/** { direction, value } for StatCard, or undefined when there's nothing in the prior period to compare against. */
-function statTrend(changePercent) {
-  if (changePercent === null || changePercent === undefined) return undefined;
-  const rounded = Math.round(changePercent * 10) / 10;
-  return { direction: rounded >= 0 ? 'up' : 'down', value: `${rounded >= 0 ? '+' : ''}${rounded}%` };
+function Field({ label, children }) {
+  return (
+    <div>
+      <p className="ui-hint" style={{ margin: '0 0 4px' }}>
+        {label}
+      </p>
+      {children}
+    </div>
+  );
 }
 
 /**
- * /admin/payments - the billing ledger, and where refunds are issued.
- *
- * A refund calls Stripe against the original PaymentIntent and is recorded
- * against the payment. Refunding the FULL remaining amount also cancels the
- * subscription; a partial refund leaves it running - the modal says so
- * explicitly, since that is easy to trigger by accident otherwise.
+ * View Details: the row the list loaded, then the full record (card expiry,
+ * every refund with who made it and why) once it arrives.
+ */
+function PaymentDetails({ row, onRefund, canRefund }) {
+  const detail = useApi(subscriptionService.adminGetPayment, { immediate: true, args: [row.id] });
+  const p = detail.data ?? row;
+  const card = p.card ?? (p.cardLast4 ? { brand: p.cardBrand, last4: p.cardLast4 } : null);
+
+  return (
+    <div style={{ display: 'grid', gap: 'var(--spacing-lg)' }}>
+      <Field label="Status">
+        <StatusBadge status={paymentStatusTone(p)} label={paymentStatusLabel(p) ?? undefined} />
+      </Field>
+
+      <Field label="Amount">
+        <p style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>
+          {formatCurrency(p.amount, p.currency)}{' '}
+          <span className="ui-hint" style={{ fontWeight: 400, fontSize: 'var(--font-size-sm)' }}>
+            {p.currency}
+          </span>
+        </p>
+        {p.discountApplied > 0 && (
+          <p className="ui-hint" style={{ margin: '4px 0 0' }}>
+            −{formatCurrency(p.discountApplied, p.currency)} coupon applied
+          </p>
+        )}
+        {p.taxLines?.length > 0 && (
+          <p className="ui-hint" style={{ margin: '4px 0 0' }}>
+            {formatCurrency(p.preTaxAmount, p.currency)} before tax ·{' '}
+            {p.taxLines.map((line) => `${line.name} ${formatCurrency(line.amount, p.currency)}`).join(' · ')}
+            {p.taxRegion ? ` (${p.taxRegion})` : ''}
+          </p>
+        )}
+      </Field>
+
+      <Field label="Customer">
+        <p style={{ margin: 0, fontWeight: 600 }}>{formatName(p.parent)}</p>
+        <p className="ui-hint" style={{ margin: 0 }}>
+          {p.parent?.email}
+        </p>
+      </Field>
+
+      <Field label="Plan">
+        <p style={{ margin: 0 }}>
+          {p.planName ?? '—'}
+          {p.planBillingCycle ? ` · ${titleCase(p.planBillingCycle)}` : ''}
+        </p>
+      </Field>
+
+      <Field label="Type">
+        <Badge variant={p.transactionType === 'refund' ? 'warning' : 'neutral'}>{titleCase(p.transactionType)}</Badge>
+      </Field>
+
+      <Field label="Transaction ID">
+        <TransactionId id={p.stripePaymentIntentId} full />
+      </Field>
+
+      <Field label="Date">
+        <p style={{ margin: 0 }}>{formatDateTime(p.createdAt)}</p>
+      </Field>
+
+      {card && (
+        <Field label="Payment method">
+          <p style={{ margin: 0 }}>{cardLabel(card)}</p>
+        </Field>
+      )}
+
+      {p.transactionType === 'refund' ? (
+        <Field label="Refund">
+          <p style={{ margin: 0 }}>
+            {p.refundReasonCode ? refundReasonLabel(p.refundReasonCode) : 'No reason recorded'}
+            {p.refundReason ? ` - ${p.refundReason}` : ''}
+          </p>
+          <p className="ui-hint" style={{ margin: '4px 0 0' }}>
+            {p.refundedByUser ? `By ${formatName(p.refundedByUser)} (${p.refundedByUser.email})` : 'Who made it was not recorded'}
+          </p>
+        </Field>
+      ) : (
+        <Field label="Refunds">
+          <p style={{ margin: 0 }}>
+            {formatCurrency(p.refundAmount ?? 0, p.currency)} refunded
+            {p.refundable != null ? ` · ${formatCurrency(p.refundable, p.currency)} still refundable` : ''}
+          </p>
+          {detail.isLoading && !detail.data ? (
+            <Loader size="sm" message="Loading refunds…" />
+          ) : detail.error ? (
+            <ErrorState error={detail.error} variant="compact" onRetry={() => detail.run(row.id).catch(() => {})} />
+          ) : (
+            p.refunds?.length > 0 && (
+              <ul className="ab-history" aria-label="Refunds made">
+                {p.refunds.map((r) => (
+                  <li key={r.id}>
+                    <span>
+                      {formatCurrency(r.amount, p.currency)}{' '}
+                      <StatusBadge status={paymentStatusTone(r)} label={paymentStatusLabel(r)} />
+                    </span>
+                    <span className="ab-history__meta">
+                      {formatDate(r.createdAt)}
+                      {r.refundReasonCode ? ` · ${refundReasonLabel(r.refundReasonCode)}` : ''}
+                      {r.refundReason ? ` · "${r.refundReason}"` : ''}
+                      {r.refundedByUser ? ` · by ${formatName(r.refundedByUser)}` : ''}
+                      {r.failureReason ? ` · ${r.failureReason}` : ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )
+          )}
+        </Field>
+      )}
+
+      {p.failureReason && <Alert variant="error">{p.failureReason}</Alert>}
+
+      {canRefund(p) && (
+        <Button variant="danger" onClick={() => onRefund(p)} startIcon={<LuUndo2 aria-hidden="true" />}>
+          Refund payment
+        </Button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * /admin/subscriptions/payments - the billing ledger, and where refunds are
+ * issued (RefundDialog: the whole picture of the payment, a required reason,
+ * one refund per click, typed confirmation and a keep-subscribed choice for a
+ * full refund). Pending and failed refunds show as such.
  */
 export default function AdminPaymentsPage() {
   const pagination = usePagination();
@@ -82,27 +215,24 @@ export default function AdminPaymentsPage() {
   const [to, setTo] = useState('');
   const debouncedSearch = useDebounce(search, 350);
 
+  // { id, opening } - `opening` remounts the dialog so each opening gets a fresh request key.
   const [refundTarget, setRefundTarget] = useState(null);
-  const [refundAmount, setRefundAmount] = useState('');
-  const [refundReason, setRefundReason] = useState('');
-  const [refundError, setRefundError] = useState(null);
-  const [refunding, setRefunding] = useState(false);
-
-  // Read-only detail view, sourced entirely from the row the list already
-  // loaded - no separate "get one payment" endpoint exists, so this opens no
-  // extra request.
   const [detailsTarget, setDetailsTarget] = useState(null);
   const [exporting, setExporting] = useState(false);
 
   const { data, meta, error, isLoading, run } = useApi(subscriptionService.adminListPayments);
   // The 4 KPI tiles track the date range only (not status/type/search) - see
-  // services/subscription.service.js#getPaymentStats for why: narrowing the
-  // *table* to "refunded" shouldn't also zero out "Successful Payments" above it.
+  // services/subscription.service.js#getPaymentStats for why.
   const stats = useApi(subscriptionService.adminGetPaymentStats, { immediate: true });
 
+  // A To date before the From date is refused (QA 2026-10-12): said under To,
+  // and nothing is fetched or exported until it's fixed.
+  const rangeProblem = dateRangeProblem(from, to);
+  const { fromMax, toMin } = dateRangeLimits(from, to);
+
   const load = useCallback(
-    () => run({ page, limit, status, transactionType, from, to, search: debouncedSearch }),
-    [run, page, limit, status, transactionType, from, to, debouncedSearch]
+    () => (rangeProblem ? Promise.resolve() : run({ page, limit, status, transactionType, from, to, search: debouncedSearch })),
+    [run, page, limit, status, transactionType, from, to, debouncedSearch, rangeProblem]
   );
 
   useEffect(() => {
@@ -114,9 +244,9 @@ export default function AdminPaymentsPage() {
   }, [meta, applyMeta]);
 
   useEffect(() => {
-    stats.run({ from, to }).catch(() => {});
+    if (!rangeProblem) stats.run({ from, to }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [from, to]);
+  }, [from, to, rangeProblem]);
 
   const resetTo = (setter) => (value) => {
     setter(value);
@@ -147,50 +277,19 @@ export default function AdminPaymentsPage() {
     }
   };
 
-  const refundableAmount = (row) => Number(row.amount) - Number(row.refundAmount ?? 0);
-
+  const remaining = (row) => Number(row.amount) - Number(row.refundAmount ?? 0);
   const canRefund = (row) =>
-    row.transactionType === 'payment' &&
-    row.status !== 'refunded' &&
-    refundableAmount(row) > 0 &&
-    Boolean(row.stripePaymentIntentId);
+    row.transactionType === 'payment' && row.status !== 'refunded' && remaining(row) > 0.004 && Boolean(row.stripePaymentIntentId);
 
   const openRefund = (row) => {
-    setRefundTarget(row);
-    // Defaults to the whole remaining amount - the common case.
-    setRefundAmount(String(refundableAmount(row).toFixed(2)));
-    setRefundReason('');
-    setRefundError(null);
+    setDetailsTarget(null); // only one panel on screen at a time
+    setRefundTarget({ id: row.id, opening: Date.now() });
   };
 
-  /** Opened from the details drawer: close it first so only one panel is ever on screen. */
-  const openRefundFromDetails = (row) => {
-    setDetailsTarget(null);
-    openRefund(row);
-  };
-
-  const submitRefund = async () => {
-    const amount = Number(refundAmount);
-    const max = refundableAmount(refundTarget);
-
-    if (!(amount > 0)) return setRefundError('Enter a refund amount greater than zero');
-    if (amount > max) return setRefundError(`That is more than the ${max.toFixed(2)} still refundable`);
-
-    setRefunding(true);
-    setRefundError(null);
-    try {
-      await subscriptionService.adminRefundPayment(refundTarget.id, {
-        amount,
-        reason: refundReason.trim() || null,
-      });
-      toast.success('Refund issued');
-      setRefundTarget(null);
-      load().catch(() => {});
-    } catch (err) {
-      setRefundError(getErrorMessage(err));
-    } finally {
-      setRefunding(false);
-    }
+  const afterRefund = () => {
+    setRefundTarget(null);
+    load().catch(() => {});
+    stats.run({ from, to }).catch(() => {});
   };
 
   const columns = [
@@ -213,7 +312,6 @@ export default function AdminPaymentsPage() {
     {
       key: 'planName',
       header: 'Plan',
-      // Lower-priority on a narrow screen - still one tap away in "View Details".
       className: 'hidden lg:table-cell',
       render: (row) => row.planName ?? '—',
     },
@@ -221,26 +319,12 @@ export default function AdminPaymentsPage() {
       key: 'transaction',
       header: 'Transaction',
       className: 'hidden lg:table-cell',
-      render: (row) =>
-        row.stripePaymentIntentId ? (
-          <span
-            title={row.stripePaymentIntentId}
-            style={{ fontFamily: 'var(--font-family-mono)', fontSize: 'var(--font-size-sm)' }}
-          >
-            {shortId(row.stripePaymentIntentId)}
-          </span>
-        ) : (
-          <span className="ui-hint">—</span>
-        ),
+      render: (row) => <TransactionId id={row.stripePaymentIntentId} showLink={false} />,
     },
     {
       key: 'transactionType',
       header: 'Type',
-      render: (row) => (
-        <Badge variant={row.transactionType === 'refund' ? 'warning' : 'neutral'}>
-          {titleCase(row.transactionType)}
-        </Badge>
-      ),
+      render: (row) => <Badge variant={row.transactionType === 'refund' ? 'warning' : 'neutral'}>{titleCase(row.transactionType)}</Badge>,
     },
     {
       key: 'amount',
@@ -250,9 +334,7 @@ export default function AdminPaymentsPage() {
       render: (row) => (
         <div>
           <strong>{formatCurrency(row.amount, row.currency)}</strong>
-          {row.discountApplied > 0 && (
-            <div className="ui-hint">−{formatCurrency(row.discountApplied, row.currency)} coupon</div>
-          )}
+          {row.discountApplied > 0 && <div className="ui-hint">−{formatCurrency(row.discountApplied, row.currency)} coupon</div>}
         </div>
       ),
     },
@@ -261,10 +343,11 @@ export default function AdminPaymentsPage() {
       header: 'Status',
       render: (row) => (
         <div>
-          <StatusBadge status={row.status} />
-          {row.refundAmount > 0 && (
+          <StatusBadge status={paymentStatusTone(row)} label={paymentStatusLabel(row) ?? undefined} />
+          {row.transactionType === 'payment' && row.refundAmount > 0 && (
             <div className="ui-hint">{formatCurrency(row.refundAmount, row.currency)} refunded</div>
           )}
+          {row.transactionType === 'refund' && row.refundReasonCode && <div className="ui-hint">{refundReasonLabel(row.refundReasonCode)}</div>}
           {row.failureReason && <div className="ui-hint">{row.failureReason}</div>}
         </div>
       ),
@@ -288,9 +371,6 @@ export default function AdminPaymentsPage() {
     },
   ];
 
-  const isFullRefund =
-    refundTarget && Number(refundAmount) >= refundableAmount(refundTarget) - 0.001;
-
   return (
     <div className="td-page">
       <PageHeader
@@ -298,26 +378,19 @@ export default function AdminPaymentsPage() {
         description="Monitor and manage platform payments, refunds, and billing activity."
         breadcrumbs={[{ label: 'Payments' }]}
         actions={
-          <Button variant="secondary" onClick={handleExport} loading={exporting} startIcon={<LuDownload aria-hidden="true" />}>
+          <Button variant="secondary" onClick={handleExport} loading={exporting} disabled={Boolean(rangeProblem)} startIcon={<LuDownload aria-hidden="true" />}>
             Export
           </Button>
         }
       />
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 'var(--spacing-md)',
-          marginBottom: 'var(--spacing-lg)',
-        }}
-      >
+      <div className="ab-statgrid">
         <StatCard
           label="Total Revenue"
           icon={<LuWallet aria-hidden="true" />}
           loading={stats.isLoading && !stats.data}
           value={formatCurrency(stats.data?.totalRevenue.value ?? 0)}
-          trend={statTrend(stats.data?.totalRevenue.changePercent)}
+          trend={trendOf(stats.data?.totalRevenue.changePercent)}
           hint={`vs previous ${stats.data?.spanDays ?? 30} days`}
         />
         <StatCard
@@ -325,7 +398,7 @@ export default function AdminPaymentsPage() {
           icon={<LuCircleCheck aria-hidden="true" />}
           loading={stats.isLoading && !stats.data}
           value={formatNumber(stats.data?.successfulPayments.value ?? 0)}
-          trend={statTrend(stats.data?.successfulPayments.changePercent)}
+          trend={trendOf(stats.data?.successfulPayments.changePercent)}
           hint={`vs previous ${stats.data?.spanDays ?? 30} days`}
         />
         <StatCard
@@ -333,15 +406,15 @@ export default function AdminPaymentsPage() {
           icon={<LuUndo2 aria-hidden="true" />}
           loading={stats.isLoading && !stats.data}
           value={formatCurrency(stats.data?.refundedAmount.value ?? 0)}
-          trend={statTrend(stats.data?.refundedAmount.changePercent)}
-          hint={`vs previous ${stats.data?.spanDays ?? 30} days`}
+          trend={trendOf(stats.data?.refundedAmount.changePercent)}
+          hint={`Including pending · vs previous ${stats.data?.spanDays ?? 30} days`}
         />
         <StatCard
           label="Failed Payments"
           icon={<LuCircleX aria-hidden="true" />}
           loading={stats.isLoading && !stats.data}
           value={formatNumber(stats.data?.failedPayments.value ?? 0)}
-          trend={statTrend(stats.data?.failedPayments.changePercent)}
+          trend={trendOf(stats.data?.failedPayments.changePercent)}
           hint={`vs previous ${stats.data?.spanDays ?? 30} days`}
         />
       </div>
@@ -371,31 +444,27 @@ export default function AdminPaymentsPage() {
           value={transactionType}
           onChange={(e) => resetTo(setTransactionType)(e.target.value)}
         />
-        <Input fieldClassName="ui-field--compact-labeled" label="From" type="date" value={from} onChange={(e) => resetTo(setFrom)(e.target.value)} />
-        <Input fieldClassName="ui-field--compact-labeled" label="To" type="date" value={to} onChange={(e) => resetTo(setTo)(e.target.value)} />
+        <Input fieldClassName="ui-field--compact-labeled" label="From" type="date" value={from} max={fromMax} onChange={(e) => resetTo(setFrom)(e.target.value)} />
+        <Input
+          fieldClassName="ui-field--compact-labeled"
+          label="To"
+          type="date"
+          value={to}
+          min={toMin}
+          error={rangeProblem}
+          onChange={(e) => resetTo(setTo)(e.target.value)}
+        />
 
         <Tooltip label="Clear filters" side="top">
-          <IconButton
-            icon={<LuFilterX aria-hidden="true" />}
-            label="Clear filters"
-            size="sm"
-            onClick={resetFilters}
-            disabled={!hasFilters}
-          />
+          <IconButton icon={<LuFilterX aria-hidden="true" />} label="Clear filters" size="sm" onClick={resetFilters} disabled={!hasFilters} />
         </Tooltip>
       </FilterBar>
-
-      {/* <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--spacing-sm)' }}>
-        <div style={{ width: 140 }}>
-          <Select
-            label="Rows per page"
-            options={ROWS_PER_PAGE_OPTIONS}
-            value={String(limit)}
-            onChange={(e) => setLimit(Number(e.target.value))}
-            reserveHelper={false}
-          />
-        </div>
-      </div> */}
+      {/* The compact date fields keep no message line of their own, so the range problem is said here. */}
+      {rangeProblem && (
+        <p className="ui-helper__message ui-helper__message--error ab-range-error" role="alert">
+          {rangeProblem}
+        </p>
+      )}
 
       <DataTable
         columns={columns}
@@ -406,11 +475,7 @@ export default function AdminPaymentsPage() {
         pagination={pagination}
         onPageChange={goToPage}
         emptyTitle={hasFilters ? 'No payments match those filters' : 'No payments yet'}
-        emptyDescription={
-          hasFilters
-            ? 'There are no transactions matching your current filters.'
-            : 'Charges appear here as parents subscribe and renew.'
-        }
+        emptyDescription={hasFilters ? 'There are no transactions matching your current filters.' : 'Charges appear here as parents subscribe and renew.'}
         emptyAction={
           hasFilters ? (
             <Button variant="secondary" onClick={resetFilters}>
@@ -421,177 +486,17 @@ export default function AdminPaymentsPage() {
         caption="Payments"
       />
 
-      <Modal
-        isOpen={Boolean(refundTarget)}
-        onClose={() => setRefundTarget(null)}
-        title="Issue a refund"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setRefundTarget(null)} disabled={refunding}>
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={submitRefund} loading={refunding}>
-              Refund {refundAmount ? formatCurrency(refundAmount, refundTarget?.currency) : ''}
-            </Button>
-          </>
-        }
-      >
-        {refundError && (
-          <Alert variant="error" className="ui-field">
-            {refundError}
-          </Alert>
-        )}
-
-        <p>
-          Refunding {formatName(refundTarget?.parent)}&apos;s payment of{' '}
-          <strong>{formatCurrency(refundTarget?.amount, refundTarget?.currency)}</strong>
-          {refundTarget?.refundAmount > 0 && (
-            <>
-              {' '}
-              ({formatCurrency(refundTarget.refundAmount, refundTarget.currency)} already refunded,{' '}
-              {formatCurrency(refundableAmount(refundTarget), refundTarget.currency)} remaining)
-            </>
-          )}
-          .
-        </p>
-
-        <Input
-          label="Refund amount"
-          type="number"
-          step="0.01"
-          min="0"
-          max={refundTarget ? refundableAmount(refundTarget) : undefined}
-          value={refundAmount}
-          onChange={(e) => setRefundAmount(e.target.value)}
+      {refundTarget && (
+        <RefundDialog
+          key={`${refundTarget.id}-${refundTarget.opening}`}
+          paymentId={refundTarget.id}
+          onClose={() => setRefundTarget(null)}
+          onDone={afterRefund}
         />
+      )}
 
-        <Textarea
-          label="Reason"
-          rows={2}
-          placeholder="Recorded against the payment"
-          value={refundReason}
-          onChange={(e) => setRefundReason(e.target.value)}
-        />
-
-        <Alert variant={isFullRefund ? 'warning' : 'info'}>
-          {isFullRefund
-            ? 'This refunds the full remaining amount, which will also cancel the parent’s subscription.'
-            : 'This is a partial refund. The subscription stays active.'}
-        </Alert>
-      </Modal>
-
-      <Drawer
-        isOpen={Boolean(detailsTarget)}
-        onClose={() => setDetailsTarget(null)}
-        title="Payment Details"
-        footer={
-          detailsTarget && canRefund(detailsTarget) ? (
-            <Button variant="danger" onClick={() => openRefundFromDetails(detailsTarget)}>
-              Refund Payment
-            </Button>
-          ) : undefined
-        }
-      >
-        {detailsTarget && (
-          <div style={{ display: 'grid', gap: 'var(--spacing-lg)' }}>
-            <div>
-              <p className="ui-hint" style={{ margin: '0 0 4px' }}>
-                Status
-              </p>
-              <StatusBadge status={detailsTarget.status} />
-            </div>
-
-            <div>
-              <p className="ui-hint" style={{ margin: '0 0 4px' }}>
-                Amount
-              </p>
-              <p style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>
-                {formatCurrency(detailsTarget.amount, detailsTarget.currency)}{' '}
-                <span className="ui-hint" style={{ fontWeight: 400, fontSize: 'var(--font-size-sm)' }}>
-                  {detailsTarget.currency}
-                </span>
-              </p>
-              {detailsTarget.discountApplied > 0 && (
-                <p className="ui-hint" style={{ margin: '4px 0 0' }}>
-                  −{formatCurrency(detailsTarget.discountApplied, detailsTarget.currency)} coupon applied
-                </p>
-              )}
-              {/* Sales tax included in the amount (migration 122). */}
-              {detailsTarget.taxLines?.length > 0 && (
-                <p className="ui-hint" style={{ margin: '4px 0 0' }}>
-                  {formatCurrency(detailsTarget.preTaxAmount, detailsTarget.currency)} before tax ·{' '}
-                  {detailsTarget.taxLines.map((line) => `${line.name} ${formatCurrency(line.amount, detailsTarget.currency)}`).join(' · ')}
-                  {detailsTarget.taxRegion ? ` (${detailsTarget.taxRegion})` : ''}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <p className="ui-hint" style={{ margin: '0 0 4px' }}>
-                Customer
-              </p>
-              <p style={{ margin: 0, fontWeight: 600 }}>{formatName(detailsTarget.parent)}</p>
-              <p className="ui-hint" style={{ margin: 0 }}>
-                {detailsTarget.parent?.email}
-              </p>
-            </div>
-
-            <div>
-              <p className="ui-hint" style={{ margin: '0 0 4px' }}>
-                Plan
-              </p>
-              <p style={{ margin: 0 }}>{detailsTarget.planName ?? '—'}</p>
-            </div>
-
-            <div>
-              <p className="ui-hint" style={{ margin: '0 0 4px' }}>
-                Type
-              </p>
-              <Badge variant={detailsTarget.transactionType === 'refund' ? 'warning' : 'neutral'}>
-                {titleCase(detailsTarget.transactionType)}
-              </Badge>
-            </div>
-
-            <div>
-              <p className="ui-hint" style={{ margin: '0 0 4px' }}>
-                Transaction ID
-              </p>
-              <p style={{ margin: 0, fontFamily: 'var(--font-family-mono)', wordBreak: 'break-all' }}>
-                {detailsTarget.stripePaymentIntentId ?? 'Not available'}
-              </p>
-            </div>
-
-            <div>
-              <p className="ui-hint" style={{ margin: '0 0 4px' }}>
-                Payment Date
-              </p>
-              <p style={{ margin: 0 }}>{formatDate(detailsTarget.createdAt)}</p>
-            </div>
-
-            {detailsTarget.cardLast4 && (
-              <div>
-                <p className="ui-hint" style={{ margin: '0 0 4px' }}>
-                  Payment Method
-                </p>
-                <p style={{ margin: 0 }}>{describeCard({ brand: detailsTarget.cardBrand, last4: detailsTarget.cardLast4 })}</p>
-              </div>
-            )}
-
-            <div>
-              <p className="ui-hint" style={{ margin: '0 0 4px' }}>
-                Refund
-              </p>
-              <p style={{ margin: 0 }}>{formatCurrency(detailsTarget.refundAmount ?? 0, detailsTarget.currency)}</p>
-              {detailsTarget.refundReason && (
-                <p className="ui-hint" style={{ margin: '4px 0 0' }}>
-                  Reason: {detailsTarget.refundReason}
-                </p>
-              )}
-            </div>
-
-            {detailsTarget.failureReason && <Alert variant="error">{detailsTarget.failureReason}</Alert>}
-          </div>
-        )}
+      <Drawer isOpen={Boolean(detailsTarget)} onClose={() => setDetailsTarget(null)} title="Payment Details">
+        {detailsTarget && <PaymentDetails key={detailsTarget.id} row={detailsTarget} canRefund={canRefund} onRefund={openRefund} />}
       </Drawer>
 
       <Toast />

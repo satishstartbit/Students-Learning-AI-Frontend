@@ -7,9 +7,9 @@ import { agendaItems, blockStats } from '../../../planner/schoolwork';
 import PlanBlockCard from './PlanBlockCard';
 
 /** What an empty weekend day says (the Plan mockup): Saturday catches up, Sunday looks ahead. */
-function weekendNote(dayKey) {
+function weekendNote(dayKey, viewer) {
   const weekday = weekdayOfKey(dayKey);
-  if (weekday === 5) return { title: 'Catch up', text: 'Use this if you’re behind.' };
+  if (weekday === 5) return { title: 'Catch up', text: viewer === 'parent' ? 'A spare day if they’re behind.' : 'Use this if you’re behind.' };
   if (weekday === 6) return { title: 'Plan ahead', text: 'Look at next week.', action: 'next-week' };
   return null;
 }
@@ -27,6 +27,10 @@ function weekendNote(dayKey) {
  *                the clock (the full calendar); otherwise the plans follow
  *   due          the tasks due this day (useTodayTasks shape)
  *   isTeacherWork(assignmentId)   for the card's person icon
+ *   viewer       'parent' (the parent's Schedule): read-only cards, no Start,
+ *                parent wording; due work opens with onOpenDue(task)
+ *   onOpenDue    when set, every due line is a button calling it (else the
+ *                student's own work opens onOpenOwn and teacher work its page)
  */
 export function PlanDayColumn({
   dayKey,
@@ -45,7 +49,9 @@ export function PlanDayColumn({
   onPickDay,
   onAdd,
   onOpenOwn,
+  onOpenDue,
   onNextWeek,
+  viewer = 'student',
 }) {
   const items = inTimeOrder
     ? agendaItems(blocks, events, (b) => getClockMinutesInTimezone(b.startAt, { timeZone }))
@@ -54,7 +60,7 @@ export function PlanDayColumn({
   const isSelected = dayKey === selectedKey && !isToday;
   const stats = blockStats(blocks);
   const openDue = due.filter((t) => !t.done);
-  const note = blocks.length === 0 && events.length === 0 ? weekendNote(dayKey) : null;
+  const note = blocks.length === 0 && events.length === 0 ? weekendNote(dayKey, viewer) : null;
   const weekday = formatDateKey(dayKey, { weekday: layout === 'day' ? 'long' : 'short', month: undefined, day: undefined, year: undefined });
   const dayNumber = formatDateKey(dayKey, { day: 'numeric', month: layout === 'day' ? 'long' : undefined, year: undefined });
   const fullLabel = formatDateKey(dayKey, { weekday: 'long', month: 'long', day: 'numeric', year: undefined });
@@ -92,8 +98,8 @@ export function PlanDayColumn({
             );
             return (
               <li key={task.key}>
-                {task.type === 'own' ? (
-                  <button type="button" className="sp-dueflag" data-late={late || undefined} onClick={() => onOpenOwn(task)}>
+                {onOpenDue || task.type === 'own' ? (
+                  <button type="button" className="sp-dueflag" data-late={late || undefined} onClick={() => (onOpenDue ?? onOpenOwn)(task)}>
                     {content}
                   </button>
                 ) : (
@@ -122,6 +128,7 @@ export function PlanDayColumn({
                 timeZone={timeZone}
                 todayKey={todayKey}
                 onOpen={onOpenBlock}
+                viewer={viewer}
               />
             ) : (
               <div key={key} className="sp-event">

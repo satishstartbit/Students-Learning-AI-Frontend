@@ -15,8 +15,11 @@ import { shortMinutes } from '../../../planner/components/schoolwork/schoolworkF
  *
  *   fromTeacher   the work is a teacher's (shows the person icon)
  *   showTime      the clock time too (day view), from the plan's own zone
+ *   viewer        'parent' on the parent's Schedule: the same card, read-only -
+ *                 no Start (only the child focuses), words about "your child"
  */
-export function PlanBlockCard({ block, color, fromTeacher, showTime = false, timeZone, todayKey, onOpen }) {
+export function PlanBlockCard({ block, color, fromTeacher, showTime = false, timeZone, todayKey, onOpen, viewer = 'student' }) {
+  const parentView = viewer === 'parent';
   const done = block.status === 'done';
   const missed = block.status === 'missed';
   const editable = Boolean(onOpen) && block.status === 'scheduled' && (!todayKey || block.date >= todayKey);
@@ -36,13 +39,13 @@ export function PlanBlockCard({ block, color, fromTeacher, showTime = false, tim
           <span className="sp-chip">Study</span>
         )}
         {fromTeacher && (
-          <span className="sp-task__from" title="From your teacher">
-            <LuUser size={11} aria-label="From your teacher" />
+          <span className="sp-task__from" title={parentView ? 'From a teacher' : 'From your teacher'}>
+            <LuUser size={11} aria-label={parentView ? 'From a teacher' : 'From your teacher'} />
           </span>
         )}
         {block.pinned && (
-          <span className="sp-task__from" title="Kept where you put it">
-            <LuPin size={10} aria-label="Kept where you put it" />
+          <span className="sp-task__from" title={parentView ? 'Kept in place' : 'Kept where you put it'}>
+            <LuPin size={10} aria-label={parentView ? 'Kept in place' : 'Kept where you put it'} />
           </span>
         )}
       </div>
@@ -64,7 +67,7 @@ export function PlanBlockCard({ block, color, fromTeacher, showTime = false, tim
             <LuClock3 size={12} aria-hidden="true" />
             {[time, missed ? `Missed · ${minutes}` : minutes].filter(Boolean).join(' · ')}
           </p>
-          {!missed && (
+          {!missed && !parentView && (
             <Link to={focusHref} className="sp-start" aria-label={`Start ${block.title || block.assignmentTitle}`}>
               <LuPlay size={10} fill="currentColor" aria-hidden="true" /> Start
             </Link>
