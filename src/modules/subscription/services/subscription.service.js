@@ -48,7 +48,8 @@ export const startPlanChange = (planId) => api.post('/subscriptions/me/change', 
 
 /** { subscription (in force or null), latestSubscription, access: { hasAccess, reason } } */
 export const getMySubscription = () => api.get('/subscriptions/me');
-export const listMyPayments = () => api.get('/subscriptions/me/payments');
+/** One page of the parent's payments, newest first: data = the page, meta = { page, limit, total, totalPages }. */
+export const listMyPayments = ({ page = 1, limit = 10 } = {}) => api.get('/subscriptions/me/payments', { params: { page, limit } });
 export const cancelMySubscription = (reason) => api.post('/subscriptions/me/cancel', { reason });
 export const setAutoRenew = (enabled) => api.patch('/subscriptions/me/auto-renew', { enabled });
 

@@ -7,6 +7,7 @@ import { formatCurrency, formatName, titleCase } from '../../../../utils/format'
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import subscriptionService from '../../services/subscription.service';
 import TransactionId from './TransactionId';
+import { Rows, Section } from './DetailRows';
 import {
   REFUND_REASON_OPTIONS,
   CONFIRM_WORD,
@@ -23,28 +24,6 @@ import {
 } from './adminBilling';
 import './adminBilling.css';
 
-function Rows({ rows }) {
-  const shown = rows.filter(([, value]) => value !== null && value !== undefined && value !== '');
-  return (
-    <dl className="ab-rows">
-      {shown.map(([label, value, total]) => (
-        <div key={label} className={total ? 'ab-rows__total' : undefined}>
-          <dt>{label}</dt>
-          <dd>{value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-function Section({ title, children }) {
-  return (
-    <section className="ab-section" aria-label={title}>
-      <h3 className="ab-section__title">{title}</h3>
-      {children}
-    </section>
-  );
-}
 
 const taxText = (lines, currency) =>
   lines.map((line) => `${formatCurrency(line.amount, currency)} ${line.name}${line.rate ? ` (${line.rate}%)` : ''}`).join(' + ');

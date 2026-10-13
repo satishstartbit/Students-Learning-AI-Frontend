@@ -8,7 +8,7 @@ import { formatDate } from '../../../utils/date';
 import { formatCurrency } from '../../../utils/format';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import PriceSummary from '../components/PriceSummary';
-import { hasTax, taxRows } from '../components/taxRows';
+import { hasTax, priceLabel, provinceRow, showPriceRow, taxNote, taxRows, totalLabel } from '../components/taxRows';
 import { useSubscriptionAccess } from '../hooks/useSubscriptionAccess';
 import subscriptionService from '../services/subscription.service';
 import {
@@ -231,7 +231,8 @@ export default function CheckoutPage() {
           <PriceSummary
             currency={checkout.currency}
             rows={[
-              { label: kind === 'change' ? `${checkout.plan?.name} (per ${cycle})` : 'Subtotal', value: checkout.subtotal },
+              kind !== 'trial' && provinceRow(checkout.tax),
+              (kind !== 'payment' || showPriceRow(checkout.tax, checkout.discount > 0)) && { label: kind === 'change' ? `${checkout.plan?.name} (per ${cycle})` : priceLabel(kind === 'trial' ? null : checkout.tax, checkout.discount > 0, 'Subtotal'), value: checkout.subtotal },
               checkout.discount > 0 && {
                 label: `Discount${checkout.coupon ? ` (${checkout.coupon.code})` : ''}`,
                 value: checkout.discount,
@@ -245,8 +246,8 @@ export default function CheckoutPage() {
                 },
               kind === 'trial' && { label: 'Free trial', text: `${checkout.trialDays} days` },
               // Sales tax on what is paid today (nothing during a trial).
-              ...(kind === 'trial' ? [] : taxRows(checkout.tax)),
-              { label: 'Total due today', value: checkout.amount, total: true },
+              ...(kind === 'trial' ? [] : taxRows(checkout.tax, { showBefore: kind === 'change' || checkout.discount > 0 })),
+              { label: kind === 'trial' ? 'Total due today' : totalLabel(checkout.tax, 'Total due today'), value: checkout.amount, total: true },
             ]}
           />
 
@@ -257,6 +258,7 @@ export default function CheckoutPage() {
               `${checkout.plan?.name} starts today and renews on ${formatDate(checkout.periodEnd)} with the card you pay with. You can turn off auto-renewal or cancel any time on the Subscription page.`}
             {kind === 'payment' &&
               `Your subscription renews automatically each ${cycle} with the card you pay with. You can turn off auto-renewal or cancel any time on the Subscription page and keep access until the end of the period you have paid for.`}
+            {kind !== 'trial' && taxNote(checkout.tax) && ` ${taxNote(checkout.tax)}`}
           </p>
         </Card>
       </div>

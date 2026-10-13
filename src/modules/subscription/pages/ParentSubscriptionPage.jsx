@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { LuUsersRound } from 'react-icons/lu';
+import { LuCheck, LuUsersRound } from 'react-icons/lu';
 import {
   PageHeader,
   Card,
@@ -26,13 +26,16 @@ import { useViewingChild } from '../../parent/hooks/useViewingChild';
 import BillingHistory from '../components/BillingHistory';
 import PaymentMethodCard from '../components/PaymentMethodCard';
 import PriceSummary from '../components/PriceSummary';
-import { hasTax, taxRows } from '../components/taxRows';
+import { hasTax, priceLabel, provinceRow, showPriceRow, taxNote, taxRows, totalLabel } from '../components/taxRows';
 import { useSubscriptionAccess } from '../hooks/useSubscriptionAccess';
 import subscriptionService from '../services/subscription.service';
 import { describeCard } from '../stripe';
 import '../components/subscription.css';
 
 /** The plan's status as the mockup words it ("Free trial", not "Trialing"). */
+/** Billing history, one server page at a time. */
+const PAYMENTS_PER_PAGE = 10;
+
 const PLAN_STATUS = {
   trialing: { label: 'Free trial', variant: 'primary' },
   active: { label: 'Active', variant: 'success' },
@@ -134,6 +137,12 @@ export default function ParentSubscriptionPage() {
 
   const overview = useApi(subscriptionService.getMySubscription);
   const payments = useApi(subscriptionService.listMyPayments);
+  // Billing history is paged on the server (GET /subscriptions/me/payments?page=&limit=).
+  const [paymentsPage, setPaymentsPage] = useState(1);
+  const { run: runPayments } = payments;
+  useEffect(() => {
+    runPayments({ page: paymentsPage, limit: PAYMENTS_PER_PAGE }).catch(() => {});
+  }, [runPayments, paymentsPage]);
   const plans = useApi(subscriptionService.listPlans);
   const paymentMethod = useApi(subscriptionService.getPaymentMethod);
 
@@ -167,7 +176,6 @@ export default function ParentSubscriptionPage() {
 
   const load = useCallback(() => {
     overview.run().catch(() => {});
-    payments.run().catch(() => {});
     plans.run().catch(() => {});
     paymentMethod.run().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -175,7 +183,9 @@ export default function ParentSubscriptionPage() {
 
   /** After anything that changes the subscription or card: re-read it all, and the layout's access. */
   const reload = useCallback(async () => {
-    await Promise.all([overview.run(), payments.run(), paymentMethod.run()].map((p) => p.catch(() => {})));
+    // A new payment lands on the first page of Billing history.
+    setPaymentsPage(1);
+    await Promise.all([overview.run(), payments.run({ page: 1, limit: PAYMENTS_PER_PAGE }), paymentMethod.run()].map((p) => p.catch(() => {})));
     await refreshAccess();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshAccess]);
@@ -319,6 +329,7 @@ export default function ParentSubscriptionPage() {
   const appliedCode = quote?.coupon?.code ?? null;
   const typedCode = couponCode.trim();
   const codePending = Boolean(typedCode) && typedCode.toLowerCase() !== (appliedCode ?? '').toLowerCase();
+  const codeApplied = Boolean(typedCode) && Boolean(appliedCode) && !codePending;
   const trialDays = shown?.trialDays ?? 0;
   const nothingToPay = Boolean(shown) && shown.total === 0;
   let checkoutLabel = 'Continue to payment';
@@ -443,6 +454,7 @@ export default function ParentSubscriptionPage() {
   }
 
   const allPayments = payments.data ?? [];
+  const paymentsTotal = payments.meta?.total ?? allPayments.length;
   const planStatus = current ? (PLAN_STATUS[current.status] ?? { label: formatStatus(current.status), variant: 'neutral' }) : null;
   // The free trial is for a family's first subscription (the server decides; this only hides the badge).
   const trialEligible = !latest;
@@ -609,7 +621,7 @@ export default function ParentSubscriptionPage() {
           </div>
 
           {changeTarget && (
-            <Card className="ui-field sub-change">
+            <Card className="sub-checkout sub-change">
               <SectionHeader title={`Change to ${changeTarget.name}`} as="h3" />
               {changeQuoteError ? (
                 <Alert variant="error">{changeQuoteError}</Alert>
@@ -620,6 +632,7 @@ export default function ParentSubscriptionPage() {
                   <PriceSummary
                     currency={changeQuote.currency}
                     rows={[
+                      provinceRow(changeQuote.tax),
                       { label: `${changeTarget.name} (per ${per(changeTarget)})`, value: changeQuote.subtotal },
                       changeQuote.discount > 0 && {
                         label: `Discount (${changeQuote.coupon?.code ?? 'code'})`,
@@ -632,15 +645,16 @@ export default function ParentSubscriptionPage() {
                         saving: true,
                       },
                       ...taxRows(changeQuote.tax),
-                      { label: 'Due today', value: changeQuote.dueToday, total: true },
+                      { label: totalLabel(changeQuote.tax, 'Due today'), value: changeQuote.dueToday, total: true },
                     ]}
                   />
                   <p className="sub-note">
                     {changeQuote.trial
                       ? `Your free trial carries on until ${formatDate(changeQuote.periodEnd)}, then ${formatCurrency(changeQuote.total, changeQuote.currency)} a ${per(changeTarget)}.`
-                      : `${changeTarget.name} starts today and renews on ${formatDate(changeQuote.periodEnd)} at ${formatCurrency(changeQuote.total, changeQuote.currency)} a ${per(changeTarget)}${hasTax(changeQuote.tax) ? ', plus tax' : ''}.`}
+                      : `${changeTarget.name} starts today and renews on ${formatDate(changeQuote.periodEnd)} at ${formatCurrency(changeQuote.total, changeQuote.currency)} a ${per(changeTarget)}${hasTax(changeQuote.tax) && !changeQuote.tax.included ? ', plus tax' : ''}.`}
                     {!changeQuote.trial && changeQuote.credit > changeQuote.total && ' The rest of your credit adds time to the new plan.'}
                   </p>
+                  {taxNote(changeQuote.tax) && <p className="sub-note">{taxNote(changeQuote.tax)}</p>}
                   {changeQuote.couponDropped && (
                     <p className="sub-note">
                       Your code {current.discountCode?.code} doesn't apply to {changeTarget.name}, so it won't carry over.
@@ -685,25 +699,21 @@ export default function ParentSubscriptionPage() {
           )}
 
           {selectedPlan && (
-            <Card style={{ marginTop: 'var(--spacing-lg)' }} className="ui-field">
+            <Card className="sub-checkout">
               <SectionHeader title={`Checkout — ${selectedPlan.name}`} as="h3" />
 
               {/* Label outside the row and tops aligned, so the button lines up
-                  with the input rather than with the field's bottom margin. */}
+                  with the input rather than with the field's helper line. */}
               <Label htmlFor="coupon-code">Discount code</Label>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 'var(--spacing-sm)',
-                  alignItems: 'flex-start',
-                  marginTop: 'var(--spacing-xs)',
-                }}
-              >
+              <div className="sub-coupon">
                 <Input
                   id="coupon-code"
-                  placeholder="Optional"
+                  placeholder="Enter a code (optional)"
+                  autoComplete="off"
                   value={couponCode}
                   error={couponError}
+                  reserveHelper={false}
+                  fieldClassName="sub-coupon__field"
                   onChange={(e) => {
                     setCouponCode(e.target.value);
                     // The shown discount belonged to the old code - drop it
@@ -718,15 +728,27 @@ export default function ParentSubscriptionPage() {
                     }
                   }}
                 />
-                <Button variant="secondary" onClick={applyCoupon} loading={checkingCoupon}>
-                  Apply
+                <Button
+                  variant={codeApplied ? 'secondary' : 'primary'}
+                  onClick={applyCoupon}
+                  loading={checkingCoupon}
+                  disabled={!typedCode || codeApplied || checkingCoupon}
+                  startIcon={codeApplied ? <LuCheck aria-hidden="true" /> : undefined}
+                >
+                  {codeApplied ? 'Applied' : 'Apply'}
                 </Button>
               </div>
+              {codeApplied && shown?.discount > 0 && (
+                <p className="sub-coupon__applied" role="status">
+                  {appliedCode} applied - you save {formatCurrency(shown.discount, selectedPlan.currency)}.
+                </p>
+              )}
 
               <PriceSummary
                 currency={selectedPlan.currency}
                 rows={[
-                  { label: 'Subtotal', value: shown?.subtotal ?? selectedPlan.price },
+                  trialDays === 0 && provinceRow(shown?.tax),
+                  (trialDays > 0 || showPriceRow(shown?.tax, shown?.discount > 0)) && { label: trialDays > 0 ? 'Subtotal' : priceLabel(shown?.tax, shown?.discount > 0, 'Subtotal'), value: shown?.subtotal ?? selectedPlan.price },
                   shown?.discount > 0 && {
                     label: `Discount${shown.coupon ? ` (${shown.coupon.code})` : ''}`,
                     value: shown.discount,
@@ -734,8 +756,8 @@ export default function ParentSubscriptionPage() {
                   },
                   trialDays > 0 && { label: 'Free trial', text: `${trialDays} days` },
                   // Sales tax on what is paid today (none during a trial).
-                  ...(trialDays > 0 ? [] : taxRows(shown?.tax)),
-                  { label: 'Total due today', value: shown?.dueToday ?? selectedPlan.price, total: true },
+                  ...(trialDays > 0 ? [] : taxRows(shown?.tax, { showBefore: shown?.discount > 0 })),
+                  { label: trialDays > 0 ? 'Total due today' : totalLabel(shown?.tax, 'Total due today'), value: shown?.dueToday ?? selectedPlan.price, total: true },
                 ]}
               />
               {trialDays > 0 && (
@@ -746,6 +768,7 @@ export default function ParentSubscriptionPage() {
                   before then and you pay nothing.
                 </p>
               )}
+              {trialDays === 0 && taxNote(shown?.tax) && <p className="sub-note">{taxNote(shown.tax)}</p>}
               {nothingToPay && <p className="sub-note">There's nothing to pay, so no card is needed.</p>}
               {codePending && !couponError && (
                 <p className="sub-note">Your code is applied when you continue - you'll see the new total first.</p>
@@ -766,7 +789,14 @@ export default function ParentSubscriptionPage() {
         </>
       )}
 
-      {isAccountHolder && (hasSubscription || allPayments.length > 0) && <BillingHistory payments={allPayments} />}
+      {isAccountHolder && (hasSubscription || paymentsTotal > 0) && (
+        <BillingHistory
+          payments={allPayments}
+          meta={payments.meta}
+          loading={payments.isLoading}
+          onPageChange={setPaymentsPage}
+        />
+      )}
 
       <ConfirmationModal
         isOpen={cancelOpen}

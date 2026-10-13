@@ -291,10 +291,14 @@ export default function AdminSubscriptionsPage() {
                 </Tooltip>
               </>
             )}
-            {/* A code applies from the next payment, so only on a plan that will renew. */}
             {!row.cancelAtPeriodEnd && (
               <Tooltip label="Apply discount code" side="top">
-                <IconButton icon={<LuTicketPercent aria-hidden="true" />} label="Apply discount code" size="sm" onClick={() => setCouponTarget(row)} />
+                <IconButton
+                  icon={<LuTicketPercent aria-hidden="true" />}
+                  label="Apply discount code"
+                  size="sm"
+                  onClick={() => setCouponTarget(row)}
+                />
               </Tooltip>
             )}
             <Tooltip label="Cancel subscription" side="top">

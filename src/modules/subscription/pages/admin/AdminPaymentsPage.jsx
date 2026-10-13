@@ -19,7 +19,7 @@ import {
   StatCard,
   StatusBadge,
   Badge,
-  Drawer,
+  Modal,
   Dropdown,
   IconButton,
   Input,
@@ -41,6 +41,7 @@ import { downloadTextFile } from '../../../../utils/file';
 import subscriptionService from '../../services/subscription.service';
 import RefundDialog from '../../components/admin/RefundDialog';
 import TransactionId from '../../components/admin/TransactionId';
+import { Rows, Section } from '../../components/admin/DetailRows';
 import {
   cardLabel,
   paymentStatusLabel,
@@ -64,137 +65,138 @@ const TYPE_OPTIONS = [
   { value: 'failed_payment', label: 'Failed payment' },
 ];
 
-function Field({ label, children }) {
-  return (
-    <div>
-      <p className="ui-hint" style={{ margin: '0 0 4px' }}>
-        {label}
-      </p>
-      {children}
-    </div>
-  );
-}
+const taxText = (lines, currency) =>
+  lines.map((line) => `${formatCurrency(line.amount, currency)} ${line.name}${line.rate ? ` (${line.rate}%)` : ''}`).join(' + ');
 
 /**
- * View Details: the row the list loaded, then the full record (card expiry,
- * every refund with who made it and why) once it arrives.
+ * View Details: a centered dialog laid out like the refund dialog (titled
+ * boxes of label · value rows). Shows the row the list loaded at once, then
+ * the full record (card expiry, every refund with who made it and why).
  */
-function PaymentDetails({ row, onRefund, canRefund }) {
+function PaymentDetails({ row, onClose, onRefund, canRefund }) {
   const detail = useApi(subscriptionService.adminGetPayment, { immediate: true, args: [row.id] });
   const p = detail.data ?? row;
+  const currency = p.currency;
   const card = p.card ?? (p.cardLast4 ? { brand: p.cardBrand, last4: p.cardLast4 } : null);
+  const isRefund = p.transactionType === 'refund';
 
   return (
-    <div style={{ display: 'grid', gap: 'var(--spacing-lg)' }}>
-      <Field label="Status">
-        <StatusBadge status={paymentStatusTone(p)} label={paymentStatusLabel(p) ?? undefined} />
-      </Field>
-
-      <Field label="Amount">
-        <p style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>
-          {formatCurrency(p.amount, p.currency)}{' '}
-          <span className="ui-hint" style={{ fontWeight: 400, fontSize: 'var(--font-size-sm)' }}>
-            {p.currency}
-          </span>
-        </p>
-        {p.discountApplied > 0 && (
-          <p className="ui-hint" style={{ margin: '4px 0 0' }}>
-            −{formatCurrency(p.discountApplied, p.currency)} coupon applied
-          </p>
-        )}
-        {p.taxLines?.length > 0 && (
-          <p className="ui-hint" style={{ margin: '4px 0 0' }}>
-            {formatCurrency(p.preTaxAmount, p.currency)} before tax ·{' '}
-            {p.taxLines.map((line) => `${line.name} ${formatCurrency(line.amount, p.currency)}`).join(' · ')}
-            {p.taxRegion ? ` (${p.taxRegion})` : ''}
-          </p>
-        )}
-      </Field>
-
-      <Field label="Customer">
-        <p style={{ margin: 0, fontWeight: 600 }}>{formatName(p.parent)}</p>
-        <p className="ui-hint" style={{ margin: 0 }}>
-          {p.parent?.email}
-        </p>
-      </Field>
-
-      <Field label="Plan">
-        <p style={{ margin: 0 }}>
-          {p.planName ?? '—'}
-          {p.planBillingCycle ? ` · ${titleCase(p.planBillingCycle)}` : ''}
-        </p>
-      </Field>
-
-      <Field label="Type">
-        <Badge variant={p.transactionType === 'refund' ? 'warning' : 'neutral'}>{titleCase(p.transactionType)}</Badge>
-      </Field>
-
-      <Field label="Transaction ID">
-        <TransactionId id={p.stripePaymentIntentId} full />
-      </Field>
-
-      <Field label="Date">
-        <p style={{ margin: 0 }}>{formatDateTime(p.createdAt)}</p>
-      </Field>
-
-      {card && (
-        <Field label="Payment method">
-          <p style={{ margin: 0 }}>{cardLabel(card)}</p>
-        </Field>
-      )}
-
-      {p.transactionType === 'refund' ? (
-        <Field label="Refund">
-          <p style={{ margin: 0 }}>
-            {p.refundReasonCode ? refundReasonLabel(p.refundReasonCode) : 'No reason recorded'}
-            {p.refundReason ? ` - ${p.refundReason}` : ''}
-          </p>
-          <p className="ui-hint" style={{ margin: '4px 0 0' }}>
-            {p.refundedByUser ? `By ${formatName(p.refundedByUser)} (${p.refundedByUser.email})` : 'Who made it was not recorded'}
-          </p>
-        </Field>
-      ) : (
-        <Field label="Refunds">
-          <p style={{ margin: 0 }}>
-            {formatCurrency(p.refundAmount ?? 0, p.currency)} refunded
-            {p.refundable != null ? ` · ${formatCurrency(p.refundable, p.currency)} still refundable` : ''}
-          </p>
-          {detail.isLoading && !detail.data ? (
-            <Loader size="sm" message="Loading refunds…" />
-          ) : detail.error ? (
-            <ErrorState error={detail.error} variant="compact" onRetry={() => detail.run(row.id).catch(() => {})} />
-          ) : (
-            p.refunds?.length > 0 && (
-              <ul className="ab-history" aria-label="Refunds made">
-                {p.refunds.map((r) => (
-                  <li key={r.id}>
-                    <span>
-                      {formatCurrency(r.amount, p.currency)}{' '}
-                      <StatusBadge status={paymentStatusTone(r)} label={paymentStatusLabel(r)} />
-                    </span>
-                    <span className="ab-history__meta">
-                      {formatDate(r.createdAt)}
-                      {r.refundReasonCode ? ` · ${refundReasonLabel(r.refundReasonCode)}` : ''}
-                      {r.refundReason ? ` · "${r.refundReason}"` : ''}
-                      {r.refundedByUser ? ` · by ${formatName(r.refundedByUser)}` : ''}
-                      {r.failureReason ? ` · ${r.failureReason}` : ''}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )
+    <Modal
+      isOpen
+      onClose={onClose}
+      title="Payment details"
+      size="lg"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
+          {canRefund(p) && (
+            <Button variant="danger" onClick={() => onRefund(p)} startIcon={<LuUndo2 aria-hidden="true" />}>
+              Refund payment
+            </Button>
           )}
-        </Field>
-      )}
+        </>
+      }
+    >
+      <div className="ab-refund">
+        {p.failureReason && <Alert variant="error">{p.failureReason}</Alert>}
 
-      {p.failureReason && <Alert variant="error">{p.failureReason}</Alert>}
+        <div className="ab-refund__grid">
+          <Section title="Payment">
+            <Rows
+              rows={[
+                ['Status', <StatusBadge key="s" status={paymentStatusTone(p)} label={paymentStatusLabel(p) ?? undefined} />],
+                ['Type', <Badge key="t" variant={isRefund ? 'warning' : 'neutral'}>{titleCase(p.transactionType)}</Badge>],
+                ['Date', formatDateTime(p.createdAt)],
+                ['Transaction', <TransactionId key="id" id={p.stripePaymentIntentId} />],
+              ]}
+            />
+          </Section>
 
-      {canRefund(p) && (
-        <Button variant="danger" onClick={() => onRefund(p)} startIcon={<LuUndo2 aria-hidden="true" />}>
-          Refund payment
-        </Button>
-      )}
-    </div>
+          <Section title="Who">
+            <Rows
+              rows={[
+                ['Parent', formatName(p.parent)],
+                ['Email', p.parent?.email],
+                ['Plan', p.planName ?? '—'],
+                ['Billing', p.planBillingCycle ? titleCase(p.planBillingCycle) : null],
+              ]}
+            />
+          </Section>
+
+          <Section title="Amount">
+            <Rows
+              rows={[
+                ['Coupon discount', p.discountApplied > 0 ? `−${formatCurrency(p.discountApplied, currency)}` : null],
+                ['Before tax', p.taxLines?.length ? formatCurrency(p.preTaxAmount, currency) : null],
+                ['Tax', p.taxLines?.length ? `${taxText(p.taxLines, currency)}${p.taxRegion ? ` · ${p.taxRegion}` : ''}` : 'None'],
+                [isRefund ? 'Amount refunded' : 'Amount paid', `${formatCurrency(p.amount, currency)} ${currency}`, true],
+              ]}
+            />
+          </Section>
+
+          <Section title="Card">
+            {card ? (
+              <Rows
+                rows={[
+                  ['Card', cardLabel(card, { expiry: false })],
+                  ['Expires', card.expiryLabel ?? 'Not recorded'],
+                ]}
+              />
+            ) : (
+              <p className="ab-refund__money">No card is recorded on this payment.</p>
+            )}
+          </Section>
+        </div>
+
+        {isRefund ? (
+          <Section title="Refund">
+            <Rows
+              rows={[
+                ['Reason', p.refundReasonCode ? refundReasonLabel(p.refundReasonCode) : 'Not recorded'],
+                ['Note', p.refundReason],
+                ['Made by', p.refundedByUser ? `${formatName(p.refundedByUser)} (${p.refundedByUser.email})` : 'Not recorded'],
+              ]}
+            />
+          </Section>
+        ) : (
+          <Section title="Refunds">
+            <Rows
+              rows={[
+                ['Already refunded', formatCurrency(p.refundAmount ?? 0, currency)],
+                ['Still refundable', p.refundable != null ? formatCurrency(p.refundable, currency) : null, true],
+              ]}
+            />
+            {detail.isLoading && !detail.data ? (
+              <Loader size="sm" message="Loading refunds…" />
+            ) : detail.error ? (
+              <ErrorState error={detail.error} variant="compact" onRetry={() => detail.run(row.id).catch(() => {})} />
+            ) : (
+              p.refunds?.length > 0 && (
+                <ul className="ab-history" aria-label="Refunds made">
+                  {p.refunds.map((r) => (
+                    <li key={r.id}>
+                      <span>
+                        {formatCurrency(r.amount, currency)}{' '}
+                        <StatusBadge status={paymentStatusTone(r)} label={paymentStatusLabel(r)} />
+                      </span>
+                      <span className="ab-history__meta">
+                        {formatDate(r.createdAt)}
+                        {r.refundReasonCode ? ` · ${refundReasonLabel(r.refundReasonCode)}` : ''}
+                        {r.refundReason ? ` · "${r.refundReason}"` : ''}
+                        {r.refundedByUser ? ` · by ${formatName(r.refundedByUser)}` : ''}
+                        {r.failureReason ? ` · ${r.failureReason}` : ''}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )
+            )}
+          </Section>
+        )}
+      </div>
+    </Modal>
   );
 }
 
@@ -495,9 +497,9 @@ export default function AdminPaymentsPage() {
         />
       )}
 
-      <Drawer isOpen={Boolean(detailsTarget)} onClose={() => setDetailsTarget(null)} title="Payment Details">
-        {detailsTarget && <PaymentDetails key={detailsTarget.id} row={detailsTarget} canRefund={canRefund} onRefund={openRefund} />}
-      </Drawer>
+      {detailsTarget && (
+        <PaymentDetails key={detailsTarget.id} row={detailsTarget} canRefund={canRefund} onRefund={openRefund} onClose={() => setDetailsTarget(null)} />
+      )}
 
       <Toast />
     </div>

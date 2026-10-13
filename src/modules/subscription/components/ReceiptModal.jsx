@@ -34,6 +34,8 @@ export default function ReceiptModal({ payment, onClose }) {
   // Sales tax (when this charge had any): the price before tax, then each tax.
   const taxLines = payment.taxLines ?? [];
   const beforeTax = payment.preTaxAmount ?? payment.amount;
+  // CRA receipt details: the seller's name and its GST/HST (and QST/PST) numbers.
+  const taxNumbers = payment.taxNumbers ?? (payment.taxNumber ? [{ label: 'GST/HST number', number: payment.taxNumber }] : []);
   const charged = payment.status !== 'failed' && payment.status !== 'pending';
   const card = payment.cardLast4 ? describeCard({ brand: payment.cardBrand, last4: payment.cardLast4 }) : null;
   const billedTo = [formatName(user), user?.email].filter(Boolean).join(' · ');
@@ -62,7 +64,7 @@ export default function ReceiptModal({ payment, onClose }) {
     >
       <div className="sub-receipt__head">
         <div>
-          <p className="sub-receipt__brand">{APP_NAME}</p>
+          <p className="sub-receipt__brand">{payment.seller || APP_NAME}</p>
           {billedTo && <span className="sub-sub">Billed to {billedTo}</span>}
         </div>
         <PaymentStatusBadge status={payment.status} />
@@ -129,12 +131,13 @@ export default function ReceiptModal({ payment, onClose }) {
             </dd>
           </div>
         )}
-        {taxLines.length > 0 && payment.taxNumber && (
-          <div className="sub-receipt__row">
-            <dt>GST/HST number</dt>
-            <dd>{payment.taxNumber}</dd>
-          </div>
-        )}
+        {taxLines.length > 0 &&
+          taxNumbers.map((t) => (
+            <div key={t.label} className="sub-receipt__row">
+              <dt>{t.label}</dt>
+              <dd>{t.number}</dd>
+            </div>
+          ))}
         <div className="sub-receipt__row">
           <dt>Reference</dt>
           <dd>{payment.id}</dd>
