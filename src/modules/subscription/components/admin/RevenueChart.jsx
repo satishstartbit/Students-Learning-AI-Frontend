@@ -9,12 +9,12 @@ const PAD = { top: 12, right: 8, bottom: 28, left: 56 };
 
 /** "Oct 1", "Oct 12 – 18" (a week), "Oct 2026" (a month). */
 function bucketLabel(key, granularity, { long = false } = {}) {
-  if (granularity === 'month') return formatDateKey(`${key}-01`, { month: long ? 'long' : 'short', year: long ? 'numeric' : '2-digit' });
+  if (granularity === 'month') return formatDateKey(`${key}-01`, { month: long ? 'long' : 'short', year: long ? 'numeric' : '2-digit', day: undefined });
   if (granularity === 'week') {
-    const start = formatDateKey(key, { month: 'short', day: 'numeric' });
+    const start = formatDateKey(key, { month: 'short', day: 'numeric', year: undefined });
     return long ? `Week of ${start} – ${formatDateKey(addDaysToKey(key, 6), { month: 'short', day: 'numeric' })}` : start;
   }
-  return formatDateKey(key, { month: 'short', day: 'numeric', ...(long ? { weekday: 'short' } : {}) });
+  return formatDateKey(key, { month: 'short', day: 'numeric', ...(long ? { weekday: 'short' } : { year: undefined }) });
 }
 
 /**

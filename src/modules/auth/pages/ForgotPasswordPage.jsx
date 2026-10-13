@@ -23,8 +23,10 @@ const EMPTY_CODE = ['', '', '', '', '', ''];
  *      token step 2 handed back (POST /auth/reset-password)
  *   4. "Password updated 🎉" - every session was signed out, so sign in again
  *
- * The API never says whether an account exists, so step 2 names the address
- * only when the server shares it (PASSWORD_RESET_SHOW_DESTINATION).
+ * An unknown username or email (or an inactive account) is refused at step 1
+ * with the server's reason under the field, and step 2 never opens (QA
+ * SLA-BUG-001). Step 2 names the address only when the server shares it
+ * (PASSWORD_RESET_SHOW_DESTINATION).
  */
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState('request');
