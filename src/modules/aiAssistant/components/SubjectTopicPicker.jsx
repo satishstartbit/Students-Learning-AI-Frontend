@@ -42,7 +42,7 @@ export function SubjectTopicPicker({ onStart, starting = false }) {
 
       {!loadingSubjects && !loadError && options.length === 0 && (
         <Alert variant="info" className="ui-field">
-          No subjects are assigned to you yet - once a teacher is assigned for a subject, it'll show up here.
+          Choose your subjects in Settings → Learning profile first. Your selected subjects will appear here.
         </Alert>
       )}
 

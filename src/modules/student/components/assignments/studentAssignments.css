@@ -4,7 +4,7 @@
  * This page was drawn entirely with the generic design-system components, so
  * it read a size larger and a face apart from the rest of the student area.
  * Everything here matches what the sibling pages already establish - Home
- * (studentHome.css), Plan, Notifications (studentNotifications.css) and
+ * (studentHome.css), Plan, Notifications (notifications/components/notificationsPage.css) and
  * Settings (studentSettings.css):
  *
  *   page      centred column, 8px 4px 40px padding

@@ -7,7 +7,7 @@ import { createContext, useContext } from 'react';
  *   settings   the server copy, or null until loaded / outside the provider
  *   update     (patch) => Promise - optimistic, rolls back and rethrows on failure
  *
- * Outside the provider (K-5, other roles) this returns inert defaults, so a
+ * Outside the provider (K-4, other roles) this returns inert defaults, so a
  * shared page can read it without checking the grade band first.
  */
 export const StudentSettingsContext = createContext({

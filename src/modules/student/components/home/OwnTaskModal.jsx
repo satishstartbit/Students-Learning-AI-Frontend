@@ -3,7 +3,7 @@ import { LuCamera, LuCheck, LuRotateCcw, LuTrash2, LuX } from 'react-icons/lu';
 import { Alert, Button, ConfirmationModal, Input, Modal, Select, Textarea } from '../../../../components/common';
 import { toast } from '../../../../hooks/useToast';
 import { getErrorMessage } from '../../../../utils/errorHandler';
-import { useOnboardingLookup } from '../../../onboarding/hooks/useOnboardingLookup';
+import { useStudentProfileOptions } from '../../../profile/hooks/useStudentProfileOptions';
 import ShareWithTeacher from '../../../planner/components/ShareWithTeacher';
 import { useWorkTypeOptions } from '../../../planner/hooks/useWorkTypeOptions';
 import studentTaskService from '../../services/studentTask.service';
@@ -69,7 +69,7 @@ function PhotoField({ file, existingUrl, onPick, onClear, emphasis }) {
 
 function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
   const isEdit = mode === 'edit';
-  const subjects = useOnboardingLookup('subjects');
+  const subjects = useStudentProfileOptions();
   const workTypes = useWorkTypeOptions();
 
   const [title, setTitle] = useState(task?.title ?? '');
@@ -88,12 +88,11 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
   const existingPhotoUrl = removePhoto ? null : task?.photo?.url ?? null;
   const hasPhoto = Boolean(photoFile || existingPhotoUrl);
 
-  const subjectOptions = useMemo(() => {
-    const opts = subjects.options.map((o) => ({ value: o.value, label: o.label }));
-    // Keep a saved subject selectable even if it's since been removed from the list.
-    if (subject && !opts.some((o) => o.value === subject)) opts.unshift({ value: subject, label: subject });
-    return opts;
-  }, [subjects.options, subject]);
+  const subjectOptions = [...subjects.subjectOptions];
+  // Keep the old task's label readable without offering it for a new choice.
+  if (isEdit && subject === task?.subject && subject && !subjectOptions.some((o) => o.value === subject)) {
+    subjectOptions.unshift({ value: subject, label: `${subject} (saved on this task)`, disabled: true });
+  }
 
   const workTypeOptions = useMemo(() => {
     const opts = [...workTypes.options];
@@ -227,6 +226,8 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
           options={subjectOptions}
           placeholder="No subject"
           loading={subjects.loading}
+          hint="Choose from the subjects selected in your learning profile."
+          error={subjects.error ? 'Could not load profile subjects' : undefined}
         />
         <Input label="Due date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
       </div>

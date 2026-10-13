@@ -23,7 +23,7 @@ import { formatDateKey, getDateKey } from '@/utils/date';
  *
  * Colours come from the semantic tokens in styles/tailwind.css (primary,
  * primary-soft, warning*), so the cell follows the app theme, its dark mode,
- * and the K-5 kid theme without any changes here.
+ * and the K-4 kid theme without any changes here.
  */
 
 /** Dots stop here - more planned work never draws more dots. */

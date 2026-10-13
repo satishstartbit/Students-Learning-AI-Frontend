@@ -11,6 +11,8 @@ export function studentNotificationPath(notification) {
   if (relatedType === 'assignment' && relatedId) return `/student/assignments/${relatedId}`;
   // A task the student added themselves - listed under "My own tasks".
   if (relatedType === 'student_task') return '/student/assignments';
+  // A reminder on one of their Home notes (a note on an assignment comes as 'assignment').
+  if (relatedType === 'sticky_note') return '/student';
   if (type === 'checkin_reminder') return '/student/check-in';
   if (type === 'weekly_plan_nudge') return '/student/calendar';
   if (type === 'reward_unlocked' || type === 'points_earned') return '/student/rewards';

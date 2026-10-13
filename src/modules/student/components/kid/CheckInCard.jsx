@@ -17,7 +17,7 @@ import { PaperCard, Tape } from './PaperKit';
 import './home/kidHome.css';
 
 /**
- * "Today's check-in" for K-5: how are you feeling, and how much energy do
+ * "Today's check-in" for K-4: how are you feeling, and how much energy do
  * you have? Saved to the real /check-ins API through TodayCheckInProvider,
  * so the Home page, the Check In page and the work-screen gate agree.
  *

@@ -15,16 +15,19 @@ import { KidChoiceChips } from '../../components/kid/KidChoiceChips';
 import { StarIcon } from '../../components/kid/KidIcons';
 import { KidOops, KidSkeleton } from '../../components/kid/KidStates';
 import { PaperCard } from '../../components/kid/PaperKit';
+import SafetyNoticeCard from '../../../../components/safety/SafetyNoticeCard';
+import { MultiSelect } from '../../../../components/common';
 
 /** A question whose answers come from a Master Management list. */
 function MasterStep({ type, name, legend, multiple, value, onChange }) {
   const { options, loading } = useOnboardingLookup(type);
   if (loading) return <KidSkeleton className="h-48" />;
+  if (multiple) return <MultiSelect name={name} label={legend} options={options} value={value ?? []} onChange={onChange} searchable placeholder="Choose your answers" />;
   return <KidChoiceChips name={name} legend={legend} options={options} value={value} onChange={onChange} multiple={multiple} />;
 }
 
 /**
- * The K-5 questions, one per screen. `required` steps can't be skipped (the
+ * The K-4 questions, one per screen. `required` steps can't be skipped (the
  * backend needs them); the rest have a "Skip" so a young student never gets
  * stuck on a question they can't answer.
  */
@@ -76,7 +79,7 @@ function KidOnboardingFlow({ onboarding, onSaved }) {
         strengths: state.strengths,
         challenges: state.challenges,
         learningPreferences: {
-          // Grade 6+ questions a K-5 student isn't asked keep whatever was there.
+          // Grade 6+ questions a K-4 student isn't asked keep whatever was there.
           bestStudyTimes: prefs.bestStudyTimes,
           distractions: prefs.distractions,
           taskApproach: prefs.taskApproach ?? null,
@@ -112,6 +115,8 @@ function KidOnboardingFlow({ onboarding, onSaved }) {
             You&apos;re in {onboarding.answers.grade}
           </p>
         )}
+        {/* Phase 1 §4: told, in kid words, that a grown-up hears if they need help. */}
+        <SafetyNoticeCard audience="kid" variant="kid" className="max-w-md" />
         <KidButton className="mt-2" onClick={() => setStepIndex(0)}>
           Let&apos;s start!
           <LuArrowRight className="size-6" aria-hidden="true" />
@@ -198,7 +203,7 @@ function KidOnboardingFlow({ onboarding, onSaved }) {
 }
 
 /**
- * K-5 /student/onboarding - "Let's get to know you", one tap-to-answer
+ * K-4 /student/onboarding - "Let's get to know you", one tap-to-answer
  * question per screen. Required once (the student layout sends a student
  * here until it's done); reopened from Settings to change answers.
  */

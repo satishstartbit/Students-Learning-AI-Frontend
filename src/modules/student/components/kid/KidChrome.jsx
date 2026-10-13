@@ -9,7 +9,7 @@ import { KidAvatar } from './KidAvatar';
 import { KID_FOOT_ITEMS, KID_NAV_ITEMS, KID_SETTINGS_ITEM, KID_TAB_ITEMS } from './kidNav';
 
 /**
- * The K-5 shell's navigation, drawn to the Kids Focus mockups: a calm
+ * The K-4 shell's navigation, drawn to the Kids Focus mockups: a calm
  * sidebar on laptops and desktops ("Growing Focus", outline icons, the page
  * you are on lightly shaded), and a top bar plus a bottom tab bar
  * (thumb-reachable, like a tablet app) below the `lg` breakpoint.

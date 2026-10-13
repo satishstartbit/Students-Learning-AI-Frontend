@@ -9,6 +9,7 @@ import { loginIdentifier, required } from '../../../utils/validation';
 import { AuthSplitLayout } from '../components/AuthSplitLayout';
 import { VerifyEmailStep } from '../components/VerifyEmailStep';
 import authService from '../services/auth.service';
+import { FAMILY_PLAN_INACTIVE, SIGN_OUT_REASON_EVENT, forgetSignOutReason, peekSignOutReason } from '../../../utils/signOutReason';
 
 /** "9:42" */
 const clock = (ms) => {
@@ -30,6 +31,10 @@ function toProblem(error) {
   if (detail.code === 'SIGNIN_PAUSED' || error?.status === 429) {
     const until = detail.lockedUntil ? new Date(detail.lockedUntil).getTime() : Date.now() + 10 * 60 * 1000;
     return { kind: 'paused', until, minutes: detail.pauseMinutes ?? 10 };
+  }
+  // A child or extra parent whose family has no plan in force (the account holder can always sign in).
+  if (detail.code === FAMILY_PLAN_INACTIVE) {
+    return { kind: 'noPlan', message: error?.message };
   }
   if (detail.code === 'INVALID_CREDENTIALS' || error?.status === 401) {
     return { kind: 'mismatch', attemptsLeft: Number.isFinite(detail.attemptsLeft) ? detail.attemptsLeft : null };
@@ -56,8 +61,24 @@ export default function LoginPage() {
   const location = useLocation();
   const { signIn } = useAuth();
   const [rememberMe, setRememberMe] = useState(false);
-  const [problem, setProblem] = useState(null);
+  // Signed out because the family's plan ended (utils/apiClient.js): say so first.
+  const [problem, setProblem] = useState(() => {
+    const reason = peekSignOutReason();
+    return reason?.code === FAMILY_PLAN_INACTIVE ? { kind: 'noPlan', message: reason.message } : null;
+  });
   const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    forgetSignOutReason();
+    // The reason can arrive just after this page opened (see utils/signOutReason.js).
+    const onReason = (event) => {
+      if (event.detail?.code !== FAMILY_PLAN_INACTIVE) return;
+      setProblem({ kind: 'noPlan', message: event.detail.message });
+      forgetSignOutReason();
+    };
+    window.addEventListener(SIGN_OUT_REASON_EVENT, onReason);
+    return () => window.removeEventListener(SIGN_OUT_REASON_EVENT, onReason);
+  }, []);
 
   const paused = problem?.kind === 'paused' && problem.until > now;
 
@@ -145,6 +166,18 @@ export default function LoginPage() {
           <div>
             <p className="lg-alert__title">That didn&apos;t match</p>
             <p className="lg-alert__text">Check the spelling of your username and password, then try again.</p>
+          </div>
+        </div>
+      )}
+
+      {problem?.kind === 'noPlan' && (
+        <div className="lg-alert lg-alert--paused" role="alert">
+          <LuInfo className="lg-alert__icon" aria-hidden="true" />
+          <div>
+            <p className="lg-alert__title">No active subscription plan</p>
+            <p className="lg-alert__text">
+              {problem.message || "Your family doesn't have an active subscription plan right now, so you can't sign in."}
+            </p>
           </div>
         </div>
       )}

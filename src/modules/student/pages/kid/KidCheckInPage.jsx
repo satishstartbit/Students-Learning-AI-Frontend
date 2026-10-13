@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Fragment, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { LuArrowRight } from 'react-icons/lu';
 import { useApi } from '../../../../hooks/useApi';
@@ -14,7 +14,7 @@ import { PaperCard } from '../../components/kid/PaperKit';
 const CheckInIcon = (props) => <MoodFace mood="ready_to_focus" {...props} />;
 
 /**
- * K-5 /student/check-in - where every work screen sends a student who hasn't
+ * K-4 /student/check-in - where every work screen sends a student who hasn't
  * checked in yet (checkIn/components/RequireCheckIn.jsx). One card to fill
  * in, then one big button back to what they were doing.
  */
@@ -31,6 +31,8 @@ export default function KidCheckInPage() {
   }, [checkedIn, checkIn?.updatedAt, run]);
 
   const tool = recommendation.data?.tool ?? null;
+  // A few to choose from (client: 2-3 at a time; how many is the admin's).
+  const names = (recommendation.data?.suggestions?.length ? recommendation.data.suggestions : tool ? [tool] : []).map((s) => s.name);
 
   return (
     <div data-kid-page className="kid-ui min-h-full">
@@ -47,9 +49,16 @@ export default function KidCheckInPage() {
           <PaperCard as="section" aria-label="Ready to go" tone="sheet" className="flex flex-col items-center gap-4 px-6 py-7 text-center">
             <p className="font-kid-display text-2xl font-semibold text-kid-ink">You&apos;re all checked in!</p>
 
-            {tool && (
+            {names.length > 0 && (
               <p className="text-lg text-kid-ink-soft">
-                Need a minute first? Try <strong className="text-kid-ink">{tool.name}</strong> in{' '}
+                Need a minute first? Try{' '}
+                {names.map((name, i) => (
+                  <Fragment key={name}>
+                    {i > 0 && (i === names.length - 1 ? ' or ' : ', ')}
+                    <strong className="text-kid-ink">{name}</strong>
+                  </Fragment>
+                ))}{' '}
+                in{' '}
                 <Link to="/student/focus" className="font-semibold text-kid-teal">
                   Focus time
                 </Link>

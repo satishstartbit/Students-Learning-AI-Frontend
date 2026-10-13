@@ -1,5 +1,5 @@
 /* =====================================================================
-   Mood reveal after a K-5 check-in (MoodCelebration.jsx). Prefix: mc-.
+   Mood reveal after a K-4 check-in (MoodCelebration.jsx). Prefix: mc-.
 
    The mood's own colour arrives as --mc-color and tints the card, the ring
    and the percentage; everything else is a kid-theme token, so the overlay

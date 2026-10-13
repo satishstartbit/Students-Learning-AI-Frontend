@@ -9,7 +9,7 @@ import lookupService from '../../../services/lookup.service';
  * which resolves that mapping so no screen has to).
  *
  * Both students' versions read it through this hook - the Grade 6+ dialog
- * and the K-5 one - so adding, rewording or deactivating any of it is a
+ * and the K-4 one - so adding, rewording or deactivating any of it is a
  * Super Admin edit, never a release.
  *
  * `strategiesFor(codes)` answers the other half: given what a student
@@ -57,8 +57,17 @@ export function useDifficultyPicker({ immediate = true } = {}) {
     [byCode]
   );
 
+  /** The first reply for what they picked: the first picked reason that has one (admin-edited). */
+  const replyFor = useMemo(
+    () => (codes = []) => codes.map((code) => byCode.get(code)?.reply).find(Boolean) ?? null,
+    [byCode]
+  );
+
   return {
     groups,
+    // The short first screen: reasons with a short label, in the admin's order.
+    quick: data?.quick ?? [],
+    replyFor,
     reasonByCode: byCode,
     // Every active strategy - to name one by its code (e.g. "Did that help?").
     strategies: data?.strategies ?? [],

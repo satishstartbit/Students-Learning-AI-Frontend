@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useSyncUserLocale } from '../hooks/useSyncUserLocale';
 import NotificationBell from '../modules/notifications/components/NotificationBell';
+import NotificationBellLink from '../modules/notifications/components/NotificationBellLink';
 import AppSidebar from './AppSidebar';
 import { MobileTabBar, MobileTopBar } from './MobileChrome';
 import AppErrorBoundary from '../components/status/AppErrorBoundary';
@@ -40,7 +41,9 @@ export function AuthenticatedLayout({
   accountSubtitle,
   // Grade 6+ students reach notifications from the sidebar instead (StudentLayout passes false).
   showNotificationBell = true,
-  // Where the phone top bar's bell leads when there's no dropdown bell (students).
+  // The role's notifications page (Student, Teacher, Parent): the bell is a
+  // link there - header and phone top bar - instead of a dropdown list.
+  // Without it (Super Admin) the bell opens the dropdown.
   notificationsPath,
   // Extra content rendered at the top of the sidebar's content area, before
   // the nav sections. The parent layout uses this for the VIEWING child picker.
@@ -52,7 +55,7 @@ export function AuthenticatedLayout({
   const { user } = useAuth();
   // Below lg, not md: at tablet-portrait widths (768-1023) a 16rem sidebar
   // leaves pages too narrow for their tables and filter rows, so tablets get
-  // the tab bar too - the same split the K-5 shell (KidLayout) uses.
+  // the tab bar too - the same split the K-4 shell (KidLayout) uses.
   const isCompact = useIsMobile(COMPACT_BREAKPOINT);
   const phoneShell = isCompact && mobileTabs?.length > 0;
   const { pathname } = useLocation();
@@ -60,7 +63,7 @@ export function AuthenticatedLayout({
   // Every date/currency formatted anywhere in the app (utils/date.js,
   // utils/format.js) reads the active timezone/locale rather than the
   // browser's own - set here from whichever signed-in user is viewing (and
-  // by KidLayout, the K-5 student shell, which replaces this layout).
+  // by KidLayout, the K-4 student shell, which replaces this layout).
   useSyncUserLocale(user);
 
   return (
@@ -74,7 +77,7 @@ export function AuthenticatedLayout({
           <MobileTopBar
             navItems={navItems}
             mobileTabs={mobileTabs}
-            notificationsPath={showNotificationBell ? undefined : notificationsPath}
+            notificationsPath={notificationsPath}
             accountSubtitle={accountSubtitle}
             brandSlot={mobileBrandSlot}
           />
@@ -92,7 +95,7 @@ export function AuthenticatedLayout({
             <span className="min-w-0 truncate text-sm font-semibold">{title}</span>
             {showNotificationBell && (
               <div className="ml-auto flex shrink-0 items-center gap-2">
-                <NotificationBell />
+                {notificationsPath ? <NotificationBellLink to={notificationsPath} /> : <NotificationBell />}
               </div>
             )}
           </header>

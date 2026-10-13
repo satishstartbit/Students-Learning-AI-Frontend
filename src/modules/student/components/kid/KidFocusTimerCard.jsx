@@ -14,7 +14,7 @@ const RING_RADIUS = 44;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
 /**
- * The K-5 focus clock: a big ring, the time left, and one obvious button -
+ * The K-4 focus clock: a big ring, the time left, and one obvious button -
  * then Pause / Resume, "All done!" (saves the time, with confetti) and "Stop
  * for now". From the Focus time mockup.
  *

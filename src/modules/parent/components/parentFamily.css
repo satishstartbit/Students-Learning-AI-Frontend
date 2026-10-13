@@ -112,7 +112,14 @@
 }
 .pm-foot {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: var(--spacing-sm);
   padding-top: 12px;
   border-top: 1px solid var(--color-border-default);
+}
+/* A switched-off parent: still listed, visibly not on the plan. */
+.pm-card--inactive {
+  border-style: dashed;
+  background: var(--color-bg-surface-sunken);
 }

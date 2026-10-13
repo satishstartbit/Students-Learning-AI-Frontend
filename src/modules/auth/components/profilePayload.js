@@ -10,7 +10,7 @@
  */
 
 /** A comma string ("Maths, Science") or an array from a master multi-select - always out as an array. */
-function toArray(value) {
+export function splitCsv(value) {
   if (Array.isArray(value)) return value.filter(Boolean);
   if (!value) return [];
   return String(value)
@@ -25,7 +25,7 @@ function toArray(value) {
  * picker needed no migration.
  */
 function toCsv(value) {
-  return Array.isArray(value) ? value.filter(Boolean).join(', ') : value;
+  return Array.isArray(value) ? value.filter(Boolean).join(', ') || null : value;
 }
 
 export function buildProfilePayload(role, values) {
@@ -81,10 +81,10 @@ export function buildProfilePayload(role, values) {
     // The admin forms select subjects and grade levels from their masters
     // (arrays already); public registration still types a comma-separated
     // subjects list.
-    const subjects = toArray(values.subjects);
+    const subjects = splitCsv(values.subjects);
     if (subjects.length) data.subjects = subjects;
 
-    const gradeLevels = toArray(values.gradeLevels);
+    const gradeLevels = splitCsv(values.gradeLevels);
     if (gradeLevels.length) data.gradeLevels = gradeLevels;
 
     return { profile_data: data };

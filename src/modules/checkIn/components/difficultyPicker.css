@@ -221,3 +221,17 @@
   color: var(--color-text-primary);
   text-decoration: underline;
 }
+
+/* The short first list (client's "What's getting in the way" note): bigger chips. */
+.dp-quick {
+  gap: 10px;
+  margin: 4px 0 16px;
+}
+.dp-quick .dp-chip {
+  padding: 10px 16px;
+  font-size: 14px;
+}
+.dp-chip--more {
+  border-style: dashed;
+  color: var(--color-text-secondary);
+}

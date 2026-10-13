@@ -56,7 +56,7 @@
 }
 .sub-note {
   margin: 12px 0 0;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--color-text-secondary);
 }
@@ -140,7 +140,106 @@
   color: var(--color-text-secondary);
 }
 .sub-plan__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
   margin-top: 16px;
+}
+
+/* --- Plan picker and price summaries (checkout, trial, change plan) ----- */
+.sub-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: var(--spacing-lg);
+}
+.sub-plancard--current {
+  border-color: var(--color-border-strong);
+  background: var(--color-bg-surface-sunken);
+}
+.sub-change {
+  margin-top: var(--spacing-lg);
+}
+/* Checkout card (first plan) and change-plan card: one type scale with the
+   plan card - heading font for the title, body font everywhere else. */
+.sub-checkout {
+  margin-top: var(--spacing-lg);
+  font-family: var(--font-family-base);
+}
+.sub-checkout .ui-sectionheader__title {
+  font-family: var(--font-family-heading);
+  font-size: 16px;
+  font-weight: 600;
+}
+.sub-checkout .ui-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.sub-coupon {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  max-width: 440px;
+  margin-top: var(--spacing-xs);
+}
+.sub-coupon__field {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+.sub-coupon .ui-btn {
+  flex: none;
+  min-width: 96px;
+}
+.sub-coupon__applied {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-success-fg);
+}
+.sub-summary {
+  margin: var(--spacing-lg) 0 0;
+  font-variant-numeric: tabular-nums;
+}
+.sub-checkout .sub-summary {
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border-default);
+}
+.sub-summary__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: 4px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+}
+.sub-summary__row dt {
+  color: var(--color-text-secondary);
+}
+.sub-summary__row--saving dt,
+.sub-summary__total dt {
+  color: inherit;
+}
+.sub-summary__row dt {
+  min-width: 0;
+}
+.sub-summary__row dd {
+  margin: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+.sub-summary__row--saving {
+  color: var(--color-success-fg);
+}
+.sub-summary__total {
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--color-border-default);
+  font-family: var(--font-family-heading);
+  font-size: 16px;
+  font-weight: 600;
 }
 
 /* --- Toggle switch (Auto-renewal) -------------------------------------- */
@@ -303,11 +402,10 @@
   outline: none;
   box-shadow: var(--focus-ring);
 }
-.sub-more {
-  display: flex;
-  justify-content: center;
+/* Billing history pages (the shared Pagination, under the list). */
+.sub-history__pages {
   margin-top: 10px;
-  padding-top: 10px;
+  padding-bottom: 0;
   border-top: 1px solid var(--color-border-default);
 }
 

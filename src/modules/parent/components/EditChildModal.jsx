@@ -8,16 +8,12 @@ import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import AddressFields from '../../auth/components/AddressFields';
-import { buildProfilePayload } from '../../auth/components/profilePayload';
+import { buildProfilePayload, splitCsv } from '../../auth/components/profilePayload';
 import { usePhotoField } from '../../../hooks/usePhotoField';
 import { ProfileHeaderCard, ProfileSection } from '../../profile/components/ProfileParts';
 import parentService from '../services/parent.service';
 import '../../profile/components/profile.css';
 import './parentChildren.css';
-
-/** "Reading, Writing" -> ["Reading", "Writing"] for the master multi-selects. */
-const splitCsv = (v) =>
-  v ? String(v).split(',').map((s) => s.trim()).filter(Boolean) : [];
 
 function valuesFromChild(child) {
   return {

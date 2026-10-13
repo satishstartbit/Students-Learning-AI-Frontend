@@ -14,7 +14,7 @@ import {
 /**
  * Icon + paper colour for a subject, so every task card is recognisable at a
  * glance - including for students who are still learning to read. `emoji`
- * is the big picture on the K-5 week tiles (the "My week" mockup draws a
+ * is the big picture on the K-4 week tiles (the "My week" mockup draws a
  * book, a flask, a calculator, a globe); the line icon stays for small spots.
  *
  * Subjects are free text from Master Management, so this matches keywords

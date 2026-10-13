@@ -1,15 +1,15 @@
 # checkIn module
 
-The student's daily check-in (how they feel, energy, where they feel it, how much time they have, an optional note), the K-5 "check in first" gate, and the "Something's tricky" difficulty picker. **Role:** STUDENT answers. Parents and teachers read the results (Progress pages, alerts).
+The student's daily check-in (how they feel, energy, an optional note), the K-4 "check in first" gate, and the "Something's tricky" difficulty picker. **Role:** STUDENT answers. Parents and teachers read the results (Progress pages, alerts).
 
 ## Where it lives
 | Frontend | Purpose |
 |---|---|
 | `components/TodayCheckInProvider.jsx` + `hooks/useTodayCheckIn.js` | One shared fetch per session of today's check-in **and** the mood list (`emotional_states` via onboarding lookups). Exposes `checkIn`, `moods`, `refresh`. |
-| `components/RequireCheckIn.jsx` | Route guard for work routes. **Holds the K-5 band only.** Grade 6+ can skip. |
-| `pages/CheckInPage.jsx` (Grade 6+, `/student/check-in` standard) · `student/pages/kid/KidCheckInPage.jsx` (K-5) | Standalone check-in pages |
-| `components/StudentCheckInModal.jsx` + `studentCheckIn.css` (`ci-`) | Grade 6+ check-in modal (mood tiles, energy, body areas, time, note) |
-| `components/DifficultyPicker.jsx` + `hooks/useDifficultyPicker.js` + `difficultyPicker.css` (`dp-`) | Grade 6+ "what is making it hard?" → reasons → strategies. The K-5 version is `student/components/kid/KidDifficultyPicker.jsx`. Both now **record** what was picked (`POST /students/me/support/barriers`, codes only - the old note box was removed because it was never saved) and show the server's ranked ideas with "Try this" (the idea's app action: smaller steps, explain, short focus, toolkit, re-plan, ask an adult). "Share with a grown-up" decides whether a parent's summary counts it. See `planner` (`useSupport`). |
+| `components/RequireCheckIn.jsx` | Route guard for work routes. **Holds the K-4 band only.** Grade 6+ can skip. |
+| `pages/CheckInPage.jsx` (Grade 6+, `/student/check-in` standard) · `student/pages/kid/KidCheckInPage.jsx` (K-4) | Standalone check-in pages |
+| `components/StudentCheckInModal.jsx` + `studentCheckIn.css` (`ci-`) | Grade 6+ check-in modal (mood tiles, energy, note) |
+| `components/DifficultyPicker.jsx` + `hooks/useDifficultyPicker.js` + `difficultyPicker.css` (`dp-`) | Grade 6+ "what is making it hard?" → reasons → strategies. The K-4 version is `student/components/kid/KidDifficultyPicker.jsx`. Both now **record** what was picked (`POST /students/me/support/barriers`, codes only - the old note box was removed because it was never saved) and show the server's ranked ideas with "Try this" (the idea's app action: smaller steps, explain, short focus, toolkit, re-plan, ask an adult). "Share with a grown-up" decides whether a parent's summary counts it. See `planner` (`useSupport`). |
 | `components/MoodGlyph.jsx`, `hooks/useMoodLookup.js`, `moods.js` | Draw a mood from master data (emoji or uploaded icon, background colour). Also used by parent/teacher Progress. |
 | `nextPath.js` | Where to send the student after checking in (`?next=`), with kid-friendly labels |
 | `services/checkIn.service.js` | `GET /check-ins/today`, `POST /check-ins`, `GET /check-ins/history` |
@@ -18,11 +18,22 @@ The student's daily check-in (how they feel, energy, where they feel it, how muc
 
 ## Rules - read before changing
 - **One check-in per student per day, in the student's timezone** (`getDateKeyInTimezone`). A second submit the same day updates the row. Points (`daily_checkin_completed`) are awarded once per day. Uses an advisory lock.
-- **Required for K-5 only** (`gradeBand.checkInRequired` from the backend; `RequireCheckIn` + the kid pages). Optional for Grade 6+. Controlled by `KIDS_UI` / `VITE_KIDS_UI`. Never hardcode a grade number.
-- **Every list is master data:** moods = `emotional_states` (with `code`, icon, background colour, `extra.intensity_level`), `body_areas`, `available_time`, `difficulty_categories` → `difficulty_reasons` → `support_strategies`. The backend validates submitted codes against active items. Don't hardcode moods or icons anywhere (parent/teacher views included).
+- **Required for K-4 only** (`gradeBand.checkInRequired` from the backend; `RequireCheckIn` + the kid pages). Optional for Grade 6+. Controlled by `KIDS_UI` / `VITE_KIDS_UI`. Never hardcode a grade number.
+- **Every list is master data:** moods = `emotional_states` (with `code`, icon, background colour, `extra.intensity_level`), `difficulty_categories` → `difficulty_reasons` → `support_strategies`. The backend validates submitted codes against active items. Don't hardcode moods or icons anywhere (parent/teacher views included).
 - **The note** ("Anything you want to add?") is stored as written and is **not** safety-screened. It never reaches an AI model. If it is ever sent to a model, it must go through `services/safety` first.
 - **Wellbeing alerts:** a mood whose `extra.intensity_level` ≥ `env.checkinAlerts.minIntensity` (default 5) raises one alert per check-in: parents are emailed (direct, not preference-filtered) and teachers get a `checkin_alert` notification and a flag on My Students until marked seen. Changing the answer later sends no second email.
-- The K-5 mood celebration (`MoodCelebration`) and Grade 6+ tiles read icons from the picked mood item, never from a name map.
+- The K-4 mood celebration (`MoodCelebration`) and Grade 6+ tiles read icons from the picked mood item, never from a name map.
+
+## Phase 1 gaps (2026-10-09)
+- **Required up to Grade 6** (client: K-6 mandatory), admin `checkin.policy.requiredUpTo`; backend `utils/gradeBand#isCheckInRequiredFor` feeds `/auth/me gradeBand.checkInRequired`. Older students going to work without a check-in get `components/SkipCheckInPrompt.jsx` once a day (client's exact message, "Check in now" / "Continue to my work"); `POST /check-ins/skip` records it (`checkin_skips`, migration 124) and Home shows `laterInvite`. `TodayCheckInProvider` exposes `skipped`, `skipPrompt`, `laterInvite`, `skip()`.
+- **Short "What's making it hard?" list** (client note): Difficulty Reasons carry `quick_label`, `quick_order`, `reply` (migration 126 adds the fields + the client's six). `GET /lookups/difficulty-picker` returns `quick` and each reason's `reply`; `useDifficultyPicker` → `quick`, `replyFor(codes)`. `DifficultyPicker` (6+) and `student/components/kid/KidDifficultyPicker` (K-4) open on the short list + "Something else…" (full groups, "Back to the short list"); the help screen's title is the picked reason's reply. Empty `quick` = the old full list.
+- **Calming suggestions, 2-3 at a time:** `/regulation-toolkit/recommendation` `suggestions` is capped by `checkin.policy.suggestionCount` (3), best of each mood category first (`regulationToolkit.service#suggestForCheckIn`, `tool` unchanged). `pages/CheckInPage` lists them; K-4 `KidCheckInPage` names them.
+- Check-in notes are safety-screened (see `student` → Safety).
+- Tests: `scenarios/checkin-skip.mjs`, `difficulty-quick.mjs`, `calming-suggestions.mjs`; backend `checkinSkip.itest.js`, `tests/utils/checkInRule.test.js`, `tests/masters/calmingSuggestions.test.js`.
+
+## Retired check-in masters (2026-10-12)
+
+`body_areas` and `available_time` had no rendered picker in either mounted check-in form. Migration 130 removes their master types/items; the snapshot and old seeder no longer create them. The modal no longer fetches them or sends hidden answers; its unused figure and picker CSS are removed. Saved `bodyAreas` and `availableMinutes` still resolve from the check-in itself and are preserved when an update omits them (including through Joi validation). Minutes remain planner/focus inputs. Old clients can resend already saved body-area codes, but cannot add new ones. Regression test: backend `tests/integration/retiredCheckInMasters.itest.js`.
 
 ## Verify
 - UI: harness with `USERS.kid` (the gate redirects to check-in when `/check-ins/today` returns `{ data: null }`) and `USERS.student` (modal).

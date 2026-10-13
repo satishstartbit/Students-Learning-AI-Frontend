@@ -29,7 +29,7 @@ import './assignmentDetail.css';
  *
  * The steps are the same plan the Focus page uses (/focus/steps), so ticking
  * one here or finishing it in a focus session both show up in the other
- * place. K-5 has components/kid/KidAssignmentView.jsx.
+ * place. K-4 has components/kid/KidAssignmentView.jsx.
  */
 
 /** "Handed in Mon, Sep. 28 · Reviewed by Maria Rivera" - the header line once the work is in. */
@@ -78,6 +78,8 @@ export function StandardAssignmentView({ item, assignmentId, reload, children })
     content: n.content,
     text: n.content,
     done: n.status === 'done',
+    remindAt: n.remindAt ?? null,
+    remindedAt: n.remindedAt ?? null,
   }));
   const reloadNotes = () => notesApi.run({ assignmentId }).catch(() => {});
 

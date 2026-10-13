@@ -1,5 +1,5 @@
 /**
- * K-5 wording for the 6 legacy moods (Grade 6+ uses `mood.name` directly -
+ * K-4 wording for the 6 legacy moods (Grade 6+ uses `mood.name` directly -
  * see checkIn/moods.js#LEGACY_MOOD_CODES). Any other mood - a new one an
  * admin has added - falls back to a phrase built from its own `name`.
  */

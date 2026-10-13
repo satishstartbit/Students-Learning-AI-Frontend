@@ -5,7 +5,7 @@ import { cn } from '../../../../lib/utils';
 import { StickerArt } from '../rewards/StickerArt';
 
 /**
- * The dashed "+" beside "How did you do?" on a K-5 reviewed assignment (the
+ * The dashed "+" beside "How did you do?" on a K-4 reviewed assignment (the
  * "Busy Bee quiz" mockup): the student sticks a sticker there to say how it
  * went - the drawn stickers from Rewards (StickerArt), picked from a small
  * tray; tap it again to change it or take it off.

@@ -83,6 +83,22 @@ export const listParentChildren = (parentId, params = {}) =>
 export const createParentChild = (parentId, payload) =>
   api.post(`/admin/users/${parentId}/children`, buildUserBody(payload));
 
+// --- A parent's family (same rules as the parent's My Children) -------------
+
+/** { isAccountHolder, accountHolder, plan, planInForce, subscription, children, parents, members } */
+export const getParentFamily = (parentId) => api.get(`/admin/users/${parentId}/family`);
+
+/** Another parent in the family (needs a plan in force with a free place). */
+export const addFamilyParent = (parentId, payload) => api.post(`/admin/users/${parentId}/family/parents`, payload);
+
+/** Off: no place on the plan and no access (always allowed). On: needs a free place. */
+export const setFamilyParentActive = (parentId, memberId, active) =>
+  api.post(`/admin/users/${parentId}/family/parents/${memberId}/${active ? 'activate' : 'deactivate'}`);
+
+/** Off: kept with all their history, no place on the plan. On: needs a free place. */
+export const setChildActive = (parentId, childId, active) =>
+  api.post(`/admin/users/${parentId}/children/${childId}/${active ? 'activate' : 'deactivate'}`);
+
 // --- Relationships ---------------------------------------------------------
 
 export function listRelationships(params = {}) {
@@ -129,6 +145,10 @@ export default {
   listSubjects,
   listParentChildren,
   createParentChild,
+  getParentFamily,
+  addFamilyParent,
+  setFamilyParentActive,
+  setChildActive,
   listRelationships,
   listRelationshipsGrouped,
   createRelationship,

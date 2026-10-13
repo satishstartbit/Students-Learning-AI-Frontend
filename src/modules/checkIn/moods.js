@@ -17,7 +17,7 @@
 /** Energy is 1-5, shown as dots. */
 export const ENERGY_LEVELS = [1, 2, 3, 4, 5];
 
-/** "How much time do you have?" - Grade 6+ only; K-5 isn't asked. */
+/** "How much time do you have?" - Grade 6+ only; K-4 isn't asked. */
 export const MINUTES_OPTIONS = [15, 30, 45, 60];
 
 /** A mood from a fetched `moods` list by its code, or null if not found (e.g. a deactivated/renamed one). */

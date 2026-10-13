@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { LuArrowDown, LuArrowUp, LuCheck, LuEllipsis, LuListChecks, LuPencil, LuPlus, LuTrash2 } from 'react-icons/lu';
 import { Dropdown } from '../../../../components/common';
+import { milestoneHeadings } from '../assignment/milestoneHeadings';
 
 /**
  * "Your steps" - the student's own checklist for the task a focus session is
@@ -87,6 +88,7 @@ function StepRow({ step, index, total, isCurrent, onSelect, selectDisabled, step
 export function StepsPanel({ assignment, steps, currentStepId, onSelectStep, selectDisabled = false }) {
   const [newTitle, setNewTitle] = useState('');
   const total = steps.steps.length;
+  const headings = milestoneHeadings(steps.steps);
   const percent = total ? Math.round((steps.doneCount / total) * 100) : 0;
 
   const addStep = async (event) => {
@@ -131,8 +133,13 @@ export function StepsPanel({ assignment, steps, currentStepId, onSelectStep, sel
       ) : (
         <ol className="fs-steps">
           {steps.steps.map((step, index) => (
+            <Fragment key={step.id}>
+            {headings.has(step.id) && (
+              <li role="presentation" className="fs-milestone">
+                <span role="heading" aria-level={3}>{headings.get(step.id)}</span>
+              </li>
+            )}
             <StepRow
-              key={step.id}
               step={step}
               index={index}
               total={total}
@@ -141,6 +148,7 @@ export function StepsPanel({ assignment, steps, currentStepId, onSelectStep, sel
               selectDisabled={selectDisabled}
               steps={steps}
             />
+            </Fragment>
           ))}
         </ol>
       )}

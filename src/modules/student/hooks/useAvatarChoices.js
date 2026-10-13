@@ -4,7 +4,7 @@ import studentSettingsService from '../services/studentSettings.service';
 /**
  * The avatars a student can pick from on "Make it yours" - the active rows of
  * the Avatars master a Super Admin manages (backend: /student-settings/avatars),
- * lowest display order first. Shared by the K-5 and Grade 6+ versions of the
+ * lowest display order first. Shared by the K-4 and Grade 6+ versions of the
  * page; the student's own choice lives in useStudentSettings().
  */
 export function useAvatarChoices() {

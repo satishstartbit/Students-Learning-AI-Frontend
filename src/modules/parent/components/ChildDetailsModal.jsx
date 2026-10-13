@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Avatar,
@@ -16,7 +16,8 @@ import { useModal } from '../../../hooks/useModal';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName, titleCase } from '../../../utils/format';
-import { formatDate } from '../../../utils/date';
+import { formatDate, formatDateTime } from '../../../utils/date';
+import { splitCsv } from '../../auth/components/profilePayload';
 import invitationService from '../../invitations/services/teacherInvitation.service';
 import parentService from '../services/parent.service';
 import InviteTeacherModal from './InviteTeacherModal';
@@ -35,6 +36,7 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
   const invitations = useApi(invitationService.listForChild);
   const inviteModal = useModal();
   const removeModal = useModal();
+  const [disconnecting, setDisconnecting] = useState(false);
 
   const load = useCallback(() => {
     if (childId) {
@@ -48,7 +50,7 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
     if (isOpen) load();
   }, [isOpen, load]);
 
-  const child = detail.data;
+  const child = detail.data?.id === childId ? detail.data : null;
   const teacherAssignments = (child?.relationships ?? []).filter(
     (r) => r.relationshipType === 'teacher_student'
   );
@@ -59,13 +61,21 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
   };
 
   const handleRemove = async () => {
+    if (disconnecting) return;
+    setDisconnecting(true);
     try {
-      await parentService.removeTeacherAssignment(childId, removeModal.payload.id);
-      toast.success('Teacher removed');
+      if (removeModal.payload.allSubjects) {
+        await parentService.disconnectTeacher(childId, removeModal.payload.owner.id);
+      } else {
+        await parentService.removeTeacherAssignment(childId, removeModal.payload.id);
+      }
+      toast.success(removeModal.payload.allSubjects ? 'Teacher disconnected from this child' : 'Subject connection removed');
       removeModal.close();
       refresh();
     } catch (err) {
       toast.error(getErrorMessage(err));
+    } finally {
+      setDisconnecting(false);
     }
   };
 
@@ -78,8 +88,9 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
 
   const columns = [
     { key: 'subject', header: 'Subject', render: (r) => r.subject ?? '—' },
-    { key: 'teacher', header: 'Teacher', render: (r) => formatName(r.owner) },
+    { key: 'grade', header: 'Grade', render: (r) => r.grade || child?.profile?.grade || '—' },
     { key: 'academicYear', header: 'Academic year', render: (r) => r.academicYear?.name ?? '—' },
+    { key: 'createdAt', header: 'Connected on', render: (r) => r.createdAt ? formatDateTime(r.createdAt) : 'Not recorded' },
     {
       key: 'status',
       header: 'Status',
@@ -91,11 +102,13 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
       align: 'right',
       render: (r) => (
         <Button size="sm" variant="secondary" onClick={() => removeModal.open(r)}>
-          Remove
+          Remove subject
         </Button>
       ),
     },
   ];
+
+  const teachers = [...new Map(teacherAssignments.filter((r) => r.owner?.id).map((r) => [r.owner.id, r.owner])).values()];
 
   const inviteButton = (
     <Button size="sm" onClick={() => inviteModal.open()}>
@@ -149,9 +162,19 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
               </div>
             </div>
 
+            <SectionHeader title="Learning profile" as="h3" className="ui-field" />
+            <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {['subjects', 'strengths', 'challenges', 'interests'].map((field) => (
+                <div key={field}>
+                  <dt className="ui-hint">{titleCase(field)}</dt>
+                  <dd className="m-0">{splitCsv(child.profile?.[field]).join(', ') || 'Not selected in the profile yet'}</dd>
+                </div>
+              ))}
+            </dl>
+
             <SectionHeader
               title="Connected teachers"
-              description="Teachers who accepted your invitation. Each subject they teach is listed on its own row."
+              description="Each teacher’s subjects and connection dates for this child. Remove one subject or disconnect the teacher completely."
               as="h3"
               className="ui-field"
               actions={inviteButton}
@@ -178,7 +201,43 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
                 action={pendingCount ? null : inviteButton}
               />
             ) : (
-              <Table columns={columns} data={teacherAssignments} rowKey="id" />
+              <div className="grid gap-4">
+                {teachers.map((teacher) => (
+                  <section key={teacher.id} className="rounded-xl border border-[var(--color-border-default)] p-3">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <strong>{formatName(teacher)}</strong>
+                        <p className="ui-hint m-0 break-all">{teacher.email}</p>
+                      </div>
+                      <Button size="sm" variant="secondary" onClick={() => removeModal.open({ owner: teacher, allSubjects: true })}>
+                        Disconnect teacher
+                      </Button>
+                    </div>
+                    <Table columns={columns} data={teacherAssignments.filter((r) => r.owner?.id === teacher.id)} rowKey="id" />
+                  </section>
+                ))}
+              </div>
+            )}
+
+            {child.teacherConnectionHistory?.length > 0 && (
+              <>
+                <SectionHeader title="Connection history" as="h3" className="ui-field" />
+                <ul className="grid list-none gap-3 p-0">
+                  {child.teacherConnectionHistory.map((entry) => (
+                    <li key={entry.id}>
+                      <strong>{entry.teacher?.name || entry.teacher?.email || 'Teacher'}</strong>
+                      <p className="ui-hint m-0">Disconnected {formatDateTime(entry.disconnectedAt)}</p>
+                      {entry.assignments.map((assignment) => (
+                        <p key={assignment.id} className="ui-hint m-0">
+                          {assignment.subject || 'All subjects'}{assignment.grade ? ` · ${assignment.grade}` : ''}
+                          {assignment.academicYear ? ` · ${assignment.academicYear}` : ''}
+                          {assignment.connectedAt ? ` · Connected ${formatDateTime(assignment.connectedAt)}` : ''}
+                        </p>
+                      ))}
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
 
             {invitationItems.length > 0 && (
@@ -209,17 +268,18 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
         isOpen={removeModal.isOpen}
         onClose={removeModal.close}
         onConfirm={handleRemove}
-        title="Remove this teacher?"
+        title={removeModal.payload?.allSubjects ? 'Disconnect this teacher?' : 'Remove this subject connection?'}
         message={
           removeModal.payload
             ? `${formatName(removeModal.payload.owner)} will no longer be connected to ${
                 child ? formatName(child) : 'this child'
-              } for ${removeModal.payload.subject ?? 'this subject'}${
+              } for ${removeModal.payload.allSubjects ? 'all their subjects and academic years' : removeModal.payload.subject ?? 'this subject'}${
                 removeModal.payload.academicYear?.name ? ` (${removeModal.payload.academicYear.name})` : ''
-              }. To reconnect later, send them a new invitation.`
+              }. Saved work and learning history stay. To reconnect later, send a new invitation.`
             : ''
         }
-        confirmLabel="Remove"
+        confirmLabel={removeModal.payload?.allSubjects ? 'Disconnect teacher' : 'Remove subject'}
+        loading={disconnecting}
         variant="danger"
       />
     </>

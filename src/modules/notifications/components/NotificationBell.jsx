@@ -4,17 +4,12 @@ import { Badge, Dropdown, EmptyState, IconButton, Loader } from '../../../compon
 import { formatRelative } from '../../../utils/date';
 import { useAuth } from '../../../hooks/useAuth';
 import useNotifications from '../hooks/useNotifications';
-import { studentNotificationPath } from '../studentNotificationPath';
-
-/** Where a notification's `relatedId` should navigate, per signed-in role. */
-const ASSIGNMENT_DETAIL_PATH = {
-  TEACHER: (id) => `/teacher/assignments/${id}`,
-  STUDENT: (id) => `/student/assignments/${id}`,
-};
+import { notificationPathFor } from '../notificationPath';
 
 /**
- * Bell icon + unread badge + dropdown panel, shared by every authenticated
- * role's header (see layouts/AuthenticatedLayout.jsx).
+ * Bell icon + unread badge + dropdown list, for a role without its own
+ * notifications page - today the Super Admin (layouts/AuthenticatedLayout.jsx).
+ * Students, teachers and parents get NotificationBellLink to their page instead.
  */
 export function NotificationBell() {
   const { role } = useAuth();
@@ -23,22 +18,8 @@ export function NotificationBell() {
 
   const handleSelect = async (notification) => {
     if (!notification.read) await markRead(notification.id);
-
-    if (role === 'STUDENT') {
-      const path = studentNotificationPath(notification);
-      if (path) navigate(path);
-    } else if (notification.relatedType === 'assignment' && notification.relatedId) {
-      const buildPath = ASSIGNMENT_DETAIL_PATH[role];
-      if (buildPath) navigate(buildPath(notification.relatedId));
-    } else if (notification.relatedType === 'student' && notification.relatedId && role === 'TEACHER') {
-      // A check-in alert - the student's page, where it can be marked seen.
-      navigate(`/teacher/students/${notification.relatedId}`);
-    } else if (notification.relatedType === 'teacher_invitation') {
-      // Teacher: the invitation to answer. Parent: an answer to one of theirs,
-      // shown on the child's card (Children page) under Invitations.
-      if (role === 'TEACHER') navigate('/teacher/invitations');
-      else if (role === 'PARENT') navigate('/parent/children');
-    }
+    const path = notificationPathFor(role, notification);
+    if (path) navigate(path);
   };
 
   return (

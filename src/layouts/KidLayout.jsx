@@ -15,7 +15,7 @@ import { KidSidebar, KidTabBar, KidTopBar } from '../modules/student/components/
 import AppErrorBoundary from '../components/status/AppErrorBoundary';
 
 /**
- * The K-5 student shell - "My Learning Space".
+ * The K-4 student shell - "My Learning Space".
  *
  * Replaces AuthenticatedLayout for students in Kindergarten-Grade 5 (chosen
  * by StudentLayout). Owns the kid theme (styles/kid-theme.css), the
@@ -23,7 +23,7 @@ import AppErrorBoundary from '../components/status/AppErrorBoundary';
  * animation off when calm mode is on, and follows the OS reduced-motion
  * setting otherwise.
  *
- * K-5 pages mark their root with `data-kid-page` and lay themselves out
+ * K-4 pages mark their root with `data-kid-page` and lay themselves out
  * edge to edge; any other page (assignment detail, AI Helper) gets the
  * usual padding, so the older shared pages still fit inside this shell.
  */

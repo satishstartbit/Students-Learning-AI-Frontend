@@ -3,7 +3,7 @@ import { USER_ROLES } from '../utils/constants.js';
 
 /**
  * Where the account entry sends each role (sidebar account menu and the
- * phone "More" sheet). Students (Grade 6+ - K-5 has its own shell) land on
+ * phone "More" sheet). Students (Grade 6+ - K-4 has its own shell) land on
  * Settings, where their onboarding answers are edited. Super Admin has its
  * own My Profile (name, phone, time zone, password).
  */

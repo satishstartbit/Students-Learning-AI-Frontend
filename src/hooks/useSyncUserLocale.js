@@ -9,7 +9,7 @@ import { useDeviceTimezone } from './useDeviceTimezone';
  * is no time zone picker anywhere.
  *
  * Called once by each signed-in shell - AuthenticatedLayout for most roles,
- * KidLayout for K-5 students - so whichever one is on screen sets it.
+ * KidLayout for K-4 students - so whichever one is on screen sets it.
  */
 export function useSyncUserLocale(user) {
   useDeviceTimezone(user);

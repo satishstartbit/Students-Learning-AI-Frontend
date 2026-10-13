@@ -14,7 +14,7 @@ import { usesLegacyArt } from '../moods';
  *   4. a plain dot, so a brand-new mood with no icon at all still renders
  *
  * Steps 1-3 are `usesLegacyArt` (modules/checkIn/moods.js), the same rule the
- * K-5 art follows, so both bands agree on when the built-in drawing applies:
+ * K-4 art follows, so both bands agree on when the built-in drawing applies:
  * the seeded emoji doesn't count as an override, but an uploaded icon or a
  * chosen background colour does.
  */

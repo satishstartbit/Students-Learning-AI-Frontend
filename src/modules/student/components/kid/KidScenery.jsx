@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { cn } from '../../../../lib/utils';
 
 /**
- * Hand-built SVG scenery for the K-5 theme - the flat illustrated
+ * Hand-built SVG scenery for the K-4 theme - the flat illustrated
  * countryside, sun, signposts and doodles from the mockup. All decorative
  * (aria-hidden), with no raster assets to fetch. Ids are prefixed with
  * useId so two copies on one page can't collide.

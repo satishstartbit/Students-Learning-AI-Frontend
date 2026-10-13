@@ -41,7 +41,7 @@ export function startOfWeek(date = new Date()) {
 
 /**
  * One assignment per calendar day - Monday through Sunday - bucketed by
- * `assignment.dueDate`, for the K-5 "My Week" page and the Grade 6+ "Plan"
+ * `assignment.dueDate`, for the K-4 "My Week" page and the Grade 6+ "Plan"
  * page. Both read the same data (useMyTasks, already fetched for the Home
  * page's "today" view) and just group it differently, so this needed no new
  * endpoint - a task belongs on the day it's due.

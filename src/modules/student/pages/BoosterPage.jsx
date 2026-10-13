@@ -12,7 +12,7 @@ import { useStudentSettings } from '../hooks/useStudentSettings';
  * card - built to the "Student Brain Games - Finger Follow (Ready)" mockup:
  * Back to Focus, the kind and length, the game, and "How it works" with
  * "Your pace, your space". Nothing here counts towards points or grades.
- * K-5 gets pages/kid/KidBoosterPage.jsx.
+ * K-4 gets pages/kid/KidBoosterPage.jsx.
  */
 export default function BoosterPage({ kind = 'game' }) {
   const { boosterId } = useParams();

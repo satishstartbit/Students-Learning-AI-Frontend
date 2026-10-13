@@ -3,7 +3,7 @@
  * assignment mockups: a header card with overall progress, the step
  * breakdown, and a right rail (overview, next step, resources, notes,
  * details); once handed in, the review banner and "Your answers" (the
- * "Detail (Reviewed)" mockup, section at the end). K-5 has its own page
+ * "Detail (Reviewed)" mockup, section at the end). K-4 has its own page
  * (components/kid/KidAssignmentView.jsx, Tailwind on the kid tokens).
  */
 .ad-page {
@@ -845,4 +845,17 @@
   .ad-q__options {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* A project's stage (PDF Q5) above its steps - TaskBreakdown. */
+.ad-milestone {
+  margin: 6px 0 -2px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+.ad-milestone:first-child {
+  margin-top: 0;
 }

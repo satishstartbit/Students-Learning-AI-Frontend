@@ -6,7 +6,7 @@ const INNER_EAR = '#f7b6bf';
 const INK = '#3a2616';
 
 /**
- * The happy bunny from the K-5 Rewards mockup, sitting on a rock.
+ * The happy bunny from the K-4 Rewards mockup, sitting on a rock.
  *
  * Wiggles its ears once when the page opens and does a small hop - never on
  * a loop, so it can't pull attention from the stickers. <MotionConfig> in

@@ -1,5 +1,13 @@
 import '../aiAssistant.css';
 import { formatTime } from '../../../utils/date';
+import HelpLines from '../../../components/safety/HelpLines';
+import { useSafetyContent } from '../../../components/safety/useSafetyContent';
+
+/** The admin's help lines (Kids Help Phone, 911) under a safety reply. */
+function SafetyHelpLines() {
+  const content = useSafetyContent();
+  return <HelpLines lines={content?.helpLines} className="ai-bubble__help" />;
+}
 
 /**
  * One `ClientMessage` in the transcript.
@@ -19,6 +27,7 @@ export function ChatBubble({ message }) {
     <div className={`ai-bubble ai-bubble--${modifier}`}>
       {isSafety && <span className="ai-bubble__label">A gentle note from your assistant</span>}
       {message.content}
+      {isSafety && <SafetyHelpLines />}
       {message.createdAt && <span className="ai-bubble__time">{formatTime(message.createdAt)}</span>}
     </div>
   );

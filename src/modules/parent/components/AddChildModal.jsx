@@ -1,4 +1,6 @@
-import { Alert, Button, Input, Modal, PasswordInput } from '../../../components/common';
+import { Alert, Button, Checkbox, Input, Modal, PasswordInput } from '../../../components/common';
+import LegalLinks from '../../../components/legal/LegalLinks';
+import { fillPlaceholders, useLegalContent } from '../../../components/legal/useLegalContent';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required, password as passwordRule, matches } from '../../../utils/validation';
@@ -15,12 +17,14 @@ import './parentChildren.css';
 // then their own device's once they sign in (hooks/useDeviceTimezone.js).
 // No email or phone either: a child signs in with their username and the
 // password set here, never an email or phone number.
-const INITIAL_VALUES = { firstName: '', lastName: '', password: '', confirmPassword: '' };
+const INITIAL_VALUES = { firstName: '', lastName: '', password: '', confirmPassword: '', guardianConsent: false };
+
+const CONSENT_FALLBACK = "I am {{child}}'s parent or guardian. I agree to the Terms of Use and Privacy Policy for them.";
 
 /**
  * "+ Add Child" - creates the student account and links it to the signed-in
  * parent in one request, mirroring the Super Admin "Add child" flow
- * (superAdmin/components/ParentChildrenPanel.jsx) so the two stay in sync.
+ * (superAdmin/components/ParentFamilyPanel.jsx) so the two stay in sync.
  *
  * Laid out like EditChildModal (and the parent's My Profile page): a photo
  * header card that fills in as the name is typed, then titled section cards
@@ -28,6 +32,8 @@ const INITIAL_VALUES = { firstName: '', lastName: '', password: '', confirmPassw
  */
 export default function AddChildModal({ isOpen, onClose, onCreated }) {
   const photo = usePhotoField();
+  // The admin's consent wording (Platform settings > Privacy Policy and Terms of Use).
+  const { content: legal } = useLegalContent();
 
   const form = useForm({
     initialValues: INITIAL_VALUES,
@@ -35,6 +41,8 @@ export default function AddChildModal({ isOpen, onClose, onCreated }) {
       firstName: [required('Enter a first name')],
       password: [required('Choose a password for your child'), passwordRule()],
       confirmPassword: [required('Type the password again'), matches('password')],
+      // Phase 1 §12: the parent consents for the child (recorded with the documents' version).
+      guardianConsent: [(value) => (value ? null : 'Please give your consent for your child')],
     },
     async onSubmit(values) {
       const { data } = await parentService.addChild({
@@ -42,6 +50,7 @@ export default function AddChildModal({ isOpen, onClose, onCreated }) {
         lastName: values.lastName || null,
         password: values.password,
         confirmPassword: values.confirmPassword,
+        guardianConsent: values.guardianConsent === true,
         profile: buildProfilePayload('STUDENT', values),
         photoFile: photo.file,
       });
@@ -135,6 +144,19 @@ export default function AddChildModal({ isOpen, onClose, onCreated }) {
             includeAdminOnly
             lookupFetcher={parentService.masterOptionsFetcher}
           />
+        </ProfileSection>
+
+        <ProfileSection title="Your consent">
+          <Checkbox
+            name="guardianConsent"
+            label={fillPlaceholders(legal?.guardianConsentLabel || CONSENT_FALLBACK, {
+              child: form.values.firstName.trim() || 'my child',
+            })}
+            checked={form.values.guardianConsent}
+            onChange={(e) => form.setFieldValue('guardianConsent', e.target.checked)}
+            error={form.touched.guardianConsent ? form.errors.guardianConsent : null}
+          />
+          <LegalLinks content={legal} />
         </ProfileSection>
       </form>
     </Modal>

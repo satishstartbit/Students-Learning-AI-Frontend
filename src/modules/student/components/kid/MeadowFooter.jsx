@@ -3,7 +3,7 @@ import { Bird3D, BirdSky, Butterfly, FallingLeaf, SeaShimmer, Sparkle } from './
 import './home/kidHome.css';
 
 /**
- * The meadow at the foot of a K-5 page (Home, My week): the user's paper-craft
+ * The meadow at the foot of a K-4 page (Home, My week): the user's paper-craft
  * hills and lake (src/assets/kid/home-meadow.webp, 1800x600, clear sky on
  * top - `.kh-meadow` tucks it up under the last cards). It rises in and comes
  * alive: light on the lake, butterflies over the flower and the bushes, birds

@@ -1,12 +1,12 @@
 /**
  * Brain Boosters - the short breaks on the Focus page (both bands): three
- * brain games and, for Grade 6+, three movement/breathing exercises. K-5's
+ * brain games and, for Grade 6+, three movement/breathing exercises. K-4's
  * "Calm & move" are the Breathe / Wiggle / Listen activities
  * (components/kid/focusActivities.js).
  *
  * Each booster opens its own page (/student/focus/games/:id or
  * /student/focus/exercises/:id - pages/BoosterPage.jsx) with "Back to Focus".
- * The games and exercises themselves are built-in content, like the K-5
+ * The games and exercises themselves are built-in content, like the K-4
  * activities: nothing here is scored for points or grades.
  *
  * `categories` are the admin-managed regulation-toolkit categories
@@ -90,7 +90,7 @@ export const BRAIN_GAMES = [
   },
 ];
 
-/** Grade 6+ exercises (K-5 has Breathe / Wiggle / Listen). `exercise` is the id in exerciseBreaks.js. */
+/** Grade 6+ exercises (K-4 has Breathe / Wiggle / Listen). `exercise` is the id in exerciseBreaks.js. */
 export const EXERCISE_BOOSTERS = [
   {
     id: 'easy-breathing',

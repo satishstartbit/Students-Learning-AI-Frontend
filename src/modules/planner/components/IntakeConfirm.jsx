@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Alert, Button, Checkbox, Input, Select } from '../../../components/common';
 import { formatDateKey } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
-import { useOnboardingLookup } from '../../onboarding/hooks/useOnboardingLookup';
+import { useStudentProfileOptions } from '../../profile/hooks/useStudentProfileOptions';
 import intakeService from '../services/intake.service';
 
 const longDate = (key) => formatDateKey(key, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -22,7 +22,7 @@ const QUESTION = {
  */
 export function IntakeConfirm({ intake, guided = false, onConfirmed, onCancelled, onReread }) {
   const f = intake.fields;
-  const subjects = useOnboardingLookup('subjects');
+  const subjects = useStudentProfileOptions(intake.studentId);
   const ask = new Set(intake.uncertain);
   const [title, setTitle] = useState(f.title.value ?? '');
   const [dueDate, setDueDate] = useState(f.dueDate.value ?? '');
@@ -34,13 +34,11 @@ export function IntakeConfirm({ intake, guided = false, onConfirmed, onCancelled
   const [attempted, setAttempted] = useState(false);
 
   const dateChoices = useMemo(() => [...new Set([...(f.dueDate.options ?? []), f.dueDate.value].filter(Boolean))], [f.dueDate]);
-  const subjectOptions = useMemo(() => {
-    const opts = subjects.options.map((o) => ({ value: o.value, label: o.label }));
-    if (subject && !opts.some((o) => o.value === subject)) opts.unshift({ value: subject, label: subject });
-    return opts;
-  }, [subjects.options, subject]);
+  const subjectOptions = subjects.subjectOptions;
 
   const errors = {
+    subject: subject && !subjects.loading && !subjectOptions.some((option) => option.value === subject)
+      ? 'Select this subject in the student profile first, or choose another subject' : null,
     title: title.trim() ? null : 'Give the work a name',
     dueDate: !noDueDate && !dueDate ? 'Choose a date, or “No due date”' : null,
     minutes: minutes && !(Number.isInteger(Number(minutes)) && Number(minutes) >= 1 && Number(minutes) <= 1440) ? 'Whole minutes, 1 to 1440' : null,
@@ -160,7 +158,7 @@ export function IntakeConfirm({ intake, guided = false, onConfirmed, onCancelled
           </>
         )}
 
-      {showAll && (
+      {(showAll || errors.subject) && (
         <div className="grid gap-x-4 sm:grid-cols-2">
           <Select
             label="Subject"
@@ -169,6 +167,8 @@ export function IntakeConfirm({ intake, guided = false, onConfirmed, onCancelled
             options={subjectOptions}
             placeholder="No subject"
             loading={subjects.loading}
+            error={subjects.error ? 'Could not load profile subjects' : attempted ? errors.subject : undefined}
+            hint="Only subjects selected in the student profile."
           />
           <Input
             label="About how long? (minutes)"

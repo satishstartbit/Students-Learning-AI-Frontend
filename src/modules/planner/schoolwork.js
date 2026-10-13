@@ -50,12 +50,102 @@ export function orderByPlan(work = [], priorities = []) {
 /** Most recently finished first. */
 const byFinished = (a, b) => String(b.completedAt ?? '').localeCompare(String(a.completedAt ?? '')) || byTitle(a, b);
 
-/** { todo, doing, done } in plan order (Done: most recently finished first). */
-export function boardColumns(work = [], priorities = []) {
+/**
+ * The page's "Sort" menu (Plan / My week, every view): the order of the work
+ * inside each column, section or day. `label` is Grade 6+'s word, `kidLabel`
+ * K-4's. `next3` (Grade 6+ list only) keeps the plan order and shows three.
+ */
+export const SORT_OPTIONS = Object.freeze([
+  { key: 'plan', label: 'Recommended', kidLabel: 'What’s next' },
+  { key: 'due', label: 'Due date', kidLabel: 'Due first' },
+  { key: 'subject', label: 'Subject', kidLabel: 'Subject' },
+  { key: 'next3', label: 'Just the next 3', kidLabel: null, views: ['list'] },
+]);
+
+/** Each view's starting order (the mockups: notes and list by the plan, the calendar by due date). */
+export const DEFAULT_SORT = Object.freeze({ board: 'plan', list: 'plan', calendar: 'due' });
+
+/** The sort options a view offers (`kid`: K-4's words; Grade 6+ only gets "next 3", and only on the list). */
+export function sortOptionsFor(view, { kid = false } = {}) {
+  return SORT_OPTIONS.filter((o) => (o.views ? o.views.includes(view) && !kid : true)).map((o) => ({ key: o.key, label: kid ? o.kidLabel ?? o.label : o.label }));
+}
+
+const bySubject = (a, b) => {
+  if (!a.subject !== !b.subject) return a.subject ? -1 : 1;
+  return String(a.subject ?? '').localeCompare(String(b.subject ?? ''), undefined, { sensitivity: 'base' });
+};
+
+/**
+ * Work in a sort's order: `plan` (and `next3`) = the plan's order
+ * (orderByPlan); `due` = soonest due first, undated last, then the plan;
+ * `subject` = by subject name (none last), then the plan.
+ */
+export function sortWork(work = [], priorities = [], sort = 'plan') {
+  const planned = orderByPlan(work, priorities);
+  const position = new Map(planned.map((w, i) => [w.id, i]));
+  const byPlanPosition = (a, b) => position.get(a.id) - position.get(b.id);
+  if (sort === 'due') return [...planned].sort((a, b) => dueKey(a).localeCompare(dueKey(b)) || byPlanPosition(a, b));
+  if (sort === 'subject') return [...planned].sort((a, b) => bySubject(a, b) || byPlanPosition(a, b));
+  return planned;
+}
+
+/** { todo, doing, done } in the sort's order (Done: most recently finished first). */
+export function boardColumns(work = [], priorities = [], sort = 'plan') {
   const columns = { todo: [], doing: [], done: [] };
-  for (const w of orderByPlan(work, priorities)) (columns[w.progress] ?? columns.todo).push(w);
+  for (const w of sortWork(work, priorities, sort)) (columns[w.progress] ?? columns.todo).push(w);
   columns.done.sort(byFinished);
   return columns;
+}
+
+/**
+ * The plan list (Grade 6+ "Up next" / "Finished", K-4 "Next" / "Then" /
+ * "Done!"): open work in the sort's order - only three for `next3` - and
+ * finished work, most recently finished first.
+ */
+export function planSections(work = [], priorities = [], sort = 'plan') {
+  const open = sortWork(
+    work.filter((w) => w.progress !== 'done'),
+    priorities,
+    sort
+  );
+  const done = work.filter((w) => w.progress === 'done').sort(byFinished);
+  return { open: sort === 'next3' ? open.slice(0, 3) : open, done };
+}
+
+/**
+ * One day's study times (the planner's blocks) in the sort's order: `plan` =
+ * the time the planner placed them; `due` = the work due soonest first
+ * (`dueOf(assignmentId)` gives its due day key), then time; `subject` = by
+ * subject, then time.
+ */
+export function sortBlocks(blocks = [], sort = 'plan', dueOf = () => null) {
+  const byTime = (a, b) => String(a.startAt ?? '').localeCompare(String(b.startAt ?? ''));
+  const list = [...blocks].sort(byTime);
+  if (sort === 'due') return list.sort((a, b) => String(dueOf(a.assignmentId) ?? '9999-12-31').localeCompare(String(dueOf(b.assignmentId) ?? '9999-12-31')) || byTime(a, b));
+  if (sort === 'subject') return list.sort((a, b) => bySubject(a, b) || byTime(a, b));
+  return list;
+}
+
+/** Study times as a week's or a day's tally: how many, how many done, minutes planned (missed ones aside). */
+export function blockStats(blocks = []) {
+  const counted = blocks.filter((b) => b.status !== 'missed');
+  return {
+    total: blocks.length,
+    done: blocks.filter((b) => b.status === 'done').length,
+    minutes: counted.reduce((sum, b) => sum + (Number(b.minutes) || 0), 0),
+  };
+}
+
+/** Work grouped by its due day key (open and finished), each day in the sort's order. */
+export function workByDueDay(work = [], priorities = [], sort = 'plan') {
+  const map = new Map();
+  for (const w of sortWork(work, priorities, sort)) {
+    if (!w.dueDate) continue;
+    const key = String(w.dueDate).slice(0, 10);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(w);
+  }
+  return map;
 }
 
 /**

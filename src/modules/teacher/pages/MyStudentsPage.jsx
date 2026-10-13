@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { LuCheck, LuFilter, LuSearch, LuUsers } from 'react-icons/lu';
+import { LuCheck, LuFilter, LuSearch, LuUsers, LuX } from 'react-icons/lu';
 import { PageHeader, DataTable, EmptyState, Toast } from '../../../components/common';
 import { useApi } from '../../../hooks/useApi';
 import { usePagination } from '../../../hooks/usePagination';
@@ -242,6 +242,11 @@ export default function MyStudentsPage() {
                 <span className="ui-sr-only">Search by name or email</span>
                 <LuSearch size={16} aria-hidden="true" />
                 <input type="search" placeholder="Search by name or email" value={search} onChange={(e) => withReset(setSearch)(e.target.value)} />
+                {search && (
+                  <button type="button" className="al-search__clear" aria-label="Clear search" onClick={() => withReset(setSearch)('')}>
+                    <LuX size={14} aria-hidden="true" />
+                  </button>
+                )}
               </label>
               <button
                 type="button"

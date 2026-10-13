@@ -8,7 +8,7 @@ import './fingerFollow.css';
  * Finger Follow: follow the dot with your eyes, tap it once each time it
  * glows gold (followGameLogic.js has the rules). On its own page
  * (pages/BoosterPage.jsx), which shows the title, so `hideHeading` drops the
- * game's own. K-5 (`isJunior`) sees a short round/tap line under the board
+ * game's own. K-4 (`isJunior`) sees a short round/tap line under the board
  * instead of the three counters - "just for fun" - with the same test ids.
  */
 export default function FingerFollow({ isJunior = false, reducedMotion = false, hideHeading = false }) {

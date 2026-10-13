@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import notificationService from '../services/notification.service';
 import { getErrorMessage } from '../../../utils/errorHandler';
+import { NOTIFICATIONS_CHANGED_EVENT } from '../notificationPath';
 
 const DEFAULT_POLL_MS = 30000;
 
@@ -64,9 +65,13 @@ export function useNotifications({ pollIntervalMs = DEFAULT_POLL_MS, limit = 10 
     });
 
     const timer = pollIntervalMs ? setInterval(loadUnreadCount, pollIntervalMs) : null;
+    // The notifications page says when it marks something read, so the badge
+    // drops straight away instead of at the next poll.
+    window.addEventListener(NOTIFICATIONS_CHANGED_EVENT, loadUnreadCount);
     return () => {
       active = false;
       if (timer) clearInterval(timer);
+      window.removeEventListener(NOTIFICATIONS_CHANGED_EVENT, loadUnreadCount);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pollIntervalMs]);

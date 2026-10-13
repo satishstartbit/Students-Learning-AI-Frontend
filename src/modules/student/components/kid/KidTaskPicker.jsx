@@ -5,7 +5,7 @@ import { cn } from '../../../../lib/utils';
 import { DueChip, SubjectTile } from './PaperKit';
 
 /**
- * "What will you work on?" - the K-5 Focus time card's dashed "+" corner
+ * "What will you work on?" - the K-4 Focus time card's dashed "+" corner
  * button. Lists the student's to-do tasks (useMyTasks().toDo, soonest due
  * first) plus "Just the timer"; the one tapped becomes the card's "Up next"
  * and the task a new focus session is tied to.

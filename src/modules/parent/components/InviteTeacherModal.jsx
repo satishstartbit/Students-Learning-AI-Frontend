@@ -1,6 +1,5 @@
-import { useEffect, useId, useMemo, useState } from 'react';
-import { Alert, Button, EmailInput, Input, Modal } from '../../../components/common';
-import FieldHelper from '../../../components/common/FieldHelper';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Button, EmailInput, Input, Modal, MultiSelect } from '../../../components/common';
 import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { useApi } from '../../../hooks/useApi';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -9,59 +8,13 @@ import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import { emailError, normalizeEmail } from '../../../utils/email';
 import invitationService from '../../invitations/services/teacherInvitation.service';
-import parentService from '../services/parent.service';
+import { useStudentProfileOptions } from '../../profile/hooks/useStudentProfileOptions';
 
 const MAX_SUBJECTS = 10;
 
 /** "Math", "Math or Science", "Math, English or Science" - for the teacher hint. */
 const orList = (items) =>
   items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} or ${items[items.length - 1]}`;
-
-/**
- * "1. Subjects they teach Sam" as tap-to-toggle chips (the Invite a teacher
- * mobile mockup) rather than a dropdown: every option is visible, and a
- * chosen one is a soft accent pill. Up to MAX_SUBJECTS.
- */
-function SubjectChipPicker({ label, options, value, onChange, loading, error }) {
-  const id = useId();
-  const full = value.length >= MAX_SUBJECTS;
-  const toggle = (subject) =>
-    onChange(value.includes(subject) ? value.filter((s) => s !== subject) : [...value, subject]);
-
-  return (
-    <fieldset className="ui-field pc-chipfield" aria-describedby={`${id}-help`}>
-      <legend className="ui-label">
-        {label}
-        <span className="ui-label__required" aria-hidden="true">
-          *
-        </span>
-        <span className="ui-sr-only">(required)</span>
-      </legend>
-      {loading ? (
-        <p className="pc-chipfield__loading">Loading subjects…</p>
-      ) : (
-        <div className="pc-chips-picker">
-          {options.map((o) => {
-            const on = value.includes(o.value);
-            return (
-              <button
-                key={o.value}
-                type="button"
-                className="pc-pick"
-                aria-pressed={on}
-                disabled={!on && full}
-                onClick={() => toggle(o.value)}
-              >
-                {o.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
-      <FieldHelper id={`${id}-help`} hint={`Choose every subject this teacher covers, up to ${MAX_SUBJECTS}.`} error={error} />
-    </fieldset>
-  );
-}
 
 /**
  * Ask for a teacher to be connected with one child. What the parent sends is
@@ -91,9 +44,10 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
   const [teacherName, setTeacherName] = useState('');
   const [teacherEmail, setTeacherEmail] = useState('');
 
-  const [subjectOptions, setSubjectOptions] = useState([]);
-  const [gradeOptions, setGradeOptions] = useState([]);
-  const [lookupsLoading, setLookupsLoading] = useState(true);
+  const profileOptions = useStudentProfileOptions(child?.id, isOpen && Boolean(child?.id));
+  const subjectOptions = profileOptions.subjectOptions;
+  const gradeOptions = childGrade ? [{ value: childGrade, label: childGrade }] : [];
+  const lookupsLoading = profileOptions.loading;
   const directory = useApi(invitationService.teacherDirectory);
   const { run: runDirectory } = directory;
   const [teacherSearch, setTeacherSearch] = useState('');
@@ -103,32 +57,16 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!isOpen) return undefined;
-    let live = true;
-    Promise.all([parentService.masterOptionsFetcher('subjects'), parentService.masterOptionsFetcher('grade_levels')])
-      .then(([subjectList, gradeList]) => {
-        if (!live) return;
-        setSubjectOptions(subjectList);
-        setGradeOptions(gradeList);
-      })
-      .catch(() => live && setError('Could not load the subject and grade lists. Close this and try again.'))
-      .finally(() => live && setLookupsLoading(false));
-    return () => {
-      live = false;
-    };
-  }, [isOpen]);
-
   // The teacher list follows the chosen subjects + grade, and the search box.
-  const readyForTeachers = subjects.length > 0 && Boolean(grade);
+  const readyForTeachers = !lookupsLoading && !profileOptions.error && subjects.length > 0 && subjects.every((value) => subjectOptions.some((option) => option.value === value)) && Boolean(grade);
   useEffect(() => {
     if (!isOpen || !readyForTeachers || byEmail) return;
-    runDirectory({ subjects, grade, search: debouncedSearch }).catch(() => {});
-  }, [isOpen, readyForTeachers, byEmail, subjects, grade, debouncedSearch, runDirectory]);
+    runDirectory({ studentId: child.id, subjects, grade, search: debouncedSearch }).catch(() => {});
+  }, [isOpen, readyForTeachers, byEmail, subjects, grade, debouncedSearch, runDirectory, child?.id]);
 
   const teachers = useMemo(
-    () => (readyForTeachers && Array.isArray(directory.data) ? directory.data : []),
-    [readyForTeachers, directory.data]
+    () => (readyForTeachers && !directory.isLoading && !directory.error && Array.isArray(directory.data) ? directory.data : []),
+    [readyForTeachers, directory.data, directory.isLoading, directory.error]
   );
   const teachersLoading = directory.isLoading;
 
@@ -138,7 +76,7 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
   );
 
   const errors = {
-    subjects: subjects.length ? null : 'Choose at least one subject',
+    subjects: readyForTeachers ? null : 'Choose subjects saved in the student profile',
     grade: grade ? null : 'Choose a grade',
     teacherId: byEmail || teacherId ? null : 'Choose a teacher',
     teacherName: !byEmail || teacherName.trim() ? null : "Enter the teacher's name",
@@ -153,11 +91,13 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
   };
 
   const changeSubjects = (next) => {
+    directory.reset();
     setSubjects(next);
     setTeacherId(null); // the list is narrowed by subject - an earlier pick may no longer apply
     setPicked(null);
   };
   const changeGrade = (next) => {
+    directory.reset();
     setGrade(next);
     setTeacherId(null);
     setPicked(null);
@@ -220,7 +160,16 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
           </Alert>
         )}
 
-        <SubjectChipPicker
+        {profileOptions.error && <Alert variant="error">Could not load this student's profile selections. Close this dialog and try again.</Alert>}
+        {!lookupsLoading && !profileOptions.error && !subjectOptions.length && <Alert variant="info">Select Subjects in this child's profile first: My Children → Edit → Subjects.</Alert>}
+        <MultiSelect
+          name="subjects"
+          required
+          searchable
+          placeholder="Select subjects"
+          maxSelected={MAX_SUBJECTS}
+          disabled={lookupsLoading || Boolean(profileOptions.error) || !subjectOptions.length}
+          hint="Only subjects selected in the student profile"
           label={`1. Subjects they teach ${first}`}
           options={subjectOptions}
           value={subjects}
@@ -247,6 +196,7 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
 
         {!byEmail ? (
           <div className="ui-field" data-testid="teacher-picker">
+            {directory.error && <Alert variant="error">Could not load teachers. Change the search to try again.</Alert>}
             <SearchableSelect
               label="3. Teacher"
               required
@@ -260,7 +210,7 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
               disabledMessage="Choose the subject and grade first"
               placeholder={readyForTeachers ? 'Search by name or email' : 'Choose the subject and grade first'}
               searchPlaceholder="Search teachers by name or email…"
-              emptyMessage="No teacher on the platform teaches that - try another search, or invite by email below"
+              emptyMessage="No matching teacher found. Try another search or subject."
               hint={readyForTeachers ? `Showing ${grade} teachers who teach ${orList(subjects)}.` : undefined}
               error={attempted ? errors.teacherId : undefined}
             />

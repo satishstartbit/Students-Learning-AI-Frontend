@@ -1,0 +1,53 @@
+/* "My stickers" on Home (DashboardStickers, prefix ds-). Tokens only. */
+.ds-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ds-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.ds-change {
+  font-size: 12.5px;
+  color: var(--accent-base);
+  font-weight: 500;
+}
+.ds-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.ds-list--kid {
+  gap: 12px;
+  margin-top: 14px;
+}
+.ds-item {
+  display: grid;
+  place-items: center;
+  transform: rotate(var(--ds-tilt, 0deg));
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.12));
+  transition: transform 200ms ease;
+}
+.ds-item:hover {
+  transform: rotate(0deg) scale(1.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-item {
+    transition: none;
+  }
+  .ds-item:hover {
+    transform: rotate(var(--ds-tilt, 0deg));
+  }
+}
+/* Calm mode (K-4) and Grade 6+ "reduce motion" stop the hover lift too. */
+[data-calm] .ds-item:hover,
+.student-reduce-motion .ds-item:hover {
+  transform: rotate(var(--ds-tilt, 0deg));
+}

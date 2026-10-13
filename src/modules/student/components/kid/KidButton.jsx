@@ -14,7 +14,7 @@ const SIZES = {
 };
 
 /**
- * The K-5 button: shadcn's <Button> with big, rounded, tactile styling -
+ * The K-4 button: shadcn's <Button> with big, rounded, tactile styling -
  * at least 48px tall, so small fingers hit it. Pass `asChild` to render a
  * router <Link> with the same look. Give icons an explicit size class
  * (`size-6`) - shadcn's default only sizes icons that have none.

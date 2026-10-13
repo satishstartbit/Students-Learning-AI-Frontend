@@ -1,0 +1,118 @@
+/*
+ * Safety help lines + the notice after a flagged save (prefix sf-).
+ * Colours from tokens only, so accent themes, dark mode and the K-4 theme follow.
+ */
+.sf-lines {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+.sf-lines__title {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+.sf-lines__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sf-lines__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface-sunken);
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+a.sf-lines__item:hover {
+  border-color: var(--accent-base);
+}
+a.sf-lines__item:focus-visible {
+  outline: 2px solid var(--accent-base);
+  outline-offset: 2px;
+}
+.sf-lines__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  color: var(--accent-base);
+}
+.sf-lines__label {
+  display: block;
+  font-weight: var(--font-weight-semibold);
+}
+.sf-lines__detail {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+.sf-lines--lg .sf-lines__item {
+  min-height: 56px;
+}
+.sf-lines--lg .sf-lines__label {
+  font-size: var(--font-size-lg);
+}
+.sf-lines--lg .sf-lines__detail {
+  font-size: var(--font-size-md);
+}
+
+.sf-notice__body {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.sf-notice__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  color: var(--accent-base);
+  font-size: 20px;
+}
+.sf-notice__text p {
+  margin: 0 0 8px;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+.sf-notice--kid .sf-notice__text p {
+  font-size: var(--font-size-lg);
+  line-height: 1.55;
+}
+
+/* The onboarding "Keeping you safe" card. */
+.sf-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+}
+.sf-card__title {
+  margin: 0 0 4px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+.sf-card__body {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}

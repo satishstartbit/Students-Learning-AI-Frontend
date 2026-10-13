@@ -22,20 +22,34 @@ export const listPlans = () => api.get('/subscriptions/plans');
 export const validateCoupon = ({ planId, code }) =>
   api.post('/subscriptions/coupons/validate', { planId, code });
 
-/** Opens a PaymentIntent and returns its client secret for Stripe Elements. */
+/**
+ * Starts checkout. `data.mode`: 'payment' (a PaymentIntent's client secret for
+ * Stripe Elements), 'setup' (a free trial: a SetupIntent that saves the card
+ * without charging it) or 'none' (nothing to pay - `data.subscription` is
+ * already active).
+ */
 export const startCheckout = ({ planId, code }) =>
   api.post('/subscriptions/checkout', { planId, code });
 
 /**
- * Tells the server Stripe reported success. The server re-reads the intent
- * from Stripe itself, so this only makes activation instant - it can't fake it.
+ * Tells the server Stripe reported success: `{ paymentIntentId }` for a
+ * payment (checkout or plan change), `{ setupIntentId }` for a free trial.
+ * The server re-reads the intent from Stripe itself, so this only makes
+ * activation instant - it can't fake it.
  */
-export const confirmCheckout = (paymentIntentId) =>
-  api.post('/subscriptions/checkout/confirm', { paymentIntentId });
+export const confirmCheckout = ({ paymentIntentId, setupIntentId }) =>
+  api.post('/subscriptions/checkout/confirm', paymentIntentId ? { paymentIntentId } : { setupIntentId });
+
+/** What moving to another plan costs today: { credit, dueToday, total, periodEnd, coupon, couponDropped, trial, ... } */
+export const getPlanChangeQuote = (planId) => api.post('/subscriptions/me/change/quote', { planId });
+
+/** Changes plan: `data.mode` 'payment' (pay the difference at checkout) or 'none' (changed now, `data.subscription`). */
+export const startPlanChange = (planId) => api.post('/subscriptions/me/change', { planId });
 
 /** { subscription (in force or null), latestSubscription, access: { hasAccess, reason } } */
 export const getMySubscription = () => api.get('/subscriptions/me');
-export const listMyPayments = () => api.get('/subscriptions/me/payments');
+/** One page of the parent's payments, newest first: data = the page, meta = { page, limit, total, totalPages }. */
+export const listMyPayments = ({ page = 1, limit = 10 } = {}) => api.get('/subscriptions/me/payments', { params: { page, limit } });
 export const cancelMySubscription = (reason) => api.post('/subscriptions/me/cancel', { reason });
 export const setAutoRenew = (enabled) => api.patch('/subscriptions/me/auto-renew', { enabled });
 
@@ -77,11 +91,44 @@ export const adminGetPaymentStats = (params = {}) =>
 export const adminExportPayments = (params = {}) =>
   api.get('/subscriptions/admin/payments/export', { params: clean(params), responseType: 'text' });
 
-export const adminRefundPayment = (id, { amount, reason }) =>
-  api.post(`/subscriptions/admin/payments/${id}/refund`, clean({ amount, reason }));
+/**
+ * A refund. `reasonCode` is required (duplicate | parent_request |
+ * service_problem | other); `requestKey` is the dialog's idempotency key, so a
+ * repeated click refunds once; `cancelSubscription: false` keeps the family
+ * subscribed after a full refund. `data.refundOutcome.status` is
+ * refunded | pending | failed.
+ */
+export const adminRefundPayment = (id, { amount, reasonCode, note, requestKey, cancelSubscription }) =>
+  api.post(`/subscriptions/admin/payments/${id}/refund`, clean({ amount, reasonCode, note, requestKey, cancelSubscription }));
 
+/** One payment for the refund dialog / View Details: card (brand, last 4, expiry), refunds with who and why, `refundable`, its subscription. */
+export const adminGetPayment = (id) => api.get(`/subscriptions/admin/payments/${id}`);
+
+/** Past-due row: charge the saved card now (`data.outcome` renewed | failed). */
+export const adminRetryPayment = (id, requestKey) =>
+  api.post(`/subscriptions/admin/subscriptions/${id}/retry-payment`, { requestKey });
+
+/** Past-due row: email the parent to update their card (once an hour at most). */
+export const adminRemindCard = (id) => api.post(`/subscriptions/admin/subscriptions/${id}/remind-card`);
+
+/** "Apply discount code": every active code with { available, reason, nextPayment } for this subscription. */
+export const adminGetCouponOptions = (id) => api.get(`/subscriptions/admin/subscriptions/${id}/coupons`);
+
+/** Puts a code on the subscription from its next payment; rejects with the reason when it can't be used. */
+export const adminApplyCoupon = (id, { discountCodeId, note }) =>
+  api.post(`/subscriptions/admin/subscriptions/${id}/coupon`, { discountCodeId, note: note || null });
+
+/** The Subscriptions list as CSV text (same filters). */
+export const adminExportSubscriptions = (params = {}) =>
+  api.get('/subscriptions/admin/subscriptions/export', { params: clean(params), responseType: 'text' });
+
+/** Revenue: by plan, totals vs the previous period, over time, MRR, trials, discounts. `from`/`to` are day keys. */
 export const adminGetStats = (params = {}) =>
   api.get('/subscriptions/admin/stats', { params: clean(params) });
+
+/** Sales tax per charge and refund with totals (CSV) - for the GST/HST return. */
+export const adminExportTax = (params = {}) =>
+  api.get('/subscriptions/admin/stats/tax-export', { params: clean(params), responseType: 'text' });
 
 export const adminListCouponRedemptions = (couponId) =>
   api.get(`/subscriptions/admin/coupons/${couponId}/redemptions`);
@@ -91,6 +138,8 @@ export default {
   validateCoupon,
   startCheckout,
   confirmCheckout,
+  getPlanChangeQuote,
+  startPlanChange,
   getMySubscription,
   listMyPayments,
   cancelMySubscription,
@@ -107,6 +156,13 @@ export default {
   adminGetPaymentStats,
   adminExportPayments,
   adminRefundPayment,
+  adminGetPayment,
+  adminRetryPayment,
+  adminRemindCard,
+  adminGetCouponOptions,
+  adminApplyCoupon,
+  adminExportSubscriptions,
   adminGetStats,
+  adminExportTax,
   adminListCouponRedemptions,
 };

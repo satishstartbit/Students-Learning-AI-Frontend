@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Pagination } from '../../../components/common';
 import { useIsMobile } from '../../../hooks/useIsMobile';
 import { formatDate } from '../../../utils/date';
 import { formatCurrency } from '../../../utils/format';
 import PaymentStatusBadge from './PaymentStatusBadge';
 import ReceiptModal from './ReceiptModal';
 
-/** Newest first; the rest one "Show older payments" at a time. */
-const PAGE_SIZE = 7;
 
 const discountText = (p) => (p.discountApplied > 0 ? `−${formatCurrency(p.discountApplied, p.currency)} discount` : null);
 const refundText = (p) => (p.refundAmount > 0 ? `${formatCurrency(p.refundAmount, p.currency)} refunded` : null);
@@ -14,22 +13,33 @@ const refundText = (p) => (p.refundAmount > 0 ? `${formatCurrency(p.refundAmount
 /**
  * Billing history, to its mockups: a table on wide screens (Receipt on each
  * row) and, on phones, one tappable row per payment that opens its receipt.
+ *
+ * Paged on the server (GET /subscriptions/me/payments?page=&limit=): `payments`
+ * is the current page, `meta` its { page, totalPages, total, limit }, and
+ * `onPageChange(page)` asks the parent page for another one.
  */
-export default function BillingHistory({ payments = [] }) {
-  const [shown, setShown] = useState(PAGE_SIZE);
+export default function BillingHistory({ payments = [], meta = null, loading = false, onPageChange }) {
   const [receipt, setReceipt] = useState(null);
   const isPhone = useIsMobile(640);
+  const top = useRef(null);
 
-  const visible = payments.slice(0, shown);
-  const hasOlder = payments.length > shown;
+  const visible = payments;
+  const page = meta?.page ?? 1;
+  const limit = meta?.limit ?? (payments.length || 1);
+  const total = meta?.total ?? payments.length;
+  const totalPages = meta?.totalPages ?? 1;
+  const goTo = (next) => {
+    onPageChange?.(Math.min(Math.max(1, next), Math.max(1, totalPages)));
+    top.current?.scrollIntoView({ block: 'nearest' });
+  };
 
   return (
-    <section className="sub-card sub-history" aria-labelledby="sub-history-title">
+    <section ref={top} className="sub-card sub-history" aria-labelledby="sub-history-title" aria-busy={loading || undefined}>
       <h2 id="sub-history-title" className="sub-card__title sub-history__title">
         Billing history
       </h2>
 
-      {payments.length === 0 ? (
+      {total === 0 ? (
         <p className="sub-note">No payments yet.</p>
       ) : isPhone ? (
         <ul className="sub-paylist">
@@ -102,13 +112,15 @@ export default function BillingHistory({ payments = [] }) {
         </table>
       )}
 
-      {hasOlder && (
-        <div className="sub-more">
-          <button type="button" className="sub-linkbtn" onClick={() => setShown((n) => n + PAGE_SIZE)}>
-            Show older payments
-          </button>
-        </div>
-      )}
+      <Pagination
+        className="sub-history__pages"
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        from={(page - 1) * limit + 1}
+        to={(page - 1) * limit + payments.length}
+        onPageChange={goTo}
+      />
 
       {receipt && <ReceiptModal payment={receipt} onClose={() => setReceipt(null)} />}
     </section>

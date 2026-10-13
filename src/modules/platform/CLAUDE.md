@@ -14,12 +14,14 @@ Super Admin tools for running the platform: versioned **Platform settings** (bus
 **Backend:** `routes/settings.routes.js`, `system.routes.js` (inside the Super Admin router) → `services/settings.service.js` (+ `repositories/settings.repository.js`, `config/settings/registry.js`, `fieldSchema.js`, `definitions/*`), `services/ops/{heartbeat,readiness,aiUsage}.service.js`. Models: `PlatformSettingVersion`, `ServiceHeartbeat` (migration 105).
 
 ## Settings (keys)
-`safety.copy`, `assistant.policy`, `billing.policy`, `ops.monitoring`, `planner.policy`, `planner.copy`, `planner.stepTemplates`, `intake.policy`, `support.policy`, `ai.routing`, `ai.prompts`, `ai.observability`. Adding one = a reviewed definition file (fields + defaults + optional `refine`); changing a value = publishing a version.
+`safety.copy`, `assistant.policy`, `billing.policy`, `ops.monitoring`, `planner.policy`, `planner.copy`, `planner.stepTemplates`, `intake.policy`, `support.policy`, `ai.routing`, `ai.prompts`, `ai.observability`, and (Phase 1 gaps, 2026-10-09) `safety.monitoring` (which student text is screened, parent alert, notices), `legal.documents` (Privacy/Terms text + version; a new version re-asks consent), `billing.tax` (GST/HST/PST/QST per province, off until a registration number is set), `notifications.parents` (due-soon / finished-work notices), `checkin.policy` (required up to Grade 6, skip prompt, calming suggestions count), `student.dashboard` (Home stickers). Adding one = a reviewed definition file (fields + defaults + optional `refine`); changing a value = publishing a version.
+
+**Sidebar:** the Platform settings / System status / AI usage links are commented out in `SuperAdminLayout.jsx` (System status and AI usage routes too); `/admin/settings` still works by address. Not our decision to undo - ask before re-enabling.
 
 ## Rules - read before changing
 - One field list drives BOTH server validation and this editor - never add a UI-only field.
 - Publishing needs a reason and is audited (`settings.publish`); rollback publishes a copy of an older version.
-- Services read settings with `settingsService.get(key)` (cache `SETTINGS_CACHE_TTL_MS`, last-known-good if the DB is down, reviewed defaults if nothing was ever published).
+- Services read settings with `settingsService.get(key)` (cache `SETTINGS_CACHE_TTL_MS`, last-known-good if the DB is down, reviewed defaults if nothing was ever published). A published value is merged over the definition's top-level defaults (`registry.js#withDefaults`), so adding a field with a default never invalidates older versions.
 - Some rules can't be published away: `billing.policy.afterGrace.readHistory` must stay on; AI prompts can only use their use case's variables, and code-owned safety invariants are always appended.
 
 ## Verify

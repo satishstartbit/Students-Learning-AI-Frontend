@@ -14,6 +14,8 @@ import invitationService from '../../invitations/services/teacherInvitation.serv
 import { AuthSplitLayout } from '../components/AuthSplitLayout';
 import { ErrorAlert, VerifyEmailStep } from '../components/VerifyEmailStep';
 import authService from '../services/auth.service';
+import LegalLinks from '../../../components/legal/LegalLinks';
+import { useLegalContent } from '../../../components/legal/useLegalContent';
 
 /**
  * Parent and Teacher only. A student does not sign themselves up - their
@@ -96,6 +98,8 @@ function SignUp({ inviteToken, invite }) {
   const [created, setCreated] = useState(null);
   const [problem, setProblem] = useState(null);
   const invitedName = splitName(invite?.teacherName);
+  // The admin's wording and document titles (Platform settings > Privacy Policy and Terms of Use).
+  const { content: legal } = useLegalContent();
 
   /** Signs the new account in and lets the router send it to its home. */
   const signInAndGo = async (email, password) => {
@@ -146,6 +150,8 @@ function SignUp({ inviteToken, invite }) {
           timezone: detectBrowserTimezone(),
           password: values.password,
           confirmPassword: values.password,
+          // Recorded with the documents' version (Phase 1 §12).
+          acceptTerms: values.agreeToTerms === true,
           ...(inviteToken ? { invitationToken: inviteToken } : {}),
         });
         const data = result?.data ?? {};
@@ -270,11 +276,12 @@ function SignUp({ inviteToken, invite }) {
         <div className="lg-terms">
           <Checkbox
             name="agreeToTerms"
-            label="I agree to the Terms of Use and Privacy Policy"
+            label={legal?.signupConsentLabel || 'I agree to the Terms of Use and Privacy Policy'}
             checked={form.values.agreeToTerms}
             onChange={form.handleChange}
             error={form.touched.agreeToTerms ? form.errors.agreeToTerms : null}
           />
+          <LegalLinks content={legal} className="lg-terms__links" />
         </div>
 
         <Button type="submit" fullWidth size="lg" loading={form.isSubmitting} className="lg-submit">

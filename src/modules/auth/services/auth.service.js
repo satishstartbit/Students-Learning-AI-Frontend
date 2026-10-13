@@ -20,6 +20,9 @@ export const logoutAll = () => api.post('/auth/logout-all');
 
 export const getMe = () => api.get('/auth/me');
 
+/** Agree to the current Terms/Privacy, and (a parent) consent for children - the consent screen. */
+export const acceptConsent = ({ acceptTerms, childIds = [] }) => api.post('/auth/me/consent', { acceptTerms, childIds });
+
 /**
  * Profile Management self-service update. When a photo is attached the
  * request must be multipart/form-data - the nested `profile` object travels

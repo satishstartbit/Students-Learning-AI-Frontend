@@ -10,7 +10,7 @@ const VARIANT_ALIASES = { danger: 'error' };
  * built to the notification mockup: a tinted card with a coloured border,
  * an outline status icon, a bold title with a quieter description under it,
  * and a plain close cross. Success / info / warning / error each take their
- * colours from the status tokens, so accent themes, dark mode and the K-5
+ * colours from the status tokens, so accent themes, dark mode and the K-4
  * theme all follow.
  *
  * Without a title the message itself is the main line (normal colour).

@@ -36,8 +36,8 @@ function query(params) {
 
 // ---- parent
 /** Teachers matching every chosen subject + the grade, searchable by name/email: [{ id, firstName, lastName, email }]. */
-export const teacherDirectory = ({ subjects, grade, search } = {}) =>
-  api.get('/parent/teacher-directory', { params: query({ subject: subjects, grade, search, limit: 50 }) });
+export const teacherDirectory = ({ studentId, subjects, grade, search } = {}) =>
+  api.get('/parent/teacher-directory', { params: query({ studentId, subject: subjects, grade, search, limit: 50 }) });
 export const listForChild = (childId) => api.get(`/parent/children/${childId}/teacher-invitations`);
 /** Either { teacherId } (picked) or { teacherName, teacherEmail } (not on the platform yet), plus subjects/grade. */
 export const invite = (childId, payload) => api.post(`/parent/children/${childId}/teacher-invitations`, payload);

@@ -22,7 +22,7 @@ import studentSettingsService from '../services/studentSettings.service';
  * follow the student to any device.
  *
  * Mounted by both student shells - StudentLayout (Grade 6+) and KidLayout
- * (K-5) - since "Make it yours" exists in both bands; K-5 only sets the
+ * (K-4) - since "Make it yours" exists in both bands; K-4 only sets the
  * avatar and card style, and leaves the rest at their defaults.
  */
 export function StudentSettingsProvider({ children }) {

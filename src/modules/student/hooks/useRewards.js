@@ -3,7 +3,7 @@ import { useApi } from '../../../hooks/useApi';
 import rewardService from '../services/reward.service';
 
 /**
- * The student's collectible rewards, shared by the K-5 and Grade 6+ Rewards
+ * The student's collectible rewards, shared by the K-4 and Grade 6+ Rewards
  * pages (and Home's progress card):
  *
  *   points      lifetime earned points - rewards are collected against this

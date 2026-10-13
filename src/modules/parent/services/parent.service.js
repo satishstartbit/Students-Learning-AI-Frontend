@@ -66,6 +66,18 @@ export const getDashboard = () => api.get('/parent/dashboard');
  */
 export const getChildOverview = (childId) => api.get(`/parent/children/${childId}/overview`);
 
+/** The family's optional "check new work" for one child (PDF Q14/Q15): { enabled, items }. */
+export const getWorkReview = (childId) => api.get(`/parent/children/${childId}/work-review`);
+export const setWorkReview = (childId, enabled) => api.patch(`/parent/children/${childId}/work-review`, { enabled });
+export const markWorkChecked = (childId, workId) => api.post(`/parent/children/${childId}/work-review/${workId}/checked`);
+
+/**
+ * One child's own notes, read-only - the same filters as the student's Notes
+ * page (`range`, `from`/`to`, `status`, `search`, `page`, `limit`), plus
+ * `generalOnly` for the Overview card (their Home board: `range: 'home'`).
+ */
+export const listChildNotes = (childId, params = {}) => api.get(`/parent/children/${childId}/notes`, { params });
+
 /** Marks a child's check-in alert as seen by this parent (teachers keep their own). */
 export const markAlertSeen = (childId, alertId) => api.post(`/parent/children/${childId}/alerts/${alertId}/seen`);
 
@@ -98,12 +110,19 @@ export const addFamilyParent = (payload) => api.post('/parent/family/parents', p
 /** Account holder only: the parent loses the family's children and plan; their account is kept. */
 export const removeFamilyParent = (id) => api.delete(`/parent/family/parents/${id}`);
 
+/** Account holder only: off = no place on the plan and no access (always allowed); on = needs a free place. */
+export const deactivateFamilyParent = (id) => api.post(`/parent/family/parents/${id}/deactivate`);
+export const activateFamilyParent = (id) => api.post(`/parent/family/parents/${id}/activate`);
+
 // --- teachers ---------------------------------------------------------------
 // Teachers are connected by invitation (modules/invitations - the teacher has
 // to accept); a parent can remove a connected teacher here.
 
 export const removeTeacherAssignment = (childId, relationshipId) =>
   api.delete(`/parent/children/${childId}/teachers/${relationshipId}`);
+
+export const disconnectTeacher = (childId, teacherId) =>
+  api.delete(`/parent/children/${childId}/teacher-connections/${teacherId}`);
 
 // --- lookups (read-only, parent-safe master data) ---------------------------
 
@@ -118,8 +137,8 @@ export const listMasterOptions = (type, params = {}) =>
 /**
  * Master options shaped for RoleProfileFields' `lookupFetcher` prop
  * ({ value, label }[]). Add Child / Edit Child pass this so their Grade /
- * Subjects / Strengths / Challenges / Interests fields use the same
- * dropdowns the Invite Teacher modal and the Super Admin forms use.
+ * Subjects / Strengths / Challenges / Interests fields offer the catalogue.
+ * Invite Teacher instead reads this child's saved profile choices.
  */
 export const masterOptionsFetcher = (type) =>
   listMasterOptions(type).then((res) =>
@@ -134,6 +153,10 @@ export const listAcademicYears = (params = {}) =>
   api.get('/parent/lookups/academic-years', { params: dropEmpty(params) });
 
 export default {
+  disconnectTeacher,
+  getWorkReview,
+  setWorkReview,
+  markWorkChecked,
   listChildren,
   getChild,
   addChild,
@@ -141,6 +164,7 @@ export default {
   setChildPassword,
   getDashboard,
   getChildOverview,
+  listChildNotes,
   markAlertSeen,
   getProgress,
   getChildProgress,
@@ -150,6 +174,8 @@ export default {
   getFamily,
   addFamilyParent,
   removeFamilyParent,
+  deactivateFamilyParent,
+  activateFamilyParent,
   removeTeacherAssignment,
   listMasterOptions,
   masterOptionsFetcher,

@@ -12,7 +12,7 @@
  * step, or a student can get the kid UI while the server treats them as an
  * older student.
  *
- *   VITE_KIDS_UI=K-5   Kindergarten to Grade 5 (default)
+ *   VITE_KIDS_UI=K-4   Kindergarten to Grade 5 (default)
  *   VITE_KIDS_UI=K-6   Kindergarten to Grade 6
  *   VITE_KIDS_UI=K     Kindergarten only
  *
@@ -29,7 +29,7 @@ const KINDERGARTEN_PATTERN =
   /^(k|kg|jk|sk|pre-?k|kindergarten|junior kindergarten|senior kindergarten|(pr[eé])?maternelle)$/i;
 
 /** Used when KIDS_UI is missing or unreadable. */
-export const DEFAULT_KIDS_UI = 'K-5';
+export const DEFAULT_KIDS_UI = 'K-4';
 const HIGHEST_GRADE = 12;
 
 /**
@@ -48,7 +48,7 @@ export function parseGradeNumber(grade) {
 }
 
 /**
- * The top grade of the kid band from a KIDS_UI value: "K-5" -> 5, "K-6" -> 6,
+ * The top grade of the kid band from a KIDS_UI value: "K-4" -> 5, "K-6" -> 6,
  * "K" -> 0. Falls back to the default (with a warning) when the value makes
  * no sense, so a typo can never leave the app with no student UI at all.
  */
@@ -77,7 +77,7 @@ export function parseKidsBand(value, { fallback = DEFAULT_KIDS_UI } = {}) {
 /** The highest grade that gets the kid experience, from VITE_KIDS_UI. */
 export const JUNIOR_MAX_GRADE = parseKidsBand(import.meta.env.VITE_KIDS_UI);
 
-/** "K-5" - the configured band, for copy and debugging. */
+/** "K-4" - the configured band, for copy and debugging. */
 export const KIDS_UI_LABEL = JUNIOR_MAX_GRADE === 0 ? 'K' : `K-${JUNIOR_MAX_GRADE}`;
 
 /**
@@ -99,7 +99,7 @@ export function isJuniorGrade(grade, maxGrade = JUNIOR_MAX_GRADE) {
  * Must this student check in before their work screens open?
  *
  * Mandatory inside the kid band, optional above it: the daily check-in is
- * part of how the K-5 day starts, while an older student decides for
+ * part of how the K-4 day starts, while an older student decides for
  * themselves whether to record one - Assignments, Plan, Focus and the
  * assistant stay open either way (modules/checkIn/components/
  * RequireCheckIn.jsx).

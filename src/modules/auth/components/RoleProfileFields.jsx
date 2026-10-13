@@ -59,7 +59,10 @@ function MasterMultiSelectField({ masterType, name, label, getProps, hint, looku
 
   return (
     <MultiSelect
+      name={name}
       label={label}
+      searchable
+      searchPlaceholder={`Search ${label.toLowerCase()}…`}
       hint={loading ? 'Loading…' : hint}
       options={options}
       value={selected}

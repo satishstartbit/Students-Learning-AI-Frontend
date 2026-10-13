@@ -2,7 +2,7 @@ import { cn } from '../../../../lib/utils';
 import './home/kidHome.css';
 
 /**
- * Moving overlays for a K-5 page banner picture (KidBannerHero). Each is
+ * Moving overlays for a K-4 page banner picture (KidBannerHero). Each is
  * placed with Tailwind position classes in % of the picture, so it stays on
  * the sun, the paw or the tree at every size. All decorative; every motion
  * stops in calm mode and follows reduced motion (kidHome.css).
@@ -245,7 +245,7 @@ export function Bird3D({ path = 'cross', top = '0cqh', size = '3cqw', time = '18
 }
 
 /**
- * A transparent-sky scenery picture at the foot of a K-5 page, with moving
+ * A transparent-sky scenery picture at the foot of a K-4 page, with moving
  * overlays (`children`, in % of the picture). Rises in when the page opens.
  * `mobileZoom` widens it on a phone so a long, low picture still reads;
  * `overlap` (% of the width) tucks its clear top under the last cards.

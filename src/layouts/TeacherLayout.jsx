@@ -1,5 +1,6 @@
 import {
   LuActivity,
+  LuBell,
   LuChartLine,
   LuFileText,
   LuHandshake,
@@ -14,6 +15,7 @@ import {
 import { useEffect } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getMe } from '../modules/auth/services/auth.service';
+import ConsentGate from '../components/legal/ConsentGate';
 import AppSettingsProvider from '../components/appearance/AppSettingsProvider';
 import SubjectColorsProvider from '../components/subjects/SubjectColorsProvider';
 import AuthenticatedLayout from './AuthenticatedLayout';
@@ -33,6 +35,7 @@ const NAV_ITEMS = [
       { to: '/teacher/progress', label: 'Progress', icon: LuChartLine },
       { to: '/teacher/learning-activity', label: 'Learning Activity', icon: LuSparkles },
       { to: '/teacher/profile', label: 'My Profile', icon: LuUser },
+      { to: '/teacher/notifications', label: 'Notifications', icon: LuBell },
     ],
   },
 ];
@@ -70,8 +73,18 @@ export function TeacherLayout({ children }) {
     <AppSettingsProvider>
       {/* The admin's subject colours, so a subject looks the same to teachers as to their students. */}
       <SubjectColorsProvider>
-        <AuthenticatedLayout navItems={NAV_ITEMS} mobileTabs={MOBILE_TABS} title="Teacher Portal" subtitle="Teacher" brand="TP" accountSubtitle={school}>
-          {children}
+        {/* The bell is a link to Notifications (no dropdown list). */}
+        <AuthenticatedLayout
+          navItems={NAV_ITEMS}
+          mobileTabs={MOBILE_TABS}
+          title="Teacher Portal"
+          subtitle="Teacher"
+          brand="TP"
+          accountSubtitle={school}
+          notificationsPath="/teacher/notifications"
+        >
+          {/* Agree to the current Terms/Privacy before anything else (Phase 1 §12). */}
+          <ConsentGate>{children}</ConsentGate>
         </AuthenticatedLayout>
       </SubjectColorsProvider>
     </AppSettingsProvider>

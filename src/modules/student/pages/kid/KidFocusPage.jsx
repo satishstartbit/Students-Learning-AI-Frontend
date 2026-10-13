@@ -18,7 +18,7 @@ import { FOCUS_ACTIVITIES, activitySeconds } from '../../components/kid/focusAct
 import { KID_TILE_INK, KID_TILE_TONES } from '../../components/kid/kidTileTones';
 import { StickerArt } from '../../components/rewards/StickerArt';
 
-// A calm 25 minutes, always - no dropdown, one clear default. K-5 isn't
+// A calm 25 minutes, always - no dropdown, one clear default. K-4 isn't
 // asked "how much time do you have" at check-in, and picking a number isn't
 // the point of this page - starting is.
 const PLANNED_MINUTES = 25;
@@ -76,7 +76,7 @@ function BreakCard({ card, suggested, onOpen }) {
 }
 
 /**
- * K-5 "Focus time 🔥" - built to the Kids Focus mockups. One big clock and
+ * K-4 "Focus time 🔥" - built to the Kids Focus mockups. One big clock and
  * one obvious button, the next task on top ("Up next", or pick another with
  * the dashed "+"), and "Need a minute first?" underneath: Calm & move
  * (Breathe / Wiggle / Listen, their own pages) or Brain games (Finger Follow,

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LuEllipsisVertical, LuPlus } from 'react-icons/lu';
 import {
   Alert,
@@ -25,7 +25,7 @@ import { formatSubjects } from '../../invitations/invitationStatus';
 import { SubjectChips } from '../../teacher/components/students/StudentBits';
 import { useViewingChild } from '../hooks/useViewingChild';
 import parentService from '../services/parent.service';
-import { childLimitReason } from '../familyLimits';
+import { CHANGE_PLAN_PATH, childLimitReason } from '../familyLimits';
 import { ParentsSection, PlanUsage } from '../components/FamilyParents';
 import AddChildModal from '../components/AddChildModal';
 import EditChildModal from '../components/EditChildModal';
@@ -33,6 +33,7 @@ import ChildDetailsModal from '../components/ChildDetailsModal';
 import InviteTeacherModal from '../components/InviteTeacherModal';
 import SetChildPasswordModal from '../components/SetChildPasswordModal';
 import '../components/parentChildren.css';
+import { splitCsv } from '../../auth/components/profilePayload';
 
 /**
  * A connected teacher and an invited one, as the same row shape.
@@ -52,6 +53,7 @@ function teacherRows(child) {
       subjects: [],
       year: t.academicYear?.name ?? null,
     };
+    if (t.status !== 'active') return;
     if (t.subject && !entry.subjects.includes(t.subject)) entry.subjects.push(t.subject);
     byTeacher.set(key, entry);
   });
@@ -88,13 +90,7 @@ function teacherRows(child) {
 function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvite, onView, onViewAs, onRemove, onArchive, onRestore }) {
   const rows = useMemo(() => teacherRows(child), [child]);
 
-  // Subjects follow the teachers - the ones already teaching this child plus
-  // the ones invited to - rather than being set on the child directly.
-  const subjects = useMemo(() => {
-    const fromTeachers = (child.teachers ?? []).map((t) => t.subject);
-    const fromInvites = (child.invitations ?? []).flatMap((inv) => inv.subjects ?? []);
-    return [...new Set([...fromTeachers, ...fromInvites].filter(Boolean))];
-  }, [child.teachers, child.invitations]);
+  const subjects = splitCsv(child.subjects);
 
   const name = formatName(child);
 
@@ -122,8 +118,8 @@ function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvi
             { key: 'invite', label: 'Invite a teacher', onClick: () => onInvite(child) },
             { key: 'divider', divider: true },
             child.archived
-              ? { key: 'restore', label: 'Restore child', onClick: () => onRestore(child) }
-              : { key: 'archive', label: 'Archive child', onClick: () => onArchive(child) },
+              ? { key: 'restore', label: 'Activate child', onClick: () => onRestore(child) }
+              : { key: 'archive', label: 'Deactivate child', onClick: () => onArchive(child) },
             { key: 'remove', label: 'Remove child', danger: true, onClick: () => onRemove(child) },
           ]}
         />
@@ -131,7 +127,7 @@ function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvi
 
       <div className="pc-chips">
         {isViewing && <Badge variant="primary">Viewing now</Badge>}
-        {child.archived ? <Badge variant="neutral">Archived - history kept</Badge> : <StatusBadge status={child.status} />}
+        {child.archived ? <Badge variant="neutral" dot>Inactive - history kept</Badge> : <StatusBadge status={child.status} />}
         {/* Children have no email to verify; what matters is whether they've signed in. */}
         {!child.lastLoginAt && (
           <Badge variant="warning" dot>
@@ -150,7 +146,7 @@ function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvi
             <SubjectChips subjects={subjects} />
           </div>
         ) : (
-          <p className="pc-section__empty">Added by the teacher once they connect.</p>
+          <p className="pc-section__empty">Select subjects in this child's profile using Edit.</p>
         )}
       </section>
 
@@ -244,11 +240,12 @@ export default function ParentChildrenPage() {
     }
   };
 
-  // Archive / restore (PDF Q12): the same child, all history kept either way.
+  // Deactivate / activate ("archive" / "restore", PDF Q12): the same child, all history kept either way;
+  // only active children take a place on the plan.
   const handleArchive = async () => {
     try {
       await parentService.archiveChild(archiveModal.payload.id);
-      toast.success(`${formatName(archiveModal.payload)} is archived - everything they saved is kept`);
+      toast.success(`${formatName(archiveModal.payload)} no longer takes a place on your plan - everything they saved is kept.`, { title: 'Child deactivated' });
       archiveModal.close();
       await load();
     } catch (err) {
@@ -258,7 +255,7 @@ export default function ParentChildrenPage() {
   const handleRestore = async (child) => {
     try {
       await parentService.restoreChild(child.id);
-      toast.success(`${formatName(child)} is back - their plan is being updated`);
+      toast.success(`${formatName(child)} is active again - their plan is being updated.`, { title: 'Child activated' });
       await load();
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -294,6 +291,16 @@ export default function ParentChildrenPage() {
         {limitReason && (
           <Alert variant="warning" className="pm-notice">
             {limitReason}
+            {family.data?.isAccountHolder && (
+              <>
+                {' '}
+                {family.data.planInForce === false ? (
+                  <Link to="/parent/subscription">Choose a plan</Link>
+                ) : (
+                  <Link to={CHANGE_PLAN_PATH}>See larger plans</Link>
+                )}
+              </>
+            )}
           </Alert>
         )}
 
@@ -350,6 +357,7 @@ export default function ParentChildrenPage() {
       />
 
       <ChildDetailsModal
+        key={`details-${detailsModal.payload ?? 'none'}-${detailsModal.isOpen}`}
         isOpen={detailsModal.isOpen}
         childId={detailsModal.payload}
         onClose={detailsModal.close}
@@ -392,13 +400,13 @@ export default function ParentChildrenPage() {
         isOpen={archiveModal.isOpen}
         onClose={archiveModal.close}
         onConfirm={handleArchive}
-        title="Archive this child?"
+        title="Deactivate this child?"
         message={
           archiveModal.payload
-            ? `${formatName(archiveModal.payload)} keeps their account and everything they saved, and you can both still read it. They won't take a place on your plan, and planning and AI help stop for them. You can restore them at any time.`
+            ? `${formatName(archiveModal.payload)} keeps their account and everything they saved, and you can both still read it. They won't take a place on your plan, and planning and AI help stop for them. You can activate them again whenever your plan has room.`
             : ''
         }
-        confirmLabel="Archive"
+        confirmLabel="Deactivate"
       />
     </div>
   );

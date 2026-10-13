@@ -20,6 +20,7 @@ import CheckboxGroup from '../components/CheckboxGroup';
 import { useOnboardingLookup } from '../hooks/useOnboardingLookup';
 import { DISTRACTIONS, FOCUS_HELPERS, LEARN_BEST_BY, TASK_APPROACH, WORK_WITH, asOptions } from '../options';
 import onboardingService from '../services/onboarding.service';
+import SafetyNoticeCard from '../../../components/safety/SafetyNoticeCard';
 
 function valuesFrom(answers) {
   const prefs = answers.learningPreferences;
@@ -155,6 +156,9 @@ function StudentOnboardingForm({ onboarding, onSaved }) {
           {...form.getFieldProps('taskApproach')}
         />
       </Card>
+
+      {/* Phase 1 §4: students are told their writing is checked for safety. */}
+      <SafetyNoticeCard audience="student" className="ui-field" />
 
       <Button type="submit" loading={form.isSubmitting}>
         {completed ? 'Save changes' : 'Finish'}

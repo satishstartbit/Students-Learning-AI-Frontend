@@ -2,7 +2,7 @@
    Colour-theme picker (AccentPicker.jsx). Prefix: ap-.
 
    One picker for every role: the Teacher and Parent profile pages, and the
-   K-5 "Make it yours" page. It is the Grade 6+ picker's design
+   K-4 "Make it yours" page. It is the Grade 6+ picker's design
    (modules/student/components/personalize/makeItYours.css - .my-tiles /
    .my-tile / .my-swatch), rebuilt here so the two match: a wide swatch of
    the family's own two tones split on the diagonal, the name under it, and

@@ -95,10 +95,18 @@ export function AppRoutes() {
 
       {/* ------------------------------------------ open (signed in or out) */}
       <Route element={<OpenLayout />}>
-        {OPEN_ROUTES.routes.map((route) => (
+        {OPEN_ROUTES.routes
+          .filter((route) => !route.fullPage)
+          .map((route) => (
+            <Route key={route.path} path={route.path} element={renderRouteElement(route)} />
+          ))}
+      </Route>
+      {/* Open pages that draw the whole screen (Privacy Policy, Terms of Use). */}
+      {OPEN_ROUTES.routes
+        .filter((route) => route.fullPage)
+        .map((route) => (
           <Route key={route.path} path={route.path} element={renderRouteElement(route)} />
         ))}
-      </Route>
 
       {/* ------------------------------------------------------- protected */}
       <Route element={<ProtectedRoutes />}>

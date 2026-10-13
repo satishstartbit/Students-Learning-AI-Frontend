@@ -7,7 +7,7 @@ import { starsForMinutes } from '../kidFormat';
 import { SubjectPicture } from '../PaperKit';
 
 /**
- * Pieces of the K-5 "My week" days (pages/kid/KidMyWeekPage.jsx), drawn to
+ * Pieces of the K-4 "My week" days (pages/kid/KidMyWeekPage.jsx), drawn to
  * the "My week" mockup: a picture tile per task, the "A day off!" card with
  * its little hill, and the dashed "+".
  */
@@ -57,10 +57,21 @@ export function WeekTaskTile({ task, showStars, delay = 0 }) {
   );
 }
 
-/** "A day off!" - nothing due and nothing planned: rest, a star, and a little hill with a daisy that sways. */
-export function DayOffCard() {
+/**
+ * "A day off!" - nothing due and nothing planned: rest, a star, and a little
+ * hill with a daisy that sways. A tall card in a day column; `stacked` keeps
+ * it tall on a phone too (the phone calendar's one-day view).
+ */
+export function DayOffCard({ stacked = false }) {
   return (
-    <div className="relative flex flex-1 items-center gap-4 overflow-hidden rounded-[1.2rem] px-3 py-3 md:flex-col md:justify-start md:gap-1.5 md:px-2 md:pb-0 md:pt-8 md:text-center">
+    <div
+      className={cn(
+        'relative flex flex-1 overflow-hidden rounded-[1.2rem]',
+        stacked
+          ? 'flex-col items-center gap-1.5 px-2 pt-7 text-center'
+          : 'items-center gap-4 px-3 py-3 md:flex-col md:justify-start md:gap-1.5 md:px-2 md:pb-0 md:pt-8 md:text-center'
+      )}
+    >
       <span className="kh-beat grid size-9 shrink-0 place-items-center text-kid-ink-soft" aria-hidden="true">
         <LuHeart className="size-6" strokeWidth={2.2} />
       </span>
@@ -68,8 +79,8 @@ export function DayOffCard() {
         <p className="font-kid-display text-base font-semibold text-kid-ink">A day off!</p>
         <p className="font-kid-body text-sm leading-snug text-kid-ink-soft">Rest, play and be proud!</p>
       </div>
-      <HomeSticker slug="star" motion="float" tilt={-6} delay={0.4} className="relative hidden size-9 md:mt-4 md:block" />
-      <DayOffScene className="ml-auto w-24 shrink-0 md:ml-0 md:mt-auto md:w-full" />
+      <HomeSticker slug="star" motion="float" tilt={-6} delay={0.4} className={cn('relative size-9', stacked ? 'mt-2 block' : 'hidden md:mt-4 md:block')} />
+      <DayOffScene className={cn('shrink-0', stacked ? 'mt-2 w-full max-w-[18rem]' : 'ml-auto w-24 md:ml-0 md:mt-auto md:w-full')} />
     </div>
   );
 }

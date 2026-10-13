@@ -10,7 +10,7 @@ import { getErrorMessage } from '../../../utils/errorHandler';
  * `elapsedSeconds` computed from that trail, so the local clock re-syncs on
  * each edge and a refreshed page resumes exactly where it was.
  *
- * Shared by the Grade 6+ Focus page and K-5 KidFocusPage.
+ * Shared by the Grade 6+ Focus page and K-4 KidFocusPage.
  */
 /** "5:09" - remaining/elapsed seconds as a clock face, shared by every Focus UI. */
 export function formatClock(totalSeconds) {

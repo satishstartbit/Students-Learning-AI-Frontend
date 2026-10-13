@@ -23,6 +23,19 @@ const wholeNumberOrBlank = (value) =>
     ? null
     : 'Enter a whole number of 1 or more, or leave blank for no limit';
 
+/** 0 is a free plan; a paid plan must be a charge a card can take (the server checks the same). */
+const chargeablePrice = (value) => {
+  if (value === '' || value == null) return null;
+  const price = Number(value);
+  if (!Number.isFinite(price) || price < 0) return 'Enter a price of 0 or more';
+  return price > 0 && price < 0.5 ? `A paid plan must cost at least 0.50 ${DEFAULT_CURRENCY}. Use 0 for a free plan.` : null;
+};
+
+const trialLength = (value) =>
+  value === '' || value == null || (Number.isInteger(Number(value)) && Number(value) >= 0 && Number(value) <= 365)
+    ? null
+    : 'Enter a whole number of days from 0 to 365';
+
 /** Simple key/value editor for the plan's `features` JSON. */
 function FeaturesEditor({ features, onChange }) {
   const entries = Object.entries(features ?? {});
@@ -73,7 +86,8 @@ export default function SubscriptionPlanFormPage() {
     },
     validationSchema: {
       name: [required('Enter a plan name')],
-      price: [required('Enter a price')],
+      price: [required('Enter a price'), chargeablePrice],
+      trialDays: [trialLength],
       maxStudents: [wholeNumberOrBlank],
       maxParents: [wholeNumberOrBlank],
     },
@@ -84,7 +98,8 @@ export default function SubscriptionPlanFormPage() {
         billingCycle: values.billingCycle,
         price: Number(values.price) || 0,
         currency: values.currency || DEFAULT_CURRENCY,
-        trialDays: values.trialDays === '' ? undefined : Number(values.trialDays),
+        // Blank = no trial, so clearing it on edit really removes it.
+        trialDays: values.trialDays === '' ? 0 : Number(values.trialDays),
         // Blank = no limit (null), so clearing a limit on edit really clears it.
         maxStudents: values.maxStudents === '' ? null : Number(values.maxStudents),
         maxParents: values.maxParents === '' ? null : Number(values.maxParents),
@@ -149,8 +164,23 @@ export default function SubscriptionPlanFormPage() {
           <Input label="Plan name" required {...form.getFieldProps('name')} />
           <Select label="Plan type" options={PLAN_TYPE_OPTIONS} required {...form.getFieldProps('planType')} />
           <Select label="Billing cycle" options={BILLING_CYCLE_OPTIONS} required {...form.getFieldProps('billingCycle')} />
-          <Input label={`Price (${DEFAULT_CURRENCY})`} type="number" required {...form.getFieldProps('price')} />
-          <Input label="Trial days" type="number" {...form.getFieldProps('trialDays')} />
+          <Input
+            label={`Price (${DEFAULT_CURRENCY})`}
+            type="number"
+            min={0}
+            step="0.01"
+            required
+            hint="0 makes it a free plan: families start it without a card."
+            {...form.getFieldProps('price')}
+          />
+          <Input
+            label="Trial days"
+            type="number"
+            min={0}
+            max={365}
+            hint="A free trial for a family's first subscription: the card is saved, then charged when the trial ends."
+            {...form.getFieldProps('trialDays')}
+          />
           <Input
             label="Number of students"
             type="number"

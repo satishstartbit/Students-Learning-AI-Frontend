@@ -3,7 +3,7 @@
  *
  * The `value` keys mirror the backend's ONBOARDING_OPTIONS
  * (utils/constants.js), which is what's validated and stored. `kidLabel` is
- * the K-5 wording where it differs.
+ * the K-4 wording where it differs.
  */
 
 export const FOCUS_HELPERS = [

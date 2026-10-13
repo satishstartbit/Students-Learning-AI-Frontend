@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LuSearch } from 'react-icons/lu';
-import { Checkbox, Input } from '../../../../components/common';
+import { Checkbox, SearchInput } from '../../../../components/common';
 import { useApi } from '../../../../hooks/useApi';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { formatName } from '../../../../utils/format';
@@ -78,15 +78,14 @@ export default function RosterPicker({ subject, grade, academicYearId, value = [
 
   return (
     <div className="af-roster">
-      <Input
+      {/* The shared search box: its own clear button (the browser's is hidden app-wide). */}
+      <SearchInput
         label="Students"
-        type="search"
         placeholder={`Search ${scope} students`}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         startAdornment={<LuSearch size={16} />}
         disabled={disabled}
-        reserveHelper={false}
       />
 
       {students.isLoading && rows.length === 0 ? (
