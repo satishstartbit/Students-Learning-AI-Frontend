@@ -1,53 +1,51 @@
 import { useMemo, useRef, useState } from 'react';
 import { LuCamera, LuCircleCheck, LuFileText, LuMic, LuPencil, LuX } from 'react-icons/lu';
-import { Alert, Button, Input, Modal, Select, Spinner, Textarea } from '../../../components/common';
+import { Alert, Button, Modal, Spinner, Textarea } from '../../../components/common';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { useStudentProfileOptions } from '../../profile/hooks/useStudentProfileOptions';
 import { useIntakeProgress } from '../hooks/useIntakeProgress';
 import { useWorkTypeOptions } from '../hooks/useWorkTypeOptions';
 import intakeService from '../services/intake.service';
+import { hasErrors, initialWorkValues, toIntakeFields, workFormErrors } from '../workForm';
 import IntakeConfirm from './IntakeConfirm';
+import WorkFormSections from './WorkFormSections';
 import VoiceRecorder from './VoiceRecorder';
 import '../planner.css';
 
 const MAX_FILES = 4;
 const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/heic,image/heif';
 
-/** Grade 6+ quick-add (Q14): title and optional facts, created at once with no reading. */
-function QuickAddForm({ studentId, defaultDueDate, onCreated, onBack }) {
-  const subjects = useStudentProfileOptions(studentId);
+/**
+ * Grade 6+ and parents' quick-add (Q14), in the teacher form's look
+ * (WorkFormSections, 2026-10-13): created at once with no reading. A parent
+ * with more than one child picks who it is for.
+ */
+function QuickAddForm({ studentId, childOptions, defaultDueDate, onCreated, onBack }) {
+  const [forId, setForId] = useState(studentId);
+  const subjects = useStudentProfileOptions(forId);
   const workTypes = useWorkTypeOptions();
-  const [title, setTitle] = useState('');
-  const [dueDate, setDueDate] = useState(defaultDueDate ?? '');
-  const [subject, setSubject] = useState('');
-  const [workType, setWorkType] = useState('');
-  const [minutes, setMinutes] = useState('');
-  const [description, setDescription] = useState('');
+  const [values, setValues] = useState(() => initialWorkValues({ defaultDueDate }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [attempted, setAttempted] = useState(false);
-  const minutesInvalid = minutes !== '' && !(Number.isInteger(Number(minutes)) && Number(minutes) >= 1 && Number(minutes) <= 1440);
+  const errors = workFormErrors(values);
+
+  const onChange = (field, value) => setValues((v) => ({ ...v, [field]: value }));
+  const pickChild = (id) => {
+    setForId(id);
+    // Subjects come from each child's own profile.
+    setValues((v) => ({ ...v, subject: '' }));
+  };
 
   const submit = async (event) => {
     event.preventDefault();
     setAttempted(true);
-    if (!title.trim() || minutesInvalid) return;
+    if (hasErrors(errors)) return;
     setSaving(true);
     setError(null);
     try {
-      const { data } = await intakeService.createIntake({
-        method: 'typed',
-        studentId,
-        fields: {
-          title: title.trim(),
-          dueDate: dueDate || null,
-          subject: subject || null,
-          taskType: workType || null,
-          estimatedMinutes: minutes ? Number(minutes) : null,
-          description: description.trim() || null,
-        },
-      });
-      onCreated(data);
+      const { data } = await intakeService.createIntake({ method: 'typed', studentId: forId, fields: toIntakeFields(values) });
+      onCreated(data, forId);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -62,38 +60,22 @@ function QuickAddForm({ studentId, defaultDueDate, onCreated, onBack }) {
           {error}
         </Alert>
       )}
-      <Input
-        label="What do you need to do?"
-        value={title}
-        maxLength={200}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="e.g. Finish worksheet 6.2"
-        error={attempted && !title.trim() ? 'Give the work a title' : undefined}
+      <WorkFormSections
+        values={values}
+        onChange={onChange}
+        errors={attempted ? errors : {}}
+        subjectOptions={subjects.subjectOptions}
+        subjectsLoading={subjects.loading}
+        subjectHint="Only subjects selected in the student profile."
+        subjectError={subjects.error ? 'Could not load profile subjects' : undefined}
+        workTypeOptions={workTypes.options}
+        workTypesLoading={workTypes.loading}
+        forOptions={childOptions}
+        forValue={forId}
+        onForChange={pickChild}
+        titleLabel="What do you need to do?"
         autoFocus
       />
-      <div className="grid gap-x-4 sm:grid-cols-2">
-        <Input label="Due date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-        <Select label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} options={subjects.subjectOptions} placeholder="No subject" loading={subjects.loading} hint="Only subjects selected in the student profile." error={subjects.error ? 'Could not load profile subjects' : undefined} />
-      </div>
-      <Select
-        label="Kind of work"
-        value={workType}
-        onChange={(e) => setWorkType(e.target.value)}
-        options={workTypes.options}
-        placeholder="Not sure"
-        loading={workTypes.loading}
-      />
-      <Input
-        label="About how long? (minutes)"
-        type="number"
-        inputMode="numeric"
-        min={1}
-        max={1440}
-        value={minutes}
-        onChange={(e) => setMinutes(e.target.value)}
-        error={attempted && minutesInvalid ? 'Whole minutes, 1 to 1440' : undefined}
-      />
-      <Textarea label="Notes" rows={3} maxLength={4000} value={description} onChange={(e) => setDescription(e.target.value)} />
       <div className="pl-actions">
         <Button type="button" variant="secondary" size="sm" onClick={onBack} disabled={saving}>
           Back
@@ -328,6 +310,8 @@ function Progress({ intake: initial, guided, onFinished, onClose }) {
  * and study times, labelled as added by the student or parent.
  *
  *   studentId   a parent adding for their child (omit for the student)
+ *   childOptions  a parent's children ([{ value, label }]): "Type it" lets
+ *               them pick who it is for (defaults to studentId)
  *   guided      Grades 4-5: voice/photo first, big buttons, fewer words
  *   intake      resume an intake that is waiting for answers
  *   method      open straight on one way in ('quick' | 'voice' | 'photo' |
@@ -339,6 +323,7 @@ export function AddWorkDialog({
   onAdded,
   studentId,
   childName,
+  childOptions,
   guided = false,
   defaultDueDate,
   intake: resumed,
@@ -394,7 +379,7 @@ export function AddWorkDialog({
             ))}
           </div>
         ) : method === 'quick' ? (
-          <QuickAddForm studentId={studentId} defaultDueDate={defaultDueDate} onCreated={created} onBack={back} />
+          <QuickAddForm studentId={studentId} childOptions={childOptions} defaultDueDate={defaultDueDate} onCreated={created} onBack={back} />
         ) : method === 'photo' || method === 'document' ? (
           <FilesForm method={method} studentId={studentId} guided={guided} onCreated={created} onBack={back} />
         ) : (

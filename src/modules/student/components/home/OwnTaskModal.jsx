@@ -1,17 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LuCamera, LuCheck, LuRotateCcw, LuTrash2, LuX } from 'react-icons/lu';
-import { Alert, Button, ConfirmationModal, Input, Modal, Select, Textarea } from '../../../../components/common';
+import { Alert, Button, ConfirmationModal, Modal } from '../../../../components/common';
 import { toast } from '../../../../hooks/useToast';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import { useStudentProfileOptions } from '../../../profile/hooks/useStudentProfileOptions';
 import ShareWithTeacher from '../../../planner/components/ShareWithTeacher';
+import WorkFormSections from '../../../planner/components/WorkFormSections';
 import { useWorkTypeOptions } from '../../../planner/hooks/useWorkTypeOptions';
+import { initialWorkValues, toOwnTaskValues, workFormErrors } from '../../../planner/workForm';
 import studentTaskService from '../../services/studentTask.service';
 
 /**
  * Add / view / edit a task the student tracks for themselves (backend:
  * /my-tasks). `mode` is 'type' or 'photo' for a new task - photo leads with
  * the picture and makes the title optional - or 'edit' with `task` set.
+ * The fields are the shared work form (planner WorkFormSections, the teacher
+ * form's look): Details (title, instructions, priority) and Subject & dates.
  */
 
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
@@ -72,12 +76,8 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
   const subjects = useStudentProfileOptions();
   const workTypes = useWorkTypeOptions();
 
-  const [title, setTitle] = useState(task?.title ?? '');
-  const [subject, setSubject] = useState(task?.subject ?? '');
-  const [workType, setWorkType] = useState(task?.workType ?? '');
-  const [dueDate, setDueDate] = useState(task?.dueDate ?? defaultDueDate ?? '');
-  const [minutes, setMinutes] = useState(task?.estimatedMinutes ? String(task.estimatedMinutes) : '');
-  const [description, setDescription] = useState(task?.description ?? '');
+  const [values, setValues] = useState(() => initialWorkValues({ task, defaultDueDate }));
+  const { subject, workType } = values;
   const [photoFile, setPhotoFile] = useState(null);
   const [removePhoto, setRemovePhoto] = useState(false);
   const [busy, setBusy] = useState(null);
@@ -101,14 +101,8 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
     return opts;
   }, [workTypes.options, workType]);
 
-  const minutesNumber = minutes === '' ? null : Number(minutes);
-  const errors = {
-    title: !title.trim() && !hasPhoto ? 'Give your task a title' : null,
-    minutes:
-      minutesNumber !== null && (!Number.isInteger(minutesNumber) || minutesNumber < 1 || minutesNumber > 600)
-        ? 'Use a whole number from 1 to 600'
-        : null,
-  };
+  const errors = workFormErrors(values, { titleRequired: !hasPhoto, maxMinutes: 600 });
+  if (errors.title) errors.title = 'Give your task a title';
   const invalid = Object.values(errors).some(Boolean);
 
   const pickPhoto = (file) => {
@@ -140,20 +134,15 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
     setAttempted(true);
     if (invalid || busy) return;
 
-    const values = {
-      title: title.trim(),
-      subject,
-      workType,
-      dueDate,
-      estimatedMinutes: minutes === '' ? '' : minutesNumber,
-      description: description.trim(),
+    const body = {
+      ...toOwnTaskValues(values),
       ...(photoFile ? { photoFile } : {}),
       ...(isEdit && removePhoto && !photoFile ? { removePhoto: true } : {}),
     };
 
     run(
       'save',
-      () => (isEdit ? studentTaskService.update(task.id, values) : studentTaskService.create(values)),
+      () => (isEdit ? studentTaskService.update(task.id, body) : studentTaskService.create(body)),
       isEdit ? 'Task saved' : 'Task added to your day'
     );
   };
@@ -206,53 +195,22 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
         <PhotoField file={photoFile} existingUrl={null} onPick={pickPhoto} onClear={() => setPhotoFile(null)} emphasis />
       )}
 
-      <Input
-        label="What do you need to do?"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder={mode === 'photo' ? 'e.g. Worksheet from the board' : 'e.g. Finish worksheet 6.2'}
-        maxLength={255}
-        required={!hasPhoto}
-        hint={hasPhoto && !title.trim() ? 'Optional with a photo' : undefined}
-        error={attempted ? errors.title : undefined}
+      <WorkFormSections
+        values={values}
+        onChange={(field, value) => setValues((v) => ({ ...v, [field]: value }))}
+        errors={attempted ? errors : {}}
+        subjectOptions={subjectOptions}
+        subjectsLoading={subjects.loading}
+        subjectHint="Choose from the subjects selected in your learning profile."
+        subjectError={subjects.error ? 'Could not load profile subjects' : undefined}
+        workTypeOptions={workTypeOptions}
+        workTypesLoading={workTypes.loading}
+        titleLabel="What do you need to do?"
+        titlePlaceholder={mode === 'photo' ? 'e.g. Worksheet from the board' : 'e.g. Finish worksheet 6.2'}
+        titleRequired={!hasPhoto}
         autoFocus={mode !== 'photo'}
+        maxMinutes={600}
       />
-
-      <div className="grid gap-x-4 sm:grid-cols-2">
-        <Select
-          label="Subject"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          options={subjectOptions}
-          placeholder="No subject"
-          loading={subjects.loading}
-          hint="Choose from the subjects selected in your learning profile."
-          error={subjects.error ? 'Could not load profile subjects' : undefined}
-        />
-        <Input label="Due date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-      </div>
-
-      <Select
-        label="Kind of work"
-        value={workType}
-        onChange={(e) => setWorkType(e.target.value)}
-        options={workTypeOptions}
-        placeholder="Not sure"
-        loading={workTypes.loading}
-      />
-
-      <Input
-        label="How long will it take? (minutes)"
-        type="number"
-        inputMode="numeric"
-        min={1}
-        max={600}
-        value={minutes}
-        onChange={(e) => setMinutes(e.target.value)}
-        error={attempted ? errors.minutes : undefined}
-      />
-
-      <Textarea label="Notes" rows={3} value={description} maxLength={2000} onChange={(e) => setDescription(e.target.value)} />
 
       {mode !== 'photo' && (
         <PhotoField

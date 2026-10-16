@@ -34,6 +34,12 @@ const parentMay = (work) => work.source === 'parent';
 
 function ChildSchedule({ child }) {
   const first = child.firstName ?? formatName(child);
+  // "Type it" can add the work for any of the family's (not archived) children.
+  const { children: family = [] } = useViewingChild();
+  const childOptions = useMemo(
+    () => family.filter((c) => !c.archived).map((c) => ({ value: c.id, label: c.firstName ?? formatName(c) })),
+    [family]
+  );
   const whose = `${first}’s`;
   const { plan, isLoading, error, reload } = usePlan(child.id);
   const settings = useSchoolworkSettings(child.id);
@@ -325,6 +331,7 @@ function ChildSchedule({ child }) {
         onAdded={refresh}
         studentId={child.id}
         childName={first}
+        childOptions={childOptions}
       />
     </div>
   );

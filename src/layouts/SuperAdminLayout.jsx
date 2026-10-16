@@ -14,6 +14,8 @@ import {
   LuTicketPercent,
   LuUsers,
   LuUsersRound,
+  LuMailOpen ,
+  LuMail
 } from 'react-icons/lu';
 import { useEffect } from 'react';
 import AuthenticatedLayout from './AuthenticatedLayout';
@@ -47,7 +49,7 @@ const NAV_ITEMS = [
         label: 'Relationships',
         icon: LuLink,
         items: [
-          // { to: '/admin/relationships/invitations', label: 'Teacher invitations', icon: LuMailOpen },
+          { to: '/admin/relationships/invitations', label: 'Teacher invitations', icon: LuMailOpen },
           { to: '/admin/relationships', label: 'Assignments', icon: LuLink, end: true },
           // "Teacher connections" removed at the client's request (2026-10-01).
           // Hidden for now - the wording lives in services/email/copy/teacher-invitation.txt (backend).

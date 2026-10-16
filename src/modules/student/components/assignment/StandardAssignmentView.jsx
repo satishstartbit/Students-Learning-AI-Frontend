@@ -153,7 +153,7 @@ export function StandardAssignmentView({ item, assignmentId, reload, children })
           </section>
 
           {/* Steps plan the work; once it's handed in there is nothing left to plan. */}
-          {!handedIn && <TaskBreakdown steps={steps} activeStepId={activeStepId} />}
+          {!handedIn && <TaskBreakdown steps={steps} activeStepId={activeStepId} workId={assignmentId} />}
 
           {children}
         </div>

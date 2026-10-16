@@ -2,6 +2,7 @@ import { LuCheck } from 'react-icons/lu';
 import { Button, Modal } from '../../../../components/common';
 import { useApi } from '../../../../hooks/useApi';
 import { minutesLabel, sourceLabel } from '../../planView';
+import BreakIntoSteps from '../BreakIntoSteps';
 import { COLUMNS, moveActions } from '../../schoolwork';
 import { SubjectChip, TypeTag } from './SchoolworkBits';
 import { dueText, estimateOf } from './schoolworkFormat';
@@ -16,6 +17,10 @@ const noSteps = async () => ({ data: [] });
  *
  *   loadSteps(workId)   the student's steps (planner / focus steps); left out
  *                       for a parent, who sees the counts
+ *   stepsFor            'me': offer "Break into steps" with AI under the steps
+ *                       (any unfinished work, teacher work included)
+ *   kid                 Grades 4-5 wording for it
+ *   onStepsChanged()    steps were kept: re-read the work (its step counts)
  *   onMove(work, to)    a board move the server allows
  *   onHandIn(work)      teacher work: open its page to hand it in
  *   onOpenPage(work)    the full page (teacher work) or the edit dialog (own work)
@@ -31,6 +36,9 @@ export function WorkNoteDialog({
   movable = false,
   busy = false,
   loadSteps,
+  stepsFor,
+  kid = false,
+  onStepsChanged,
   onClose,
   onMove,
   onHandIn,
@@ -89,7 +97,7 @@ export function WorkNoteDialog({
           ) : steps.error ? (
             <p className="sw-muted">The steps couldn’t load right now.</p>
           ) : stepList.length === 0 ? (
-            <p className="sw-muted">No steps yet - they appear once the work is broken down.</p>
+            <p className="sw-muted">No steps yet.</p>
           ) : (
             <ol className="sw-steps">
               {stepList.map((s) => (
@@ -105,6 +113,18 @@ export function WorkNoteDialog({
                 </li>
               ))}
             </ol>
+          )}
+          {stepsFor && !done && !(steps.isLoading && !steps.data) && !steps.error && (
+            <BreakIntoSteps
+              studentId={stepsFor}
+              workId={work.id}
+              hasSteps={stepList.length > 0}
+              kid={kid}
+              onSaved={() => {
+                steps.run(work.id).catch(() => {});
+                onStepsChanged?.();
+              }}
+            />
           )}
         </section>
       )}

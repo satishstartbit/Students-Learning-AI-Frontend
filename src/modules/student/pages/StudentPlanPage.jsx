@@ -346,6 +346,8 @@ export default function StudentPlanPage() {
         movable
         busy={schoolwork.busyId === openWork?.id}
         loadSteps={focusService.listSteps}
+        stepsFor="me"
+        onStepsChanged={schoolwork.reload}
         onClose={() => setOpenWork(null)}
         onMove={moveFromDialog}
         onHandIn={(w) => {
