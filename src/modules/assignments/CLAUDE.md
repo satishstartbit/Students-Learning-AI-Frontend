@@ -13,6 +13,7 @@ Shared building blocks for assignments. There are **no pages here**. Teachers au
 | `components/StudentPicker.jsx`, `BackgroundAudioField.jsx` | Recipients, and background sound (track or upload) |
 | `media/*` | Picture for a question or pair: upload / emoji (emoji-mart) / GIF & sticker (`VITE_GIF_PROVIDER`, `VITE_GIF_API_KEY`) |
 | `components/assignmentForm.css` | Form styles (`af-`) shared with the teacher form |
+| `components/FormSection.jsx` | One collapsible form card (title, status chip, description) - the teacher's assignment form and the parent/student work form (`planner/components/WorkFormSections`) share it (2026-10-13). `teacher/components/assignmentForm/FormSection.jsx` re-exports it |
 
 **Backend:** `routes/assignment.routes.js` (`/assignments`, `subscriptionGated`; TEACHER/SUPER_ADMIN author, STUDENT works) → `controllers/assignment.controller.js` → `services/assignment.service.js`, `assignmentQuestion.service.js` → `repositories/assignment.repository.js`. Curriculum: `routes/curriculum.routes.js` → `services/curriculum.service.js`. Models: `Assignment`, `AssignmentRecipient`, `AssignmentSubmission`, `AssignmentQuestion`, `SubmissionAnswer`, `AssignmentFile`, `TaskType`, `Subject`, `Topic`, `QuestionType`, `AudioTrack`.
 

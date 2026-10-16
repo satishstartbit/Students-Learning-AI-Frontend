@@ -38,8 +38,24 @@ export const getSchoolworkSettings = (studentId) => api.get(`${base(studentId)}/
 /** Partial: { defaultView?, showTypeIcons?, showEstimatedTime?, showPersonalEvents?, subjectColors? }. */
 export const updateSchoolworkSettings = (studentId, patch) => api.patch(`${base(studentId)}/schoolwork-settings`, patch);
 
+/*
+ * "Break into steps" with AI (studentBreakdown.service.js): the steps are
+ * sized to the student's own free time and other work before the due date.
+ */
+/** { available, hasSteps, canRedo, outOfDate } */
+export const getStepHelp = (studentId, workId) => api.get(`${base(studentId)}/work/${workId}/steps/ai`);
+
+/** The AI's steps for review - nothing is saved: { proposalId, source, steps, keeping, replacing, workload, maxSteps }. */
+export const suggestSteps = (studentId, workId) => api.post(`${base(studentId)}/work/${workId}/steps/ai/suggest`);
+
+/** Keep the steps as edited: { proposalId, steps: [{ key, title, minutes, dependsOn, checkpointId }] }. */
+export const keepSteps = (studentId, workId, body) => api.post(`${base(studentId)}/work/${workId}/steps/ai`, body);
+
 export default {
   getPlan,
+  getStepHelp,
+  suggestSteps,
+  keepSteps,
   replan,
   listWork,
   getAvailability,

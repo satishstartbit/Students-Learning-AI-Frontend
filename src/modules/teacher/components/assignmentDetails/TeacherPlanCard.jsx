@@ -135,6 +135,29 @@ function BreakdownStatus({ breakdown, live }) {
   );
 }
 
+/**
+ * Per-student steps (the default since 2026-10-13): no class list to edit.
+ * Each student taps "Break into steps" and the AI sizes the steps to their
+ * own week; the checkpoints above still bind every student.
+ */
+function PerStudentSteps({ breakdown }) {
+  const { studentsWithSteps = 0, recipients = 0 } = breakdown;
+  return (
+    <div className="ui-field" data-testid="breakdown-steps">
+      <h3 className="ui-statcard__label">Steps</h3>
+      <p className="ui-hint" style={{ marginTop: 0 }} data-testid="breakdown-status" data-status="per_student">
+        Each student breaks this into their own steps with AI, sized to their free time and other work before the due date. Your checkpoints above
+        apply to everyone.
+      </p>
+      <p className="ui-hint" style={{ marginTop: 0 }}>
+        {recipients
+          ? `${studentsWithSteps} of ${recipients} ${recipients === 1 ? 'student has' : 'students have'} made steps so far.`
+          : 'Students make their steps once it’s sent to them.'}
+      </p>
+    </div>
+  );
+}
+
 function StepsEditor({ assignmentId, plan, disabled, onSaved }) {
   const breakdown = plan.breakdown ?? { status: 'ready', steps: plan.steps ?? [], missing: [] };
   const live = Boolean(breakdown.live);
@@ -271,10 +294,11 @@ function StepsEditor({ assignmentId, plan, disabled, onSaved }) {
 
 /**
  * Checkpoints and the step breakdown for THEIR assignment (PDF Q3, Q5; the
- * "AI Breakdown Timing" spec, 2026-10-01). The steps are made when the
- * assignment is saved - draft or publish - and previewed and edited here;
- * a draft's are never shown to students. No regenerate button: a different
- * breakdown comes from editing the steps, or the assignment itself.
+ * "AI Breakdown Timing" spec, 2026-10-01). With intake.policy
+ * breakdownTrigger 'student' (the default since 2026-10-13) every student
+ * makes their own steps (PerStudentSteps). With 'automatic', the steps are
+ * made when the assignment is saved - draft or publish - and previewed and
+ * edited here; a draft's are never shown to students.
  */
 export function TeacherPlanCard({ assignmentId, archived }) {
   const plan = useApi(assignmentService.getTeacherPlan, { immediate: true, args: [assignmentId] });
@@ -300,7 +324,11 @@ export function TeacherPlanCard({ assignmentId, archived }) {
   return (
     <Card
       title="Steps and checkpoints"
-      subtitle="Steps are suggested when you save the assignment. Edit them here; students get them when it’s published."
+      subtitle={
+        plan.data?.breakdown?.status === 'per_student'
+          ? 'Set checkpoints for the class. Each student makes their own steps.'
+          : 'Steps are suggested when you save the assignment. Edit them here; students get them when it’s published.'
+      }
       className="ui-field"
     >
       {plan.error && !plan.data ? (
@@ -311,7 +339,11 @@ export function TeacherPlanCard({ assignmentId, archived }) {
         // Re-mounted only when the stored steps or checkpoints change (not on a status-only poll).
         <div key={JSON.stringify([plan.data.checkpoints, plan.data.breakdown?.steps ?? plan.data.steps])}>
           <CheckpointsEditor assignmentId={assignmentId} plan={plan.data} disabled={archived} onSaved={reload} />
-          <StepsEditor assignmentId={assignmentId} plan={plan.data} disabled={archived} onSaved={reload} />
+          {plan.data.breakdown?.status === 'per_student' ? (
+            <PerStudentSteps breakdown={plan.data.breakdown} />
+          ) : (
+            <StepsEditor assignmentId={assignmentId} plan={plan.data} disabled={archived} onSaved={reload} />
+          )}
         </div>
       )}
     </Card>

@@ -560,3 +560,156 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
+
+/* "Break into steps" (components/BreakIntoSteps.jsx) - inline in the work dialog and the assignment page. */
+.pl-bis {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+}
+.pl-bis--busy {
+  flex-direction: row;
+  align-items: center;
+  color: var(--color-text-secondary);
+}
+.pl-bis--review {
+  align-items: stretch;
+  padding: 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface-sunken);
+}
+.pl-bis__title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+}
+.pl-bis__note {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+.pl-bis__alert {
+  width: 100%;
+}
+.pl-bis__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pl-bis__facts li {
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+.pl-bis__keeping ul {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+.pl-bis__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pl-bis__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+}
+.pl-bis__num {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  margin-top: 4px;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  color: var(--accent-base);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+.pl-bis__fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.pl-bis__fields input {
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+}
+.pl-bis__fields input[aria-invalid='true'] {
+  border-color: var(--color-danger-fg);
+}
+.pl-bis__title-input {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.pl-bis__mins {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+.pl-bis__mins input {
+  width: 64px;
+}
+.pl-bis__error {
+  flex-basis: 100%;
+  color: var(--color-danger-fg);
+  font-size: var(--font-size-sm);
+}
+.pl-bis__tools {
+  flex: none;
+  display: inline-flex;
+  gap: 2px;
+}
+.pl-bis__foot,
+.pl-bis__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pl-bis__actions {
+  justify-content: flex-end;
+}
+.pl-bis__total {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+@media (max-width: 480px) {
+  .pl-bis__row {
+    flex-wrap: wrap;
+  }
+  .pl-bis__tools {
+    margin-left: 32px;
+  }
+}

@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import { LuArrowDown, LuArrowUp, LuCheck, LuClock3, LuEllipsis, LuPencil, LuPlus, LuTrash2 } from 'react-icons/lu';
 import { Button, Dropdown } from '../../../../components/common';
+import BreakIntoSteps from '../../../planner/components/BreakIntoSteps';
 import { milestoneHeadings } from './milestoneHeadings';
 
 /**
@@ -9,9 +10,11 @@ import { milestoneHeadings } from './milestoneHeadings';
  * backend /focus/steps), with Done / In progress / To do.
  *
  * "In progress" is real: it's the step the student's live focus session is on.
- * Steps arrive with the work (made when it was saved); there is no "Suggest"
- * or "Regenerate" button - smaller steps come from "Need help? → Break it
- * down more". Editing (rename / reorder / remove / add) appears under "Edit steps".
+ * "Break into steps" (2026-10-13, planner/components/BreakIntoSteps): the
+ * student asks the AI for steps sized to their week, reviews and keeps them;
+ * with steps already there it offers a redo of the unfinished ones. Smaller
+ * steps also come from "Need help? → Break it down more". Editing (rename /
+ * reorder / remove / add) appears under "Edit steps".
  */
 
 const stateOf = (step, activeStepId) => {
@@ -98,7 +101,7 @@ function StepRow({ step, index, total, steps, activeStepId, editing, onSelect })
   );
 }
 
-export function TaskBreakdown({ steps, activeStepId, onSelectStep }) {
+export function TaskBreakdown({ steps, activeStepId, onSelectStep, workId }) {
   const [editing, setEditing] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const total = steps.steps.length;
@@ -136,9 +139,8 @@ export function TaskBreakdown({ steps, activeStepId, onSelectStep }) {
         <p className="ad-steps__empty">Loading your steps…</p>
       ) : total === 0 ? (
         <div className="ad-steps__empty">
-          <p style={{ margin: '0 0 12px' }}>
-            Your steps arrive with the work - check back in a moment. You can also add your own.
-          </p>
+          <BreakIntoSteps workId={workId} onSaved={steps.reload} />
+          <p style={{ margin: '12px 0' }}>Or add your own steps.</p>
           <Button size="sm" variant="secondary" startIcon={<LuPlus aria-hidden="true" />} onClick={() => setEditing(true)}>
             Add a step
           </Button>
@@ -176,6 +178,7 @@ export function TaskBreakdown({ steps, activeStepId, onSelectStep }) {
         </form>
       )}
 
+      {total > 0 && <BreakIntoSteps workId={workId} hasSteps onSaved={steps.reload} />}
       {total > 0 && <p className="ad-foot">These steps are yours - edit, reorder, add or delete them at any time.</p>}
     </section>
   );

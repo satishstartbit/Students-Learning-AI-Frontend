@@ -351,6 +351,9 @@ export default function KidMyWeekPage() {
         movable
         busy={schoolwork.busyId === openWork?.id}
         loadSteps={focusService.listSteps}
+        stepsFor="me"
+        kid
+        onStepsChanged={schoolwork.reload}
         onClose={() => setOpenWork(null)}
         onMove={async (w, to) => {
           setOpenWork(null);
