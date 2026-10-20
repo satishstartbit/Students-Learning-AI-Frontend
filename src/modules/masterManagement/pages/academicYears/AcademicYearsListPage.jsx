@@ -9,6 +9,8 @@ import { useDebounce } from '../../../../hooks/useDebounce';
 import { formatDate } from '../../../../utils/date';
 import { toast } from '../../../../hooks/useToast';
 import academicService from '../../services/academic.service';
+import MasterGuideButton from '../../components/guide/MasterGuideButton';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -120,11 +122,17 @@ export default function AcademicYearsListPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title="Academic Years"
         description="Only one academic year can be marked current at a time."
         breadcrumbs={[{ label: 'Master Management', to: '/admin/masters' }, { label: 'Academic Years' }]}
-        actions={<Button as={Link} to="/admin/masters/academic-years/create">Add academic year</Button>}
+        actions={
+          <>
+            <MasterGuideButton title="Academic Years" />
+            <Button as={Link} to="/admin/masters/academic-years/create">Add academic year</Button>
+          </>
+        }
       />
 
       <FilterBar>

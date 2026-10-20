@@ -11,6 +11,7 @@ import { taskTypeService } from '../../services/curriculum.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const LIST_PATH = '/admin/masters/task-types';
 const EMPTY = { name: '', description: '', icon: '', minGrade: '', maxGrade: '', subtaskStyle: '', displayOrder: '', isActive: true };
@@ -73,6 +74,7 @@ export default function TaskTypeFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit task type' : 'Add task type'}
         breadcrumbs={[

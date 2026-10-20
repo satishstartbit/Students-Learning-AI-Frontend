@@ -25,6 +25,7 @@ import appearanceService from '../../services/appearance.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 /**
  * Avatars master - the buddies students choose from on "Make it yours"
@@ -287,6 +288,7 @@ export default function AvatarFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit avatar' : 'Add avatar'}
         description="Avatars students can choose from on their “Make it yours” page."

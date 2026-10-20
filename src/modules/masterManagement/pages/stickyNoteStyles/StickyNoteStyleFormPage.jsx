@@ -9,6 +9,7 @@ import appearanceService from '../../services/appearance.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const DEFAULT_CONFIG = { background: '#FEF3C7', border: '#FBBF24' };
 
@@ -60,6 +61,7 @@ export default function StickyNoteStyleFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit sticky note style' : 'Add sticky note style'}
         breadcrumbs={[

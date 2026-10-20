@@ -87,6 +87,12 @@ function PlanCard({ plan, selected, onSelect, fitReason, current = false, trialE
         <Badge variant="neutral">{limitText(plan.maxChildren, 'child', 'children')}</Badge>
         <Badge variant="neutral">{limitText(plan.maxParents, 'parent', 'parents')}</Badge>
       </div>
+      {/* The least this plan costs, whatever discount code is used (2026-10-20). */}
+      {plan.minimumAmount > 0 && (
+        <p className="ui-hint" style={{ margin: 'var(--spacing-sm) 0 0' }}>
+          Minimum payment {formatCurrency(plan.minimumAmount, plan.currency)} / {per(plan)}, even with a discount code.
+        </p>
+      )}
 
       <div style={{ marginTop: 'var(--spacing-lg)' }}>
         <Button
@@ -660,6 +666,12 @@ export default function ParentSubscriptionPage() {
                       Your code {current.discountCode?.code} doesn't apply to {changeTarget.name}, so it won't carry over.
                     </p>
                   )}
+                  {changeQuote.minimumApplied && (
+                    <p className="sub-note">
+                      {changeTarget.name} has a minimum payment of {formatCurrency(changeTarget.minimumAmount, changeQuote.currency)}, so your code takes
+                      off no more than that allows.
+                    </p>
+                  )}
                   <div style={{ marginTop: 'var(--spacing-lg)' }}>
                     <Button onClick={confirmChange} loading={startingChange}>
                       {changeQuote.dueToday > 0
@@ -741,6 +753,8 @@ export default function ParentSubscriptionPage() {
               {codeApplied && shown?.discount > 0 && (
                 <p className="sub-coupon__applied" role="status">
                   {appliedCode} applied - you save {formatCurrency(shown.discount, selectedPlan.currency)}.
+                  {shown.minimumApplied &&
+                    ` ${selectedPlan.name} has a minimum payment of ${formatCurrency(selectedPlan.minimumAmount, selectedPlan.currency)}, so the code takes off no more than that allows.`}
                 </p>
               )}
 

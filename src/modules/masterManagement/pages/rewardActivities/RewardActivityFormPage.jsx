@@ -9,6 +9,7 @@ import rewardService from '../../services/reward.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const KEY_PATTERN = /^[a-z][a-z0-9_]*$/;
 
@@ -75,6 +76,7 @@ export default function RewardActivityFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit reward activity' : 'Add reward activity'}
         breadcrumbs={[

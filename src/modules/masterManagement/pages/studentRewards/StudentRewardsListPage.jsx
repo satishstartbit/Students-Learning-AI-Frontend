@@ -9,6 +9,8 @@ import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
 import rewardService from '../../services/reward.service';
 import RewardArt from '../../../student/components/rewards/RewardArt';
+import MasterGuideButton from '../../components/guide/MasterGuideButton';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -136,11 +138,17 @@ export default function StudentRewardsListPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title="Student Rewards"
         description="Stickers and emojis students collect automatically as their earned points reach each level."
         breadcrumbs={[{ label: 'Master Management', to: '/admin/masters' }, { label: 'Student Rewards' }]}
-        actions={<Button as={Link} to="/admin/masters/student-rewards/create">Add reward</Button>}
+        actions={
+          <>
+            <MasterGuideButton title="Student Rewards" />
+            <Button as={Link} to="/admin/masters/student-rewards/create">Add reward</Button>
+          </>
+        }
       />
 
       <FilterBar>

@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { PageHeader, Card, Input, Textarea, Select, Checkbox, Button, Alert, ButtonGroup, SectionHeader, IconButton, Loader } from '../../../../components/common';
+import { PageHeader, Card, Input, Textarea, Select, Checkbox, Button, Alert, ButtonGroup, Loader } from '../../../../components/common';
 import { useForm } from '../../../../hooks/useForm';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
 import { required } from '../../../../utils/validation';
 import { DEFAULT_CURRENCY } from '../../../../utils/locale';
+import { listAddress } from '../../../../utils/listQuery';
 import billingService from '../../services/billing.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import { familySizeProblem, minimumProblem, planPayload, priceProblem, trialProblem } from './planFormRules';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const PLAN_TYPE_OPTIONS = [
   { value: 'individual', label: 'Individual' },
@@ -20,54 +23,13 @@ const BILLING_CYCLE_OPTIONS = [
   { value: 'yearly', label: 'Yearly' },
 ];
 
-const wholeNumberOrBlank = (value) =>
-  value === '' || value == null || (Number.isInteger(Number(value)) && Number(value) >= 1)
-    ? null
-    : 'Enter a whole number of 1 or more, or leave blank for no limit';
+// Field rules live in planFormRules.js (+ test); the server checks the same.
+const chargeablePrice = (value) => priceProblem(value, DEFAULT_CURRENCY);
+const minimumWithinPrice = (value, values) => minimumProblem(value, values, DEFAULT_CURRENCY);
 
-/** 0 is a free plan; a paid plan must be a charge a card can take (the server checks the same). */
-const chargeablePrice = (value) => {
-  if (value === '' || value == null) return null;
-  const price = Number(value);
-  if (!Number.isFinite(price) || price < 0) return 'Enter a price of 0 or more';
-  return price > 0 && price < 0.5 ? `A paid plan must cost at least 0.50 ${DEFAULT_CURRENCY}. Use 0 for a free plan.` : null;
-};
-
-const trialLength = (value) =>
-  value === '' || value == null || (Number.isInteger(Number(value)) && Number(value) >= 0 && Number(value) <= 365)
-    ? null
-    : 'Enter a whole number of days from 0 to 365';
-
-/** Simple key/value editor for the plan's `features` JSON. */
-function FeaturesEditor({ features, onChange }) {
-  const entries = Object.entries(features ?? {});
-
-  const setEntry = (index, key, value) => {
-    const next = [...entries];
-    next[index] = [key, value];
-    onChange(Object.fromEntries(next));
-  };
-  const removeEntry = (index) => {
-    const next = entries.filter((_, i) => i !== index);
-    onChange(Object.fromEntries(next));
-  };
-  const addEntry = () => onChange(Object.fromEntries([...entries, ['', '']]));
-
-  return (
-    <div className="ui-field">
-      <label className="ui-label">Features</label>
-      {entries.map(([key, value], index) => (
-        <div key={index} style={{ display: 'flex', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-xs)' }}>
-          <Input placeholder="Feature key" value={key} onChange={(e) => setEntry(index, e.target.value, value)} fieldClassName="" />
-          <Input placeholder="Value" value={value} onChange={(e) => setEntry(index, key, e.target.value)} fieldClassName="" />
-          <IconButton label="Remove feature" variant="danger" onClick={() => removeEntry(index)}>×</IconButton>
-        </div>
-      ))}
-      <Button type="button" size="sm" variant="secondary" onClick={addEntry}>Add feature</Button>
-    </div>
-  );
-}
-
+// No Features editor (removed 2026-10-20, user request): nothing in the app shows a
+// plan's features, so the form doesn't send them - a new plan gets none (the
+// column defaults to {}), and saving an older plan leaves what it has.
 export default function SubscriptionPlanFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -79,34 +41,29 @@ export default function SubscriptionPlanFormPage() {
     if (isEdit) fetchItem(id).catch(() => {});
   }, [isEdit, id, fetchItem]);
 
-  const [features, setFeatures] = useState({});
-
   const form = useForm({
     initialValues: {
-      name: '', planType: 'individual', billingCycle: 'monthly', price: '', currency: DEFAULT_CURRENCY,
+      name: '', planType: 'individual', billingCycle: 'monthly', price: '', minimumAmount: '', currency: DEFAULT_CURRENCY,
       trialDays: '', maxStudents: '', maxParents: '', description: '', displayOrder: '', isActive: true,
     },
+    // 2026-10-20 (user request): trial days, number of students/parents (at least 1) and the
+    // minimum amount are required.
     validationSchema: {
       name: [required('Enter a plan name')],
       price: [required('Enter a price'), chargeablePrice],
-      trialDays: [trialLength],
-      maxStudents: [wholeNumberOrBlank],
-      maxParents: [wholeNumberOrBlank],
+      minimumAmount: [required('Enter the minimum amount (0 for no minimum)'), minimumWithinPrice],
+      trialDays: [required('Enter the trial days (0 for no free trial)'), trialProblem],
+      maxStudents: [required('Enter the number of students'), familySizeProblem],
+      maxParents: [required('Enter the number of parents'), familySizeProblem],
     },
     async onSubmit(values) {
       const payload = {
         name: values.name,
         planType: values.planType,
         billingCycle: values.billingCycle,
-        price: Number(values.price) || 0,
+        ...planPayload(values),
         currency: values.currency || DEFAULT_CURRENCY,
-        // Blank = no trial, so clearing it on edit really removes it.
-        trialDays: values.trialDays === '' ? 0 : Number(values.trialDays),
-        // Blank = no limit (null), so clearing a limit on edit really clears it.
-        maxStudents: values.maxStudents === '' ? null : Number(values.maxStudents),
-        maxParents: values.maxParents === '' ? null : Number(values.maxParents),
         description: values.description || null,
-        features,
         displayOrder: orderPayload(values.displayOrder),
       };
       if (!isEdit) payload.isActive = values.isActive;
@@ -116,17 +73,10 @@ export default function SubscriptionPlanFormPage() {
         : await billingService.createPlan(payload);
 
       toast.success(isEdit ? 'Subscription plan updated' : 'Subscription plan created');
-      navigate('/admin/masters/subscription-plans');
+      navigate(listAddress('/admin/masters/subscription-plans'));
       return data;
     },
   });
-
-  // Features follow the loaded plan - adjusted during render, not in an effect.
-  const [featuresSeededFrom, setFeaturesSeededFrom] = useState(null);
-  if (existing && existing !== featuresSeededFrom) {
-    setFeaturesSeededFrom(existing);
-    setFeatures(existing.features ?? {});
-  }
 
   useEffect(() => {
     if (!existing) return;
@@ -135,6 +85,7 @@ export default function SubscriptionPlanFormPage() {
       planType: existing.planType ?? 'individual',
       billingCycle: existing.billingCycle ?? 'monthly',
       price: existing.price ?? '',
+      minimumAmount: existing.minimumAmount ?? '0.00',
       currency: existing.currency ?? DEFAULT_CURRENCY,
       trialDays: existing.trialDays ?? '',
       maxStudents: existing.maxStudents ?? '',
@@ -150,6 +101,7 @@ export default function SubscriptionPlanFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit subscription plan' : 'Add subscription plan'}
         breadcrumbs={[
@@ -176,31 +128,40 @@ export default function SubscriptionPlanFormPage() {
             {...form.getFieldProps('price')}
           />
           <Input
+            label={`Minimum amount (${DEFAULT_CURRENCY})`}
+            type="number"
+            min={0}
+            step="0.01"
+            required
+            hint="The least a family pays for this plan, whatever discount code is used. 0 = no minimum. It can't be more than the price."
+            {...form.getFieldProps('minimumAmount')}
+          />
+          <Input
             label="Trial days"
             type="number"
             min={0}
             max={365}
-            hint="A free trial for a family's first subscription: the card is saved, then charged when the trial ends."
+            required
+            hint="A free trial for a family's first subscription: the card is saved, then charged when the trial ends. 0 = no trial."
             {...form.getFieldProps('trialDays')}
           />
           <Input
             label="Number of students"
             type="number"
             min={1}
-            hint="Most children a family can add on this plan. Blank = no limit."
+            required
+            hint="Most children a family can add on this plan (at least 1)."
             {...form.getFieldProps('maxStudents')}
           />
           <Input
             label="Number of parents"
             type="number"
             min={1}
-            hint="Most parent accounts in the family, the account holder included. Blank = no limit."
+            required
+            hint="Most parent accounts in the family, the account holder included (at least 1)."
             {...form.getFieldProps('maxParents')}
           />
           <Textarea label="Description" {...form.getFieldProps('description')} />
-
-          <SectionHeader title="Features" as="h3" />
-          <FeaturesEditor features={features} onChange={setFeatures} />
 
           <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
           {!isEdit && (
@@ -209,7 +170,7 @@ export default function SubscriptionPlanFormPage() {
 
           <ButtonGroup>
             <Button type="submit" loading={form.isSubmitting}>{isEdit ? 'Save changes' : 'Create plan'}</Button>
-            <Button as={Link} to="/admin/masters/subscription-plans" variant="secondary">Cancel</Button>
+            <Button as={Link} to={listAddress('/admin/masters/subscription-plans')} variant="secondary">Cancel</Button>
           </ButtonGroup>
         </form>
       </Card>

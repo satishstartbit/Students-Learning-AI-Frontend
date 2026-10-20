@@ -11,6 +11,7 @@ import { questionTypeService } from '../../services/curriculum.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const LIST_PATH = '/admin/masters/question-types';
 const EMPTY = { name: '', description: '', code: '', minGrade: '', maxGrade: '', displayOrder: '', isActive: true };
@@ -77,6 +78,7 @@ export default function QuestionTypeFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit question type' : 'Add question type'}
         breadcrumbs={[

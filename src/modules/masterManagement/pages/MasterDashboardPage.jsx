@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LuChevronDown, LuCircleCheck, LuCircleX, LuDatabase, LuEye, LuList, LuPlus } from 'react-icons/lu';
+import { Link, useNavigate } from 'react-router-dom';
+import { LuChevronDown, LuCircleCheck, LuCircleX, LuDatabase, LuEye, LuList } from 'react-icons/lu';
 import {
   PageHeader,
   Card,
@@ -18,8 +18,11 @@ import {
 import { Tooltip } from '../../../components/ui/tooltip';
 import { useApi } from '../../../hooks/useApi';
 import { useDebounce } from '../../../hooks/useDebounce';
+import { useListQuery } from '../../../hooks/useListQuery';
+import { useAddressText } from '../../../hooks/useAddressText';
 import { formatDate } from '../../../utils/date';
 import dashboardService from '../services/dashboard.service';
+import { formatSorts, parseSorts, sectionKey, sortFor, sortRows } from './masterDashboardState';
 import './masterDashboard.css';
 
 const CATEGORY_ALL = '';
@@ -84,13 +87,24 @@ function AreaCard({ category, rows, columns, sort, onSort, busy }) {
  * Master Management dashboard - every master (generic and dedicated),
  * grouped by area, with total/active/inactive record counts and a link
  * into that master's own list/edit screens.
+ *
+ * 2026-10-20 (user request): each master's name is a link to its list; each
+ * section sorts on its own; search, area and every section's sort live in the
+ * address (hooks/useListQuery: ?q=&area=&sort=academic:totalRecords:desc), so
+ * coming back - the browser's Back or a master page's Back button
+ * (components/MasterBackButton) - shows the dashboard exactly as it was left.
  */
 export default function MasterDashboardPage() {
   const navigate = useNavigate();
 
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('');
-  const [sort, setSort] = useState({ by: 'label', order: 'asc' });
+  const { query, setQuery } = useListQuery({ q: '', area: '', sort: '' });
+  const search = query.q;
+  const category = query.area;
+  const sorts = useMemo(() => parseSorts(query.sort), [query.sort]);
+  const setSearch = (value) => setQuery({ q: value });
+  const [searchText, typeSearch] = useAddressText(search, setSearch);
+  const setCategory = (value) => setQuery({ area: value });
+  const setSectionSort = (cat, by, order) => setQuery({ sort: formatSorts({ ...sorts, [sectionKey(cat)]: { by, order } }) });
 
   const debouncedSearch = useDebounce(search, 350);
 
@@ -131,17 +145,9 @@ export default function MasterDashboardPage() {
 
     return [...byCategory.entries()]
       .sort(([a], [b]) => orderIndex(a) - orderIndex(b) || a.localeCompare(b))
-      .map(([cat, rows]) => {
-        const sorted = [...rows].sort((a, b) => {
-          const dir = sort.order === 'desc' ? -1 : 1;
-          const av = a[sort.by] ?? '';
-          const bv = b[sort.by] ?? '';
-          if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
-          return String(av).localeCompare(String(bv)) * dir;
-        });
-        return { category: cat, rows: sorted };
-      });
-  }, [filtered, sort]);
+      // Each section in its own order (masterDashboardState.js).
+      .map(([cat, rows]) => ({ category: cat, rows: sortRows(rows, sortFor(sorts, cat)), sort: sortFor(sorts, cat) }));
+  }, [filtered, sorts]);
 
   const totals = useMemo(() => {
     const areas = new Set();
@@ -168,7 +174,10 @@ export default function MasterDashboardPage() {
       sortable: true,
       render: (row) => (
         <div>
-          <div className="mm-master__name">{row.label}</div>
+          {/* The name opens the master's own list (blue, underlined - 2026-10-20). */}
+          <Link to={row.viewPath} className="mm-master__name mm-master__link">
+            {row.label}
+          </Link>
           {row.description && <div className="ui-hint">{row.description}</div>}
         </div>
       ),
@@ -251,9 +260,9 @@ export default function MasterDashboardPage() {
           fieldClassName="ui-filterbar__search ui-field--compact"
           placeholder="Search masters"
           aria-label="Search masters"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onClear={() => setSearch('')}
+          value={searchText}
+          onChange={(e) => typeSearch(e.target.value)}
+          onClear={() => typeSearch('')}
         />
         <Select
           fieldClassName="ui-field--compact"
@@ -275,14 +284,14 @@ export default function MasterDashboardPage() {
           description={hasFilters ? 'Try clearing the search or choosing All areas.' : undefined}
         />
       ) : (
-        groups.map(({ category: cat, rows }) => (
+        groups.map(({ category: cat, rows, sort }) => (
           <AreaCard
             key={cat}
             category={cat}
             rows={rows}
             columns={columns}
             sort={sort}
-            onSort={(by, order) => setSort({ by, order })}
+            onSort={(by, order) => setSectionSort(cat, by, order)}
             busy={isLoading}
           />
         ))

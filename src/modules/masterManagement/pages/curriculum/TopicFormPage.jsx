@@ -11,6 +11,7 @@ import { curriculumSubjectService, topicService } from '../../services/curriculu
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const listAllSubjects = () => curriculumSubjectService.list({ limit: 100, sortBy: 'name', sortOrder: 'asc' });
 
@@ -74,6 +75,7 @@ export default function TopicFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit topic' : 'Add topic'}
         breadcrumbs={[

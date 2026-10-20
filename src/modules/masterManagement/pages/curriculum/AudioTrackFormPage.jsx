@@ -25,6 +25,7 @@ import { audioTrackService } from '../../services/curriculum.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const LIST_PATH = '/admin/masters/audio-tracks';
 const SOURCE_OPTIONS = [
@@ -109,6 +110,7 @@ export default function AudioTrackFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit sound' : 'Add sound'}
         breadcrumbs={[

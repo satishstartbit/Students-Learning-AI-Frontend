@@ -11,6 +11,7 @@ import { curriculumSubjectService } from '../../services/curriculum.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const LIST_PATH = '/admin/masters/curriculum-subjects';
 
@@ -57,6 +58,7 @@ export default function CurriculumSubjectFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit subject' : 'Add subject'}
         breadcrumbs={[

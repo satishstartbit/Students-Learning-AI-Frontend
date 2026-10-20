@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   PageHeader,
   Card,
@@ -8,13 +8,13 @@ import {
   StatusBadge,
   Alert,
   Loader,
-  Button,
 } from '../../../../components/common';
 import { useApi } from '../../../../hooks/useApi';
 import { formatDate } from '../../../../utils/date';
 import { formatName } from '../../../../utils/format';
 import { getErrorMessage } from '../../../../utils/errorHandler';
 import subscriptionService from '../../services/subscription.service';
+import MasterBackButton from '../../../masterManagement/components/MasterBackButton';
 
 /**
  * /admin/masters/discount-codes/:id/redemptions
@@ -58,6 +58,7 @@ export default function AdminCouponRedemptionsPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={coupon ? `Redemptions — ${coupon.code}` : 'Redemptions'}
         description={coupon?.name}
@@ -66,11 +67,6 @@ export default function AdminCouponRedemptionsPage() {
           { label: 'Discount Codes', to: '/admin/masters/discount-codes' },
           { label: 'Redemptions' },
         ]}
-        actions={
-          <Button as={Link} to="/admin/masters/discount-codes" variant="secondary">
-            Back to codes
-          </Button>
-        }
       />
 
       {error && <Alert variant="error">{getErrorMessage(error)}</Alert>}

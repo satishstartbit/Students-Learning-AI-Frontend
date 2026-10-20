@@ -4,11 +4,14 @@ import { LuFilterX, LuPencil, LuToggleLeft, LuToggleRight, LuTrash2 } from 'reac
 import { PageHeader, Button, IconButton, FilterBar, DataTable, SearchInput, Select, StatusBadge, Badge, ConfirmationModal, Toast } from '../../../../components/common';
 import { Tooltip } from '../../../../components/ui/tooltip';
 import { useApi } from '../../../../hooks/useApi';
-import { usePagination } from '../../../../hooks/usePagination';
+import { useListQuery } from '../../../../hooks/useListQuery';
+import { useAddressText } from '../../../../hooks/useAddressText';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
 import { formatCurrency } from '../../../../utils/format';
 import billingService from '../../services/billing.service';
+import MasterGuideButton from '../../components/guide/MasterGuideButton';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -23,11 +26,10 @@ const ACTION_COPY = {
 
 export default function SubscriptionPlansListPage() {
   const navigate = useNavigate();
-  const pagination = usePagination();
+  // Filters, sort and page live in the address, so Back from a plan returns here as left (2026-10-20).
+  const { query, setQuery, pagination } = useListQuery({ search: '', status: '', sortBy: 'display_order', sortOrder: 'asc' });
+  const { search, status, sortBy, sortOrder } = query;
 
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
-  const [sort, setSort] = useState({ by: 'display_order', order: 'asc' });
   const [confirm, setConfirm] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -36,8 +38,8 @@ export default function SubscriptionPlansListPage() {
   const { page, limit, applyMeta, goToPage } = pagination;
 
   const load = useCallback(
-    () => run({ page, limit, search: debouncedSearch, status, sortBy: sort.by, sortOrder: sort.order }),
-    [run, page, limit, debouncedSearch, status, sort]
+    () => run({ page, limit, search: debouncedSearch, status, sortBy, sortOrder }),
+    [run, page, limit, debouncedSearch, status, sortBy, sortOrder]
   );
 
   useEffect(() => {
@@ -48,10 +50,8 @@ export default function SubscriptionPlansListPage() {
     if (meta?.total !== undefined) applyMeta(meta);
   }, [meta, applyMeta]);
 
-  const resetTo = (setter) => (value) => {
-    setter(value);
-    goToPage(1);
-  };
+  const filterBy = (key) => (value) => setQuery({ [key]: value, page: 1 });
+  const [searchText, typeSearch] = useAddressText(search, filterBy('search'));
 
   const runAction = async () => {
     if (!confirm) return;
@@ -77,7 +77,17 @@ export default function SubscriptionPlansListPage() {
     {
       key: 'price',
       header: 'Price',
-      render: (row) => <Badge variant="primary">{formatCurrency(row.price, row.currency)}</Badge>,
+      render: (row) => (
+        <div>
+          <Badge variant="primary">{formatCurrency(row.price, row.currency)}</Badge>
+          {/* The least a family pays, whatever discount code is used (2026-10-20). */}
+          {Number(row.minimumAmount) > 0 && (
+            <div className="ui-hint" style={{ margin: '2px 0 0' }}>
+              Minimum {formatCurrency(row.minimumAmount, row.currency)}
+            </div>
+          )}
+        </div>
+      ),
     },
     { key: 'is_active', header: 'Status', render: (row) => <StatusBadge status={row.isActive ? 'active' : 'inactive'} /> },
     {
@@ -107,24 +117,26 @@ export default function SubscriptionPlansListPage() {
   ];
 
   const hasFilters = Boolean(search || status);
-  const clearFilters = () => {
-    setSearch('');
-    setStatus('');
-    goToPage(1);
-  };
+  const clearFilters = () => setQuery({ search: '', status: '', page: 1 });
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title="Subscription Plans"
         description="Billing plans available to parents."
         breadcrumbs={[{ label: 'Master Management', to: '/admin/masters' }, { label: 'Subscription Plans' }]}
-        actions={<Button as={Link} to="/admin/masters/subscription-plans/create">Add plan</Button>}
+        actions={
+          <>
+            <MasterGuideButton title="Subscription Plans" />
+            <Button as={Link} to="/admin/masters/subscription-plans/create">Add plan</Button>
+          </>
+        }
       />
 
       <FilterBar>
-        <SearchInput fieldClassName="ui-filterbar__search ui-field--compact" placeholder="Plan name" value={search} onChange={(e) => resetTo(setSearch)(e.target.value)} onClear={() => resetTo(setSearch)('')} />
-        <Select fieldClassName="ui-field--compact" label="Status" options={STATUS_OPTIONS} placeholder="All statuses" value={status} onChange={(e) => resetTo(setStatus)(e.target.value)} />
+        <SearchInput fieldClassName="ui-filterbar__search ui-field--compact" placeholder="Plan name" value={searchText} onChange={(e) => typeSearch(e.target.value)} onClear={() => typeSearch('')} />
+        <Select fieldClassName="ui-field--compact" label="Status" options={STATUS_OPTIONS} placeholder="All statuses" value={status} onChange={(e) => filterBy('status')(e.target.value)} />
         <Tooltip label="Clear filters" side="top">
           <IconButton icon={<LuFilterX aria-hidden="true" />} label="Clear filters" size="sm" onClick={clearFilters} disabled={!hasFilters} />
         </Tooltip>
@@ -136,9 +148,9 @@ export default function SubscriptionPlansListPage() {
         isLoading={isLoading}
         error={error}
         onRetry={load}
-        sortBy={sort.by}
-        sortOrder={sort.order}
-        onSort={(by, order) => setSort({ by, order })}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSort={(by, order) => setQuery({ sortBy: by, sortOrder: order, page: 1 })}
         pagination={pagination}
         onPageChange={goToPage}
         emptyTitle={hasFilters ? 'No plans match those filters' : 'No subscription plans yet'}

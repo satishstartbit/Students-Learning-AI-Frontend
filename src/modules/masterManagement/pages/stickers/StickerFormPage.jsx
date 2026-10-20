@@ -9,6 +9,7 @@ import appearanceService from '../../services/appearance.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 export default function StickerFormPage() {
   const { id } = useParams();
@@ -62,6 +63,7 @@ export default function StickerFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit sticker' : 'Add sticker'}
         breadcrumbs={[

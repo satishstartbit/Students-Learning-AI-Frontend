@@ -16,7 +16,8 @@ import {
 import { SearchableSelect } from '../../../components/ui/searchable-select';
 import { Tooltip } from '../../../components/ui/tooltip';
 import { useApi } from '../../../hooks/useApi';
-import { usePagination } from '../../../hooks/usePagination';
+import { useListQuery } from '../../../hooks/useListQuery';
+import { useAddressText } from '../../../hooks/useAddressText';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { useModal } from '../../../hooks/useModal';
 import { toast } from '../../../hooks/useToast';
@@ -48,7 +49,11 @@ const STATUS_OPTIONS = [
 const STATUS_FILTER_OPTIONS = [{ value: '', label: 'All statuses' }, ...STATUS_OPTIONS];
 
 export default function RelationshipsPage() {
-  const pagination = usePagination();
+  // Filters and page live in the address (2026-10-20): a refresh, Back from a
+  // user's page, or a shared link shows the list as it was left.
+  const { query, setQuery, pagination } = useListQuery({
+    search: '', teacher: '', student: '', subject: '', grade: '', year: '', status: '',
+  });
   const { page, limit, applyMeta, goToPage } = pagination;
 
   // --- reference data: subjects, grades, academic years -------------------
@@ -93,13 +98,13 @@ export default function RelationshipsPage() {
   const assignModal = useModal();
 
   // --- filters --------------------------------------------------------------
-  const [search, setSearch] = useState('');
-  const [filterSubject, setFilterSubject] = useState(null);
-  const [filterGrade, setFilterGrade] = useState(null);
-  const [filterAcademicYearId, setFilterAcademicYearId] = useState(null);
-  const [filterStatus, setFilterStatus] = useState('');
-  const [filterTeacherId, setFilterTeacherId] = useState(null);
-  const [filterStudentId, setFilterStudentId] = useState(null);
+  const search = query.search;
+  const filterSubject = query.subject || null;
+  const filterGrade = query.grade || null;
+  const filterAcademicYearId = query.year || null;
+  const filterStatus = query.status;
+  const filterTeacherId = query.teacher || null;
+  const filterStudentId = query.student || null;
   const [filterTeacherSearch, setFilterTeacherSearch] = useState('');
   const [filterStudentSearch, setFilterStudentSearch] = useState('');
 
@@ -152,21 +157,12 @@ export default function RelationshipsPage() {
     Boolean(filterTeacherId) ||
     Boolean(filterStudentId);
 
-  const clearFilters = () => {
-    setSearch('');
-    setFilterSubject(null);
-    setFilterGrade(null);
-    setFilterAcademicYearId(null);
-    setFilterStatus('');
-    setFilterTeacherId(null);
-    setFilterStudentId(null);
-    goToPage(1);
-  };
+  const clearFilters = () =>
+    setQuery({ search: '', teacher: '', student: '', subject: '', grade: '', year: '', status: '', page: 1 });
 
-  const withFilterReset = (setter) => (next) => {
-    setter(next);
-    goToPage(1);
-  };
+  // One address change per filter change, back to page 1.
+  const filterBy = (key) => (next) => setQuery({ [key]: next ?? '', page: 1 });
+  const [searchText, typeSearch] = useAddressText(search, filterBy('search'));
 
   // --- list ----------------------------------------------------------------
   const list = useApi(adminUserService.listRelationships);
@@ -285,9 +281,9 @@ export default function RelationshipsPage() {
         <SearchInput
           fieldClassName="ui-filterbar__search ui-field--compact"
           placeholder="Search by name or email"
-          value={search}
-          onChange={(e) => withFilterReset(setSearch)(e.target.value)}
-          onClear={() => withFilterReset(setSearch)('')}
+          value={searchText}
+          onChange={(e) => typeSearch(e.target.value)}
+          onClear={() => typeSearch('')}
         />
 
         <SearchableSelect
@@ -295,7 +291,7 @@ export default function RelationshipsPage() {
           label="Teacher"
           options={filterTeacherOptions}
           value={filterTeacherId}
-          onChange={withFilterReset(setFilterTeacherId)}
+          onChange={filterBy('teacher')}
           loading={filterTeachers.isLoading}
           placeholder="Any teacher"
           searchPlaceholder="Search teachers…"
@@ -308,7 +304,7 @@ export default function RelationshipsPage() {
           label="Student"
           options={filterStudentOptions}
           value={filterStudentId}
-          onChange={withFilterReset(setFilterStudentId)}
+          onChange={filterBy('student')}
           loading={filterStudents.isLoading}
           placeholder="Any student"
           searchPlaceholder="Search students…"
@@ -321,7 +317,7 @@ export default function RelationshipsPage() {
           label="Subject"
           options={subjectOptions}
           value={filterSubject}
-          onChange={withFilterReset(setFilterSubject)}
+          onChange={filterBy('subject')}
           loading={subjects.isLoading}
           placeholder="Any subject"
           searchPlaceholder="Search subjects…"
@@ -332,7 +328,7 @@ export default function RelationshipsPage() {
           label="Grade"
           options={gradeOptions}
           value={filterGrade}
-          onChange={withFilterReset(setFilterGrade)}
+          onChange={filterBy('grade')}
           loading={grades.isLoading}
           placeholder="Any grade"
           searchPlaceholder="Search grades…"
@@ -343,7 +339,7 @@ export default function RelationshipsPage() {
           label="Academic Year"
           options={academicYearOptions}
           value={filterAcademicYearId}
-          onChange={withFilterReset(setFilterAcademicYearId)}
+          onChange={filterBy('year')}
           loading={academicYears.isLoading}
           placeholder="Any academic year"
           searchPlaceholder="Search academic years…"
@@ -353,7 +349,7 @@ export default function RelationshipsPage() {
           fieldClassName="ui-field--compact"
           label="Status"
           value={filterStatus}
-          onChange={(e) => withFilterReset(setFilterStatus)(e.target.value)}
+          onChange={(e) => filterBy('status')(e.target.value)}
           options={STATUS_FILTER_OPTIONS}
         />
 

@@ -8,6 +8,7 @@ import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
 import appearanceService from '../../services/appearance.service';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -121,6 +122,7 @@ export default function StickersListPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title="Stickers"
         description="Decorative stickers students can add to their dashboard."

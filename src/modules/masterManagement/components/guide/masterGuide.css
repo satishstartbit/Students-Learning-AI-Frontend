@@ -1,0 +1,172 @@
+/*
+ * "Where it's used" guide on master pages (MasterGuideButton), prefix mg-.
+ * Portal type scale (Nunito text, Poppins headings), theme tokens only.
+ */
+.mg-body {
+  display: grid;
+  gap: var(--spacing-lg);
+  font-family: var(--font-family-base);
+  color: var(--color-text-primary);
+}
+
+.mg-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--spacing-sm);
+  font-family: var(--font-family-heading);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.mg-section__title svg {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  color: var(--accent-base);
+}
+
+/* --- Where it shows up ------------------------------------------------- */
+.mg-places {
+  display: grid;
+  gap: var(--spacing-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mg-place {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+}
+.mg-place__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.mg-place__page {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+}
+.mg-place__how {
+  margin: 4px 0 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+.mg-place__path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 6px 0 0;
+}
+.mg-body code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--color-bg-surface-sunken);
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+.mg-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--accent-base);
+}
+.mg-link svg {
+  width: 13px;
+  height: 13px;
+}
+.mg-empty {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* --- Bullets and fields -------------------------------------------------- */
+.mg-bullets {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+}
+.mg-fields {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+.mg-field {
+  display: grid;
+  grid-template-columns: minmax(140px, 32%) minmax(0, 1fr);
+  gap: 4px 12px;
+  font-size: var(--font-size-md);
+  line-height: 1.45;
+}
+.mg-field dt {
+  font-weight: 700;
+}
+.mg-field dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.mg-related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+.mg-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--accent-border);
+  border-radius: 9999px;
+  background: var(--accent-soft);
+  color: var(--accent-base);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+.mg-chip:hover {
+  background: var(--accent-soft-hover);
+}
+
+/* --- For developers ------------------------------------------------------- */
+.mg-dev {
+  padding: 10px 12px;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+.mg-dev summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+.mg-dev summary svg {
+  width: 15px;
+  height: 15px;
+}
+.mg-dev[open] summary {
+  margin-bottom: var(--spacing-sm);
+}
+
+@media (max-width: 640px) {
+  .mg-field {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

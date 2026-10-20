@@ -9,6 +9,8 @@ import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
 import { AvatarPicture } from '../../../student/components/personalize/AvatarPicture';
 import appearanceService from '../../services/appearance.service';
+import MasterGuideButton from '../../components/guide/MasterGuideButton';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -125,11 +127,17 @@ export default function AvatarsListPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title="Avatars"
         description="Avatar images students can choose from."
         breadcrumbs={[{ label: 'Master Management', to: '/admin/masters' }, { label: 'Avatars' }]}
-        actions={<Button as={Link} to="/admin/masters/avatars/create">Add avatar</Button>}
+        actions={
+          <>
+            <MasterGuideButton title="Avatars" />
+            <Button as={Link} to="/admin/masters/avatars/create">Add avatar</Button>
+          </>
+        }
       />
 
       <FilterBar>

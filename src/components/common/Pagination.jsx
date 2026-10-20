@@ -3,6 +3,11 @@
  *
  * Pairs with usePagination - pass its page/totalPages/goToPage straight in.
  * Long ranges collapse to first/last plus a window around the current page.
+ *
+ * Admin lists (2026-10-20, user request) pass `alwaysShow` so the bar - "Showing
+ * 1-6 of 6" and the page buttons - is there even when everything fits on one
+ * page, and `onLimitChange` (+ `limit`, `pageSizeOptions`) for "Rows per page".
+ * Both are opt-in; without them the bar hides when there is one page, as before.
  */
 function buildPageRange(page, totalPages, siblings = 1) {
   const total = siblings * 2 + 5;
@@ -35,10 +40,15 @@ export function Pagination({
   siblings = 1,
   showSummary = true,
   className = '',
+  alwaysShow = false,
+  limit,
+  onLimitChange,
+  pageSizeOptions = [10, 20, 50],
 }) {
-  if (totalPages <= 1) return null;
+  if (alwaysShow ? !(total > 0) : totalPages <= 1) return null;
+  const lastPage = Math.max(totalPages, 1);
 
-  const pages = buildPageRange(page, totalPages, siblings);
+  const pages = buildPageRange(page, lastPage, siblings);
 
   return (
     <nav className={`ui-pagination ${className}`.trim()} aria-label="Pagination">
@@ -46,6 +56,21 @@ export function Pagination({
         <span>
           {from != null && to != null ? `Showing ${from}–${to} of ${total}` : `Page ${page} of ${totalPages}`}
         </span>
+      )}
+
+      {onLimitChange && (
+        <label className="ui-pagination__size">
+          Rows per page
+          <select value={limit} onChange={(e) => onLimitChange(Number(e.target.value))}>
+            {[...new Set([...pageSizeOptions, limit].filter(Boolean))]
+              .sort((a, b) => a - b)
+              .map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+          </select>
+        </label>
       )}
 
       <div className="ui-pagination__pages">
@@ -82,7 +107,7 @@ export function Pagination({
           type="button"
           className="ui-pagination__page"
           onClick={() => onPageChange?.(page + 1)}
-          disabled={page >= totalPages}
+          disabled={page >= lastPage}
           aria-label="Next page"
         >
           ›

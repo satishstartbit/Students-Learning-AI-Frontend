@@ -9,6 +9,7 @@ import regulationService from '../../services/regulation.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const ACTIVITY_TYPE_HINT = 'e.g. Breathing, Grounding, Movement, Calming Sounds, Music, Mindfulness';
 // Students see this beside the exercise on Focus (student focus/ExerciseMedia.jsx); without one, a built-in picture of the steps.
@@ -79,6 +80,7 @@ export default function RegulationActivityFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit regulation activity' : 'Add regulation activity'}
         breadcrumbs={[
