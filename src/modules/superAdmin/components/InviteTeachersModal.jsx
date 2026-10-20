@@ -13,14 +13,33 @@ import invitationService from '../../invitations/services/teacherInvitation.serv
  * Nothing is linked here: every teacher chosen gets an invitation for every
  * student chosen, and only the teacher's Accept creates the link.
  *
- *   1. Subject(s)   2. Grade   -> 3. Teachers who teach them (search by name/email)
- *                              -> 4. Students in that grade (search by name/email)
- *   5. Academic year
+ *   1. Subject(s)   2. Grade   3. Academic year (required, starts on the current one)
+ *   -> 4. The teacher (one - one teacher per subject) who teaches them (search by name/email)
+ *   -> 5. Students in that grade who don't already have a teacher - or a
+ *         request/invitation open - for any of those subjects that year
+ *         (one teacher per subject, 2026-10-19); the form says how many were left out
  *
- * Pairs that already have an open invitation, or are already connected for
- * those subjects, are skipped and reported. Subject/grade/year options come
- * from the page, which already loads them for its filters.
+ * Pairs that already have an open invitation, are already connected, or
+ * whose subject got a teacher earlier in the same send, are skipped and
+ * reported. Subject/grade/year options come from the page.
  */
+const SKIP_WORDS = {
+  already_invited: 'already invited',
+  already_connected: 'already connected',
+  subject_taken: 'subject already has a teacher',
+};
+
+/** "3 skipped: 2 subject already has a teacher, 1 already invited." */
+function skippedSummary(skipped = []) {
+  const counts = {};
+  skipped.forEach((s) => {
+    const words = SKIP_WORDS[s.reason] ?? 'not possible';
+    counts[words] = (counts[words] ?? 0) + 1;
+  });
+  const parts = Object.entries(counts).map(([words, n]) => `${n} ${words}`);
+  return `${skipped.length} skipped: ${parts.join(', ')}.`;
+}
+
 export default function InviteTeachersModal({
   isOpen,
   onClose,
@@ -38,7 +57,12 @@ export default function InviteTeachersModal({
   const [grade, setGrade] = useState(null);
   const [teacherIds, setTeacherIds] = useState([]);
   const [studentIds, setStudentIds] = useState([]);
+  // null = the current year (pre-selected); the field is required.
   const [academicYearId, setAcademicYearId] = useState(null);
+  const currentYearId = academicYearOptions?.find((o) => o.isCurrent)?.value ?? null;
+  const yearId = academicYearId ?? currentYearId;
+  const yearOption = academicYearOptions?.find((o) => o.value === yearId);
+  const yearLabel = yearOption?.name ?? yearOption?.label ?? null;
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [teacherSearch, setTeacherSearch] = useState('');
@@ -53,7 +77,7 @@ export default function InviteTeachersModal({
 
   const debouncedTeacherSearch = useDebounce(teacherSearch, 350);
   const debouncedStudentSearch = useDebounce(studentSearch, 350);
-  const readyForPeople = subjects.length > 0 && Boolean(grade);
+  const readyForPeople = subjects.length > 0 && Boolean(grade) && Boolean(yearId);
 
   // Teachers only once subject(s) and grade are chosen - both narrow the list server-side.
   useEffect(() => {
@@ -61,10 +85,12 @@ export default function InviteTeachersModal({
     runTeachers({ subjects, grade, search: debouncedTeacherSearch }).catch(() => {});
   }, [isOpen, readyForPeople, subjects, grade, debouncedTeacherSearch, runTeachers]);
 
+  // Students only once subject(s), grade and year are chosen: those already covered for a subject that year are left out.
   useEffect(() => {
-    if (!isOpen || !grade) return;
-    runStudents({ grade, search: debouncedStudentSearch }).catch(() => {});
-  }, [isOpen, grade, debouncedStudentSearch, runStudents]);
+    if (!isOpen || !readyForPeople) return;
+    runStudents({ grade, subjects, academicYearId: yearId, search: debouncedStudentSearch }).catch(() => {});
+  }, [isOpen, readyForPeople, grade, subjects, yearId, debouncedStudentSearch, runStudents]);
+  const hiddenStudents = readyForPeople ? Number(students.meta?.hidden ?? 0) : 0;
 
   const toOption = (p) => ({ value: p.id, label: formatName(p), description: p.email });
   /** Current results, plus any already-chosen person the current search no longer shows. */
@@ -107,7 +133,15 @@ export default function InviteTeachersModal({
 
   const handleSubjectsChange = (next) => {
     setSubjects(next);
-    setTeacherIds([]); // the teacher list is narrowed by subject - earlier picks may no longer apply
+    // Both lists depend on the subjects - earlier picks may no longer apply.
+    setTeacherIds([]);
+    setStudentIds([]);
+    setError(null);
+  };
+
+  const handleYearChange = (next) => {
+    setAcademicYearId(next);
+    setStudentIds([]); // who is still free depends on the year
     setError(null);
   };
 
@@ -119,22 +153,21 @@ export default function InviteTeachersModal({
   };
 
   const pairCount = teacherIds.length * studentIds.length;
-  const canSend = Boolean(subjects.length && grade && teacherIds.length && studentIds.length) && !busy;
+  const canSend = Boolean(subjects.length && grade && yearId && teacherIds.length && studentIds.length) && !busy;
 
   const handleSend = async (event) => {
     event.preventDefault();
     setError(null);
     if (!subjects.length) return setError('Select at least one subject');
     if (!grade) return setError('Select a grade');
+    if (!yearId) return setError('Select the academic year');
     if (!teacherIds.length) return setError('Select at least one teacher');
     if (!studentIds.length) return setError('Select at least one student');
 
     setBusy(true);
     try {
-      const { data } = await invitationService.adminInvite({ subjects, grade, teacherIds, studentIds, academicYearId });
-      const skippedText = data.skippedCount
-        ? ` ${data.skippedCount} skipped (already invited or already connected).`
-        : '';
+      const { data } = await invitationService.adminInvite({ subjects, grade, teacherIds, studentIds, academicYearId: yearId });
+      const skippedText = data.skippedCount ? ` ${skippedSummary(data.skipped)}` : '';
       if (data.createdCount === 0) toast.warning(`No new invitations -${skippedText}`);
       else toast.success(`${data.createdCount} invitation${data.createdCount === 1 ? '' : 's'} sent.${skippedText}`);
       if (data.emailFailures) toast.warning(`${data.emailFailures} email(s) could not be sent - re-send them from Teacher invitations.`);
@@ -153,7 +186,7 @@ export default function InviteTeachersModal({
       isOpen={isOpen}
       onClose={handleClose}
       title="Invite teachers"
-      description="Choose the subject(s) and grade, then the teachers and students. Each teacher gets an invitation for each student, and is connected only when they accept."
+      description="Choose the subject(s), grade and academic year, then the teacher and the students. Students who already have a teacher for a subject that year are not listed. The teacher gets an invitation for each student and is connected only when they accept."
       size="lg"
       closeOnOverlayClick={!busy}
       closeOnEscape={!busy}
@@ -210,11 +243,26 @@ export default function InviteTeachersModal({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
+          <SearchableSelect
+            label="3. Academic year"
+            required
+            options={academicYearOptions}
+            value={yearId}
+            onChange={handleYearChange}
+            loading={academicYearsLoading}
+            placeholder="Select academic year"
+            searchPlaceholder="Search academic years…"
+            emptyMessage="No academic years available"
+            hint="The school year these classes are for. Starts on the current year."
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
           <MultiSelect
-            label="3. Teachers"
+            label="4. Teacher"
             required
             searchable
-            showSelectAll
+            maxSelected={1}
             options={teacherOptions}
             value={teacherIds}
             onChange={choose(setTeacherIds, teacherOptions)}
@@ -222,13 +270,13 @@ export default function InviteTeachersModal({
             filterLocally={false}
             loading={teachers.isLoading}
             disabled={!readyForPeople}
-            placeholder={readyForPeople ? 'Search by name or email' : 'Select subject and grade first'}
+            placeholder={readyForPeople ? 'Search by name or email' : 'Select subject, grade and year first'}
             searchPlaceholder="Search teachers by name or email…"
-            hint="Teachers who list these subjects and this grade on their profile."
+            hint="One teacher per subject: teachers who list these subjects and this grade on their profile."
           />
 
           <MultiSelect
-            label="4. Students"
+            label="5. Students"
             required
             searchable
             showSelectAll
@@ -239,33 +287,26 @@ export default function InviteTeachersModal({
             filterLocally={false}
             loading={students.isLoading}
             disabled={!readyForPeople}
-            placeholder={readyForPeople ? 'Search by name or email' : 'Select subject and grade first'}
+            placeholder={readyForPeople ? 'Search by name or email' : 'Select subject, grade and year first'}
             searchPlaceholder="Search students by name or email…"
-            hint="Students in the chosen grade."
+            emptyMessage="No students left without a teacher for these subjects"
+            hint={
+              readyForPeople
+                ? `Students in ${grade} without a teacher for ${subjects.join(', ')}${yearLabel ? ` in ${yearLabel}` : ''}.${
+                    hiddenStudents ? ` ${hiddenStudents} already ${hiddenStudents === 1 ? 'has' : 'have'} one (or an invitation open) and ${hiddenStudents === 1 ? "isn't" : "aren't"} listed.` : ''
+                  }`
+                : 'Students in the chosen grade who still need a teacher for these subjects.'
+            }
           />
         </div>
 
         {pairCount > 0 && (
           <Alert variant="info">
-            {teacherIds.length} teacher{teacherIds.length === 1 ? '' : 's'} × {studentIds.length} student
-            {studentIds.length === 1 ? '' : 's'} = <strong>{pairCount}</strong> invitation{pairCount === 1 ? '' : 's'} for{' '}
-            {subjects.join(', ')} — {grade}. Nothing is linked until each teacher accepts.
+            <strong>{pairCount}</strong> invitation{pairCount === 1 ? '' : 's'} to {teacherOptions.find((o) => o.value === teacherIds[0])?.label ?? 'the teacher'}{' '}
+            for {subjects.join(', ')} — {grade}{yearLabel ? `, ${yearLabel}` : ''}. Each student's parents can follow it on My Children. Nothing is
+            linked until the teacher accepts.
           </Alert>
         )}
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <SearchableSelect
-            label="5. Academic year"
-            options={academicYearOptions}
-            value={academicYearId}
-            onChange={setAcademicYearId}
-            loading={academicYearsLoading}
-            placeholder="Current academic year"
-            searchPlaceholder="Search academic years…"
-            emptyMessage="No academic years available"
-            hint="Leave empty for the current academic year."
-          />
-        </div>
       </form>
     </Modal>
   );

@@ -7,7 +7,8 @@ import { listGradeLevels } from '../services/curriculum.service';
 
 /**
  * "From grade" / "To grade" pickers for a curriculum master. Options come from
- * the Grade Levels master (its sort value is the grade number), so there is
+ * the Grade Levels master (each grade's number is kept by the server - hidden
+ * from the admin since 2026-10-19), so there is
  * one grade list for the whole platform. Blank on either side = open-ended.
  *
  * `fromProps` / `toProps` are `form.getFieldProps(...)` results.

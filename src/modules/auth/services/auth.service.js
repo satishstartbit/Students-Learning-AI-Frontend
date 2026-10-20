@@ -7,11 +7,34 @@ import api from '../../../utils/apiClient';
  * these; they never touch apiClient directly.
  */
 
+/**
+ * A sign-in that got no answer is tried once more, quietly (QA 2026-10-16:
+ * "the first sign-in fails, the second works"): the first request after a
+ * quiet spell can be lost while the connection is set up or the hosted
+ * server wakes (no response, or a gateway's 502/503/504). Only those - a
+ * refused password, a pause or any other real answer is never repeated, so
+ * wrong-password counting is unchanged; and not while the device is offline.
+ */
+const SIGN_IN_RETRY_MS = 1200;
+const gatewayStatus = (status) => status === 502 || status === 503 || status === 504;
+
+async function signInOnce(path, credentials) {
+  try {
+    return await api.post(path, credentials);
+  } catch (error) {
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    const noAnswer = error?.isNetworkError && !error?.isTimeout;
+    if (offline || !(noAnswer || gatewayStatus(error?.status))) throw error;
+    await new Promise((resolve) => setTimeout(resolve, SIGN_IN_RETRY_MS));
+    return api.post(path, credentials);
+  }
+}
+
 /** Shared sign-in for Student, Teacher and Parent. */
-export const login = (credentials) => api.post('/auth/login', credentials);
+export const login = (credentials) => signInOnce('/auth/login', credentials);
 
 /** Sign-in for Super Admin only - the dedicated admin endpoint. */
-export const adminLogin = (credentials) => api.post('/auth/admin/login', credentials);
+export const adminLogin = (credentials) => signInOnce('/auth/admin/login', credentials);
 
 export const register = (payload) => api.post('/auth/register', payload);
 

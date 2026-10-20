@@ -73,6 +73,9 @@ export default function AdminDashboardPage() {
   const phrase = periodPhrase(days);
   const previousText = (value, format = formatNumber) => `vs ${format(value ?? 0)} in the ${Number(days) === 365 ? 'previous 12 months' : `previous ${days} days`}`;
   const attention = attentionItems(data);
+  // Only a full reply is drawn - an empty or partial one shows "couldn't load" with a retry, never a crash.
+  const ready = Boolean(acc?.total && data?.subscriptions && data?.learning);
+  const retry = () => run(Number(days)).catch(() => {});
 
   const subscriptionRows = SUBSCRIPTION_ROWS.filter((r) => r.always || (data?.subscriptions?.byStatus?.[r.key] ?? 0) > 0).map((r) => ({
     ...r,
@@ -103,10 +106,12 @@ export default function AdminDashboardPage() {
         </FilterBar>
       </div>
 
-      {dashboard.error && !data ? (
-        <ErrorState error={dashboard.error} onRetry={() => run(Number(days)).catch(() => {})} />
-      ) : !data ? (
+      {dashboard.error && !ready ? (
+        <ErrorState error={dashboard.error} onRetry={retry} />
+      ) : !ready && (dashboard.isLoading || !data) ? (
         <Loader message="Loading the dashboard…" />
+      ) : !ready ? (
+        <ErrorState title="The dashboard couldn't be loaded" error={new Error("The dashboard's figures didn't come through. Try again in a moment.")} onRetry={retry} />
       ) : (
         <>
           <div className="ad-stats" aria-busy={dashboard.isLoading || undefined}>

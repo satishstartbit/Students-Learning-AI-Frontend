@@ -9,9 +9,11 @@ import { fromGradeValue, gradeOrderRule, toGradeValue } from '../../../../utils/
 import GradeRangeFields from '../../components/GradeRangeFields';
 import { questionTypeService } from '../../services/curriculum.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 const LIST_PATH = '/admin/masters/question-types';
-const EMPTY = { name: '', description: '', code: '', minGrade: '', maxGrade: '', displayOrder: 0, isActive: true };
+const EMPTY = { name: '', description: '', code: '', minGrade: '', maxGrade: '', displayOrder: '', isActive: true };
 
 // Fixed 4-value set - these are the only answer shapes the teacher builder actually knows how to render.
 const CODE_OPTIONS = [
@@ -45,7 +47,7 @@ export default function QuestionTypeFormPage() {
         description: values.description.trim() || null,
         minGrade: toGradeValue(values.minGrade),
         maxGrade: toGradeValue(values.maxGrade),
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (!isEdit) {
         payload.code = values.code;
@@ -66,7 +68,7 @@ export default function QuestionTypeFormPage() {
       code: existing.code ?? '',
       minGrade: fromGradeValue(existing.minGrade),
       maxGrade: fromGradeValue(existing.maxGrade),
-      displayOrder: existing.displayOrder ?? 0,
+      displayOrder: existing.displayOrder ?? '',
       isActive: existing.isActive ?? true,
     });
   }, [existing, reset]);
@@ -102,7 +104,7 @@ export default function QuestionTypeFormPage() {
             />
           )}
           <GradeRangeFields fromProps={form.getFieldProps('minGrade')} toProps={form.getFieldProps('maxGrade')} />
-          <Input label="Display order" type="number" min="0" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
           {!isEdit && <Checkbox name="isActive" label="Active" checked={form.values.isActive} onChange={form.handleChange} />}
           <ButtonGroup>
             <Button type="submit" loading={form.isSubmitting}>{isEdit ? 'Save changes' : 'Create question type'}</Button>

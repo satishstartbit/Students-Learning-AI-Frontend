@@ -7,6 +7,8 @@ import { toast } from '../../../../hooks/useToast';
 import { required } from '../../../../utils/validation';
 import appearanceService from '../../services/appearance.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 const DEFAULT_CONFIG = { background: '#FEF3C7', border: '#FBBF24' };
 
@@ -24,10 +26,10 @@ export default function StickyNoteStyleFormPage() {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
 
   const form = useForm({
-    initialValues: { name: '', displayOrder: 0, isActive: true },
+    initialValues: { name: '', displayOrder: '', isActive: true },
     validationSchema: { name: [required('Enter a style name')] },
     async onSubmit(values) {
-      const payload = { name: values.name, configJson: config, displayOrder: Number(values.displayOrder) || 0 };
+      const payload = { name: values.name, configJson: config, displayOrder: orderPayload(values.displayOrder) };
       if (!isEdit) payload.isActive = values.isActive;
 
       const { data } = isEdit
@@ -50,7 +52,7 @@ export default function StickyNoteStyleFormPage() {
 
   useEffect(() => {
     if (!existing) return;
-    form.reset({ name: existing.name ?? '', displayOrder: existing.displayOrder ?? 0, isActive: existing.isActive ?? true });
+    form.reset({ name: existing.name ?? '', displayOrder: existing.displayOrder ?? '', isActive: existing.isActive ?? true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existing]);
 
@@ -74,7 +76,7 @@ export default function StickyNoteStyleFormPage() {
           <Input label="Style name" required {...form.getFieldProps('name')} />
           <Input label="Background colour" type="color" value={config.background} onChange={(e) => setConfig((c) => ({ ...c, background: e.target.value }))} />
           <Input label="Border colour" type="color" value={config.border} onChange={(e) => setConfig((c) => ({ ...c, border: e.target.value }))} />
-          <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
 
           {!isEdit && (
             <Checkbox name="isActive" label="Active" checked={form.values.isActive} onChange={form.handleChange} />

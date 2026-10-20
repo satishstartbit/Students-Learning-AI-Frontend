@@ -34,7 +34,8 @@ export class AppErrorBoundary extends Component {
 
   render() {
     if (this.state.error) {
-      return <ServerErrorPage inShell={this.props.inShell} error={this.state.error} onRetry={this.reset} />;
+      // Its buttons do a real page load (a re-render can't fetch a page whose code failed to download).
+      return <ServerErrorPage inShell={this.props.inShell} error={this.state.error} />;
     }
     return this.props.children;
   }

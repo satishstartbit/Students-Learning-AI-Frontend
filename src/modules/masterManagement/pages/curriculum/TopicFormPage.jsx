@@ -9,6 +9,8 @@ import { formatGradeRange, fromGradeValue, gradeOrderRule, toGradeValue } from '
 import GradeRangeFields from '../../components/GradeRangeFields';
 import { curriculumSubjectService, topicService } from '../../services/curriculum.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 const listAllSubjects = () => curriculumSubjectService.list({ limit: 100, sortBy: 'name', sortOrder: 'asc' });
 
@@ -26,7 +28,7 @@ export default function TopicFormPage() {
   }, [isEdit, id, fetchItem]);
 
   const form = useForm({
-    initialValues: { subjectId: searchParams.get('subjectId') ?? '', name: '', minGrade: '', maxGrade: '', displayOrder: 0, isActive: true },
+    initialValues: { subjectId: searchParams.get('subjectId') ?? '', name: '', minGrade: '', maxGrade: '', displayOrder: '', isActive: true },
     validationSchema: {
       subjectId: [required('Choose a subject')],
       name: [required('Enter a topic name')],
@@ -39,7 +41,7 @@ export default function TopicFormPage() {
         name: values.name.trim(),
         minGrade: toGradeValue(values.minGrade),
         maxGrade: toGradeValue(values.maxGrade),
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (!isEdit) payload.isActive = values.isActive;
       await (isEdit ? topicService.update(id, payload) : topicService.create(payload));
@@ -56,7 +58,7 @@ export default function TopicFormPage() {
       name: existing.name ?? '',
       minGrade: fromGradeValue(existing.minGrade),
       maxGrade: fromGradeValue(existing.maxGrade),
-      displayOrder: existing.displayOrder ?? 0,
+      displayOrder: existing.displayOrder ?? '',
       isActive: existing.isActive ?? true,
     });
   }, [existing, reset]);
@@ -95,7 +97,7 @@ export default function TopicFormPage() {
           />
           <Input label="Topic name" required {...form.getFieldProps('name')} />
           <GradeRangeFields fromProps={form.getFieldProps('minGrade')} toProps={form.getFieldProps('maxGrade')} />
-          <Input label="Display order" type="number" min="0" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
           {!isEdit && <Checkbox name="isActive" label="Active" checked={form.values.isActive} onChange={form.handleChange} />}
           <ButtonGroup>
             <Button type="submit" loading={form.isSubmitting}>{isEdit ? 'Save changes' : 'Create topic'}</Button>

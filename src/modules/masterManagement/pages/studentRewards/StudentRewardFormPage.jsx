@@ -27,6 +27,8 @@ import { StickerArt } from '../../../student/components/rewards/StickerArt';
 import { STICKER_OPTIONS, STICKER_PREFIX } from '../../../student/components/rewards/stickerCatalog';
 import rewardService from '../../services/reward.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 // Loaded on first open - the emoji data set is a few hundred KB (same as IconField).
 const EmojiPickerPanel = lazy(() => import('../../../assignments/media/EmojiPickerPanel'));
@@ -143,7 +145,7 @@ function RewardForm({ id, existing }) {
       description: existing?.description ?? '',
       pointsRequired: existing?.pointsRequired ?? '',
       rewardType: existing?.rewardType === 'emoji' ? 'emoji' : 'sticker',
-      displayOrder: existing?.displayOrder ?? 0,
+      displayOrder: existing?.displayOrder ?? '',
       isActive: existing?.isActive ?? true,
     },
     validationSchema: {
@@ -164,7 +166,7 @@ function RewardForm({ id, existing }) {
         description: values.description || null,
         pointsRequired: Number(values.pointsRequired) || 0,
         rewardType: values.rewardType || 'sticker',
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (source === 'upload') {
         if (photo.file) payload.imageFile = photo.file;
@@ -300,7 +302,7 @@ function RewardForm({ id, existing }) {
           )}
         </div>
 
-        <Input label="Display order" type="number" hint="Ties at the same points level are shown in this order" {...form.getFieldProps('displayOrder')} />
+        <OrderField isEdit={isEdit} hint="Ties at the same points level are shown in this order" {...form.getFieldProps('displayOrder')} />
 
         {!isEdit && <Checkbox name="isActive" label="Active - students can see and collect it" checked={form.values.isActive} onChange={form.handleChange} />}
 

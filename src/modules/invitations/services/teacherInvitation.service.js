@@ -39,6 +39,11 @@ function query(params) {
 export const teacherDirectory = ({ studentId, subjects, grade, search } = {}) =>
   api.get('/parent/teacher-directory', { params: query({ studentId, subject: subjects, grade, search, limit: 50 }) });
 export const listForChild = (childId) => api.get(`/parent/children/${childId}/teacher-invitations`);
+/**
+ * The child's profile subjects and whether a teacher can still be asked for each this year
+ * (one teacher per subject): { academicYear, subjects: [{ name, available, reason, teacherName }] }.
+ */
+export const teacherSubjects = (childId) => api.get(`/parent/children/${childId}/teacher-subjects`);
 /** Either { teacherId } (picked) or { teacherName, teacherEmail } (not on the platform yet), plus subjects/grade. */
 export const invite = (childId, payload) => api.post(`/parent/children/${childId}/teacher-invitations`, payload);
 export const resend = (invitationId) => api.post(`/parent/teacher-invitations/${invitationId}/resend`);
@@ -55,9 +60,12 @@ export const adminInvite = (payload) => api.post('/admin/teacher-invitations', p
 /** Active teachers who teach every chosen subject and the grade, searchable by name/email. */
 export const adminTeachers = ({ subjects, grade, search } = {}) =>
   api.get('/admin/users', { params: query({ role: 'TEACHER', status: 'active', subject: subjects, grade, search, limit: 100 }) });
-/** Active students in the grade, searchable by name/email. */
-export const adminStudents = ({ grade, search } = {}) =>
-  api.get('/admin/users', { params: query({ role: 'STUDENT', status: 'active', grade, search, limit: 100 }) });
+/**
+ * Active students in the grade who don't already have a teacher - or a request/invitation open -
+ * for any chosen subject in that academic year. `meta.hidden` = how many were left out.
+ */
+export const adminStudents = ({ grade, subjects, academicYearId, search } = {}) =>
+  api.get('/admin/teacher-invitations/students', { params: query({ grade, subject: subjects, academicYearId, search, limit: 100 }) });
 
 export const adminList = (params = {}) =>
   api.get('/admin/teacher-invitations', {
@@ -65,6 +73,10 @@ export const adminList = (params = {}) =>
   });
 export const adminResend = (invitationId) => api.post(`/admin/teacher-invitations/${invitationId}/resend`);
 export const adminCancel = (invitationId) => api.post(`/admin/teacher-invitations/${invitationId}/cancel`);
+/** A parent's request: send it on to the teacher. */
+export const adminApprove = (invitationId) => api.post(`/admin/teacher-invitations/${invitationId}/approve`);
+/** A parent's request: turn it down - the family sees `reason` (5+ characters). */
+export const adminReject = (invitationId, reason) => api.post(`/admin/teacher-invitations/${invitationId}/reject`, { reason });
 
 export default {
   getByToken,
@@ -72,6 +84,7 @@ export default {
   declineByToken,
   teacherDirectory,
   listForChild,
+  teacherSubjects,
   invite,
   adminInvite,
   adminTeachers,
@@ -84,4 +97,6 @@ export default {
   adminList,
   adminResend,
   adminCancel,
+  adminApprove,
+  adminReject,
 };

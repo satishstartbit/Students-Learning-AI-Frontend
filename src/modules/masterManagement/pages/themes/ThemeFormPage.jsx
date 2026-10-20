@@ -7,6 +7,8 @@ import { toast } from '../../../../hooks/useToast';
 import { required } from '../../../../utils/validation';
 import appearanceService from '../../services/appearance.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 const DEFAULT_CONFIG = { primary: '#4F46E5', secondary: '#818CF8', background: '#FFFFFF', text: '#111827' };
 
@@ -24,14 +26,14 @@ export default function ThemeFormPage() {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
 
   const form = useForm({
-    initialValues: { name: '', description: '', displayOrder: 0, isActive: true },
+    initialValues: { name: '', description: '', displayOrder: '', isActive: true },
     validationSchema: { name: [required('Enter a theme name')] },
     async onSubmit(values) {
       const payload = {
         name: values.name,
         description: values.description || null,
         configJson: config,
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (!isEdit) payload.isActive = values.isActive;
 
@@ -57,7 +59,7 @@ export default function ThemeFormPage() {
     form.reset({
       name: existing.name ?? '',
       description: existing.description ?? '',
-      displayOrder: existing.displayOrder ?? 0,
+      displayOrder: existing.displayOrder ?? '',
       isActive: existing.isActive ?? true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,7 +91,7 @@ export default function ThemeFormPage() {
           <Input label="Background colour" type="color" value={config.background} onChange={(e) => setConfig((c) => ({ ...c, background: e.target.value }))} />
           <Input label="Text colour" type="color" value={config.text} onChange={(e) => setConfig((c) => ({ ...c, text: e.target.value }))} />
 
-          <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
           {!isEdit && (
             <Checkbox name="isActive" label="Active" checked={form.values.isActive} onChange={form.handleChange} />
           )}

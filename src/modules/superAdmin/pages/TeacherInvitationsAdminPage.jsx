@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
-import { LuBan, LuFilterX, LuSend } from 'react-icons/lu';
+import { LuBan, LuCheck, LuFilterX, LuSend, LuX } from 'react-icons/lu';
 import {
+  Alert,
   Badge,
+  Button,
   ConfirmationModal,
   DataTable,
   FilterBar,
   IconButton,
+  Modal,
   PageHeader,
   SearchInput,
   Select,
+  Textarea,
 } from '../../../components/common';
 import { Tooltip } from '../../../components/ui/tooltip';
 import { useApi } from '../../../hooks/useApi';
@@ -25,13 +29,33 @@ import invitationService from '../../invitations/services/teacherInvitation.serv
  * it (a parent, or Super Admin via Invite Teachers on the Assignments page).
  * Nobody links a teacher directly; a teacher is connected only by accepting.
  * Pending/expired invitations can be re-sent or cancelled here.
+ *
+ * A parent's REQUEST (awaiting approval) is reviewed here (2026-10-19 - the
+ * old Requests page was removed on 1 Oct, leaving requests stuck): Approve &
+ * send emails the invitation to the teacher; Reject needs a note the family
+ * sees. A banner says how many are waiting. The server re-checks one teacher
+ * per subject on approval (409 with the reason).
  */
+const NOTE_MIN = 5;
+
 export default function TeacherInvitationsAdminPage() {
   const pagination = usePagination();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [confirm, setConfirm] = useState(null);
   const [acting, setActing] = useState(false);
+  const [rejecting, setRejecting] = useState(null);
+  const [rejectNote, setRejectNote] = useState('');
+  const [rejectTried, setRejectTried] = useState(false);
+
+  // How many parent requests are waiting, for the banner (whatever the filters).
+  const waiting = useApi(invitationService.adminList);
+  const { run: runWaiting } = waiting;
+  const loadWaiting = useCallback(() => runWaiting({ page: 1, limit: 1, status: 'awaiting_approval' }).catch(() => {}), [runWaiting]);
+  useEffect(() => {
+    loadWaiting();
+  }, [loadWaiting]);
+  const waitingCount = Number(waiting.meta?.total ?? 0);
 
   const debouncedSearch = useDebounce(search, 350);
   const { data, meta, error, isLoading, run } = useApi(invitationService.adminList);
@@ -56,7 +80,11 @@ export default function TeacherInvitationsAdminPage() {
     if (!confirm) return;
     setActing(true);
     try {
-      if (confirm.type === 'resend') {
+      if (confirm.type === 'approve') {
+        const res = await invitationService.adminApprove(confirm.item.id);
+        if (res?.data?.emailSent === false) toast.warning('Approved, but the email could not be sent. Re-send it from this list.');
+        else toast.success(`Approved - the invitation was emailed to ${confirm.item.teacherEmail}. The family has been told.`);
+      } else if (confirm.type === 'resend') {
         const res = await invitationService.adminResend(confirm.item.id);
         if (res?.data?.emailSent === false) toast.warning('The invitation was renewed, but the email could not be sent.');
         else toast.success(`Invitation re-sent to ${confirm.item.teacherEmail}`);
@@ -66,12 +94,41 @@ export default function TeacherInvitationsAdminPage() {
       }
       setConfirm(null);
       load().catch(() => {});
+      loadWaiting();
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
       setActing(false);
     }
   };
+
+  const rejectNoteError = rejectNote.trim().length < NOTE_MIN ? 'Tell the family why (at least 5 characters) - they see this note' : null;
+  const closeReject = () => {
+    if (acting) return;
+    setRejecting(null);
+    setRejectNote('');
+    setRejectTried(false);
+  };
+  const runReject = async () => {
+    setRejectTried(true);
+    if (rejectNoteError || !rejecting) return;
+    setActing(true);
+    try {
+      await invitationService.adminReject(rejecting.id, rejectNote.trim());
+      toast.success('Request not approved - the family has been told why.');
+      setRejecting(null);
+      setRejectNote('');
+      setRejectTried(false);
+      load().catch(() => {});
+      loadWaiting();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const studentName = (row) => [row?.student?.firstName, row?.student?.lastName].filter(Boolean).join(' ');
 
   const columns = [
     {
@@ -140,20 +197,48 @@ export default function TeacherInvitationsAdminPage() {
     {
       key: 'when',
       header: 'Sent / expires',
-      render: (row) => (
-        <div className="ui-hint" style={{ margin: 0 }}>
-          {formatDate(row.lastSentAt)}
-          {row.sentCount > 1 ? ` (×${row.sentCount})` : ''}
-          {row.status === 'pending' && <div>expires {formatDate(row.expiresAt)}</div>}
-        </div>
-      ),
+      render: (row) =>
+        // A request (still waiting, or turned down) was never emailed: say when it was asked for.
+        !row.sentCount ? (
+          <div className="ui-hint" style={{ margin: 0 }}>
+            Requested {formatDate(row.createdAt)}
+            <div>{row.status === 'awaiting_approval' ? 'not sent yet' : 'never sent'}</div>
+          </div>
+        ) : (
+          <div className="ui-hint" style={{ margin: 0 }}>
+            {formatDate(row.lastSentAt)}
+            {row.sentCount > 1 ? ` (×${row.sentCount})` : ''}
+            {row.status === 'pending' && <div>expires {formatDate(row.expiresAt)}</div>}
+          </div>
+        ),
     },
     {
       key: 'actions',
       header: '',
       align: 'right',
       render: (row) =>
-        row.status === 'pending' || row.status === 'expired' ? (
+        row.canReview ? (
+          <div style={{ display: 'flex', gap: 'var(--spacing-xs)', justifyContent: 'flex-end' }}>
+            <Tooltip label="Approve and send to the teacher" side="top">
+              <IconButton
+                icon={<LuCheck aria-hidden="true" />}
+                label={`Approve request for ${row.teacherName}`}
+                variant="success"
+                size="sm"
+                onClick={() => setConfirm({ type: 'approve', item: row })}
+              />
+            </Tooltip>
+            <Tooltip label="Reject request" side="top">
+              <IconButton
+                icon={<LuX aria-hidden="true" />}
+                label={`Reject request for ${row.teacherName}`}
+                variant="danger"
+                size="sm"
+                onClick={() => setRejecting(row)}
+              />
+            </Tooltip>
+          </div>
+        ) : row.status === 'pending' || row.status === 'expired' ? (
           <div style={{ display: 'flex', gap: 'var(--spacing-xs)', justifyContent: 'flex-end' }}>
             <Tooltip label={row.canResend ? 'Re-send' : 'Just sent - wait a few minutes'} side="top">
               <IconButton
@@ -192,9 +277,18 @@ export default function TeacherInvitationsAdminPage() {
     <div className="td-page">
       <PageHeader
         title="Teacher invitations"
-        description="Every invitation to connect a teacher with a student - sent by parents, or by Super Admin with Invite Teachers on the Assignments page. A teacher is connected only when they accept."
+        description="Every invitation to connect a teacher with a student. A parent's request waits here for your approval before the teacher hears anything; Super Admin's own invitations (Invite Teachers on the Assignments page) go straight out. A teacher is connected only when they accept."
         breadcrumbs={[{ label: 'Relationships', to: '/admin/relationships' }, { label: 'Teacher invitations' }]}
       />
+
+      {waitingCount > 0 && status !== 'awaiting_approval' && (
+        <Alert variant="info" className="ui-field" title={`${waitingCount} parent request${waitingCount === 1 ? '' : 's'} waiting for approval`}>
+          <span>Nothing reaches the teacher until you approve it. </span>
+          <Button size="sm" variant="secondary" onClick={() => resetTo(setStatus)('awaiting_approval')}>
+            Show requests
+          </Button>
+        </Alert>
+      )}
 
       <FilterBar>
         <SearchInput
@@ -236,17 +330,52 @@ export default function TeacherInvitationsAdminPage() {
         onConfirm={runAction}
         loading={acting}
         variant={confirm?.type === 'cancel' ? 'danger' : 'primary'}
-        title={confirm?.type === 'cancel' ? 'Cancel this invitation?' : 'Re-send this invitation?'}
-        confirmLabel={confirm?.type === 'cancel' ? 'Cancel invitation' : 'Re-send'}
+        title={
+          confirm?.type === 'cancel' ? 'Cancel this invitation?' : confirm?.type === 'approve' ? 'Approve and send this request?' : 'Re-send this invitation?'
+        }
+        confirmLabel={confirm?.type === 'cancel' ? 'Cancel invitation' : confirm?.type === 'approve' ? 'Approve & send' : 'Re-send'}
         cancelLabel="Back"
         message={
-          confirm
-            ? confirm.type === 'cancel'
+          !confirm
+            ? ''
+            : confirm.type === 'cancel'
               ? `${confirm.item.teacherName} (${confirm.item.teacherEmail}) won't be able to accept it. The parent will see it as cancelled.`
-              : `${confirm.item.teacherEmail} gets a new link with a fresh expiry date. The previous link stops working.`
-            : ''
+              : confirm.type === 'approve'
+                ? `${confirm.item.teacherName} (${confirm.item.teacherEmail}) is emailed an invitation to teach ${studentName(confirm.item)} ${formatSubjects(confirm.item.subjects)}${
+                    confirm.item.academicYear ? ` (${confirm.item.academicYear.name})` : ''
+                  }. The family is told, and they're connected once the teacher accepts.`
+                : `${confirm.item.teacherEmail} gets a new link with a fresh expiry date. The previous link stops working.`
         }
       />
+
+      <Modal
+        isOpen={Boolean(rejecting)}
+        onClose={closeReject}
+        title="Reject this request?"
+        description={rejecting ? `${rejecting.teacherName} won't be contacted. The family sees your note on My Children and can send a corrected request.` : undefined}
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={closeReject} disabled={acting}>
+              Back
+            </Button>
+            <Button variant="danger" onClick={runReject} loading={acting}>
+              Reject request
+            </Button>
+          </>
+        }
+      >
+        <Textarea
+          label="Note for the family"
+          required
+          rows={3}
+          maxLength={500}
+          value={rejectNote}
+          onChange={(e) => setRejectNote(e.target.value)}
+          placeholder="e.g. This teacher doesn't teach Grade 7 - please choose another."
+          error={rejectTried ? rejectNoteError : undefined}
+        />
+      </Modal>
     </div>
   );
 }

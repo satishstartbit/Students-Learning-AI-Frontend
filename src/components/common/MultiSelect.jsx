@@ -43,6 +43,8 @@ export function MultiSelect({
   disabled = false,
   maxSelected,
   className = '',
+  // Shown when there are no options at all (not for a search with no matches).
+  emptyMessage = 'No options available',
 }) {
   const generatedId = useId();
   const controlId = `${name || 'multiselect'}-${generatedId}`;
@@ -231,7 +233,7 @@ export function MultiSelect({
 
               {!loading && visibleOptions.length === 0 && (
                 <li className="ui-multiselect__option" aria-disabled="true">
-                  {search.trim() ? 'No matches' : 'No options available'}
+                  {search.trim() ? 'No matches' : emptyMessage}
                 </li>
               )}
 

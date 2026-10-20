@@ -5,6 +5,7 @@ The teacher-invitation link a teacher opens from the email, plus the shared stat
 ## Where it lives
 | Frontend | Purpose |
 |---|---|
+| `invitationProgress.js` (+ test), `components/InvitationSteps.jsx` + `invitationSteps.css` (`iv-`) | 2026-10-19: an invitation's progress for families - parent request: Requested → Being reviewed / Approved and sent / Not approved / Withdrawn → Waiting for the teacher / Teacher accepted / declined / expired / cancelled; Super Admin's: Sent by the platform team → the teacher's answer. `compact` (child card) or full with `dates` (details). `subjectChoices` turns `/teacher-subjects` into the parent's options + "Not offered" reasons. |
 | `pages/TeacherInvitationPage.jsx` (`/invitations/teacher/:token`, an `OPEN_ROUTES` route) | Shows who invited, the child, subjects, grade and year, then Accept / Decline (with an optional reason) |
 | `invitationStatus.js` | **The** label/tone map for every status: `awaiting_approval` "Awaiting approval", `pending`, `accepted`, `declined`, `expired`, `cancelled`, `rejected` "Not approved". Parent, teacher and admin screens all read it. |
 | `services/teacherInvitation.service.js` | Token endpoints plus the parent/teacher/admin invitation calls used by other modules |

@@ -90,7 +90,7 @@ export default function MasterListPage() {
     goToPage(1);
   };
 
-  const extraColumns = (typeRow?.fieldSchema?.fields ?? []).map((field) => ({
+  const extraColumns = (typeRow?.fieldSchema?.fields ?? []).filter((field) => !field.hidden).map((field) => ({
     key: `extra_${field.key}`,
     header: field.label ?? field.key,
     render: (row) => (row.extra?.[field.key] !== undefined && row.extra?.[field.key] !== null ? String(row.extra[field.key]) : '—'),

@@ -22,6 +22,7 @@ import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import { formatSubjects } from '../../invitations/invitationStatus';
+import InvitationSteps from '../../invitations/components/InvitationSteps';
 import { SubjectChips } from '../../teacher/components/students/StudentBits';
 import { useViewingChild } from '../hooks/useViewingChild';
 import parentService from '../services/parent.service';
@@ -79,8 +80,10 @@ function teacherRows(child) {
         ? { variant: 'info', label: 'Awaiting approval' }
         : inv.status === 'expired'
           ? { variant: 'neutral', label: 'Invite expired' }
-          : { variant: 'warning', label: 'Invite sent' },
+          : { variant: 'warning', label: inv.invitedBy?.role === 'SUPER_ADMIN' ? 'Sent by platform' : 'Invite sent' },
     pending: true,
+    // Requested → approved → the teacher's answer, so the family can follow it (2026-10-19).
+    invitation: inv,
   }));
 
   return [...connected, ...invited];
@@ -160,6 +163,7 @@ function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvi
                 <span className="pc-teacher__body">
                   <span className="pc-teacher__name">{row.name}</span>
                   {row.meta && <span className="pc-teacher__meta">{row.meta}</span>}
+                  {row.invitation && <InvitationSteps invitation={row.invitation} compact />}
                 </span>
                 <Badge variant={row.badge.variant}>{row.badge.label}</Badge>
               </li>

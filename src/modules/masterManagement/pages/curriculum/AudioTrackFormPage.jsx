@@ -23,6 +23,8 @@ import { formatFileSize } from '../../../../utils/format';
 import { AUDIO_ACCEPT } from '../../../../utils/file';
 import { audioTrackService } from '../../services/curriculum.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 const LIST_PATH = '/admin/masters/audio-tracks';
 const SOURCE_OPTIONS = [
@@ -45,7 +47,7 @@ export default function AudioTrackFormPage() {
   }, [isEdit, id, fetchItem]);
 
   const form = useForm({
-    initialValues: { name: '', description: '', sourceType: 'url', audioUrl: '', fileId: '', displayOrder: 0, isActive: true },
+    initialValues: { name: '', description: '', sourceType: 'url', audioUrl: '', fileId: '', displayOrder: '', isActive: true },
     validationSchema: {
       name: [required('Enter a name')],
       audioUrl: [onlyWhen('url', required('Enter the link to the audio file'))],
@@ -58,7 +60,7 @@ export default function AudioTrackFormPage() {
         sourceType: values.sourceType,
         audioUrl: values.sourceType === 'url' ? values.audioUrl.trim() : null,
         fileId: values.sourceType === 'upload' ? values.fileId : null,
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (!isEdit) payload.isActive = values.isActive;
       await (isEdit ? audioTrackService.update(id, payload) : audioTrackService.create(payload));
@@ -76,7 +78,7 @@ export default function AudioTrackFormPage() {
       sourceType: existing.sourceType ?? 'url',
       audioUrl: existing.audioUrl ?? '',
       fileId: existing.file?.id ?? '',
-      displayOrder: existing.displayOrder ?? 0,
+      displayOrder: existing.displayOrder ?? '',
       isActive: existing.isActive ?? true,
     });
   }, [existing, reset]);
@@ -153,7 +155,7 @@ export default function AudioTrackFormPage() {
 
           {previewUrl && <AudioPlayer key={previewUrl} src={previewUrl} title={values.name || 'Preview'} className="ui-field" />}
 
-          <Input label="Display order" type="number" min="0" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
           {!isEdit && <Checkbox name="isActive" label="Active" checked={values.isActive} onChange={form.handleChange} />}
           <ButtonGroup>
             <Button type="submit" loading={form.isSubmitting}>{isEdit ? 'Save changes' : 'Add sound'}</Button>

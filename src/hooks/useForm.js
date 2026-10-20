@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { validateField, validateForm } from '../utils/validation';
 import { getFieldErrors } from '../utils/errorHandler';
+import { browserFilledValues } from '../utils/formAutofill';
 
 /**
  * Controlled-form state with validation.
@@ -71,11 +72,14 @@ export function useForm({ initialValues = {}, validationSchema = {}, onSubmit } 
     });
   }, []);
 
-  const validate = useCallback(() => {
-    const { isValid, errors: nextErrors } = validateForm(values, schemaRef.current);
-    setErrors(nextErrors);
-    return isValid;
-  }, [values]);
+  const validate = useCallback(
+    (current = values) => {
+      const { isValid, errors: nextErrors } = validateForm(current, schemaRef.current);
+      setErrors(nextErrors);
+      return isValid;
+    },
+    [values]
+  );
 
   const handleSubmit = useCallback(
     async (event) => {
@@ -83,21 +87,36 @@ export function useForm({ initialValues = {}, validationSchema = {}, onSubmit } 
       if (inFlightRef.current) return undefined;
       setSubmitError(null);
 
+      // Saved-password autofill and password managers can fill a field without
+      // an input event: take what is really in the form (utils/formAutofill.js).
+      const filled = browserFilledValues(event?.currentTarget, values);
+      const current = filled ? { ...values, ...filled } : values;
+      if (filled) setValues(current);
+
       setTouched(Object.fromEntries(Object.keys(schemaRef.current).map((k) => [k, true])));
-      if (!validate()) return undefined;
+      if (!validate(current)) return undefined;
 
       inFlightRef.current = true;
       setIsSubmitting(true);
       try {
-        return await onSubmit?.(values);
+        return await onSubmit?.(current);
       } catch (error) {
         // Push server-side field errors back onto the matching inputs.
         // Not rethrown: handleSubmit is passed straight to onClick/onSubmit,
         // where a rejection has no catcher and only surfaces as an unhandled
         // promise rejection - the error is already shown through the form.
+        // A server error is shown even on a field the user never left (no
+        // client rule, or Enter pressed inside it); one for a field this form
+        // doesn't have goes above the form instead of vanishing.
         const fieldErrors = getFieldErrors(error);
-        if (Object.keys(fieldErrors).length) setErrors((prev) => ({ ...prev, ...fieldErrors }));
-        else setSubmitError(error?.message ?? 'Something went wrong');
+        const fields = Object.keys(fieldErrors);
+        if (fields.length) {
+          setErrors((prev) => ({ ...prev, ...fieldErrors }));
+          setTouched((prev) => ({ ...prev, ...Object.fromEntries(fields.map((k) => [k, true])) }));
+          if (!fields.some((k) => k in current)) setSubmitError(Object.values(fieldErrors)[0] || error?.message || 'Something went wrong');
+        } else {
+          setSubmitError(error?.message ?? 'Something went wrong');
+        }
         return undefined;
       } finally {
         inFlightRef.current = false;
