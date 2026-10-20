@@ -11,6 +11,8 @@ import { isCanadianCountry } from '../../../../utils/address';
 import AddressFields from '../../../auth/components/AddressFields';
 import academicService from '../../services/academic.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 export default function SchoolFormPage() {
   const { id } = useParams();
@@ -27,7 +29,7 @@ export default function SchoolFormPage() {
     initialValues: {
       name: '', schoolCode: '', addressLine2: '', address: '', city: '', state: '',
       country: DEFAULT_COUNTRY === 'CA' ? 'Canada' : '', postalCode: '',
-      contactPerson: '', contactEmail: '', contactPhone: '', isActive: true, displayOrder: 0,
+      contactPerson: '', contactEmail: '', contactPhone: '', isActive: true, displayOrder: '',
     },
     validationSchema: {
       name: [required('Enter a school name')],
@@ -50,7 +52,7 @@ export default function SchoolFormPage() {
         contactPerson: values.contactPerson || null,
         contactEmail: values.contactEmail || null,
         contactPhone: values.contactPhone || null,
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (!isEdit) payload.isActive = values.isActive;
 
@@ -79,7 +81,7 @@ export default function SchoolFormPage() {
       contactEmail: existing.contactEmail ?? '',
       contactPhone: formatPhoneForDisplay(existing.contactPhone),
       isActive: existing.isActive ?? true,
-      displayOrder: existing.displayOrder ?? 0,
+      displayOrder: existing.displayOrder ?? '',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existing]);
@@ -110,7 +112,7 @@ export default function SchoolFormPage() {
           <EmailInput label="Contact email" autoComplete="off" {...form.getFieldProps('contactEmail')} />
           <PhoneInput label="Contact phone" autoComplete="off" {...form.getFieldProps('contactPhone')} />
 
-          <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
           {!isEdit && (
             <Checkbox name="isActive" label="Active" checked={form.values.isActive} onChange={form.handleChange} />
           )}

@@ -11,7 +11,7 @@ export default function DynamicExtraFields({ fields = [], values = {}, errors = 
 
   return (
     <>
-      {fields.map((field) => {
+      {fields.filter((field) => !field.hidden).map((field) => {
         const label = field.label ?? field.key;
         const value = values[field.key] ?? '';
         const error = errors[field.key] ?? null;

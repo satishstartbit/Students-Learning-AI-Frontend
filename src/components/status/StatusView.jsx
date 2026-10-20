@@ -38,7 +38,7 @@ export function StatusView({
   role = 'alert',
 }) {
   const copy = statusCopy(kind);
-  const illustration = kind === 'pageNotFound' ? 'notFound' : kind;
+  const illustration = kind === 'pageNotFound' ? 'notFound' : kind === 'pageLoad' ? 'unreachable' : kind;
   const label = eyebrow === undefined ? copy.eyebrow : eyebrow;
   const Heading = variant === 'page' ? 'h1' : 'h2';
 

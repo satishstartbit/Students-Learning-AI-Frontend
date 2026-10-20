@@ -7,6 +7,8 @@ import { toast } from '../../../../hooks/useToast';
 import { required } from '../../../../utils/validation';
 import regulationService from '../../services/regulation.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 const ACTIVITY_TYPE_HINT = 'e.g. Breathing, Grounding, Movement, Calming Sounds, Music, Mindfulness';
 // Students see this beside the exercise on Focus (student focus/ExerciseMedia.jsx); without one, a built-in picture of the steps.
@@ -26,7 +28,7 @@ export default function RegulationActivityFormPage() {
   const form = useForm({
     initialValues: {
       name: '', toolType: '', description: '', instructions: '', mediaUrl: '',
-      durationMinutes: '', icon: '', category: '', displayOrder: 0, isActive: true,
+      durationMinutes: '', icon: '', category: '', displayOrder: '', isActive: true,
     },
     validationSchema: {
       name: [required('Enter an activity name')],
@@ -42,7 +44,7 @@ export default function RegulationActivityFormPage() {
         durationMinutes: values.durationMinutes === '' ? undefined : Number(values.durationMinutes),
         icon: values.icon || null,
         category: values.category || null,
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (!isEdit) payload.isActive = values.isActive;
 
@@ -67,7 +69,7 @@ export default function RegulationActivityFormPage() {
       durationMinutes: existing.durationMinutes ?? '',
       icon: existing.icon ?? '',
       category: existing.category ?? '',
-      displayOrder: existing.displayOrder ?? 0,
+      displayOrder: existing.displayOrder ?? '',
       isActive: existing.isActive ?? true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,7 +100,7 @@ export default function RegulationActivityFormPage() {
           <Input label="Recommended duration (minutes)" type="number" {...form.getFieldProps('durationMinutes')} />
           <Input label="Icon" hint="An emoji or icon key" {...form.getFieldProps('icon')} />
           <Input label="Category" {...form.getFieldProps('category')} />
-          <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
 
           {!isEdit && (
             <Checkbox name="isActive" label="Active" checked={form.values.isActive} onChange={form.handleChange} />

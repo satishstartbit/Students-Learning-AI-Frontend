@@ -42,6 +42,12 @@ export const STATUS_COPY = {
     title: 'You don’t have access to this',
     description: 'This belongs to another account, or needs permission you don’t have.',
   },
+  // A page's code didn't download (utils/pageLoadError.js) - a connection problem, not a crash.
+  pageLoad: {
+    eyebrow: 'Connection problem',
+    title: 'This page didn’t load',
+    description: 'Part of the page couldn’t download - usually a dropped connection. Check your internet, then try again.',
+  },
   crash: {
     eyebrow: 'Something broke',
     title: 'This page ran into a problem',

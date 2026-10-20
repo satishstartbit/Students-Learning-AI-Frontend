@@ -20,6 +20,8 @@ import masterGenericService from '../services/masterGeneric.service';
 import DynamicExtraFields from '../components/DynamicExtraFields';
 import IconField from '../components/IconField';
 import '../components/masterPages.css';
+import OrderField from '../components/OrderField';
+import { orderPayload } from '../components/masterOrder';
 
 /**
  * Generic master create/edit form - one screen shared by every simple lookup
@@ -34,7 +36,8 @@ export default function MasterFormPage() {
 
   const { data: types } = useApi(masterGenericService.listTypes, { immediate: true });
   const typeRow = (types ?? []).find((t) => t.code === masterType) ?? null;
-  const fields = typeRow?.fieldSchema?.fields ?? [];
+  // Hidden fields (e.g. Grade Levels' grade number) are kept and filled by the server.
+  const fields = (typeRow?.fieldSchema?.fields ?? []).filter((f) => !f.hidden);
 
   const { data: existing, isLoading: loadingItem, run: fetchItem } = useApi(masterGenericService.getItem);
 
@@ -56,7 +59,7 @@ export default function MasterFormPage() {
   );
 
   const form = useForm({
-    initialValues: { name: '', code: '', description: '', icon: '', displayOrder: 0, isActive: true },
+    initialValues: { name: '', code: '', description: '', icon: '', displayOrder: '', isActive: true },
     validationSchema: { name: [required('Enter a name')], ...extraSchema },
     async onSubmit(values) {
       const extra = Object.fromEntries(fields.map((f) => [f.key, values[f.key]]));
@@ -64,7 +67,7 @@ export default function MasterFormPage() {
         name: values.name,
         code: values.code || null,
         description: values.description || null,
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
         extra,
       };
       if (!isEdit) payload.isActive = values.isActive;
@@ -94,7 +97,7 @@ export default function MasterFormPage() {
       code: existing.code ?? '',
       description: existing.description ?? '',
       icon: existing.icon ?? '',
-      displayOrder: existing.displayOrder ?? 0,
+      displayOrder: existing.displayOrder ?? '',
       isActive: existing.isActive ?? true,
       ...(existing.extra ?? {}),
     });
@@ -132,7 +135,7 @@ export default function MasterFormPage() {
             iconUrl={existing?.iconUrl ?? null}
             onStateChange={setIconState}
           />
-          <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
 
           {!isEdit && (
             <Checkbox

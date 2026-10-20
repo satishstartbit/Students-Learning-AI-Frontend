@@ -5,6 +5,7 @@ import { toast } from '../../../hooks/useToast';
 import { formatDate, formatDateTime } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatSubjects, invitationStatusOf } from '../../invitations/invitationStatus';
+import InvitationSteps from '../../invitations/components/InvitationSteps';
 import invitationService from '../../invitations/services/teacherInvitation.service';
 
 /** One line of context under each invitation: when it was sent / answered / expires. */
@@ -106,6 +107,7 @@ export default function TeacherInvitationsList({ invitations, onChanged }) {
                 <div className="ui-hint" style={{ margin: '2px 0 0' }}>
                   {whenLine(inv)}
                 </div>
+                <InvitationSteps invitation={inv} dates />
                 <details className="ui-hint mt-2">
                   <summary className="cursor-pointer">Invitation details</summary>
                   <dl className="mt-2 grid gap-1">

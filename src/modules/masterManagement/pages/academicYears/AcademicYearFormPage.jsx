@@ -18,6 +18,8 @@ const endDateAfterStartDate =
     isEmpty(value) || isEmpty(allValues.startDate) || value > allValues.startDate ? null : message;
 import academicService from '../../services/academic.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 export default function AcademicYearFormPage() {
   const { id } = useParams();
@@ -31,7 +33,7 @@ export default function AcademicYearFormPage() {
   }, [isEdit, id, fetchItem]);
 
   const form = useForm({
-    initialValues: { name: '', startDate: '', endDate: '', isCurrent: false, isActive: true, displayOrder: 0 },
+    initialValues: { name: '', startDate: '', endDate: '', isCurrent: false, isActive: true, displayOrder: '' },
     validationSchema: {
       name: [required('Enter a name, e.g. "2026-2027"')],
       startDate: [required('Choose a start date')],
@@ -43,7 +45,7 @@ export default function AcademicYearFormPage() {
         startDate: values.startDate,
         endDate: values.endDate,
         isCurrent: values.isCurrent,
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (!isEdit) payload.isActive = values.isActive;
 
@@ -65,7 +67,7 @@ export default function AcademicYearFormPage() {
       endDate: existing.endDate ?? '',
       isCurrent: existing.isCurrent ?? false,
       isActive: existing.isActive ?? true,
-      displayOrder: existing.displayOrder ?? 0,
+      displayOrder: existing.displayOrder ?? '',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existing]);
@@ -90,7 +92,7 @@ export default function AcademicYearFormPage() {
           <Input label="Name" required hint='e.g. "2026-2027"' {...form.getFieldProps('name')} />
           <DatePicker label="Start date" required {...form.getFieldProps('startDate')} />
           <DatePicker label="End date" required {...form.getFieldProps('endDate')} />
-          <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
 
           <Checkbox
             name="isCurrent"

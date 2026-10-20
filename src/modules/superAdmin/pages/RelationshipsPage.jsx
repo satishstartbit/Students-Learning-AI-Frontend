@@ -81,7 +81,8 @@ export default function RelationshipsPage() {
     [grades.data]
   );
   const academicYearOptions = useMemo(
-    () => (academicYears.data ?? []).map((y) => ({ value: y.id, label: y.name })),
+    // isCurrent: the invite form starts on the current year (required there).
+    () => (academicYears.data ?? []).map((y) => ({ value: y.id, label: y.isCurrent ? `${y.name} (current)` : y.name, name: y.name, isCurrent: Boolean(y.isCurrent) })),
     [academicYears.data]
   );
 

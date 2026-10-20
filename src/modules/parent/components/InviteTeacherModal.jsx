@@ -7,8 +7,8 @@ import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import { emailError, normalizeEmail } from '../../../utils/email';
+import { subjectChoices } from '../../invitations/invitationProgress';
 import invitationService from '../../invitations/services/teacherInvitation.service';
-import { useStudentProfileOptions } from '../../profile/hooks/useStudentProfileOptions';
 
 const MAX_SUBJECTS = 10;
 
@@ -22,7 +22,11 @@ const orList = (items) =>
  * client-written invitation emailed to the teacher - who then accepts or
  * declines. Nothing is linked until the teacher accepts.
  *
- *   1. Subject(s)  a teacher may cover several - e.g. Math and Science
+ *   1. Subject(s)  a teacher may cover several - e.g. Math and Science. Only
+ *                  the child's profile subjects that can still get a teacher
+ *                  this year (one teacher per subject, 2026-10-19): one with a
+ *                  teacher, or a request/invitation open, is listed as "Not
+ *                  offered" with the reason instead
  *   2. Grade       defaults to the child's own grade
  *   3. Teacher     the teachers on the platform who teach those subjects at
  *                  that grade, searchable by name or email - or, for a
@@ -44,10 +48,15 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
   const [teacherName, setTeacherName] = useState('');
   const [teacherEmail, setTeacherEmail] = useState('');
 
-  const profileOptions = useStudentProfileOptions(child?.id, isOpen && Boolean(child?.id));
-  const subjectOptions = profileOptions.subjectOptions;
+  // The child's profile subjects, each with whether a teacher can still be asked for it this year.
+  const availability = useApi(invitationService.teacherSubjects, { immediate: isOpen && Boolean(child?.id), args: [child?.id] });
+  const profileOptions = { error: availability.error };
+  const choice = useMemo(() => subjectChoices(availability.data), [availability.data]);
+  const subjectOptions = choice.options;
+  const profileSubjectCount = availability.data?.subjects?.length ?? 0;
+  const yearName = availability.data?.academicYear?.name ?? null;
   const gradeOptions = childGrade ? [{ value: childGrade, label: childGrade }] : [];
-  const lookupsLoading = profileOptions.loading;
+  const lookupsLoading = availability.isLoading && !availability.data;
   const directory = useApi(invitationService.teacherDirectory);
   const { run: runDirectory } = directory;
   const [teacherSearch, setTeacherSearch] = useState('');
@@ -161,7 +170,13 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
         )}
 
         {profileOptions.error && <Alert variant="error">Could not load this student's profile selections. Close this dialog and try again.</Alert>}
-        {!lookupsLoading && !profileOptions.error && !subjectOptions.length && <Alert variant="info">Select Subjects in this child's profile first: My Children → Edit → Subjects.</Alert>}
+        {!lookupsLoading && !profileOptions.error && !profileSubjectCount && <Alert variant="info">Select Subjects in this child's profile first: My Children → Edit → Subjects.</Alert>}
+        {!lookupsLoading && !profileOptions.error && profileSubjectCount > 0 && !subjectOptions.length && (
+          <Alert variant="info" title="Every subject is covered">
+            Each subject in {whose} profile already has a teacher, or a request waiting{yearName ? ` for ${yearName}` : ''}. Add a subject to the
+            profile to ask for another teacher.
+          </Alert>
+        )}
         <MultiSelect
           name="subjects"
           required
@@ -169,7 +184,7 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
           placeholder="Select subjects"
           maxSelected={MAX_SUBJECTS}
           disabled={lookupsLoading || Boolean(profileOptions.error) || !subjectOptions.length}
-          hint="Only subjects selected in the student profile"
+          hint={`Subjects in ${whose} profile that don't have a teacher yet${yearName ? ` (${yearName})` : ''}. One teacher per subject.`}
           label={`1. Subjects they teach ${first}`}
           options={subjectOptions}
           value={subjects}
@@ -177,6 +192,11 @@ export default function InviteTeacherModal({ isOpen, child, onClose, onInvited }
           loading={lookupsLoading}
           error={attempted ? errors.subjects : undefined}
         />
+        {choice.taken.length > 0 && (
+          <p className="ui-hint pc-taken" data-testid="subjects-not-offered">
+            Not offered: {choice.taken.map((t) => `${t.name} (${t.why})`).join(', ')}.
+          </p>
+        )}
 
         <div className="ui-field">
           <SearchableSelect

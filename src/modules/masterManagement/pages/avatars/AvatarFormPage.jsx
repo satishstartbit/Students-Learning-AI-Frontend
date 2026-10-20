@@ -23,6 +23,8 @@ import { AvatarPicture } from '../../../student/components/personalize/AvatarPic
 import { AVATAR_OPTIONS, AVATAR_PREFIX } from '../../../student/components/personalize/avatarCatalog';
 import appearanceService from '../../services/appearance.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 /**
  * Avatars master - the buddies students choose from on "Make it yours"
@@ -121,7 +123,7 @@ function AvatarForm({ id, existing }) {
     initialValues: {
       name: existing?.name ?? '',
       category: existing?.category ?? '',
-      displayOrder: existing?.displayOrder ?? 0,
+      displayOrder: existing?.displayOrder ?? '',
       isActive: existing?.isActive ?? true,
     },
     validationSchema: { name: [required('Enter an avatar name')] },
@@ -133,7 +135,7 @@ function AvatarForm({ id, existing }) {
       const payload = {
         name: values.name,
         category: values.category || null,
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (source === 'upload') {
         if (photo.file) payload.imageFile = photo.file;
@@ -255,7 +257,7 @@ function AvatarForm({ id, existing }) {
 
         <div className="grid gap-x-4 md:grid-cols-2">
           <Input label="Category" hint="Optional - groups avatars in the admin list" {...form.getFieldProps('category')} />
-          <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
         </div>
 
         {!isEdit && <Checkbox name="isActive" label="Active" checked={form.values.isActive} onChange={form.handleChange} />}

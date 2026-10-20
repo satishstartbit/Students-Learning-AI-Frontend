@@ -7,6 +7,8 @@ import { toast } from '../../../../hooks/useToast';
 import { required, pattern, min } from '../../../../utils/validation';
 import rewardService from '../../services/reward.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 const KEY_PATTERN = /^[a-z][a-z0-9_]*$/;
 
@@ -22,7 +24,7 @@ export default function RewardActivityFormPage() {
   }, [isEdit, id, fetchItem]);
 
   const form = useForm({
-    initialValues: { name: '', activityType: '', description: '', icon: '', points: '', displayOrder: 0, isActive: true },
+    initialValues: { name: '', activityType: '', description: '', icon: '', points: '', displayOrder: '', isActive: true },
     validationSchema: {
       name: [required('Enter an activity name')],
       activityType: isEdit ? [] : [required('Enter a key'), pattern(KEY_PATTERN, 'Lowercase letters, digits and underscores only')],
@@ -38,7 +40,7 @@ export default function RewardActivityFormPage() {
         description: values.description || null,
         icon: values.icon || null,
         points: Number(values.points) || 0,
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (!isEdit) {
         payload.activityType = values.activityType;
@@ -63,7 +65,7 @@ export default function RewardActivityFormPage() {
       description: existing.description ?? '',
       icon: existing.icon ?? '',
       points: existing.points ?? '',
-      displayOrder: existing.displayOrder ?? 0,
+      displayOrder: existing.displayOrder ?? '',
       isActive: existing.isActive ?? true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,7 +100,7 @@ export default function RewardActivityFormPage() {
           <Textarea label="Description" {...form.getFieldProps('description')} />
           <Input label="Icon" hint="An emoji or icon key" {...form.getFieldProps('icon')} />
           <Input label="Points" type="number" required {...form.getFieldProps('points')} />
-          <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
 
           {!isEdit && (
             <Checkbox name="isActive" label="Active" checked={form.values.isActive} onChange={form.handleChange} />

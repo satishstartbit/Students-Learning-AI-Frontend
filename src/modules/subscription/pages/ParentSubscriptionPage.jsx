@@ -579,9 +579,9 @@ export default function ParentSubscriptionPage() {
 
             {isAccountHolder && (
               <div className="sub-plan__actions">
-                <Button variant="secondary" aria-expanded={changeOpen} onClick={changeOpen ? closeChange : () => setChangeOpen(true)}>
+                {/* <Button variant="secondary" aria-expanded={changeOpen} onClick={changeOpen ? closeChange : () => setChangeOpen(true)}>
                   {changeOpen ? 'Close plan options' : 'Change plan'}
-                </Button>
+                </Button> */}
                 {!current.cancelledAt && (
                   <Button variant="secondary" onClick={() => setCancelOpen(true)}>
                     Cancel subscription

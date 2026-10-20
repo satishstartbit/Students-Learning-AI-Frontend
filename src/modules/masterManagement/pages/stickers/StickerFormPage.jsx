@@ -7,6 +7,8 @@ import { toast } from '../../../../hooks/useToast';
 import { required } from '../../../../utils/validation';
 import appearanceService from '../../services/appearance.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 export default function StickerFormPage() {
   const { id } = useParams();
@@ -20,7 +22,7 @@ export default function StickerFormPage() {
   }, [isEdit, id, fetchItem]);
 
   const form = useForm({
-    initialValues: { name: '', imageUrl: '', category: '', displayOrder: 0, isActive: true },
+    initialValues: { name: '', imageUrl: '', category: '', displayOrder: '', isActive: true },
     validationSchema: {
       name: [required('Enter a sticker name')],
       imageUrl: [required('Enter an image URL')],
@@ -30,7 +32,7 @@ export default function StickerFormPage() {
         name: values.name,
         imageUrl: values.imageUrl,
         category: values.category || null,
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (!isEdit) payload.isActive = values.isActive;
 
@@ -50,7 +52,7 @@ export default function StickerFormPage() {
       name: existing.name ?? '',
       imageUrl: existing.imageUrl ?? '',
       category: existing.category ?? '',
-      displayOrder: existing.displayOrder ?? 0,
+      displayOrder: existing.displayOrder ?? '',
       isActive: existing.isActive ?? true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,7 +78,7 @@ export default function StickerFormPage() {
           <Input label="Sticker name" required {...form.getFieldProps('name')} />
           <Input label="Image URL" required {...form.getFieldProps('imageUrl')} />
           <Input label="Category" hint="e.g. Achievement, Motivation, Fun, Study, Celebration" {...form.getFieldProps('category')} />
-          <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
 
           {!isEdit && (
             <Checkbox name="isActive" label="Active" checked={form.values.isActive} onChange={form.handleChange} />

@@ -8,6 +8,8 @@ import { required, max, min, pattern } from '../../../../utils/validation';
 import { toDateInputValue } from '../../../../utils/date';
 import billingService from '../../services/billing.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 const DISCOUNT_TYPE_OPTIONS = [
   { value: 'percentage', label: 'Percentage' },
@@ -50,7 +52,7 @@ export default function DiscountCodeFormPage() {
   const form = useForm({
     initialValues: {
       code: '', name: '', description: '', discountType: 'percentage', discountValue: '',
-      startDate: '', expiresAt: '', maxRedemptions: '', maxRedemptionsPerUser: '1', displayOrder: 0, isActive: true,
+      startDate: '', expiresAt: '', maxRedemptions: '', maxRedemptionsPerUser: '1', displayOrder: '', isActive: true,
     },
     validationSchema: {
       code: isEdit
@@ -74,7 +76,7 @@ export default function DiscountCodeFormPage() {
         maxRedemptions: values.maxRedemptions === '' ? null : Number(values.maxRedemptions),
         maxRedemptionsPerUser: values.maxRedemptionsPerUser === '' ? null : Number(values.maxRedemptionsPerUser),
         applicablePlans,
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (!isEdit) {
         payload.code = values.code;
@@ -112,7 +114,7 @@ export default function DiscountCodeFormPage() {
       expiresAt: existing.expiresAt ? toDateInputValue(existing.expiresAt) : '',
       maxRedemptions: existing.maxRedemptions ?? '',
       maxRedemptionsPerUser: existing.maxRedemptionsPerUser ?? '',
-      displayOrder: existing.displayOrder ?? 0,
+      displayOrder: existing.displayOrder ?? '',
       isActive: existing.isActive ?? true,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -178,7 +180,7 @@ export default function DiscountCodeFormPage() {
             placeholder="All plans"
             hint="Leave empty to apply to every plan"
           />
-          <Input label="Display order" type="number" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
 
           {!isEdit && (
             <Checkbox name="isActive" label="Active" checked={form.values.isActive} onChange={form.handleChange} />

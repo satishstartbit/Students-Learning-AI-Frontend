@@ -9,9 +9,11 @@ import { fromGradeValue, gradeOrderRule, toGradeValue } from '../../../../utils/
 import GradeRangeFields from '../../components/GradeRangeFields';
 import { taskTypeService } from '../../services/curriculum.service';
 import '../../components/masterPages.css';
+import OrderField from '../../components/OrderField';
+import { orderPayload } from '../../components/masterOrder';
 
 const LIST_PATH = '/admin/masters/task-types';
-const EMPTY = { name: '', description: '', icon: '', minGrade: '', maxGrade: '', subtaskStyle: '', displayOrder: 0, isActive: true };
+const EMPTY = { name: '', description: '', icon: '', minGrade: '', maxGrade: '', subtaskStyle: '', displayOrder: '', isActive: true };
 
 export default function TaskTypeFormPage() {
   const { id } = useParams();
@@ -43,7 +45,7 @@ export default function TaskTypeFormPage() {
         minGrade: toGradeValue(values.minGrade),
         maxGrade: toGradeValue(values.maxGrade),
         subtaskStyle: values.subtaskStyle.trim(),
-        displayOrder: Number(values.displayOrder) || 0,
+        displayOrder: orderPayload(values.displayOrder),
       };
       if (!isEdit) payload.isActive = values.isActive;
       await (isEdit ? taskTypeService.update(id, payload) : taskTypeService.create(payload));
@@ -62,7 +64,7 @@ export default function TaskTypeFormPage() {
       minGrade: fromGradeValue(existing.minGrade),
       maxGrade: fromGradeValue(existing.maxGrade),
       subtaskStyle: existing.subtaskStyle ?? '',
-      displayOrder: existing.displayOrder ?? 0,
+      displayOrder: existing.displayOrder ?? '',
       isActive: existing.isActive ?? true,
     });
   }, [existing, reset]);
@@ -103,7 +105,7 @@ export default function TaskTypeFormPage() {
             hint="Used by the AI when it breaks a task into steps - not shown to teachers. e.g. linear-steps, milestone-based, research-draft-revise"
             {...form.getFieldProps('subtaskStyle')}
           />
-          <Input label="Display order" type="number" min="0" {...form.getFieldProps('displayOrder')} />
+          <OrderField isEdit={isEdit} {...form.getFieldProps('displayOrder')} />
           {!isEdit && <Checkbox name="isActive" label="Active" checked={form.values.isActive} onChange={form.handleChange} />}
           <ButtonGroup>
             <Button type="submit" loading={form.isSubmitting}>{isEdit ? 'Save changes' : 'Create task type'}</Button>
