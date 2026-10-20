@@ -189,6 +189,8 @@ export const SUPER_ADMIN_ROUTES = {
     { path: 'dashboard', label: 'Dashboard', redirectTo: '/admin' },
     // The Super Admin's own account (account menu > Account).
     { path: 'profile', label: 'My Profile', permissions: [PERMISSIONS.PROFILE_READ], component: AdminProfilePage },
+    // Sidebar > Notifications (2026-10-20: replaced the header bell's dropdown).
+    { path: 'notifications', label: 'Notifications', permissions: [PERMISSIONS.NOTIFICATION_READ], component: NotificationsPage },
     // Business policies changed without a release (modules/platform).
     { path: 'settings', label: 'Platform settings', component: PlatformSettingsPage },
     { path: 'settings/:key', label: 'Platform setting', component: PlatformSettingPage },

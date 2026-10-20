@@ -27,7 +27,11 @@ test('parent: help and alerts to Progress, invitations to My Children, billing t
   assert.equal(notificationPathFor('PARENT', n('reward')), null);
 });
 
-test('student: the student rules; Super Admin and unknown: nowhere', () => {
+test('Super Admin: a parent\'s teacher request opens the waiting requests', () => {
+  assert.equal(notificationPathFor('SUPER_ADMIN', n('teacher_invitation', 'i1')), '/admin/relationships/invitations?status=awaiting_approval');
+});
+
+test('student: the student rules; Super Admin\'s other notices and unknown: nowhere', () => {
   assert.equal(notificationPathFor('STUDENT', n('assignment', 'a9')), '/student/assignments/a9');
   assert.equal(notificationPathFor('STUDENT', { type: 'reward_unlocked' }), '/student/rewards');
   // Note reminders: a Home note opens Home, a note on an assignment opens the assignment.
@@ -37,6 +41,7 @@ test('student: the student rules; Super Admin and unknown: nowhere', () => {
   assert.equal(notificationPathFor('TEACHER', null), null);
 });
 
-test('a notifications page for student, teacher and parent only', () => {
-  assert.deepEqual(Object.keys(NOTIFICATIONS_PAGE_BY_ROLE).sort(), ['PARENT', 'STUDENT', 'TEACHER']);
+test('every signed-in role has a notifications page (Super Admin since 2026-10-20)', () => {
+  assert.deepEqual(Object.keys(NOTIFICATIONS_PAGE_BY_ROLE).sort(), ['PARENT', 'STUDENT', 'SUPER_ADMIN', 'TEACHER']);
+  assert.equal(NOTIFICATIONS_PAGE_BY_ROLE.SUPER_ADMIN, '/admin/notifications');
 });

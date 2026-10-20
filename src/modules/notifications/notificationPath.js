@@ -34,16 +34,21 @@ export function notificationPathFor(role, notification) {
       if (relatedType === 'teacher_invitation' || relatedType === 'teacher_connection') return '/parent/children';
       if (relatedType === 'subscriptions' || relatedType === 'payment_transactions') return '/parent/subscription';
       return null;
+    case 'SUPER_ADMIN':
+      // A parent's teacher request waiting for approval → the requests on Teacher invitations.
+      if (relatedType === 'teacher_invitation') return '/admin/relationships/invitations?status=awaiting_approval';
+      return null;
     default:
       return null;
   }
 }
 
-/** Each role's notifications page (Super Admin has none - it keeps the bell's list). */
+/** Each role's notifications page (Super Admin's since 2026-10-20 - its header bell is gone). */
 export const NOTIFICATIONS_PAGE_BY_ROLE = {
   STUDENT: '/student/notifications',
   TEACHER: '/teacher/notifications',
   PARENT: '/parent/notifications',
+  SUPER_ADMIN: '/admin/notifications',
 };
 
 /** Tells the bell's unread badge to look again (after reading on the page). */
