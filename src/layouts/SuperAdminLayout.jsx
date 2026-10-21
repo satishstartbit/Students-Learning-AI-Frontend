@@ -75,13 +75,13 @@ const navItems = (unreadCount) => [
           { to: '/admin/subscriptions/payments', label: 'Payments & Refunds', icon: LuReceiptText },
         ],
       },
-      {
-        to: NOTIFICATIONS_PATH,
-        label: 'Notifications',
-        icon: LuBell,
-        badge: unreadCount,
-        ariaLabel: unreadCount ? `Notifications, ${unreadCount} unread` : undefined,
-      },
+      // {
+      //   to: NOTIFICATIONS_PATH,
+      //   label: 'Notifications',
+      //   icon: LuBell,
+      //   badge: unreadCount,
+      //   ariaLabel: unreadCount ? `Notifications, ${unreadCount} unread` : undefined,
+      // },
       // Hidden for now (re-add the icons to the import):
       // { to: '/admin/settings', label: 'Platform settings', icon: LuSlidersHorizontal },
       // { to: '/admin/system', label: 'System status', icon: LuActivity },

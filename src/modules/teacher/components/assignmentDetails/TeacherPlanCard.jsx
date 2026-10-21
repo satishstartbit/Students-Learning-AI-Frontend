@@ -3,8 +3,9 @@ import { LuArrowDown, LuArrowUp, LuPlus, LuTrash2 } from 'react-icons/lu';
 import { Alert, Button, Card, ErrorState, IconButton, Input, Select } from '../../../../components/common';
 import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
-import { formatDateKey } from '../../../../utils/date';
+import { formatDateKey, getDateKey } from '../../../../utils/date';
 import { getErrorMessage } from '../../../../utils/errorHandler';
+import { pastDateErrors } from '../../../../utils/workDates';
 import assignmentService from '../../../assignments/services/assignment.service';
 
 const rowStyle = { display: 'grid', gap: 8, gridTemplateColumns: 'minmax(0, 1fr) auto', alignItems: 'end' };
@@ -14,7 +15,11 @@ function CheckpointsEditor({ assignmentId, plan, disabled, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  const invalid = rows.some((r) => !r.title.trim() || !r.dueDate || (plan.dueDate && r.dueDate > plan.dueDate));
+  // A new or moved checkpoint can't be on a day that has gone; a saved one keeps its date.
+  const today = getDateKey();
+  const savedDate = new Map(plan.checkpoints.map((c) => [c.id, c.dueDate]));
+  const pastError = (r) => pastDateErrors({ dueDate: r.dueDate }, { today, saved: { dueDate: r.id ? savedDate.get(r.id) : null } }).dueDate;
+  const invalid = rows.some((r) => !r.title.trim() || !r.dueDate || (plan.dueDate && r.dueDate > plan.dueDate) || pastError(r));
 
   const save = async () => {
     setSaving(true);
@@ -58,9 +63,10 @@ function CheckpointsEditor({ assignmentId, plan, disabled, onSaved }) {
             label="By"
             type="date"
             value={r.dueDate}
+            min={today}
             max={plan.dueDate ?? undefined}
             disabled={disabled}
-            error={plan.dueDate && r.dueDate > plan.dueDate ? 'After the due date' : undefined}
+            error={pastError(r) ?? (plan.dueDate && r.dueDate > plan.dueDate ? 'After the due date' : undefined)}
             onChange={(e) => setRows((list) => list.map((x, j) => (j === i ? { ...x, dueDate: e.target.value } : x)))}
           />
           <IconButton

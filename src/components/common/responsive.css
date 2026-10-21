@@ -63,6 +63,16 @@
     flex: 1 1 auto;
     justify-content: center;
   }
+  /* Also buttons inside a wrapper row. Basis auto, not 0: from 0 they all fit
+     one line and their labels spill over each other; from auto they wrap to the
+     next line, then share the width. A label wider than the row wraps inside. */
+  .ui-pageheader__actions .ui-btn {
+    flex: 1 1 auto;
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+  }
 }
 
 /* --- Dialogs become bottom sheets -------------------------------------- */

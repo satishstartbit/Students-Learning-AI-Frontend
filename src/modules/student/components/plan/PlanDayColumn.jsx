@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { LuHeart, LuPlus } from 'react-icons/lu';
 import { formatDateKey, getClockMinutesInTimezone, weekdayOfKey } from '../../../../utils/date';
+import { isPastDay } from '../../../../utils/workDates';
 import { PersonalEventCard } from '../../../planner/components/schoolwork/SchoolworkBits';
 import { shortMinutes } from '../../../planner/components/schoolwork/schoolworkFormat';
 import { agendaItems, blockStats } from '../../../planner/schoolwork';
@@ -19,7 +20,7 @@ function weekendNote(dayKey, viewer) {
  * due that day (a small "Due" line - the cards are the study times), the
  * study times the planner put on it as cards in the page's Sort order, the
  * student's personal activities (shown, never schoolwork), and at the foot
- * Add (new work pre-dated to this day), how many study times are done and
+ * Add (new work pre-dated to this day; none on a day that has gone), how many study times are done and
  * the time planned. An empty Saturday says "Catch up", Sunday "Plan ahead".
  *
  *   blocks       this day's study times, already in the Sort order
@@ -155,9 +156,14 @@ export function PlanDayColumn({
       </div>
 
       <div className="sp-day__foot">
-        <button type="button" className="sp-add" onClick={() => onAdd(dayKey)} aria-label={`Add a task for ${fullLabel}`}>
-          <LuPlus size={13} aria-hidden="true" /> Add
-        </button>
+        {isPastDay(dayKey, todayKey) ? (
+          // No work on a day that has gone (2026-10-21).
+          <span className="sp-add sp-add--gone" aria-hidden="true" />
+        ) : (
+          <button type="button" className="sp-add" onClick={() => onAdd(dayKey)} aria-label={`Add a task for ${fullLabel}`}>
+            <LuPlus size={13} aria-hidden="true" /> Add
+          </button>
+        )}
         {blocks.length > 0 || !isWeekend ? (
           <>
             <span className="sp-day__stat">

@@ -602,6 +602,11 @@
   background: var(--accent-soft);
   color: var(--accent-base);
 }
+/* A day that has gone: no Add, but its space stays so every day's foot lines up. */
+.sp-add--gone {
+  display: block;
+  visibility: hidden;
+}
 
 .sp-bar {
   display: block;
