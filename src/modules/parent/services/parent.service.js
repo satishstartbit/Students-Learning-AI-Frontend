@@ -1,4 +1,5 @@
 import api from '../../../utils/apiClient';
+import { toAcademicYearOptions } from '../../auth/components/academicYearOptions';
 
 /**
  * Parent self-service API calls - the parent's own "My Children" panel.
@@ -155,6 +156,10 @@ export const listGrades = (params = {}) => listMasterOptions('grade_levels', par
 export const listAcademicYears = (params = {}) =>
   api.get('/parent/lookups/academic-years', { params: dropEmpty(params) });
 
+/** Academic year options for Add/Edit child (switched-on years, current one marked). */
+export const academicYearOptionsFetcher = () =>
+  listAcademicYears().then((res) => toAcademicYearOptions(res?.data ?? []));
+
 export default {
   disconnectTeacher,
   getWorkReview,
@@ -186,4 +191,5 @@ export default {
   listSubjects,
   listGrades,
   listAcademicYears,
+  academicYearOptionsFetcher,
 };

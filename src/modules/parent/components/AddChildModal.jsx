@@ -18,7 +18,7 @@ import './parentChildren.css';
 // then their own device's once they sign in (hooks/useDeviceTimezone.js).
 // No email or phone either: a child signs in with their username and the
 // password set here, never an email or phone number.
-const INITIAL_VALUES = { firstName: '', lastName: '', password: '', confirmPassword: '', guardianConsent: false };
+const INITIAL_VALUES = { firstName: '', lastName: '', password: '', confirmPassword: '', academic_year_id: '', guardianConsent: false };
 
 const CONSENT_FALLBACK = "I am {{child}}'s parent or guardian. I agree to the Terms of Use and Privacy Policy for them.";
 
@@ -144,6 +144,7 @@ export default function AddChildModal({ isOpen, onClose, onCreated }) {
             getProps={form.getFieldProps}
             includeAdminOnly
             lookupFetcher={parentService.masterOptionsFetcher}
+            academicYearFetcher={parentService.academicYearOptionsFetcher}
           />
         </ProfileSection>
 

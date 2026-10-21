@@ -32,11 +32,11 @@ const NAV_ITEMS = [
       // Parents' invitations to connect with their child (accept / decline).
       { to: '/teacher/invitations', label: 'Invitations', icon: LuMailOpen },
       { to: '/teacher/assignments', label: 'Assignments', icon: LuFileText },
-      { to: '/teacher/shared-work', label: 'Shared with me', icon: LuHandshake },
+      // { to: '/teacher/shared-work', label: 'Shared with me', icon: LuHandshake },
       { to: '/teacher/progress', label: 'Progress', icon: LuChartLine },
-      { to: '/teacher/learning-activity', label: 'Learning Activity', icon: LuSparkles },
+      // { to: '/teacher/learning-activity', label: 'Learning Activity', icon: LuSparkles },
       { to: '/teacher/profile', label: 'My Profile', icon: LuUser },
-      { to: '/teacher/notifications', label: 'Notifications', icon: LuBell },
+      // { to: '/teacher/notifications', label: 'Notifications', icon: LuBell },
     ],
   },
 ];
@@ -50,7 +50,7 @@ const MOBILE_TABS = [
   { to: '/teacher/students', label: 'Students', icon: LuUsers },
   { to: '/teacher/assignments', label: 'Work', icon: LuListChecks },
   { to: '/teacher/progress', label: 'Progress', icon: LuChartLine },
-  { to: '/teacher/learning-activity', label: 'Activity', icon: LuActivity },
+  // { to: '/teacher/learning-activity', label: 'Activity', icon: LuActivity },
 ];
 
 export function TeacherLayout({ children }) {

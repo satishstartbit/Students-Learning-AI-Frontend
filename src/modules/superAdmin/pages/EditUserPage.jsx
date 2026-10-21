@@ -101,6 +101,7 @@ export default function EditUserPage() {
       email: user.email ?? '',
       phone: formatPhoneForDisplay(user.phone),
       grade: profile.grade ?? '',
+      academic_year_id: isStudent ? profile.academic_year_id ?? '' : '',
       date_of_birth: isStudent ? profile.date_of_birth ?? '' : '',
       gender: isStudent ? profile.gender ?? '' : '',
       preferred_working_style: profile.preferred_working_style ?? '',
@@ -172,6 +173,7 @@ export default function EditUserPage() {
             getProps={form.getFieldProps}
             includeAdminOnly
             photo={user.role === 'STUDENT' ? photo : undefined}
+            savedAcademicYear={user.profile?.academicYear}
           />
 
           <ButtonGroup>

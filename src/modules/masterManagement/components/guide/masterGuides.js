@@ -19,17 +19,19 @@ const BUILT_IN = 'Built-in items can be edited or switched off but not deleted; 
 export const MASTER_GUIDES = {
   // ------------------------------------------------------------------ Academic
   'academic-years': {
-    summary: 'The school years that teacher–student links, parent invitations and assignments belong to. The one marked "current" is the year new links and invitations use.',
+    summary: 'The school years that students, teacher–student links, parent invitations and assignments belong to. The one marked "current" is the year new links and invitations use.',
     usedIn: [
+      { role: 'Parent', page: 'My Children › Add child, Edit child', path: '/parent/children', how: 'Every child needs an academic year (required); the child card and details show it.' },
+      { role: 'Super Admin', page: 'A parent’s record › Add child, Edit user', path: '/admin/users/:id', how: 'The same required Academic year field for a child; the student’s record shows it.' },
       { role: 'Parent', page: 'My Children › Invite a teacher, child details', path: '/parent/children', how: 'Invitations and teacher links show the school year they are for.' },
       { role: 'Teacher', page: 'New / edit assignment › Who it is for', path: '/teacher/assignments/new', how: 'Students are picked from the links of the current year.' },
       { role: 'Teacher', page: 'Assignment details', path: '/teacher/assignments/:id', how: 'Shows the year the assignment belongs to.' },
       { role: 'Super Admin', page: 'Relationships', path: '/admin/relationships', how: 'Each teacher–student link is subject + grade + school year.' },
     ],
     drives: ['Accepting a parent’s invitation links the teacher for the current year.', 'Teacher subject coverage and the parent’s teacher connections are grouped by year.'],
-    whenYouChange: ['Only one year can be current; marking another current moves new links and invitations to it.', OFF_HIDES, BUILT_IN],
+    whenYouChange: ['Only one year can be current; marking another current moves new links and invitations to it.', 'A year students are in can’t be deleted - switch it off instead; those children keep it until they are edited.', OFF_HIDES, BUILT_IN],
     related: ['grade_levels', 'subjects'],
-    api: { admin: 'GET|POST /api/v1/admin/master/academic-years · PATCH|DELETE …/:id', read: ['Used inside teacher, parent and relationship services'], code: ['services/teacherInvitation.service.js', 'services/relationship.service.js', 'services/assignment.service.js'] },
+    api: { admin: 'GET|POST /api/v1/admin/master/academic-years · PATCH|DELETE …/:id', read: ['GET /api/v1/parent/lookups/academic-years', 'Used inside teacher, parent and relationship services'], code: ['services/user.service.js (student_profiles.academic_year_id)', 'services/teacherInvitation.service.js', 'services/relationship.service.js', 'services/assignment.service.js'] },
   },
   grade_levels: {
     summary: 'The grade list for the whole platform (Kindergarten to Grade 12). A student’s grade also decides which version of the app they get - the K-4 kid design or the Grade 6+ design.',

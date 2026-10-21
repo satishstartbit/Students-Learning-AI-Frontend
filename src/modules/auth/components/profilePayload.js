@@ -58,6 +58,7 @@ export function buildProfilePayload(role, values) {
         'profile_notes',
         'date_of_birth',
         'gender',
+        'academic_year_id',
       ]
         .map((k) => [k, shaped[k]])
         .filter(([, v]) => v !== undefined && v !== '')

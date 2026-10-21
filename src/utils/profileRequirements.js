@@ -13,6 +13,7 @@ const MESSAGES = {
   grade: 'Choose a grade',
   date_of_birth: 'Enter the date of birth',
   gender: 'Choose a gender',
+  academic_year_id: 'Choose an academic year',
   subjects: 'Choose at least one subject',
   gradeLevels: 'Choose at least one grade you teach',
   yearsExperience: 'Enter the years of experience',
@@ -21,7 +22,7 @@ const MESSAGES = {
 const TEACHER_SUBJECTS_MESSAGE = 'Choose at least one subject you teach';
 
 export const REQUIRED_BY_ROLE = {
-  STUDENT: ['lastName', 'grade', 'date_of_birth', 'gender', 'subjects'],
+  STUDENT: ['lastName', 'grade', 'academic_year_id', 'date_of_birth', 'gender', 'subjects'],
   TEACHER: ['lastName', 'phone', 'subjects', 'gradeLevels', 'yearsExperience'],
   PARENT: ['lastName', 'phone'],
 };

@@ -5,7 +5,7 @@ import { isRequiredField, requiredFields, requiredMessage, withRequiredFields } 
 const run = (rules, value) => rules.map((rule) => rule(value)).find(Boolean) ?? null;
 
 test('the same required lists as the backend', () => {
-  assert.deepEqual(requiredFields('STUDENT'), ['lastName', 'grade', 'date_of_birth', 'gender', 'subjects']);
+  assert.deepEqual(requiredFields('STUDENT'), ['lastName', 'grade', 'academic_year_id', 'date_of_birth', 'gender', 'subjects']);
   assert.deepEqual(requiredFields('TEACHER'), ['lastName', 'phone', 'subjects', 'gradeLevels', 'yearsExperience']);
   assert.deepEqual(requiredFields('PARENT'), ['lastName', 'phone']);
   assert.deepEqual(requiredFields('SUPER_ADMIN'), []);
@@ -22,6 +22,12 @@ test("required comes first, then the form's own rules", () => {
   assert.equal(run(schema.phone, '+1 (416) 555-1234'), null);
   assert.equal(run(schema.lastName, '   '), 'Enter a last name');
   assert.ok(schema.firstName);
+});
+
+test('a child without an academic year is refused (QA 2026-10-21)', () => {
+  const child = withRequiredFields('STUDENT');
+  assert.equal(run(child.academic_year_id, ''), 'Choose an academic year');
+  assert.equal(run(child.academic_year_id, 'd24f1ea0-6073-4de9-a526-4647f53b8d63'), null);
 });
 
 test('empty lists fail, zero years passes, and `fields` limits what is added', () => {

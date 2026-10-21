@@ -2,6 +2,7 @@ import { Input, Textarea, Select, MultiSelect, ImageUpload, DatePicker } from '.
 import { getDateKey } from '../../../utils/date';
 import { isRequiredField } from '../../../utils/profileRequirements';
 import { useMasterOptions } from './useMasterOptions';
+import { adminAcademicYearFetcher, withSavedYear } from './academicYearOptions';
 
 const GENDER_OPTIONS = [
   { value: 'female', label: 'Female' },
@@ -46,6 +47,25 @@ function MasterSelectField({ masterType, name, label, getProps, hint, required, 
       loading={loading}
       required={required}
       {...getProps(name)}
+    />
+  );
+}
+
+/** A student's academic year: switched-on years from the Academic Years master, stored by id. */
+function AcademicYearField({ getProps, required, fetcher, savedYear }) {
+  const { options, loading } = useMasterOptions('academic_years', fetcher);
+  const choices = withSavedYear(options, savedYear);
+  const noYears = !loading && choices.length === 0;
+
+  return (
+    <Select
+      label="Academic year"
+      placeholder="Select an academic year"
+      options={choices}
+      hint={loading ? 'Loading…' : noYears ? 'No academic years are set up yet - Super Admin adds them in Master Management.' : undefined}
+      loading={loading}
+      required={required}
+      {...getProps('academic_year_id')}
     />
   );
 }
@@ -109,6 +129,12 @@ function ProfilePhotoField({ photo }) {
  *                  row in the My Profile grid (profile.css `pf-grid`), as the
  *                  parent's Edit child dialog does. The default 'stacked'
  *                  layout is unchanged for every other form.
+ * @param academicYearFetcher  STUDENT only - where the Academic year options
+ *                  come from (default `/admin/master/academic-years`; parents
+ *                  pass parentService.academicYearOptionsFetcher).
+ * @param savedAcademicYear    STUDENT edit forms - the child's saved
+ *                  `profile.academicYear` ({ id, name }), kept in the list even
+ *                  once that year is switched off.
  */
 export default function RoleProfileFields({
   role,
@@ -118,6 +144,8 @@ export default function RoleProfileFields({
   photo,
   showFamilyContext = true,
   layout = 'stacked',
+  academicYearFetcher = adminAcademicYearFetcher,
+  savedAcademicYear = null,
 }) {
   // The asterisks follow utils/profileRequirements.js - the same list the API enforces.
   const isRequired = (field) => isRequiredField(role, field);
@@ -134,6 +162,16 @@ export default function RoleProfileFields({
       />
     ) : (
       <Input label="Grade" placeholder="e.g. Grade 9" required={isRequired('grade')} {...getProps('grade')} />
+    );
+
+    // Students are only ever created on the master-backed forms (Add child, Edit).
+    const academicYear = includeAdminOnly && (
+      <AcademicYearField
+        getProps={getProps}
+        required={isRequired('academic_year_id')}
+        fetcher={academicYearFetcher}
+        savedYear={savedAcademicYear}
+      />
     );
 
     const dateOfBirth = (
@@ -219,6 +257,7 @@ export default function RoleProfileFields({
             </div>
           )}
           {grade}
+          {academicYear}
           {dateOfBirth}
           {gender}
           <div className="pf-span-2">{workingStyle}</div>
@@ -233,6 +272,7 @@ export default function RoleProfileFields({
       <>
         {photo && <ProfilePhotoField photo={photo} />}
         {grade}
+        {academicYear}
         {dateOfBirth}
         {gender}
         {workingStyle}

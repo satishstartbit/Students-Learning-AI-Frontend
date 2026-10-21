@@ -105,7 +105,7 @@ function ChildCard({ child, isViewing, onProgress, onEdit, onSetPassword, onInvi
         <div className="pc-head__body">
           <h3 className="pc-name">{name}</h3>
           <p className="pc-meta">
-            {[child.username ? `@${child.username}` : null, child.grade].filter(Boolean).join(' · ')}
+            {[child.username ? `@${child.username}` : null, child.grade, child.academicYear?.name].filter(Boolean).join(' · ')}
           </p>
         </div>
 

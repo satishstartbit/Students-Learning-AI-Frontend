@@ -41,7 +41,7 @@ const SUBSCRIPTION_STATUS = {
   past_due: 'Payment due',
 };
 
-const EMPTY_CHILD = { firstName: '', lastName: '', password: '', confirmPassword: '' };
+const EMPTY_CHILD = { firstName: '', lastName: '', password: '', confirmPassword: '', academic_year_id: '' };
 
 /** One person in the family: who, badges, and the row's icon actions. */
 function MemberRow({ to, name, meta, badges, actions }) {

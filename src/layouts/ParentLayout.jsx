@@ -49,7 +49,7 @@ const NAV_ITEMS = [
       { to: '/parent/progress', label: 'Progress', icon: LuChartLine },
       { to: '/parent/schedule', label: 'Schedule', icon: LuCalendarDays },
       { to: '/parent/notes', label: 'Notes', icon: LuStickyNote },
-      { to: '/parent/learning-summary', label: 'Learning Summary', icon: LuSparkles },
+      // { to: '/parent/learning-summary', label: 'Learning Summary', icon: LuSparkles },
     ],
   },
   {
@@ -59,7 +59,7 @@ const NAV_ITEMS = [
       { to: '/parent/children', label: 'My Children', icon: LuUsersRound },
       { to: '/parent/profile', label: 'My Profile', icon: LuUser },
       { to: '/parent/subscription', label: 'Subscription', icon: LuCreditCard },
-      { to: '/parent/notifications', label: 'Notifications', icon: LuBell },
+      // { to: '/parent/notifications', label: 'Notifications', icon: LuBell },
     ],
   },
 ];
@@ -72,7 +72,7 @@ const MOBILE_TABS = [
   { to: '/parent', label: 'Overview', icon: LuLayoutGrid, end: true },
   { to: '/parent/children', label: 'Children', icon: LuUsersRound },
   { to: '/parent/progress', label: 'Progress', icon: LuChartLine },
-  { to: '/parent/learning-summary', label: 'Learning', icon: LuSparkles },
+  // { to: '/parent/learning-summary', label: 'Learning', icon: LuSparkles },
   { to: '/parent/subscription', label: 'Plan', icon: LuCreditCard },
 ];
 

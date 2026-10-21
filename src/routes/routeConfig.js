@@ -683,12 +683,12 @@ export const PARENT_ROUTES = {
       permissions: [PERMISSIONS.PROGRESS_READ],
       component: ParentNotesPage,
     },
-    {
-      path: 'learning-summary',
-      label: 'Learning Summary',
-      permissions: [PERMISSIONS.LEARNING_SUMMARY_READ],
-      component: ParentLearningSummaryPage,
-    },
+    // {
+    //   path: 'learning-summary',
+    //   label: 'Learning Summary',
+    //   permissions: [PERMISSIONS.LEARNING_SUMMARY_READ],
+    //   component: ParentLearningSummaryPage,
+    // },
     {
       path: 'subscription',
       label: 'Subscription',

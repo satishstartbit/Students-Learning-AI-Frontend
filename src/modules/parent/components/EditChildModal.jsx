@@ -29,6 +29,7 @@ function valuesFromChild(child) {
     country: child?.country ?? '',
     postalCode: child?.postalCode ?? '',
     grade: child?.profile?.grade ?? '',
+    academic_year_id: child?.profile?.academic_year_id ?? '',
     date_of_birth: child?.profile?.date_of_birth ?? '',
     gender: child?.profile?.gender ?? '',
     preferred_working_style: child?.profile?.preferred_working_style ?? '',
@@ -174,6 +175,8 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
               getProps={form.getFieldProps}
               includeAdminOnly
               lookupFetcher={parentService.masterOptionsFetcher}
+              academicYearFetcher={parentService.academicYearOptionsFetcher}
+              savedAcademicYear={child.profile?.academicYear}
             />
           </ProfileSection>
         </form>
