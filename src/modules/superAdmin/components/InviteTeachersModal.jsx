@@ -63,6 +63,10 @@ export default function InviteTeachersModal({
   const yearId = academicYearId ?? currentYearId;
   const yearOption = academicYearOptions?.find((o) => o.value === yearId);
   const yearLabel = yearOption?.name ?? yearOption?.label ?? null;
+  const yearsLoaded = !academicYearsLoading && Array.isArray(academicYearOptions);
+  const noYears = yearsLoaded && academicYearOptions.length === 0;
+  // No current year to start on: say what's missing instead of only greying out Send.
+  const yearMissing = yearsLoaded && academicYearOptions.length > 0 && !yearId;
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [teacherSearch, setTeacherSearch] = useState('');
@@ -208,10 +212,11 @@ export default function InviteTeachersModal({
           </Alert>
         )}
 
-        {(noSubjects || noGrades) && (
+        {(noSubjects || noGrades || noYears) && (
           <Alert variant="warning" title="Master data missing">
             {noSubjects && <div>Add subjects in Master Management before inviting teachers.</div>}
             {noGrades && <div>Add grade levels in Master Management before inviting teachers.</div>}
+            {noYears && <div>Add an academic year in Master Management before inviting teachers.</div>}
           </Alert>
         )}
 
@@ -249,11 +254,13 @@ export default function InviteTeachersModal({
             options={academicYearOptions}
             value={yearId}
             onChange={handleYearChange}
+            clearable={false}
             loading={academicYearsLoading}
             placeholder="Select academic year"
             searchPlaceholder="Search academic years…"
             emptyMessage="No academic years available"
             hint="The school year these classes are for. Starts on the current year."
+            error={yearMissing ? 'Choose the academic year - invitations can’t be sent without one.' : undefined}
           />
         </div>
 

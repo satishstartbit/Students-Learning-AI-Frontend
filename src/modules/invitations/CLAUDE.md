@@ -18,7 +18,7 @@ The teacher-invitation link a teacher opens from the email, plus the shared stat
 - Accepting creates the `teacher_student` relationships (per subject, grade, academic year) and notifies the family. "Accept for teacher" (Super Admin) runs the same `acceptInvitation`.
 - The teacher email is lower-cased. If an account exists for it, accepting links that account. The page works signed in or out.
 - A new status needs changes in five places: DB check (migration), model, `validators/teacherInvitation.validator.js#STATUSES`, `invitationStatus.js`, and every list that filters by status.
-- The email wording is the client's. Don't write it. `[CLIENT COPY PENDING]` blocks sending in production (see `superAdmin`).
+- The email wording is the client's. Don't write it. `[CLIENT COPY PENDING]` blocks sending in production with a 409 `INVITATION_EMAIL_NOT_READY` that says why (see `superAdmin`).
 
 ## Verify
 - UI: harness scenario opening `/invitations/teacher/<token>` with a mocked `GET /teacher-invitations/:token`.
