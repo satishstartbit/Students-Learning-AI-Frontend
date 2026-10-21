@@ -281,6 +281,8 @@ export default function UserDetailPage() {
             </Field>
           )}
           {!isStudent && <Field label="Phone">{formatPhoneForDisplay(user.phone)}</Field>}
+          {isStudent && <Field label="Grade">{user.profile?.grade || null}</Field>}
+          {isStudent && <Field label="Academic year">{user.profile?.academicYear?.name ?? null}</Field>}
           <Field label="Mailing address">
             {mailingLines.length ? <span style={{ whiteSpace: 'pre-wrap' }}>{mailingLines.join('\n')}</span> : null}
           </Field>

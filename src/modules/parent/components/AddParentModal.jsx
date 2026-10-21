@@ -2,6 +2,7 @@ import { Alert, Button, EmailInput, Input, Modal, PhoneInput } from '../../../co
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required, emailRules, phone as phoneRule } from '../../../utils/validation';
+import { isRequiredField, withRequiredFields } from '../../../utils/profileRequirements';
 import { formatName } from '../../../utils/format';
 import { ProfileSection } from '../../profile/components/ProfileParts';
 import parentService from '../services/parent.service';
@@ -21,11 +22,11 @@ const INITIAL_VALUES = { firstName: '', lastName: '', email: '', phone: '' };
 export default function AddParentModal({ isOpen, onClose, onCreated, save = parentService.addFamilyParent, familyName = null }) {
   const form = useForm({
     initialValues: INITIAL_VALUES,
-    validationSchema: {
+    validationSchema: withRequiredFields('PARENT', {
       firstName: [required('Enter a first name')],
       email: emailRules(),
       phone: [phoneRule()],
-    },
+    }),
     async onSubmit(values) {
       const { data } = await save({
         firstName: values.firstName,
@@ -84,9 +85,9 @@ export default function AddParentModal({ isOpen, onClose, onCreated, save = pare
         <ProfileSection title="Their details">
           <div className="pf-grid">
             <Input label="First name" required autoComplete="off" {...form.getFieldProps('firstName')} />
-            <Input label="Last name" autoComplete="off" {...form.getFieldProps('lastName')} />
+            <Input label="Last name" required={isRequiredField('PARENT', 'lastName')} autoComplete="off" {...form.getFieldProps('lastName')} />
             <EmailInput label="Email" required autoComplete="off" {...form.getFieldProps('email')} />
-            <PhoneInput label="Phone" autoComplete="off" {...form.getFieldProps('phone')} />
+            <PhoneInput label="Phone" required={isRequiredField('PARENT', 'phone')} autoComplete="off" {...form.getFieldProps('phone')} />
           </div>
         </ProfileSection>
       </form>

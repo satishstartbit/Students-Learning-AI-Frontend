@@ -124,6 +124,8 @@ function SignUp({ inviteToken, invite }) {
     validationSchema: {
       role: [required('Choose how you will use the platform')],
       firstName: [required('Enter your first name')],
+      // Phone and the teaching details are asked for after sign-in ("Complete your profile").
+      lastName: [required('Enter your last name')],
       email: emailRules(),
       password: [required('Choose a password'), passwordRule()],
       agreeToTerms: [(value) => (value ? null : 'Please agree to the Terms of Use and Privacy Policy')],

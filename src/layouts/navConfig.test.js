@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { accountMenuPosition, flattenNav, PROFILE_PATH_BY_ROLE } from './navConfig.js';
+import { accountMenuPosition, activeMenuLabel, flattenNav, PROFILE_PATH_BY_ROLE } from './navConfig.js';
 
 const Icon = () => null;
 
@@ -34,6 +34,28 @@ test('the account menu: above the tile when expanded, beside the rail when colla
   assert.equal(accountMenuPosition({ left: 8, right: 40, top: 856, bottom: 888 }, { ...view, collapsed: true, railRight: 52 }).left, 60);
   // Never past the right edge of a narrow window.
   assert.equal(accountMenuPosition({ left: 300, right: 340, top: 0, bottom: 40 }, { viewportWidth: 360, viewportHeight: 800, collapsed: true }).left, 112);
+});
+
+test('the menu that opens on arrival is the one holding the current page', () => {
+  const sections = [
+    {
+      group: 'Platform',
+      items: [
+        { to: '/admin', label: 'Dashboard', end: true },
+        { label: 'Users', items: [{ to: '/admin/users/students', label: 'Students' }, { to: '/admin/users/parents', label: 'Parents' }] },
+        { label: 'Billing', items: [{ to: '/admin/subscriptions', label: 'Subscriptions', end: true }, { to: '/admin/subscriptions/revenue', label: 'Revenue' }] },
+      ],
+    },
+  ];
+  const at = (pathname) => (to, end) => (end ? pathname === to : pathname === to || pathname.startsWith(`${to}/`));
+
+  assert.equal(activeMenuLabel(sections, at('/admin/users/parents')), 'Users');
+  assert.equal(activeMenuLabel(sections, at('/admin/users/parents/42/edit')), 'Users');
+  assert.equal(activeMenuLabel(sections, at('/admin/subscriptions/revenue')), 'Billing');
+  // A page that is a plain link (or no link at all) belongs to no menu.
+  assert.equal(activeMenuLabel(sections, at('/admin')), null);
+  assert.equal(activeMenuLabel(sections, at('/admin/masters')), null);
+  assert.equal(activeMenuLabel([], at('/admin')), null);
 });
 
 test('every signed-in role has an account page', () => {

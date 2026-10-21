@@ -9,6 +9,8 @@
  * page, and `onLimitChange` (+ `limit`, `pageSizeOptions`) for "Rows per page".
  * Both are opt-in; without them the bar hides when there is one page, as before.
  */
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 function buildPageRange(page, totalPages, siblings = 1) {
   const total = siblings * 2 + 5;
   if (totalPages <= total) return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -81,7 +83,7 @@ export function Pagination({
           disabled={page <= 1}
           aria-label="Previous page"
         >
-          ‹
+          <ChevronLeft size={16} strokeWidth={2.25} aria-hidden="true" />
         </button>
 
         {pages.map((item, index) =>
@@ -110,7 +112,7 @@ export function Pagination({
           disabled={page >= lastPage}
           aria-label="Next page"
         >
-          ›
+          <ChevronRight size={16} strokeWidth={2.25} aria-hidden="true" />
         </button>
       </div>
     </nav>

@@ -87,16 +87,6 @@ export default function AdminDashboardPage() {
       <PageHeader
         title={`Welcome back, ${user?.firstName ?? 'Admin'}`}
         description="Platform overview: accounts, billing, learning activity and anything that needs you."
-        actions={
-          <>
-            <Button as={Link} to={ROLE_CREATE_PATH[USER_ROLES.TEACHER]} startIcon={<LuUserPlus aria-hidden="true" />}>
-              Create teacher
-            </Button>
-            <Button as={Link} to={ROLE_CREATE_PATH[USER_ROLES.PARENT]} variant="secondary">
-              Create parent
-            </Button>
-          </>
-        }
       />
 
       <div className="ad-period">
@@ -117,8 +107,11 @@ export default function AdminDashboardPage() {
           <div className="ad-stats" aria-busy={dashboard.isLoading || undefined}>
             <StatCard label="Students" icon={<LuBackpack aria-hidden="true" />} value={formatNumber(acc.total.student)} hint={`+${formatNumber(acc.new.student)} in ${phrase}`} />
             <StatCard label="Parents" icon={<LuUsers aria-hidden="true" />} value={formatNumber(acc.total.parent)} hint={`+${formatNumber(acc.new.parent)} in ${phrase}`} />
-            <StatCard label="Teachers" icon={<LuGraduationCap aria-hidden="true" />} value={formatNumber(acc.total.teacher)} hint={`+${formatNumber(acc.new.teacher)} in ${phrase}`} />
-            <StatCard
+            <StatCard 
+              label="Teachers"
+              icon={<LuGraduationCap aria-hidden="true" />}
+              value={formatNumber(acc.total.teacher)} hint={`+${formatNumber(acc.new.teacher)} in ${phrase}`} />
+            <StatCard  
               label="New accounts"
               icon={<LuUserPlus aria-hidden="true" />}
               value={formatNumber(acc.newAll)}

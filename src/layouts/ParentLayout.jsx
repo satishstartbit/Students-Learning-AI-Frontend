@@ -17,6 +17,7 @@ import SubjectColorsProvider from '../components/subjects/SubjectColorsProvider'
 import { useApi } from '../hooks/useApi';
 import onboardingService from '../modules/onboarding/services/onboarding.service';
 import ConsentGate from '../components/legal/ConsentGate';
+import ProfileCompletionGate from '../modules/auth/components/ProfileCompletionGate';
 import { ParentOnboardingContext } from '../modules/parent/hooks/useParentOnboarding';
 import ViewingChildPicker from '../modules/parent/components/ViewingChildPicker';
 import ViewingChildChip from '../modules/parent/components/ViewingChildChip';
@@ -48,7 +49,7 @@ const NAV_ITEMS = [
       { to: '/parent/progress', label: 'Progress', icon: LuChartLine },
       { to: '/parent/schedule', label: 'Schedule', icon: LuCalendarDays },
       { to: '/parent/notes', label: 'Notes', icon: LuStickyNote },
-      { to: '/parent/learning-summary', label: 'Learning Summary', icon: LuSparkles },
+      // { to: '/parent/learning-summary', label: 'Learning Summary', icon: LuSparkles },
     ],
   },
   {
@@ -58,7 +59,7 @@ const NAV_ITEMS = [
       { to: '/parent/children', label: 'My Children', icon: LuUsersRound },
       { to: '/parent/profile', label: 'My Profile', icon: LuUser },
       { to: '/parent/subscription', label: 'Subscription', icon: LuCreditCard },
-      { to: '/parent/notifications', label: 'Notifications', icon: LuBell },
+      // { to: '/parent/notifications', label: 'Notifications', icon: LuBell },
     ],
   },
 ];
@@ -71,7 +72,7 @@ const MOBILE_TABS = [
   { to: '/parent', label: 'Overview', icon: LuLayoutGrid, end: true },
   { to: '/parent/children', label: 'Children', icon: LuUsersRound },
   { to: '/parent/progress', label: 'Progress', icon: LuChartLine },
-  { to: '/parent/learning-summary', label: 'Learning', icon: LuSparkles },
+  // { to: '/parent/learning-summary', label: 'Learning', icon: LuSparkles },
   { to: '/parent/subscription', label: 'Plan', icon: LuCreditCard },
 ];
 
@@ -183,23 +184,26 @@ export function ParentLayout({ children }) {
           <AppSettingsProvider>
             {/* The admin's subject colours, so subjects look the same here as on the child's screens. */}
             <SubjectColorsProvider>
-              <AuthenticatedLayout
-                navItems={NAV_ITEMS}
-                mobileTabs={MOBILE_TABS}
-                title="Parent Portal"
-                subtitle="Parent"
-                brand="FP"
-                sidebarExtra={<ViewingChildPicker />}
-                // Phones: the child being viewed sits next to the logo (the "child view" mockup).
-                mobileBrandSlot={childrenList.length ? <ViewingChildChip /> : undefined}
-                // "Parent of 3" under the name, as teachers get their school and students their grade.
-                accountSubtitle={activeChildCount ? `Parent of ${activeChildCount}` : undefined}
-                // The bell is a link to Notifications (no dropdown list).
-                notificationsPath="/parent/notifications"
-              >
-                {/* Terms/Privacy and consent for each child come first (Phase 1 §12). */}
-                <ConsentGate>{content}</ConsentGate>
-              </AuthenticatedLayout>
+              {/* Required details still empty (e.g. signed up on /register): that page, with no navigation, first. */}
+              <ProfileCompletionGate role="PARENT">
+                <AuthenticatedLayout
+                  navItems={NAV_ITEMS}
+                  mobileTabs={MOBILE_TABS}
+                  title="Parent Portal"
+                  subtitle="Parent"
+                  brand="FP"
+                  sidebarExtra={<ViewingChildPicker />}
+                  // Phones: the child being viewed sits next to the logo (the "child view" mockup).
+                  mobileBrandSlot={childrenList.length ? <ViewingChildChip /> : undefined}
+                  // "Parent of 3" under the name, as teachers get their school and students their grade.
+                  accountSubtitle={activeChildCount ? `Parent of ${activeChildCount}` : undefined}
+                  // The bell is a link to Notifications (no dropdown list).
+                  notificationsPath="/parent/notifications"
+                >
+                  {/* Terms/Privacy and consent for each child come first (Phase 1 §12). */}
+                  <ConsentGate>{content}</ConsentGate>
+                </AuthenticatedLayout>
+              </ProfileCompletionGate>
             </SubjectColorsProvider>
           </AppSettingsProvider>
         </ViewingChildContext.Provider>

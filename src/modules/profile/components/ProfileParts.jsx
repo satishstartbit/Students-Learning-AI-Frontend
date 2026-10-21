@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LuPlus, LuUpload, LuX } from 'react-icons/lu';
-import { Button, PageHeader } from '../../../components/common';
+import { Button, FieldHelper, PageHeader } from '../../../components/common';
 import { IMAGE_ACCEPT, validateImage } from '../../../utils/file';
 import { getInitials } from '../../../utils/format';
 
@@ -125,7 +125,7 @@ export function ProfileHeaderCard({
  * `options` are { value, label }; `value` is an array of option values.
  * Chips keep the order of `options` (master display order).
  */
-export function ChipMultiSelect({ label, options, value = [], onChange, addLabel = 'Add', loading = false, name }) {
+export function ChipMultiSelect({ label, options, value = [], onChange, addLabel = 'Add', loading = false, name, required = false, error = null }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const rootRef = useRef(null);
@@ -165,8 +165,20 @@ export function ChipMultiSelect({ label, options, value = [], onChange, addLabel
     <div className="ui-field">
       <span id={labelId} className="ui-label">
         {label}
+        {required && (
+          <span className="ui-label__required" aria-hidden="true">
+            *
+          </span>
+        )}
+        {required && <span className="ui-sr-only">(required)</span>}
       </span>
-      <ul className="pf-chips" ref={rootRef} aria-labelledby={labelId} data-testid={`chips-${name}`}>
+      <ul
+        className="pf-chips"
+        ref={rootRef}
+        aria-labelledby={labelId}
+        aria-describedby={error ? `${labelId}-error` : undefined}
+        data-testid={`chips-${name}`}
+      >
         {chips.map((chip) => (
           <li key={chip.value} className="pf-chip">
             {chip.label}
@@ -218,6 +230,7 @@ export function ChipMultiSelect({ label, options, value = [], onChange, addLabel
           </li>
         )}
       </ul>
+      {error && <FieldHelper id={`${labelId}-error`} error={error} />}
     </div>
   );
 }

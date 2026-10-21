@@ -379,11 +379,6 @@ export default function AdminPaymentsPage() {
         title="Payments & Refunds"
         description="Monitor and manage platform payments, refunds, and billing activity."
         breadcrumbs={[{ label: 'Payments' }]}
-        actions={
-          <Button variant="secondary" onClick={handleExport} loading={exporting} disabled={Boolean(rangeProblem)} startIcon={<LuDownload aria-hidden="true" />}>
-            Export
-          </Button>
-        }
       />
 
       <div className="ab-statgrid">

@@ -4,6 +4,7 @@ import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { emailProblemText } from '../../../utils/emailProblem';
 import { required, emailRules, phone as phoneRule } from '../../../utils/validation';
+import { isRequiredField, withRequiredFields, yearsExperienceRule } from '../../../utils/profileRequirements';
 import { ROLE_LABELS, USER_ROLES, listPathForRole } from '../../../utils/constants';
 import adminUserService from '../services/adminUser.service';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
@@ -60,11 +61,12 @@ function CreateUserForm({ role }) {
       email: '',
       phone: '',
     },
-    validationSchema: {
+    validationSchema: withRequiredFields(role, {
       firstName: [required('Enter a first name')],
       email: emailRules(),
       phone: [phoneRule()],
-    },
+      yearsExperience: [yearsExperienceRule],
+    }),
     async onSubmit(values) {
       const { data } = await adminUserService.createUser({
         role,
@@ -109,9 +111,9 @@ function CreateUserForm({ role }) {
           <SectionHeader title="Account details" as="h3" />
 
           <Input label="First name" required {...form.getFieldProps('firstName')} />
-          <Input label="Last name" {...form.getFieldProps('lastName')} />
+          <Input label="Last name" required={isRequiredField(role, 'lastName')} {...form.getFieldProps('lastName')} />
           <EmailInput label="Email" required autoComplete="off" {...form.getFieldProps('email')} />
-          <PhoneInput label="Phone" {...form.getFieldProps('phone')} />
+          <PhoneInput label="Phone" required={isRequiredField(role, 'phone')} {...form.getFieldProps('phone')} />
 
           <SectionHeader title={page.profileTitle} as="h3" />
 

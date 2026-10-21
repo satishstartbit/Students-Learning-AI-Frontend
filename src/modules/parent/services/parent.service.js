@@ -1,4 +1,5 @@
 import api from '../../../utils/apiClient';
+import { toAcademicYearOptions } from '../../auth/components/academicYearOptions';
 
 /**
  * Parent self-service API calls - the parent's own "My Children" panel.
@@ -107,6 +108,9 @@ export const getFamily = () => api.get('/parent/family');
 /** Account holder only: creates the parent's account and links them to every child. */
 export const addFamilyParent = (payload) => api.post('/parent/family/parents', payload);
 
+/** Account holder only: name and phone; the email only while their invite is pending (a fresh invite goes out). */
+export const updateFamilyParent = (id, payload) => api.patch(`/parent/family/parents/${id}`, payload);
+
 /** Account holder only: the parent loses the family's children and plan; their account is kept. */
 export const removeFamilyParent = (id) => api.delete(`/parent/family/parents/${id}`);
 
@@ -152,6 +156,10 @@ export const listGrades = (params = {}) => listMasterOptions('grade_levels', par
 export const listAcademicYears = (params = {}) =>
   api.get('/parent/lookups/academic-years', { params: dropEmpty(params) });
 
+/** Academic year options for Add/Edit child (switched-on years, current one marked). */
+export const academicYearOptionsFetcher = () =>
+  listAcademicYears().then((res) => toAcademicYearOptions(res?.data ?? []));
+
 export default {
   disconnectTeacher,
   getWorkReview,
@@ -173,6 +181,7 @@ export default {
   restoreChild,
   getFamily,
   addFamilyParent,
+  updateFamilyParent,
   removeFamilyParent,
   deactivateFamilyParent,
   activateFamilyParent,
@@ -182,4 +191,5 @@ export default {
   listSubjects,
   listGrades,
   listAcademicYears,
+  academicYearOptionsFetcher,
 };

@@ -4,6 +4,7 @@ import { useApi } from '../../../hooks/useApi';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required } from '../../../utils/validation';
+import { isRequiredField, withRequiredFields } from '../../../utils/profileRequirements';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
@@ -28,6 +29,7 @@ function valuesFromChild(child) {
     country: child?.country ?? '',
     postalCode: child?.postalCode ?? '',
     grade: child?.profile?.grade ?? '',
+    academic_year_id: child?.profile?.academic_year_id ?? '',
     date_of_birth: child?.profile?.date_of_birth ?? '',
     gender: child?.profile?.gender ?? '',
     preferred_working_style: child?.profile?.preferred_working_style ?? '',
@@ -69,9 +71,9 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
 
   const form = useForm({
     initialValues: valuesFromChild(null),
-    validationSchema: {
+    validationSchema: withRequiredFields('STUDENT', {
       firstName: [required('Enter a first name')],
-    },
+    }),
     async onSubmit(values) {
       await parentService.updateChild(childId, {
         firstName: values.firstName,
@@ -152,7 +154,7 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
           <ProfileSection title="Personal details">
             <div className="pf-grid">
               <Input label="First name" required autoComplete="off" {...form.getFieldProps('firstName')} />
-              <Input label="Last name" autoComplete="off" {...form.getFieldProps('lastName')} />
+              <Input label="Last name" required={isRequiredField('STUDENT', 'lastName')} autoComplete="off" {...form.getFieldProps('lastName')} />
             </div>
           </ProfileSection>
 
@@ -173,6 +175,8 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
               getProps={form.getFieldProps}
               includeAdminOnly
               lookupFetcher={parentService.masterOptionsFetcher}
+              academicYearFetcher={parentService.academicYearOptionsFetcher}
+              savedAcademicYear={child.profile?.academicYear}
             />
           </ProfileSection>
         </form>

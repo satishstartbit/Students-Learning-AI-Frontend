@@ -149,6 +149,10 @@ export default function ChildDetailsModal({ isOpen, childId, onClose, onChanged 
                 <div>{child.profile?.grade || '—'}</div>
               </div>
               <div>
+                <span className="ui-hint">Academic year</span>
+                <div>{child.profile?.academicYear?.name || '—'}</div>
+              </div>
+              <div>
                 <span className="ui-hint">Date of birth</span>
                 <div>{child.profile?.date_of_birth ? formatDate(child.profile.date_of_birth) : '—'}</div>
               </div>

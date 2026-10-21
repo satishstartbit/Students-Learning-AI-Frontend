@@ -7,7 +7,7 @@ The shared "My Profile" UI kit. There are no pages here. The Teacher, Parent and
 ## Where it lives
 | File | Purpose |
 |---|---|
-| `components/ProfileParts.jsx` | `ProfileSection` (titled card), `ProfileHeaderCard` (photo or initials, name, meta line, Upload/Remove; `inline` drops the card frame so it can head another section, `pf-header--inline`), `ChipMultiSelect` (removable chips + "+ Add" searchable list) |
+| `components/ProfileParts.jsx` | `ProfileSection` (titled card), `ProfileHeaderCard` (photo or initials, name, meta line, Upload/Remove; `inline` drops the card frame so it can head another section, `pf-header--inline`), `ChipMultiSelect` (removable chips + "+ Add" searchable list; `required` stars the label, `error` shows under it - both off by default) |
 | `components/profile.css` (`pf-`) | `.pf-layout` (two-column page grid), `.pf-card` (6px field spacing on top of the reserved error line), `.pf-card__title/__hint`, **`.pf-grid`** (two columns, one under 640px), `.pf-span-2`, `.pf-half`, `.pf-actions`, `.pf-facts` (label/value rows), header and chip styles |
 | `useProfilePhoto.js` | My Profile photo: upload/remove **save immediately** through `PATCH /auth/me` (`removePhoto: true` to clear) |
 

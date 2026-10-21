@@ -261,10 +261,11 @@
   --layout-navbar-height: 58px;
 
   /* --- Z-index ---------------------------------------------------------
-   * --z-dropdown: the non-portaled Dropdown.jsx menu only.
+   * --z-dropdown: no longer used by Dropdown.jsx (its menu is portaled now
+   *   and uses --z-popover); kept for anything still referencing it.
    * --z-modal: Modal & Drawer's shared overlay (consolidates the old,
    *   identically-valued --z-drawer and the dead --z-modal into one token).
-   * --z-popover: portaled MultiSelect/SearchableSelect menus, Tooltip, and
+   * --z-popover: portaled Dropdown/MultiSelect/SearchableSelect menus, Tooltip, and
    *   the full-page loader takeover - tokenizes the value these already,
    *   deliberately used (see the .ui-loader--fullscreen/MultiSelect/
    *   SearchableSelect comments) so a combobox opened inside a dialog keeps

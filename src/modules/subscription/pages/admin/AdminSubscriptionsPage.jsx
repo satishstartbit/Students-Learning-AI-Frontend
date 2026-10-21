@@ -291,16 +291,7 @@ export default function AdminSubscriptionsPage() {
                 </Tooltip>
               </>
             )}
-            {!row.cancelAtPeriodEnd && (
-              <Tooltip label="Apply discount code" side="top">
-                <IconButton
-                  icon={<LuTicketPercent aria-hidden="true" />}
-                  label="Apply discount code"
-                  size="sm"
-                  onClick={() => setCouponTarget(row)}
-                />
-              </Tooltip>
-            )}
+
             <Tooltip label="Cancel subscription" side="top">
               <IconButton icon={<LuBan aria-hidden="true" />} label="Cancel subscription" variant="danger" size="sm" onClick={() => openCancel(row)} />
             </Tooltip>
@@ -327,19 +318,6 @@ export default function AdminSubscriptionsPage() {
         title="Subscriptions"
         description="Every parent subscription across the platform."
         breadcrumbs={[{ label: 'Subscriptions' }]}
-        actions={
-          <>
-            <Button variant="secondary" onClick={handleExport} loading={exporting} disabled={Boolean(rangeProblem)} startIcon={<LuDownload aria-hidden="true" />}>
-              Export
-            </Button>
-            <Button as={Link} to="/admin/masters/discount-codes" variant="secondary">
-              Discount codes
-            </Button>
-            <Button as={Link} to="/admin/masters/subscription-plans" variant="secondary">
-              Manage plans
-            </Button>
-          </>
-        }
       />
 
       <FilterBar>

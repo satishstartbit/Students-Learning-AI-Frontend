@@ -23,6 +23,7 @@ import { useForm } from '../../../hooks/useForm';
 import { useModal } from '../../../hooks/useModal';
 import { toast } from '../../../hooks/useToast';
 import { required, password as passwordRule, matches } from '../../../utils/validation';
+import { isRequiredField, withRequiredFields } from '../../../utils/profileRequirements';
 import { formatName } from '../../../utils/format';
 import { formatDate } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
@@ -40,7 +41,7 @@ const SUBSCRIPTION_STATUS = {
   past_due: 'Payment due',
 };
 
-const EMPTY_CHILD = { firstName: '', lastName: '', password: '', confirmPassword: '' };
+const EMPTY_CHILD = { firstName: '', lastName: '', password: '', confirmPassword: '', academic_year_id: '' };
 
 /** One person in the family: who, badges, and the row's icon actions. */
 function MemberRow({ to, name, meta, badges, actions }) {
@@ -112,11 +113,11 @@ export default function ParentFamilyPanel({ parent, family, familyError, onChang
   const createPhoto = usePhotoField();
   const childForm = useForm({
     initialValues: EMPTY_CHILD,
-    validationSchema: {
+    validationSchema: withRequiredFields('STUDENT', {
       firstName: [required('Enter a first name')],
       password: [required('Choose a password for the student'), passwordRule()],
       confirmPassword: [required('Type the password again'), matches('password')],
-    },
+    }),
     async onSubmit(values) {
       const { data } = await adminUserService.createParentChild(parentId, {
         firstName: values.firstName,
@@ -434,7 +435,7 @@ export default function ParentFamilyPanel({ parent, family, familyError, onChang
         </Alert>
         <form onSubmit={childForm.handleSubmit} noValidate>
           <Input label="First name" required {...childForm.getFieldProps('firstName')} />
-          <Input label="Last name" {...childForm.getFieldProps('lastName')} />
+          <Input label="Last name" required={isRequiredField('STUDENT', 'lastName')} {...childForm.getFieldProps('lastName')} />
           <PasswordInput
             label="Password"
             required

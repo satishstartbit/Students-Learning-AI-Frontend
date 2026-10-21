@@ -10,6 +10,7 @@ import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import { emailRules, phone as phoneRule, required } from '../../../utils/validation';
+import { withRequiredFields, yearsExperienceRule } from '../../../utils/profileRequirements';
 import AddressFields from '../../auth/components/AddressFields';
 import ChangePasswordForm from '../../auth/components/ChangePasswordForm';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
@@ -73,12 +74,6 @@ function useMasterOptions(masterType) {
   return state;
 }
 
-const yearsRule = (value) => {
-  if (value === '' || value === null || value === undefined) return null;
-  const n = Number(value);
-  return Number.isInteger(n) && n >= 0 && n <= 60 ? null : 'Enter whole years, 0 to 60';
-};
-
 /**
  * /teacher/profile - one column, like the parent's My Profile (user request
  * 2026-10-01): Colour theme on top, then Personal details with the photo row
@@ -101,12 +96,12 @@ export default function TeacherProfilePage() {
 
   const form = useForm({
     initialValues: valuesFromMe(null),
-    validationSchema: {
+    validationSchema: withRequiredFields('TEACHER', {
       firstName: [required('Enter your first name')],
       email: emailRules(),
       phone: [phoneRule()],
-      yearsExperience: [yearsRule],
-    },
+      yearsExperience: [yearsExperienceRule],
+    }),
     async onSubmit(values) {
       const { data } = await authService.updateMe({
         firstName: values.firstName,
@@ -181,14 +176,14 @@ export default function TeacherProfilePage() {
           />
           <div className="pf-grid">
             <Input label="First name" required autoComplete="given-name" {...form.getFieldProps('firstName')} />
-            <Input label="Last name" autoComplete="family-name" {...form.getFieldProps('lastName')} />
+            <Input label="Last name" required autoComplete="family-name" {...form.getFieldProps('lastName')} />
             <EmailInput
               label="Email"
               required
               hint={emailChanged ? "Saving signs you out - we'll email a link to confirm the new address." : undefined}
               {...form.getFieldProps('email')}
             />
-            <PhoneInput label="Phone" {...form.getFieldProps('phone')} />
+            <PhoneInput label="Phone" required {...form.getFieldProps('phone')} />
           </div>
         </ProfileSection>
 
@@ -208,6 +203,8 @@ export default function TeacherProfilePage() {
             name="subjects"
             label="Subjects taught"
             addLabel="Add subject"
+            required
+            error={form.getFieldProps('subjects').error}
             options={subjects.options}
             loading={subjects.loading}
             value={form.values.subjects}
@@ -217,13 +214,15 @@ export default function TeacherProfilePage() {
             name="gradeLevels"
             label="Grades taught"
             addLabel="Add grade"
+            required
+            error={form.getFieldProps('gradeLevels').error}
             options={grades.options}
             loading={grades.loading}
             value={form.values.gradeLevels}
             onChange={(next) => form.setFieldValue('gradeLevels', next)}
           />
           <div className="pf-half">
-            <Input label="Years teaching" type="number" inputMode="numeric" min={0} max={60} {...form.getFieldProps('yearsExperience')} />
+            <Input label="Years teaching" type="number" inputMode="numeric" min={0} max={70} required {...form.getFieldProps('yearsExperience')} />
           </div>
           <Textarea label="Short bio" rows={4} maxLength={1000} {...form.getFieldProps('bio')} />
           <div className="pf-actions">

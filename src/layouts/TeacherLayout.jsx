@@ -16,6 +16,7 @@ import { useEffect } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getMe } from '../modules/auth/services/auth.service';
 import ConsentGate from '../components/legal/ConsentGate';
+import ProfileCompletionGate from '../modules/auth/components/ProfileCompletionGate';
 import AppSettingsProvider from '../components/appearance/AppSettingsProvider';
 import SubjectColorsProvider from '../components/subjects/SubjectColorsProvider';
 import AuthenticatedLayout from './AuthenticatedLayout';
@@ -31,11 +32,11 @@ const NAV_ITEMS = [
       // Parents' invitations to connect with their child (accept / decline).
       { to: '/teacher/invitations', label: 'Invitations', icon: LuMailOpen },
       { to: '/teacher/assignments', label: 'Assignments', icon: LuFileText },
-      { to: '/teacher/shared-work', label: 'Shared with me', icon: LuHandshake },
+      // { to: '/teacher/shared-work', label: 'Shared with me', icon: LuHandshake },
       { to: '/teacher/progress', label: 'Progress', icon: LuChartLine },
-      { to: '/teacher/learning-activity', label: 'Learning Activity', icon: LuSparkles },
+      // { to: '/teacher/learning-activity', label: 'Learning Activity', icon: LuSparkles },
       { to: '/teacher/profile', label: 'My Profile', icon: LuUser },
-      { to: '/teacher/notifications', label: 'Notifications', icon: LuBell },
+      // { to: '/teacher/notifications', label: 'Notifications', icon: LuBell },
     ],
   },
 ];
@@ -49,7 +50,7 @@ const MOBILE_TABS = [
   { to: '/teacher/students', label: 'Students', icon: LuUsers },
   { to: '/teacher/assignments', label: 'Work', icon: LuListChecks },
   { to: '/teacher/progress', label: 'Progress', icon: LuChartLine },
-  { to: '/teacher/learning-activity', label: 'Activity', icon: LuActivity },
+  // { to: '/teacher/learning-activity', label: 'Activity', icon: LuActivity },
 ];
 
 export function TeacherLayout({ children }) {
@@ -73,19 +74,22 @@ export function TeacherLayout({ children }) {
     <AppSettingsProvider>
       {/* The admin's subject colours, so a subject looks the same to teachers as to their students. */}
       <SubjectColorsProvider>
-        {/* The bell is a link to Notifications (no dropdown list). */}
-        <AuthenticatedLayout
-          navItems={NAV_ITEMS}
-          mobileTabs={MOBILE_TABS}
-          title="Teacher Portal"
-          subtitle="Teacher"
-          brand="TP"
-          accountSubtitle={school}
-          notificationsPath="/teacher/notifications"
-        >
-          {/* Agree to the current Terms/Privacy before anything else (Phase 1 §12). */}
-          <ConsentGate>{children}</ConsentGate>
-        </AuthenticatedLayout>
+        {/* Required details still empty (e.g. signed up on /register): that page, with no navigation, first. */}
+        <ProfileCompletionGate role="TEACHER">
+          {/* The bell is a link to Notifications (no dropdown list). */}
+          <AuthenticatedLayout
+            navItems={NAV_ITEMS}
+            mobileTabs={MOBILE_TABS}
+            title="Teacher Portal"
+            subtitle="Teacher"
+            brand="TP"
+            accountSubtitle={school}
+            notificationsPath="/teacher/notifications"
+          >
+            {/* Agree to the current Terms/Privacy before anything else (Phase 1 §12). */}
+            <ConsentGate>{children}</ConsentGate>
+          </AuthenticatedLayout>
+        </ProfileCompletionGate>
       </SubjectColorsProvider>
     </AppSettingsProvider>
   );
