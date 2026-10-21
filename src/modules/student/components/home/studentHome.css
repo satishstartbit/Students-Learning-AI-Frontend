@@ -25,12 +25,17 @@
 
 /* ------------------------------------------------------------------ hero */
 .sh-hero {
+  --sh-checkin-travel: 25px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
   min-height: 168px;
   margin-bottom: 8px;
+}
+.sh-hero__greeting {
+  min-width: 0;
 }
 .sh-hero__title {
   margin: 0;
@@ -50,39 +55,67 @@
   width: min(440px, 48%);
   aspect-ratio: 440 / 190;
 }
-.sh-hero__landscape {
+.sh-hero__scene {
   position: absolute;
   inset: auto 0 0 -8%;
   width: 92%;
-  height: auto;
+  aspect-ratio: 1672 / 941;
+  /* Keep moving paint inside the illustration, clear of the task cards. */
+  overflow: hidden;
+  isolation: isolate;
   pointer-events: none;
   user-select: none;
+}
+.sh-hero__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+.sh-hero__layer--leaf {
+  transform-origin: 22% 18%;
 }
 
 /* The floating "Today's check-in" card, tilted like a note pinned over the view. */
 .sh-checkin {
   position: absolute;
-  top: 4px;
+  /* A fixed hit area covers the visual card's entire upward travel. */
+  top: calc(4px - var(--sh-checkin-travel));
   right: 0;
   width: 190px;
-  padding: 12px 14px;
-  border: 1px solid var(--sh-hairline);
+  z-index: 1;
+  padding: var(--sh-checkin-travel) 0 0;
+  border: 0;
   border-radius: 10px;
-  background: var(--color-bg-surface);
-  box-shadow: 0 10px 24px -12px rgba(46, 35, 20, 0.35), 0 1px 2px rgba(46, 35, 20, 0.06);
-  transform: rotate(2.5deg);
+  background: transparent;
   text-align: left;
   font: inherit;
   color: inherit;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
-.sh-checkin:hover,
-.sh-checkin:focus-visible {
-  transform: rotate(0deg) translateY(-2px);
+.sh-checkin__surface {
+  display: block;
+  padding: 12px 14px;
+  border: 1px solid var(--sh-hairline);
+  border-radius: inherit;
+  background: var(--color-bg-surface);
+  pointer-events: none;
+  box-shadow: 0 10px 24px -12px rgba(46, 35, 20, 0.35), 0 1px 2px rgba(46, 35, 20, 0.06);
+}
+/* Keep the presentation still and fully readable while using the fixed button. */
+.sh-checkin:hover .sh-checkin__surface,
+.sh-checkin:focus-visible .sh-checkin__surface {
+  transform: none !important;
+  opacity: 1 !important;
   box-shadow: 0 14px 28px -12px rgba(46, 35, 20, 0.4);
 }
 .sh-checkin:focus-visible {
+  outline: none;
+}
+.sh-checkin:focus-visible .sh-checkin__surface {
   outline: 2px solid var(--accent-ring, var(--accent-base));
   outline-offset: 2px;
 }
@@ -140,6 +173,7 @@
   background: var(--accent-base);
 }
 .sh-checkin__meta {
+  display: block;
   margin: 4px 0 0;
   font-size: 11px;
   color: var(--sh-muted);
@@ -974,6 +1008,15 @@
   to { background-position: -200% 0; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .sh-hero__layer,
+  .sh-hero__greeting,
+  .sh-checkin__surface {
+    transform: none !important;
+  }
+  .sh-hero__greeting,
+  .sh-checkin__surface {
+    opacity: 1 !important;
+  }
   .sh-skeleton { animation: none; }
   .sh-note,
   .sh-checkin,
@@ -995,8 +1038,9 @@
     grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
   }
 }
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .sh-hero {
+    --sh-checkin-travel: 12.5px;
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
@@ -1009,6 +1053,8 @@
     max-width: 380px;
     align-self: center;
   }
+}
+@media (max-width: 640px) {
   .sh-card {
     padding: 16px;
   }

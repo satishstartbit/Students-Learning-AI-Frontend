@@ -19,6 +19,8 @@ import { usePagination } from '../../../hooks/usePagination';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
+import MasterGuideButton from './guide/MasterGuideButton';
+import MasterBackButton from './MasterBackButton';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -181,14 +183,18 @@ export default function CurriculumMasterList({
     // is the whole body of every one of them (Task types, Question types,
     // Subjects, Topics, Audio tracks), so it is their page root.
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={title}
         description={description}
         breadcrumbs={[{ label: 'Master Management', to: '/admin/masters' }, { label: title }]}
         actions={
-          <Button as={Link} to={createTo ?? `${basePath}/create`}>
-            Add {noun}
-          </Button>
+          <>
+            <MasterGuideButton title={title} />
+            <Button as={Link} to={createTo ?? `${basePath}/create`}>
+              Add {noun}
+            </Button>
+          </>
         }
       />
 

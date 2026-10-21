@@ -24,10 +24,11 @@ import '../components/notificationsPage.css';
 
 /**
  * The notifications page - /student/notifications (Grade 6+),
- * /teacher/notifications and /parent/notifications - built to the student
- * notifications mockup. For these roles it is the only list of
- * notifications: their header bell is a link here, not a dropdown
- * (AuthenticatedLayout `notificationsPath`). Super Admin keeps the dropdown.
+ * /teacher/notifications, /parent/notifications and (2026-10-20)
+ * /admin/notifications - built to the student notifications mockup. For
+ * these roles it is the only list of notifications: their header bell is a
+ * link here, not a dropdown (AuthenticatedLayout `notificationsPath`); Super
+ * Admin has no bell, only the sidebar item with the unread count.
  *
  * Filters run on the server (`unreadOnly`, `category`), so "Deadlines" and
  * "Rewards" (students) are exact, not just whatever happened to be on the
@@ -46,13 +47,18 @@ const FILTERS_BY_ROLE = {
   STUDENT: [ALL, UNREAD, { key: 'deadlines', label: 'Deadlines', query: { category: 'deadlines' } }, { key: 'rewards', label: 'Rewards', query: { category: 'rewards' } }],
   TEACHER: [ALL, UNREAD],
   PARENT: [ALL, UNREAD],
+  SUPER_ADMIN: [ALL, UNREAD],
 };
 
 const EMPTY_ALL = {
   STUDENT: 'Updates about your work, reminders and rewards will show up here.',
   TEACHER: 'Updates about your students, their work and invitations will show up here.',
   PARENT: 'Updates about your children, their teachers and your subscription will show up here.',
+  SUPER_ADMIN: 'Parents’ teacher requests and other things that need you will show up here.',
 };
+
+// Roles with notification settings (the backend's per-role catalog); Super Admin has none.
+const HAS_SETTINGS = new Set(['STUDENT', 'TEACHER', 'PARENT']);
 const EMPTY = {
   unread: { title: 'You’re all caught up', text: 'Nothing new since you last looked.' },
   deadlines: { title: 'No deadline updates', text: 'New assignments and due-date reminders will show up here.' },
@@ -215,9 +221,11 @@ export default function NotificationsPage() {
         </div>
         <div className="sn-head__actions">
           {/* What they hear about, and how (in app / email / browser push). */}
-          <button type="button" className="sn-settings-btn" onClick={() => setSettingsOpen(true)}>
-            <LuSettings2 size={13} aria-hidden="true" /> Settings
-          </button>
+          {HAS_SETTINGS.has(role) && (
+            <button type="button" className="sn-settings-btn" onClick={() => setSettingsOpen(true)}>
+              <LuSettings2 size={13} aria-hidden="true" /> Settings
+            </button>
+          )}
           <button type="button" className="sn-markall" onClick={handleMarkAll} disabled={markingAll || unreadCount === 0}>
             Mark all as read <LuChevronRight size={13} aria-hidden="true" />
           </button>

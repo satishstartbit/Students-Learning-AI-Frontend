@@ -76,3 +76,8 @@
     flex: 1;
   }
 }
+
+/* "Back" above a master page's title (components/MasterBackButton.jsx). */
+.ms-back {
+  margin: 0 0 var(--spacing-xs) calc(-1 * var(--spacing-sm));
+}

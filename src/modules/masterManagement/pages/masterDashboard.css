@@ -104,3 +104,19 @@
   gap: var(--spacing-xs);
   justify-content: flex-end;
 }
+
+/* The master's name links to its list (2026-10-20): blue and underlined, like a link.
+   Scoped past `body.portal-theme .ui-table a`, which takes the underline off table links. */
+.mm-group .ui-table a.mm-master__link {
+  color: var(--color-info-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.mm-master__link:hover {
+  text-decoration-thickness: 2px;
+}
+.mm-master__link:focus-visible {
+  outline: none;
+  border-radius: 2px;
+  box-shadow: var(--focus-ring);
+}

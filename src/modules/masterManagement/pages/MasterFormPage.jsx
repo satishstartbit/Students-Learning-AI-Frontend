@@ -22,6 +22,7 @@ import IconField from '../components/IconField';
 import '../components/masterPages.css';
 import OrderField from '../components/OrderField';
 import { orderPayload } from '../components/masterOrder';
+import MasterBackButton from '../components/MasterBackButton';
 
 /**
  * Generic master create/edit form - one screen shared by every simple lookup
@@ -108,6 +109,7 @@ export default function MasterFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? `Edit ${typeRow?.label ?? 'record'}` : `Add ${typeRow?.label ?? 'record'}`}
         breadcrumbs={[

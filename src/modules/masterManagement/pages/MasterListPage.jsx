@@ -20,6 +20,8 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import { formatDateTime } from '../../../utils/date';
 import { toast } from '../../../hooks/useToast';
 import masterGenericService from '../services/masterGeneric.service';
+import MasterGuideButton from '../components/guide/MasterGuideButton';
+import MasterBackButton from '../components/MasterBackButton';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -193,14 +195,18 @@ export default function MasterListPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={typeRow?.label ?? 'Master data'}
         description={typeRow?.description}
         breadcrumbs={[{ label: 'Master Management', to: '/admin/masters' }, { label: typeRow?.label ?? masterType }]}
         actions={
-          <Button as={Link} to={`/admin/masters/${masterType}/create`}>
-            Add record
-          </Button>
+          <>
+            <MasterGuideButton title={typeRow?.label} />
+            <Button as={Link} to={`/admin/masters/${masterType}/create`}>
+              Add record
+            </Button>
+          </>
         }
       />
 

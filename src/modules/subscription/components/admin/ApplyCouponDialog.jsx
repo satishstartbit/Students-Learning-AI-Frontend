@@ -119,7 +119,9 @@ export default function ApplyCouponDialog({ row, onClose, onApplied }) {
           <p className="ab-coupon__preview" aria-live="polite">
             From the next payment{chosen.nextPayment?.date ? ` on ${formatDate(chosen.nextPayment.date)}` : ''}:{' '}
             {now && now.total !== chosen.nextPayment.total && <s>{formatCurrency(now.total, currency)}</s>}{' '}
-            <strong>{formatCurrency(chosen.nextPayment.total, currency)}</strong> (before tax). A payment already taken is not changed.
+            <strong>{formatCurrency(chosen.nextPayment.total, currency)}</strong> (before tax)
+            {chosen.nextPayment.minimumApplied ? ` - the plan's minimum payment of ${formatCurrency(chosen.nextPayment.minimumAmount, currency)}` : ''}. A
+            payment already taken is not changed.
           </p>
         )}
 

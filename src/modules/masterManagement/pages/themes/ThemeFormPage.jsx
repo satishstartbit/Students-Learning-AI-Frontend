@@ -9,6 +9,7 @@ import appearanceService from '../../services/appearance.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const DEFAULT_CONFIG = { primary: '#4F46E5', secondary: '#818CF8', background: '#FFFFFF', text: '#111827' };
 
@@ -69,6 +70,7 @@ export default function ThemeFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit colour theme' : 'Add colour theme'}
         breadcrumbs={[

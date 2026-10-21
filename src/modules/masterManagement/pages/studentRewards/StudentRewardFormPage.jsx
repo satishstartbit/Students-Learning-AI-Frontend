@@ -29,6 +29,7 @@ import rewardService from '../../services/reward.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 // Loaded on first open - the emoji data set is a few hundred KB (same as IconField).
 const EmojiPickerPanel = lazy(() => import('../../../assignments/media/EmojiPickerPanel'));
@@ -344,6 +345,7 @@ export default function StudentRewardFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit reward' : 'Add reward'}
         description="Stickers and emojis students collect on their Rewards page as their points grow."

@@ -17,7 +17,8 @@ import {
 import { Tooltip } from '../../../components/ui/tooltip';
 import { useApi } from '../../../hooks/useApi';
 import { useDebounce } from '../../../hooks/useDebounce';
-import { usePagination } from '../../../hooks/usePagination';
+import { useListQuery } from '../../../hooks/useListQuery';
+import { useAddressText } from '../../../hooks/useAddressText';
 import { toast } from '../../../hooks/useToast';
 import { formatDate } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
@@ -39,9 +40,9 @@ import invitationService from '../../invitations/services/teacherInvitation.serv
 const NOTE_MIN = 5;
 
 export default function TeacherInvitationsAdminPage() {
-  const pagination = usePagination();
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
+  // Search, status and page live in the address (2026-10-20): a refresh or Back keeps them.
+  const { query, setQuery, pagination } = useListQuery({ search: '', status: '' });
+  const { search, status } = query;
   const [confirm, setConfirm] = useState(null);
   const [acting, setActing] = useState(false);
   const [rejecting, setRejecting] = useState(null);
@@ -71,10 +72,8 @@ export default function TeacherInvitationsAdminPage() {
     if (meta?.total !== undefined) applyMeta(meta);
   }, [meta, applyMeta]);
 
-  const resetTo = (setter) => (value) => {
-    setter(value);
-    goToPage(1);
-  };
+  const filterBy = (key) => (value) => setQuery({ [key]: value, page: 1 });
+  const [searchText, typeSearch] = useAddressText(search, filterBy('search'));
 
   const runAction = async () => {
     if (!confirm) return;
@@ -267,11 +266,7 @@ export default function TeacherInvitationsAdminPage() {
   ];
 
   const hasFilters = Boolean(search || status);
-  const clearFilters = () => {
-    setSearch('');
-    setStatus('');
-    goToPage(1);
-  };
+  const clearFilters = () => setQuery({ search: '', status: '', page: 1 });
 
   return (
     <div className="td-page">
@@ -284,7 +279,7 @@ export default function TeacherInvitationsAdminPage() {
       {waitingCount > 0 && status !== 'awaiting_approval' && (
         <Alert variant="info" className="ui-field" title={`${waitingCount} parent request${waitingCount === 1 ? '' : 's'} waiting for approval`}>
           <span>Nothing reaches the teacher until you approve it. </span>
-          <Button size="sm" variant="secondary" onClick={() => resetTo(setStatus)('awaiting_approval')}>
+          <Button size="sm" variant="secondary" onClick={() => filterBy('status')('awaiting_approval')}>
             Show requests
           </Button>
         </Alert>
@@ -294,9 +289,9 @@ export default function TeacherInvitationsAdminPage() {
         <SearchInput
           fieldClassName="ui-filterbar__search ui-field--compact"
           placeholder="Teacher, parent or student"
-          value={search}
-          onChange={(e) => resetTo(setSearch)(e.target.value)}
-          onClear={() => resetTo(setSearch)('')}
+          value={searchText}
+          onChange={(e) => typeSearch(e.target.value)}
+          onClear={() => typeSearch('')}
         />
         <Select
           fieldClassName="ui-field--compact"
@@ -304,7 +299,7 @@ export default function TeacherInvitationsAdminPage() {
           options={INVITATION_STATUS_OPTIONS}
           placeholder="All statuses"
           value={status}
-          onChange={(e) => resetTo(setStatus)(e.target.value)}
+          onChange={(e) => filterBy('status')(e.target.value)}
         />
         <Tooltip label="Clear filters" side="top">
           <IconButton icon={<LuFilterX aria-hidden="true" />} label="Clear filters" size="sm" onClick={clearFilters} disabled={!hasFilters} />

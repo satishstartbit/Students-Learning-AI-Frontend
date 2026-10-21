@@ -6,10 +6,12 @@ import { useApi } from '../../../../hooks/useApi';
 import { toast } from '../../../../hooks/useToast';
 import { required, max, min, pattern } from '../../../../utils/validation';
 import { toDateInputValue } from '../../../../utils/date';
+import { listAddress } from '../../../../utils/listQuery';
 import billingService from '../../services/billing.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const DISCOUNT_TYPE_OPTIONS = [
   { value: 'percentage', label: 'Percentage' },
@@ -88,7 +90,7 @@ export default function DiscountCodeFormPage() {
         : await billingService.createDiscountCode(payload);
 
       toast.success(isEdit ? 'Discount code updated' : 'Discount code created');
-      navigate('/admin/masters/discount-codes');
+      navigate(listAddress('/admin/masters/discount-codes'));
       return data;
     },
   });
@@ -124,6 +126,7 @@ export default function DiscountCodeFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit discount code' : 'Add discount code'}
         breadcrumbs={[
@@ -188,7 +191,7 @@ export default function DiscountCodeFormPage() {
 
           <ButtonGroup>
             <Button type="submit" loading={form.isSubmitting}>{isEdit ? 'Save changes' : 'Create code'}</Button>
-            <Button as={Link} to="/admin/masters/discount-codes" variant="secondary">Cancel</Button>
+            <Button as={Link} to={listAddress('/admin/masters/discount-codes')} variant="secondary">Cancel</Button>
           </ButtonGroup>
         </form>
       </Card>

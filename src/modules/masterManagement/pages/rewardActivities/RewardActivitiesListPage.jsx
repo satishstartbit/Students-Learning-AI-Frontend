@@ -8,6 +8,8 @@ import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
 import rewardService from '../../services/reward.service';
+import MasterGuideButton from '../../components/guide/MasterGuideButton';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -109,11 +111,13 @@ export default function RewardActivitiesListPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title="Reward Activities"
         description="Point values earned for platform activities. Change the point value here without touching application code."
         breadcrumbs={[{ label: 'Master Management', to: '/admin/masters' }, { label: 'Reward Activities' }]}
         // actions={<Button as={Link} to="/admin/masters/reward-activities/create">Add activity</Button>}
+        actions={<MasterGuideButton title="Reward Activities" />}
       />
 
       <FilterBar>

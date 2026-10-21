@@ -20,6 +20,7 @@ import academicService from '../../services/academic.service';
 import '../../components/masterPages.css';
 import OrderField from '../../components/OrderField';
 import { orderPayload } from '../../components/masterOrder';
+import MasterBackButton from '../../components/MasterBackButton';
 
 export default function AcademicYearFormPage() {
   const { id } = useParams();
@@ -76,6 +77,7 @@ export default function AcademicYearFormPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title={isEdit ? 'Edit academic year' : 'Add academic year'}
         breadcrumbs={[

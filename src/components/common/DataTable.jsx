@@ -92,6 +92,11 @@ export function DataTable({
           from={pagination.from}
           to={pagination.to}
           onPageChange={onPageChange ?? pagination.goToPage}
+          // URL-backed admin lists (hooks/useListQuery): always shown, with rows per page.
+          alwaysShow={Boolean(pagination.alwaysShow)}
+          limit={pagination.limit}
+          onLimitChange={pagination.alwaysShow ? pagination.setLimit : undefined}
+          pageSizeOptions={pagination.pageSizeOptions}
         />
       )}
     </div>

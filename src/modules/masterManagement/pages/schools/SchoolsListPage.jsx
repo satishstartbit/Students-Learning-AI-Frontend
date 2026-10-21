@@ -9,6 +9,8 @@ import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
 import { normalizeAddressText } from '../../../../utils/address';
 import academicService from '../../services/academic.service';
+import MasterGuideButton from '../../components/guide/MasterGuideButton';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -115,11 +117,17 @@ export default function SchoolsListPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title="Schools / Organizations"
         description="Supports future school and organization onboarding."
         breadcrumbs={[{ label: 'Master Management', to: '/admin/masters' }, { label: 'Schools / Organizations' }]}
-        actions={<Button as={Link} to="/admin/masters/schools/create">Add school</Button>}
+        actions={
+          <>
+            <MasterGuideButton title="Schools / Organizations" />
+            <Button as={Link} to="/admin/masters/schools/create">Add school</Button>
+          </>
+        }
       />
 
       <FilterBar>

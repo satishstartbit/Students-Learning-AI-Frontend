@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LuBell,
@@ -16,6 +17,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -31,7 +33,8 @@ import { AvatarPicture } from '../modules/student/components/personalize/AvatarP
 import { useStudentSettings } from '../modules/student/hooks/useStudentSettings';
 import { APP_NAME, ROLE_LABELS } from '../utils/constants';
 import { formatName, getInitials } from '../utils/format';
-import { PROFILE_PATH_BY_ROLE } from './navConfig';
+import { NOTIFICATIONS_PAGE_BY_ROLE } from '../modules/notifications/notificationPath';
+import { PROFILE_PATH_BY_ROLE, accountMenuPosition } from './navConfig';
 
 /**
  * The application sidebar.
@@ -74,7 +77,7 @@ function NavLeaf({ item, Button = SidebarMenuButton, isActive }) {
 
   return (
     <Tooltip label={item.label} enabled={collapsed}>
-      <Button as={NavLink} to={item.to} end={item.end} isActive={isActive} tooltip={item.label}>
+      <Button as={NavLink} to={item.to} end={item.end} isActive={isActive} tooltip={item.label} aria-label={item.ariaLabel}>
         {Icon ? (
           <Icon aria-hidden="true" />
         ) : (
@@ -171,9 +174,26 @@ function NavEntry({ entry, isPathActive }) {
     return <NavCollapsible entry={entry} isPathActive={isPathActive} />;
   }
 
+  // `badge` (a count, e.g. unread notifications): a number on the right, a dot on the collapsed rail.
+  const badge = Number(entry.badge) || 0;
   return (
     <SidebarMenuItem>
       <NavLeaf item={entry} isActive={isPathActive(entry.to, entry.end)} />
+      {badge > 0 && (
+        <>
+          <SidebarMenuBadge
+            aria-hidden="true"
+            data-testid="nav-badge"
+            className="rounded-full bg-[color:var(--color-danger-solid)] text-[11px] font-bold text-[color:var(--color-danger-on-solid)]"
+          >
+            {badge > 99 ? '99+' : badge}
+          </SidebarMenuBadge>
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1 right-1 hidden size-2 rounded-full bg-[color:var(--color-danger-solid)] group-data-[collapsible=icon]:block"
+          />
+        </>
+      )}
     </SidebarMenuItem>
   );
 }
@@ -183,31 +203,59 @@ function NavEntry({ entry, isPathActive }) {
  *
  * Built here rather than reusing the shared Dropdown component, which is
  * styled by the older CSS system and would not match the sidebar.
+ *
+ * The menu is drawn on <body> at a fixed spot (accountMenuPosition), not
+ * inside the sidebar: the collapsed rail is 3rem wide and clips its content,
+ * so the menu used to show only a sliver - "SC" and the "L" of Log out (user
+ * report 2026-10-20). `data-slot="sidebar-account-menu"` lets the Super Admin
+ * black sidebar theme reach it there.
  */
 function UserMenu({ accountSubtitle }) {
   const { user, role, signOut } = useAuth();
   const navigate = useNavigate();
+  const { state, isMobile } = useSidebar();
+  const collapsed = state === 'collapsed' && !isMobile;
 
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState(null);
   const containerRef = useRef(null);
+  const buttonRef = useRef(null);
+  const menuRef = useRef(null);
+  // Placed for the other sidebar state (it was toggled while open): hide it.
+  const showMenu = open && position?.collapsed === collapsed;
 
   useEffect(() => {
     if (!open) return undefined;
 
     const onPointerDown = (event) => {
-      if (!containerRef.current?.contains(event.target)) setOpen(false);
+      if (!containerRef.current?.contains(event.target) && !menuRef.current?.contains(event.target)) setOpen(false);
     };
     const onKeyDown = (event) => {
       if (event.key === 'Escape') setOpen(false);
     };
+    const close = () => setOpen(false);
 
     document.addEventListener('mousedown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
+    window.addEventListener('resize', close);
     return () => {
       document.removeEventListener('mousedown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('resize', close);
     };
   }, [open]);
+
+  const toggleMenu = () => {
+    if (showMenu) {
+      setOpen(false);
+      return;
+    }
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const railRight = buttonRef.current.closest('[data-slot="sidebar"]')?.getBoundingClientRect().right;
+    setPosition(accountMenuPosition(rect, { collapsed, viewportWidth: window.innerWidth, viewportHeight: window.innerHeight, railRight }));
+    setOpen(true);
+  };
 
   const name = formatName(user);
   const initials = getInitials(name) || '?';
@@ -224,6 +272,11 @@ function UserMenu({ accountSubtitle }) {
   const handleAccount = () => {
     setOpen(false);
     navigate(profilePath);
+  };
+  const notificationsPath = NOTIFICATIONS_PAGE_BY_ROLE[role];
+  const handleNotifications = () => {
+    setOpen(false);
+    navigate(notificationsPath);
   };
 
   /**
@@ -242,20 +295,19 @@ function UserMenu({ accountSubtitle }) {
     </span>
   );
 
-  const { state, isMobile } = useSidebar();
-  const collapsed = state === 'collapsed' && !isMobile;
-
-
   const menuItem =
     'flex w-full cursor-pointer appearance-none items-center gap-2 rounded-[var(--radius-sm)] border-0 bg-transparent px-2 py-1.5 text-left text-sm hover:bg-[color:var(--color-bg-surface-sunken)] disabled:cursor-not-allowed disabled:opacity-50';
+  // Buttons don't inherit colour or font; on <body> (outside the sidebar's rules) they were black on the black menu.
+  const menuItemStyle = { color: 'inherit', fontFamily: 'inherit' };
 
   return (
     <SidebarMenuItem ref={containerRef} className="relative">
       <SidebarMenuButton
+        ref={buttonRef}
         size="lg"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggleMenu}
         aria-haspopup="menu"
-        aria-expanded={open}
+        aria-expanded={showMenu}
         tooltip={name}
       >
         {avatar}
@@ -268,13 +320,18 @@ function UserMenu({ accountSubtitle }) {
         )}
       </SidebarMenuButton>
 
-      {open && (
+      {showMenu && createPortal(
         <div
+          ref={menuRef}
           role="menu"
           aria-label="Account"
-          // Opens upward: the tile sits at the bottom of the sidebar.
-          className="absolute bottom-full left-0 z-50 mb-2 w-60 overflow-hidden rounded-[var(--radius-md)] border p-1 shadow-lg"
+          data-slot="sidebar-account-menu"
+          // Above the tile (expanded) or beside the rail (collapsed) - accountMenuPosition.
+          // z-[60]: over the phone drawer (z-50) too.
+          className="fixed z-[60] w-60 overflow-hidden rounded-[var(--radius-md)] border p-1 shadow-lg"
           style={{
+            left: position.left,
+            bottom: position.bottom,
             background: 'var(--color-bg-surface)',
             borderColor: 'var(--color-border-default)',
             boxShadow: 'var(--elevation-3)',
@@ -299,13 +356,21 @@ function UserMenu({ accountSubtitle }) {
               type="button"
               role="menuitem"
               className={menuItem}
+              style={menuItemStyle}
               onClick={profilePath ? handleAccount : undefined}
               disabled={!profilePath}
             >
               <LuUser aria-hidden="true" />
               <span>Account</span>
             </button>
-            <button type="button" role="menuitem" className={menuItem} disabled>
+            <button
+              type="button"
+              role="menuitem"
+              className={menuItem}
+              style={menuItemStyle}
+              onClick={notificationsPath ? handleNotifications : undefined}
+              disabled={!notificationsPath}
+            >
               <LuBell aria-hidden="true" />
               <span>Notifications</span>
             </button>
@@ -317,13 +382,14 @@ function UserMenu({ accountSubtitle }) {
               role="menuitem"
               onClick={handleSignOut}
               className={menuItem}
-              style={{ color: 'var(--color-danger-fg)' }}
+              style={{ ...menuItemStyle, color: 'var(--color-danger-fg)' }}
             >
               <LuLogOut aria-hidden="true" />
               <span>Log out</span>
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </SidebarMenuItem>
   );

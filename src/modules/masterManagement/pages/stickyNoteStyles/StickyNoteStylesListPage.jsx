@@ -8,6 +8,7 @@ import { usePagination } from '../../../../hooks/usePagination';
 import { useDebounce } from '../../../../hooks/useDebounce';
 import { toast } from '../../../../hooks/useToast';
 import appearanceService from '../../services/appearance.service';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -120,6 +121,7 @@ export default function StickyNoteStylesListPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title="Sticky Note Styles"
         description="Visual styles available for student sticky notes."

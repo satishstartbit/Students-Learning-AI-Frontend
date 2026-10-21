@@ -1615,6 +1615,22 @@
 .ui-pagination__ellipsis {
   padding: 0 4px;
 }
+/* Rows per page (Pagination onLimitChange). */
+.ui-pagination__size {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-left: auto;
+}
+.ui-pagination__size select {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+}
 
 .ui-progress {
   font-family: var(--font-family-base);

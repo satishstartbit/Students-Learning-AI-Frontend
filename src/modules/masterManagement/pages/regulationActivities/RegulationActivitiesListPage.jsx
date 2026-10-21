@@ -9,6 +9,8 @@ import { useDebounce } from '../../../../hooks/useDebounce';
 import { formatDuration } from '../../../../utils/date';
 import { toast } from '../../../../hooks/useToast';
 import regulationService from '../../services/regulation.service';
+import MasterGuideButton from '../../components/guide/MasterGuideButton';
+import MasterBackButton from '../../components/MasterBackButton';
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Active' },
@@ -123,11 +125,17 @@ export default function RegulationActivitiesListPage() {
 
   return (
     <div className="td-page">
+      <MasterBackButton />
       <PageHeader
         title="Regulation Activities"
         description="Breathing, grounding, movement and calming activities recommended after a check-in."
         breadcrumbs={[{ label: 'Master Management', to: '/admin/masters' }, { label: 'Regulation Activities' }]}
-        actions={<Button as={Link} to="/admin/masters/regulation-activities/create">Add activity</Button>}
+        actions={
+          <>
+            <MasterGuideButton title="Regulation Activities" />
+            <Button as={Link} to="/admin/masters/regulation-activities/create">Add activity</Button>
+          </>
+        }
       />
 
       <FilterBar>

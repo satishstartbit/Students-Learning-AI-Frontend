@@ -1,6 +1,5 @@
 import {
-  LuActivity,
-  LuBrainCircuit,
+  LuBell,
   LuChartLine,
   LuCreditCard,
   LuDatabase,
@@ -10,17 +9,19 @@ import {
   LuPackage,
   LuReceiptText,
   LuSchool,
-  LuSlidersHorizontal,
   LuTicketPercent,
   LuUsers,
   LuUsersRound,
-  LuMailOpen ,
-  LuMail
+  LuMailOpen,
+  LuWallet,
 } from 'react-icons/lu';
 import { useEffect } from 'react';
 import AuthenticatedLayout from './AuthenticatedLayout';
 import usePortalTheme from './usePortalTheme';
+import useNotifications from '../modules/notifications/hooks/useNotifications';
 import '../theme/superAdminSidebar.css';
+
+const NOTIFICATIONS_PATH = '/admin/notifications';
 
 /**
  * Navigation for the Super Admin area (/admin/*).
@@ -28,8 +29,12 @@ import '../theme/superAdminSidebar.css';
  * `{ group, items }` renders a labelled section; an item carrying its own
  * `items` becomes a collapsible parent with a submenu. Only routes that
  * actually exist are listed.
+ *
+ * 2026-10-20 (user request): Billing is one menu with its pages underneath
+ * (it was a section of five links), and Notifications is a menu item with
+ * the unread count - it replaced the header bell.
  */
-const NAV_ITEMS = [
+const navItems = (unreadCount) => [
   {
     group: 'Platform',
     items: [
@@ -53,26 +58,34 @@ const NAV_ITEMS = [
           { to: '/admin/relationships', label: 'Assignments', icon: LuLink, end: true },
           // "Teacher connections" removed at the client's request (2026-10-01).
           // Hidden for now - the wording lives in services/email/copy/teacher-invitation.txt (backend).
-          // { to: '/admin/relationships/invitation-email', label: 'Invitation email', icon: LuMail }, // re-add LuMail to the import
+          // { to: '/admin/relationships/invitation-email', label: 'Invitation email', icon: LuMail }, // add LuMail to the import
         ],
       },
       { to: '/admin/masters', label: 'Master Management', icon: LuDatabase },
+      {
+        // Plans and codes are the same Master Management screens, surfaced here
+        // too so the whole billing picture is reachable from one place.
+        label: 'Billing',
+        icon: LuWallet,
+        items: [
+          { to: '/admin/subscriptions', label: 'Subscriptions', icon: LuCreditCard, end: true },
+          { to: '/admin/masters/subscription-plans', label: 'Plans', icon: LuPackage },
+          { to: '/admin/masters/discount-codes', label: 'Discount Codes', icon: LuTicketPercent },
+          { to: '/admin/subscriptions/revenue', label: 'Revenue', icon: LuChartLine },
+          { to: '/admin/subscriptions/payments', label: 'Payments & Refunds', icon: LuReceiptText },
+        ],
+      },
+      {
+        to: NOTIFICATIONS_PATH,
+        label: 'Notifications',
+        icon: LuBell,
+        badge: unreadCount,
+        ariaLabel: unreadCount ? `Notifications, ${unreadCount} unread` : undefined,
+      },
+      // Hidden for now (re-add the icons to the import):
       // { to: '/admin/settings', label: 'Platform settings', icon: LuSlidersHorizontal },
       // { to: '/admin/system', label: 'System status', icon: LuActivity },
       // { to: '/admin/ai-usage', label: 'AI usage', icon: LuBrainCircuit },
-    ],
-  },
-
-  {
-    // Plans and codes are the same Master Management screens, surfaced here
-    // too so the whole billing picture is reachable from one place.
-    group: 'Billing',
-    items: [
-      { to: '/admin/subscriptions', label: 'Subscriptions', icon: LuCreditCard, end: true },
-      { to: '/admin/subscriptions/payments', label: 'Payments & Refunds', icon: LuReceiptText },
-      { to: '/admin/subscriptions/revenue', label: 'Revenue', icon: LuChartLine },
-      { to: '/admin/masters/subscription-plans', label: 'Plans', icon: LuPackage },
-      { to: '/admin/masters/discount-codes', label: 'Discount Codes', icon: LuTicketPercent },
     ],
   },
 ];
@@ -103,8 +116,19 @@ export function SuperAdminLayout({ children }) {
     return () => document.body.classList.remove('super-admin-theme');
   }, []);
 
+  // The Notifications item carries the unread count (polled; drops as soon as the page reads one).
+  const { unreadCount } = useNotifications({ limit: 1 });
+
   return (
-    <AuthenticatedLayout navItems={NAV_ITEMS} title="Admin Console" subtitle="Super Admin" brand="AC">
+    <AuthenticatedLayout
+      navItems={navItems(unreadCount)}
+      title="Admin Console"
+      subtitle="Super Admin"
+      brand="AC"
+      // Notifications live on their own page (sidebar), not in a header bell.
+      notificationsPath={NOTIFICATIONS_PATH}
+      showNotificationBell={false}
+    >
       {children}
     </AuthenticatedLayout>
   );

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LuEye, LuFilterX } from 'react-icons/lu';
 import {
@@ -15,7 +15,8 @@ import {
 } from '../../../components/common';
 import { Tooltip } from '../../../components/ui/tooltip';
 import { useApi } from '../../../hooks/useApi';
-import { usePagination } from '../../../hooks/usePagination';
+import { useListQuery } from '../../../hooks/useListQuery';
+import { useAddressText } from '../../../hooks/useAddressText';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { formatDateTime, formatRelative } from '../../../utils/date';
 import { formatName } from '../../../utils/format';
@@ -75,13 +76,13 @@ const EMPTY_COPY = {
  */
 export default function UsersListPage({ fixedRole = null }) {
   const navigate = useNavigate();
-  const pagination = usePagination();
-
-  const [search, setSearch] = useState('');
-  const [role, setRole] = useState('');
-  const [status, setStatus] = useState('');
-  const [emailVerified, setEmailVerified] = useState('');
-  const [sort, setSort] = useState({ by: 'created_at', order: 'desc' });
+  // Filters, sort and page live in the address (2026-10-20): Back from a user's
+  // record shows the list as it was left. Each role's list has its own address.
+  const { query, setQuery, pagination } = useListQuery({
+    search: '', role: '', status: '', emailVerified: '', sortBy: 'created_at', sortOrder: 'desc',
+  });
+  const { search, role, status, emailVerified } = query;
+  const sort = { by: query.sortBy, order: query.sortOrder };
 
   // A locked role always wins over the dropdown.
   const effectiveRole = fixedRole ?? role;
@@ -104,7 +105,7 @@ export default function UsersListPage({ fixedRole = null }) {
         sortBy: sort.by,
         sortOrder: sort.order,
       }),
-    [run, page, limit, debouncedSearch, effectiveRole, status, emailVerified, sort]
+    [run, page, limit, debouncedSearch, effectiveRole, status, emailVerified, sort.by, sort.order]
   );
 
   useEffect(() => {
@@ -119,10 +120,8 @@ export default function UsersListPage({ fixedRole = null }) {
   }, [meta, applyMeta]);
 
   // Any filter change starts again from page one.
-  const resetTo = (setter) => (value) => {
-    setter(value);
-    goToPage(1);
-  };
+  const filterBy = (key) => (value) => setQuery({ [key]: value, page: 1 });
+  const [searchText, typeSearch] = useAddressText(search, filterBy('search'));
 
   const columns = [
     {
@@ -187,13 +186,7 @@ export default function UsersListPage({ fixedRole = null }) {
 
   // Distinguishes "nothing here yet" from "nothing matched your filters".
   const hasFilters = Boolean(search || status || emailVerified || (!fixedRole && role));
-  const clearFilters = () => {
-    setSearch('');
-    setRole('');
-    setStatus('');
-    setEmailVerified('');
-    goToPage(1);
-  };
+  const clearFilters = () => setQuery({ search: '', role: '', status: '', emailVerified: '', page: 1 });
 
   const heading = fixedRole
     ? { title: `${ROLE_LABELS[fixedRole]}s`, description: DESCRIPTIONS[fixedRole] }
@@ -220,9 +213,9 @@ export default function UsersListPage({ fixedRole = null }) {
         <SearchInput
           fieldClassName="ui-filterbar__search ui-field--compact"
           placeholder="Name or email"
-          value={search}
-          onChange={(e) => resetTo(setSearch)(e.target.value)}
-          onClear={() => resetTo(setSearch)('')}
+          value={searchText}
+          onChange={(e) => typeSearch(e.target.value)}
+          onClear={() => typeSearch('')}
         />
         {/* Hidden when the route already fixes the role. */}
         {!fixedRole && (
@@ -232,7 +225,7 @@ export default function UsersListPage({ fixedRole = null }) {
             options={ROLE_OPTIONS}
             placeholder="All roles"
             value={role}
-            onChange={(e) => resetTo(setRole)(e.target.value)}
+            onChange={(e) => filterBy('role')(e.target.value)}
           />
         )}
         <Select
@@ -241,7 +234,7 @@ export default function UsersListPage({ fixedRole = null }) {
           options={STATUS_OPTIONS}
           placeholder="All statuses"
           value={status}
-          onChange={(e) => resetTo(setStatus)(e.target.value)}
+          onChange={(e) => filterBy('status')(e.target.value)}
         />
         <Select
           fieldClassName="ui-field--compact"
@@ -249,7 +242,7 @@ export default function UsersListPage({ fixedRole = null }) {
           options={VERIFIED_OPTIONS}
           placeholder="Any"
           value={emailVerified}
-          onChange={(e) => resetTo(setEmailVerified)(e.target.value)}
+          onChange={(e) => filterBy('emailVerified')(e.target.value)}
         />
         <Tooltip label="Clear filters" side="top">
           <IconButton
@@ -268,9 +261,9 @@ export default function UsersListPage({ fixedRole = null }) {
         isLoading={isLoading}
         error={error}
         onRetry={load}
-        sortBy={sort.by}
+        sortBy={sort.by === 'first_name' ? 'name' : sort.by}
         sortOrder={sort.order}
-        onSort={(by, order) => setSort({ by: by === 'name' ? 'first_name' : by, order })}
+        onSort={(by, order) => setQuery({ sortBy: by === 'name' ? 'first_name' : by, sortOrder: order, page: 1 })}
         pagination={pagination}
         onPageChange={goToPage}
         emptyTitle={
