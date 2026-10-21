@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Alert, Button, Checkbox, Input, Select } from '../../../components/common';
-import { formatDateKey } from '../../../utils/date';
+import { formatDateKey, getDateKey } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
+import { PAST_DAY_MESSAGE, isPastDay } from '../../../utils/workDates';
 import { useStudentProfileOptions } from '../../profile/hooks/useStudentProfileOptions';
 import intakeService from '../services/intake.service';
 
@@ -20,12 +21,16 @@ const QUESTION = {
  * questions, with big one-tap date choices (Q14). Answers are saved as the
  * person's own and are never overwritten by a re-read.
  */
-export function IntakeConfirm({ intake, guided = false, onConfirmed, onCancelled, onReread }) {
+export function IntakeConfirm({ intake, guided = false, today: givenToday, onConfirmed, onCancelled, onReread }) {
   const f = intake.fields;
   const subjects = useStudentProfileOptions(intake.studentId);
   const ask = new Set(intake.uncertain);
+  // No work on a day that has gone: a date read from the page that has passed is shown, never offered.
+  const today = givenToday || getDateKey();
+  const readDateGone = isPastDay(f.dueDate.value, today);
+  if (readDateGone) ask.add('dueDate');
   const [title, setTitle] = useState(f.title.value ?? '');
-  const [dueDate, setDueDate] = useState(f.dueDate.value ?? '');
+  const [dueDate, setDueDate] = useState(readDateGone ? '' : f.dueDate.value ?? '');
   const [noDueDate, setNoDueDate] = useState(!ask.has('dueDate') && !f.dueDate.value);
   const [subject, setSubject] = useState(f.subject.value ?? '');
   const [minutes, setMinutes] = useState(f.estimatedMinutes.value ? String(f.estimatedMinutes.value) : '');
@@ -33,14 +38,17 @@ export function IntakeConfirm({ intake, guided = false, onConfirmed, onCancelled
   const [error, setError] = useState(null);
   const [attempted, setAttempted] = useState(false);
 
-  const dateChoices = useMemo(() => [...new Set([...(f.dueDate.options ?? []), f.dueDate.value].filter(Boolean))], [f.dueDate]);
+  const dateChoices = useMemo(
+    () => [...new Set([...(f.dueDate.options ?? []), f.dueDate.value].filter((key) => key && !isPastDay(key, today)))],
+    [f.dueDate, today]
+  );
   const subjectOptions = subjects.subjectOptions;
 
   const errors = {
     subject: subject && !subjects.loading && !subjectOptions.some((option) => option.value === subject)
       ? 'Select this subject in the student profile first, or choose another subject' : null,
     title: title.trim() ? null : 'Give the work a name',
-    dueDate: !noDueDate && !dueDate ? 'Choose a date, or “No due date”' : null,
+    dueDate: noDueDate ? null : !dueDate ? 'Choose a date, or “No due date”' : isPastDay(dueDate, today) ? PAST_DAY_MESSAGE : null,
     minutes: minutes && !(Number.isInteger(Number(minutes)) && Number(minutes) >= 1 && Number(minutes) <= 1440) ? 'Whole minutes, 1 to 1440' : null,
   };
 
@@ -126,6 +134,11 @@ export function IntakeConfirm({ intake, guided = false, onConfirmed, onCancelled
         wrap(
           'dueDate',
           <>
+            {readDateGone && (
+              <p className="pl-muted" role="note">
+                It says {longDate(f.dueDate.value)}, which has already passed. Choose today or a later day.
+              </p>
+            )}
             {dateChoices.length > 0 && (
               <div className="pl-choices" role="group" aria-label="Due date choices">
                 {dateChoices.map((key) => (
@@ -149,8 +162,9 @@ export function IntakeConfirm({ intake, guided = false, onConfirmed, onCancelled
                 label={dateChoices.length ? 'Or pick another day' : 'Due date'}
                 type="date"
                 value={dueDate}
+                min={today}
                 onChange={(e) => setDueDate(e.target.value)}
-                error={attempted ? errors.dueDate : undefined}
+                error={attempted || isPastDay(dueDate, today) ? errors.dueDate : undefined}
               />
             )}
             <Checkbox label="No due date" checked={noDueDate} onChange={(e) => setNoDueDate(e.target.checked)} />

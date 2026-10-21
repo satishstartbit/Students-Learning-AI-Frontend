@@ -327,6 +327,7 @@ function ChildSchedule({ child }) {
         isOpen={Boolean(adding)}
         method={adding?.dueDate ? 'quick' : null}
         defaultDueDate={adding?.dueDate}
+        today={todayKey}
         onClose={() => setAdding(null)}
         onAdded={refresh}
         studentId={child.id}

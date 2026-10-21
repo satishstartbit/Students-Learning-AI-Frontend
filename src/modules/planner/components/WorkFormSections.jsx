@@ -14,7 +14,8 @@ import '../../assignments/components/assignmentForm.css';
  *
  *   values     { title, description, priority, subject, workType, minutes, startDate, dueDate }
  *   onChange(field, value)
- *   errors     { title?, minutes?, startDate? } (shown as given)
+ *   errors     { title?, minutes?, startDate?, dueDate? } (shown as given)
+ *   minDate    the earliest day the pickers offer (today - no work on a day that has gone)
  *   subjectOptions, subjectsLoading, subjectHint, workTypeOptions, workTypesLoading
  *   forOptions [{ value, label }] + forValue + onForChange: a parent picks the child
  *   titleLabel / titlePlaceholder / titleRequired / autoFocus / maxMinutes
@@ -40,6 +41,7 @@ export function WorkFormSections({
   autoFocus = false,
   maxMinutes = 1440,
   extraDetails = null,
+  minDate,
 }) {
   const [open, setOpen] = useState({ for: true, details: true, dates: true });
   const toggle = (key) => setOpen((o) => ({ ...o, [key]: !o[key] }));
@@ -48,7 +50,8 @@ export function WorkFormSections({
   const hasTitle = Boolean(values.title.trim()) || !titleRequired;
   const hasNotes = Boolean(values.description.trim());
   const detailsBad = errors.title;
-  const datesBad = errors.minutes || errors.startDate;
+  const datesBad = errors.minutes || errors.startDate || errors.dueDate;
+  const dueMin = values.startDate && (!minDate || values.startDate > minDate) ? values.startDate : minDate;
   const chips = {
     for: plainChip(forOptions?.find((o) => o.value === forValue)?.label ?? 'Choose', forValue ? 'accent' : 'warning'),
     details: detailsBad
@@ -104,8 +107,8 @@ export function WorkFormSections({
           <Select label="Kind of work" value={values.workType} onChange={set('workType')} options={workTypeOptions} placeholder="Not sure" loading={workTypesLoading} />
         </div>
         <div className="grid gap-x-4 sm:grid-cols-3">
-          <DatePicker label="Start date" value={values.startDate} onChange={set('startDate')} max={values.dueDate || undefined} error={errors.startDate} />
-          <DatePicker label="Due date" value={values.dueDate} onChange={set('dueDate')} min={values.startDate || undefined} />
+          <DatePicker label="Start date" value={values.startDate} onChange={set('startDate')} min={minDate || undefined} max={values.dueDate || undefined} error={errors.startDate} />
+          <DatePicker label="Due date" value={values.dueDate} onChange={set('dueDate')} min={dueMin || undefined} error={errors.dueDate} />
           <Input
             label="Estimated time (minutes)"
             type="number"

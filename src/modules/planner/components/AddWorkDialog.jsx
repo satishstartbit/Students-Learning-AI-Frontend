@@ -1,12 +1,14 @@
 import { useMemo, useRef, useState } from 'react';
 import { LuCamera, LuCircleCheck, LuFileText, LuMic, LuPencil, LuX } from 'react-icons/lu';
 import { Alert, Button, Modal, Spinner, Textarea } from '../../../components/common';
+import { getDateKey } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
+import { isPastDay } from '../../../utils/workDates';
 import { useStudentProfileOptions } from '../../profile/hooks/useStudentProfileOptions';
 import { useIntakeProgress } from '../hooks/useIntakeProgress';
 import { useWorkTypeOptions } from '../hooks/useWorkTypeOptions';
 import intakeService from '../services/intake.service';
-import { hasErrors, initialWorkValues, toIntakeFields, workFormErrors } from '../workForm';
+import { hasErrors, initialWorkValues, pastOnly, toIntakeFields, workFormErrors } from '../workForm';
 import IntakeConfirm from './IntakeConfirm';
 import WorkFormSections from './WorkFormSections';
 import VoiceRecorder from './VoiceRecorder';
@@ -20,15 +22,15 @@ const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/heic,image/heif';
  * (WorkFormSections, 2026-10-13): created at once with no reading. A parent
  * with more than one child picks who it is for.
  */
-function QuickAddForm({ studentId, childOptions, defaultDueDate, onCreated, onBack }) {
+function QuickAddForm({ studentId, childOptions, defaultDueDate, today, onCreated, onBack }) {
   const [forId, setForId] = useState(studentId);
   const subjects = useStudentProfileOptions(forId);
   const workTypes = useWorkTypeOptions();
-  const [values, setValues] = useState(() => initialWorkValues({ defaultDueDate }));
+  const [values, setValues] = useState(() => initialWorkValues({ defaultDueDate: isPastDay(defaultDueDate, today) ? '' : defaultDueDate }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [attempted, setAttempted] = useState(false);
-  const errors = workFormErrors(values);
+  const errors = workFormErrors(values, { today });
 
   const onChange = (field, value) => setValues((v) => ({ ...v, [field]: value }));
   const pickChild = (id) => {
@@ -63,7 +65,8 @@ function QuickAddForm({ studentId, childOptions, defaultDueDate, onCreated, onBa
       <WorkFormSections
         values={values}
         onChange={onChange}
-        errors={attempted ? errors : {}}
+        errors={attempted ? errors : pastOnly(errors)}
+        minDate={today}
         subjectOptions={subjects.subjectOptions}
         subjectsLoading={subjects.loading}
         subjectHint="Only subjects selected in the student profile."
@@ -248,7 +251,7 @@ function FilesForm({ method, studentId, guided, onCreated, onBack }) {
   );
 }
 
-function Progress({ intake: initial, guided, onFinished, onClose }) {
+function Progress({ intake: initial, guided, today, onFinished, onClose }) {
   const { intake, setIntake, stillReading, timedOut, error } = useIntakeProgress(initial);
 
   if (intake.status === 'created') {
@@ -297,6 +300,7 @@ function Progress({ intake: initial, guided, onFinished, onClose }) {
       key={`${intake.id}-${intake.updatedAt}`}
       intake={intake}
       guided={guided}
+      today={today}
       onConfirmed={setIntake}
       onCancelled={setIntake}
       onReread={setIntake}
@@ -316,6 +320,8 @@ function Progress({ intake: initial, guided, onFinished, onClose }) {
  *   intake      resume an intake that is waiting for answers
  *   method      open straight on one way in ('quick' | 'voice' | 'photo' |
  *               'document' | 'typed'); remount (key) to change it
+ *   today       the earliest day work can be due (a child's plan `today` on
+ *               their calendar); defaults to today in the signed-in person's zone
  */
 export function AddWorkDialog({
   isOpen,
@@ -329,7 +335,9 @@ export function AddWorkDialog({
   intake: resumed,
   method: initialMethod = null,
   maxVoiceSeconds = 90,
+  today: givenToday,
 }) {
+  const today = givenToday || getDateKey();
   const [method, setMethod] = useState(initialMethod);
   const [intake, setIntake] = useState(resumed ?? null);
   const current = intake ?? resumed ?? null;
@@ -367,7 +375,7 @@ export function AddWorkDialog({
     <Modal isOpen={isOpen} onClose={close} title={title} size="md">
       {isOpen &&
         (current ? (
-          <Progress intake={current} guided={guided} onFinished={close} onClose={close} />
+          <Progress intake={current} guided={guided} today={today} onFinished={close} onClose={close} />
         ) : !method ? (
           <div className={`pl-methods${guided ? ' pl-methods--guided' : ''}`}>
             {methods.map(({ key, icon: Icon, title: t, hint }) => (
@@ -379,7 +387,7 @@ export function AddWorkDialog({
             ))}
           </div>
         ) : method === 'quick' ? (
-          <QuickAddForm studentId={studentId} childOptions={childOptions} defaultDueDate={defaultDueDate} onCreated={created} onBack={back} />
+          <QuickAddForm studentId={studentId} childOptions={childOptions} defaultDueDate={defaultDueDate} today={today} onCreated={created} onBack={back} />
         ) : method === 'photo' || method === 'document' ? (
           <FilesForm method={method} studentId={studentId} guided={guided} onCreated={created} onBack={back} />
         ) : (

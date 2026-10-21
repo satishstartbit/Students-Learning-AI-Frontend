@@ -15,7 +15,8 @@ import {
 import { useApi } from '../../../hooks/useApi';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
-import { formatDate, formatTime } from '../../../utils/date';
+import { formatDate, formatTime, getClockMinutesInTimezone, getDateKey } from '../../../utils/date';
+import { DUE_TIME_PASSED_MESSAGE, dueTimePassed, isPastDay, pastDateErrors } from '../../../utils/workDates';
 import { ASSIGNMENT_CRUD_STATUS, ASSIGNMENT_RECIPIENT_STATUS } from '../../../utils/constants';
 import assignmentService from '../../assignments/services/assignment.service';
 import curriculumService from '../../assignments/services/curriculum.service';
@@ -211,13 +212,35 @@ function AssignmentEditor({ initial }) {
   const hasStudents = studentIds.length > 0;
   const canPublish = hasTitle && hasStudents && questionsValid && audioIsComplete(audio);
 
+  // ---- dates: nothing on a day that has gone (utils/workDates.js); dates already saved stay editable ----
+  const today = getDateKey();
+  const timePassed = dueTimePassed({ dueDate: form.dueDate, dueTime: form.dueTime, today, nowMinutes: getClockMinutesInTimezone(new Date()) });
+  const dateErrors = pastDateErrors(form, { today, saved: { startDate: initial?.startDate, dueDate: initial?.dueDate } });
+  const deadlineChanged = form.dueDate !== (initial?.dueDate ?? '') || form.dueTime !== (initial?.dueTime ?? '');
+  if (!dateErrors.dueDate && deadlineChanged && timePassed) dateErrors.dueTime = DUE_TIME_PASSED_MESSAGE;
+  const hasDateErrors = Object.keys(dateErrors).length > 0;
+  // A draft saved before its deadline went by still saves, but reaches no student until it has a new one.
+  const publishDateError =
+    published || hasDateErrors
+      ? null
+      : isPastDay(form.dueDate, today)
+        ? 'The due date has already passed. Choose a new due date before publishing.'
+        : timePassed
+          ? DUE_TIME_PASSED_MESSAGE
+          : null;
+  const dueMin = form.startDate && form.startDate > today ? form.startDate : today;
+
   const current = groupsOf(form, studentIds, questions, audio);
   const changed = Object.fromEntries(Object.keys(current).map((k) => [k, current[k] !== saved.groups[k]]));
   const hasChanges = Object.values(changed).some(Boolean);
 
   const chips = {
     details: hasTitle && hasDescription ? { label: 'Complete', tone: 'success' } : hasTitle ? { label: 'Add a description' } : { label: 'Needs a title', tone: 'warning' },
-    curriculum: hasCurriculum ? { label: 'Complete', tone: 'success' } : { label: 'Needs grade & subject', tone: 'warning' },
+    curriculum: hasDateErrors
+      ? { label: 'Check the dates', tone: 'danger' }
+      : hasCurriculum
+        ? { label: 'Complete', tone: 'success' }
+        : { label: 'Needs grade & subject', tone: 'warning' },
     students: hasStudents ? { label: plural(studentIds.length, 'student'), tone: 'accent' } : { label: 'Needs students', tone: 'warning' },
     questions: questions.length === 0 ? { label: 'Optional' } : questionsValid ? { label: plural(questions.length, 'question') } : { label: 'Needs finishing', tone: 'danger' },
     audio: audio.type === 'none' ? { label: 'Optional' } : audioIsComplete(audio) ? { label: 'On', tone: 'accent' } : { label: 'Pick a sound', tone: 'warning' },
@@ -226,7 +249,7 @@ function AssignmentEditor({ initial }) {
   const checklist = [
     { key: 'details', label: 'Title and description', state: hasTitle && hasDescription ? 'done' : hasTitle ? 'todo' : 'warn', edited: changed.details },
     { key: 'curriculum', label: 'Grade and subject', state: hasCurriculum ? 'done' : 'todo', edited: changed.curriculum },
-    { key: 'dates', label: 'Start and due dates', state: hasDates ? 'done' : 'todo', edited: changed.dates },
+    { key: 'dates', label: 'Start and due dates', state: hasDateErrors || publishDateError ? 'warn' : hasDates ? 'done' : 'todo', edited: changed.dates },
     published
       ? { key: 'students', label: `${plural(studentIds.length, 'student')} assigned`, state: hasStudents ? 'done' : 'warn', edited: changed.students }
       : { key: 'students', label: 'At least one student', state: hasStudents ? 'done' : 'warn', edited: changed.students },
@@ -306,8 +329,9 @@ function AssignmentEditor({ initial }) {
     []
   );
 
-  // Autosave: drafts only (a published assignment is live - it waits for Save changes).
-  const autosaveBody = !published && !isArchived && hasTitle && hasChanges ? buildPayload({ partial: true }) : null;
+  // Autosave: drafts only (a published assignment is live - it waits for Save changes),
+  // and never a date that has gone (the server refuses it; the save line says why).
+  const autosaveBody = !published && !isArchived && hasTitle && hasChanges && !hasDateErrors ? buildPayload({ partial: true }) : null;
   const autosaveKey = autosaveBody ? fingerprint(autosaveBody) : null;
   const pendingAutosave = useRef(null);
 
@@ -328,26 +352,29 @@ function AssignmentEditor({ initial }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autosaveKey, busy, enqueue, writeDraft]);
 
-  const openSectionsWithErrors = (next, qErrors) => {
+  const openSectionsWithErrors = (next, qErrors, datesBad) => {
     setOpen((o) => ({
       ...o,
       details: o.details || Boolean(next.title),
+      curriculum: o.curriculum || datesBad,
       questions: o.questions || Object.keys(qErrors).length > 0,
       audio: o.audio || Boolean(next.audio),
     }));
   };
 
-  const validate = () => {
+  const validate = ({ publishing = false } = {}) => {
     const next = {};
     if (!hasTitle) next.title = 'Give the assignment a title';
     if (audio.type === 'library' && !audio.trackId) next.audio = 'Choose a sound, or pick "No sound"';
     if (audio.type === 'upload' && !audio.fileId) next.audio = 'Upload an audio file, or pick "No sound"';
     const qErrors = questionsLocked ? {} : liveQuestionErrors;
+    const dateProblem = Object.values(dateErrors)[0] ?? (publishing ? publishDateError : null);
     setErrors(next);
     setQuestionErrors(qErrors);
-    openSectionsWithErrors(next, qErrors);
-    if (Object.keys(qErrors).length) toast.error('Some questions need finishing - see the highlighted fields');
-    return Object.keys(next).length === 0 && Object.keys(qErrors).length === 0;
+    openSectionsWithErrors(next, qErrors, Boolean(dateProblem));
+    if (dateProblem) toast.error(dateProblem);
+    else if (Object.keys(qErrors).length) toast.error('Some questions need finishing - see the highlighted fields');
+    return Object.keys(next).length === 0 && Object.keys(qErrors).length === 0 && !dateProblem;
   };
 
   const cancelPendingAutosave = () => {
@@ -371,7 +398,7 @@ function AssignmentEditor({ initial }) {
   };
 
   const handlePublish = async () => {
-    if (!validate()) return;
+    if (!validate({ publishing: true })) return;
     if (!hasStudents) {
       setOpen((o) => ({ ...o, students: true }));
       toast.error('Pick at least one student before publishing');
@@ -439,7 +466,8 @@ function AssignmentEditor({ initial }) {
 
   let saveState = null;
   if (!published) {
-    if (autosave.state === 'saving') saveState = { text: 'Saving draft…' };
+    if (hasDateErrors && hasChanges) saveState = { text: `Draft not saved: ${Object.values(dateErrors)[0]}`, tone: 'error' };
+    else if (autosave.state === 'saving') saveState = { text: 'Saving draft…' };
     // A failed save that has since been undone leaves nothing unsaved.
     else if (autosave.state === 'error' && !hasChanges) saveState = { text: 'All changes saved.' };
     else if (autosave.state === 'error') saveState = { text: `Couldn't save the draft: ${autosave.message}. We'll try again when you type.`, tone: 'error' };
@@ -473,7 +501,8 @@ function AssignmentEditor({ initial }) {
       ...cur,
       title: f.title?.value || cur.title,
       description: cur.description.trim() ? cur.description : data.instructions || cur.description,
-      dueDate: f.dueDate?.value || cur.dueDate,
+      // A date on the sheet that has already gone is not used - the teacher picks one.
+      dueDate: (isPastDay(f.dueDate?.value, today) ? null : f.dueDate?.value) || cur.dueDate,
       estimatedMinutes: f.estimatedMinutes?.value ?? cur.estimatedMinutes,
       ...(subjectId ? { subjectId, topicId: '', legacySubject: '' } : {}),
       ...(taskTypeId ? { taskTypeId } : {}),
@@ -596,8 +625,8 @@ function AssignmentEditor({ initial }) {
                 endAdornment={<span className="ui-hint">minutes</span>}
                 placeholder="20"
               />
-              <DatePicker label="Start date" value={form.startDate} onChange={setField('startDate')} />
-              <DatePicker label="Due date" value={form.dueDate} onChange={setField('dueDate')} min={form.startDate || undefined} />
+              <DatePicker label="Start date" value={form.startDate} onChange={setField('startDate')} min={today} error={dateErrors.startDate} />
+              <DatePicker label="Due date" value={form.dueDate} onChange={setField('dueDate')} min={dueMin} error={dateErrors.dueDate ?? publishDateError ?? undefined} />
               {/* The time belongs to the due date - without one there is
                   nothing for it to be a time of. */}
               <Input
@@ -606,6 +635,7 @@ function AssignmentEditor({ initial }) {
                 value={form.dueTime}
                 onChange={setField('dueTime')}
                 disabled={!form.dueDate}
+                error={dateErrors.dueTime}
                 hint={form.dueDate ? 'Optional - any time that day if left empty.' : 'Set a due date first.'}
               />
             </div>

@@ -2328,9 +2328,6 @@
   .ui-pageheader__actions {
     width: 100%;
   }
-  .ui-pageheader__actions .ui-btn {
-    flex: 1;
-  }
   .ui-modal {
     max-width: calc(100vw - 24px);
   }

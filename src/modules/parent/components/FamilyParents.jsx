@@ -11,8 +11,11 @@ import {
   ProgressBar,
   SectionHeader,
 } from '../../../components/common';
+import { useState } from 'react';
 import { useModal } from '../../../hooks/useModal';
 import { toast } from '../../../hooks/useToast';
+import { formatTimeAgo } from '../../../utils/date';
+import { emailProblemText } from '../../../utils/emailProblem';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import { formatPhoneForDisplay } from '../../../utils/phone';
@@ -64,9 +67,10 @@ export function PlanUsage({ family }) {
   );
 }
 
-function MemberCard({ member, isYou, canManage, canActivate, activateReason, onEdit, onRemove, onDeactivate, onActivate }) {
+function MemberCard({ member, isYou, canManage, canActivate, activateReason, onEdit, onRemove, onDeactivate, onActivate, onResend, resending }) {
   const name = formatName(member);
   const inactive = member.active === false;
+  const invitePending = !inactive && !member.emailVerified;
   return (
     <article className={`pm-card${inactive ? ' pm-card--inactive' : ''}`}>
       <div className="pm-head">
@@ -95,12 +99,18 @@ function MemberCard({ member, isYou, canManage, canActivate, activateReason, onE
           </Badge>
         )}
       </div>
+      {invitePending && member.inviteSentAt && <p className="pm-meta">Invite sent {formatTimeAgo(member.inviteSentAt)}</p>}
 
       {canManage && (
         <div className="pm-foot">
           <Button size="sm" variant="secondary" onClick={() => onEdit(member)}>
             Edit
           </Button>
+          {invitePending && (
+            <Button size="sm" variant="secondary" onClick={() => onResend(member)} loading={resending}>
+              Resend invite
+            </Button>
+          )}
           {inactive ? (
             <Button size="sm" variant="secondary" onClick={() => onActivate(member)} disabled={!canActivate} title={canActivate ? undefined : activateReason}>
               Activate
@@ -155,6 +165,29 @@ export function ParentsSection({ family, currentUserId, onChanged }) {
       await onChanged();
     } catch (err) {
       toast.error(getErrorMessage(err));
+    }
+  };
+
+  const [resendingId, setResendingId] = useState(null);
+  const handleResend = async (member) => {
+    setResendingId(member.id);
+    try {
+      const { data: sent } = await parentService.resendFamilyParentInvite(member.id);
+      if (sent?.inviteEmail?.sent === false) {
+        toast.error(`The new invite to ${member.email} didn't go out. ${emailProblemText(sent.inviteEmail.problem)}`, {
+          title: "The invite email didn't go out",
+        });
+      } else {
+        toast.success(`We emailed ${member.email} a new link to set their password. The earlier link no longer works.`, {
+          title: 'Invite sent again',
+        });
+      }
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setResendingId(null);
+      // The time it went out, or a parent who has signed up meanwhile.
+      await onChanged();
     }
   };
 
@@ -223,6 +256,8 @@ export function ParentsSection({ family, currentUserId, onChanged }) {
                 onRemove={removeModal.open}
                 onDeactivate={deactivateModal.open}
                 onActivate={handleActivate}
+                onResend={handleResend}
+                resending={resendingId === member.id}
               />
             ))}
           </div>

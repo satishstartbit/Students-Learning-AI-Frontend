@@ -7,7 +7,9 @@ import { useStudentProfileOptions } from '../../../profile/hooks/useStudentProfi
 import ShareWithTeacher from '../../../planner/components/ShareWithTeacher';
 import WorkFormSections from '../../../planner/components/WorkFormSections';
 import { useWorkTypeOptions } from '../../../planner/hooks/useWorkTypeOptions';
-import { initialWorkValues, toOwnTaskValues, workFormErrors } from '../../../planner/workForm';
+import { initialWorkValues, pastOnly, toOwnTaskValues, workFormErrors } from '../../../planner/workForm';
+import { getDateKey } from '../../../../utils/date';
+import { isPastDay } from '../../../../utils/workDates';
 import studentTaskService from '../../services/studentTask.service';
 
 /**
@@ -76,7 +78,10 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
   const subjects = useStudentProfileOptions();
   const workTypes = useWorkTypeOptions();
 
-  const [values, setValues] = useState(() => initialWorkValues({ task, defaultDueDate }));
+  // No task on a day that has gone; an edited task keeps the dates it was saved with.
+  const today = getDateKey();
+  const saved = isEdit ? { startDate: task?.startDate, dueDate: task?.dueDate } : {};
+  const [values, setValues] = useState(() => initialWorkValues({ task, defaultDueDate: isPastDay(defaultDueDate, today) ? '' : defaultDueDate }));
   const { subject, workType } = values;
   const [photoFile, setPhotoFile] = useState(null);
   const [removePhoto, setRemovePhoto] = useState(false);
@@ -101,7 +106,7 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
     return opts;
   }, [workTypes.options, workType]);
 
-  const errors = workFormErrors(values, { titleRequired: !hasPhoto, maxMinutes: 600 });
+  const errors = workFormErrors(values, { titleRequired: !hasPhoto, maxMinutes: 600, today, saved });
   if (errors.title) errors.title = 'Give your task a title';
   const invalid = Object.values(errors).some(Boolean);
 
@@ -198,7 +203,8 @@ function OwnTaskForm({ mode, task, defaultDueDate, onDone, onCancel }) {
       <WorkFormSections
         values={values}
         onChange={(field, value) => setValues((v) => ({ ...v, [field]: value }))}
-        errors={attempted ? errors : {}}
+        errors={attempted ? errors : pastOnly(errors)}
+        minDate={today}
         subjectOptions={subjectOptions}
         subjectsLoading={subjects.loading}
         subjectHint="Choose from the subjects selected in your learning profile."

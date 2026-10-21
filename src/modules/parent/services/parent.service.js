@@ -118,6 +118,9 @@ export const removeFamilyParent = (id) => api.delete(`/parent/family/parents/${i
 export const deactivateFamilyParent = (id) => api.post(`/parent/family/parents/${id}/deactivate`);
 export const activateFamilyParent = (id) => api.post(`/parent/family/parents/${id}/activate`);
 
+/** Account holder only: a fresh invite for a parent who hasn't signed up yet (`data.inviteEmail` says if it went out). */
+export const resendFamilyParentInvite = (id) => api.post(`/parent/family/parents/${id}/resend-invite`);
+
 // --- teachers ---------------------------------------------------------------
 // Teachers are connected by invitation (modules/invitations - the teacher has
 // to accept); a parent can remove a connected teacher here.
@@ -185,6 +188,7 @@ export default {
   removeFamilyParent,
   deactivateFamilyParent,
   activateFamilyParent,
+  resendFamilyParentInvite,
   removeTeacherAssignment,
   listMasterOptions,
   masterOptionsFetcher,
