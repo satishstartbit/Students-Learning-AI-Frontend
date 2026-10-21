@@ -3,6 +3,7 @@ import '@fontsource/patrick-hand/400.css';
 import { ConfirmationModal } from '../../../components/common';
 import { useAuth } from '../../../hooks/useAuth';
 import { useApi } from '../../../hooks/useApi';
+import { useMainScrollContainer } from '../../../hooks/useMainScrollContainer';
 import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import AddWorkDialog from '../../planner/components/AddWorkDialog';
@@ -53,10 +54,14 @@ export default function StudentHomePage() {
   const { user } = useAuth();
   // Settings -> Name: the name the student chose to be called, else their first name.
   const { settings } = useStudentSettings();
+  const scrollContainerRef = useMainScrollContainer();
   const plan = useTodayTasks();
   const summary = useApi(rewardService.getSummary, { immediate: true });
   const catalog = useApi(rewardService.listCatalog, { immediate: true });
   const todayMinutes = useApi(focusService.getTodayMinutes, { immediate: true });
+  // Read the existing session without starting a timer or changing any focus state.
+  const activeFocus = useApi(focusService.getActiveSession, { immediate: true });
+  const isFocusMode = activeFocus.isLoading || ['in_progress', 'paused'].includes(activeFocus.data?.status);
   // The board shows the student's general notes from yesterday onwards (a note's
   // date = its reminder, else when it was written); older ones are on the Notes
   // page, and notes tied to an assignment live on that assignment's page.
@@ -135,6 +140,9 @@ export default function StudentHomePage() {
   return (
     <div className="sh-page td-page">
       <HomeHero
+        scrollContainerRef={scrollContainerRef}
+        isFocusMode={isFocusMode}
+        reduceMotion={Boolean(settings?.reduceMotion)}
         firstName={settings?.preferredName || user?.firstName}
         openCount={plan.openCount}
         minutesLeft={plan.minutesLeft}

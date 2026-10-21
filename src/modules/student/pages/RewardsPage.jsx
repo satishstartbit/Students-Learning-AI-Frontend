@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Alert, Button } from '../../../components/common';
+import { useApi } from '../../../hooks/useApi';
 import { isTodayInTimezone } from '../../../utils/date';
-import RewardArt from '../components/rewards/RewardArt';
+import RewardParallaxArt from '../components/rewards/RewardParallaxArt';
 import '../components/rewards/studentRewards.css';
 import { useRewards } from '../hooks/useRewards';
+import { useStudentSettings } from '../hooks/useStudentSettings';
+import focusService from '../services/focus.service';
 
 /**
  * /student/rewards for Grade 6+ (K-4 has KidRewardsPage), built to the Grade
@@ -47,7 +50,7 @@ function ProgressRing({ value, points }) {
   );
 }
 
-function RewardTile({ reward, index }) {
+function RewardTile({ reward, index, motionDisabled }) {
   const isNew = reward.collected && isTodayInTimezone(reward.collectedAt);
   const label = reward.collected
     ? `${reward.name}, collected`
@@ -57,7 +60,7 @@ function RewardTile({ reward, index }) {
     <li>
       <div className="rw-tile" data-collected={reward.collected || undefined} data-new={isNew || undefined} aria-label={label} role="group">
         {isNew && <span className="rw-tile__badge">New</span>}
-        <RewardArt imageUrl={reward.imageUrl} size={64} locked={!reward.collected} delay={(index % 6) * 0.25} />
+        <RewardParallaxArt imageUrl={reward.imageUrl} locked={!reward.collected} index={index} disabled={motionDisabled} />
         <span className="rw-tile__name">{reward.name}</span>
         {!reward.collected && <span className="rw-tile__hint">{reward.pointsCost} pts to unlock</span>}
       </div>
@@ -68,6 +71,11 @@ function RewardTile({ reward, index }) {
 export default function RewardsPage() {
   const rewards = useRewards();
   const [tab, setTab] = useState('stickers');
+  const { settings, isLoading: settingsLoading } = useStudentSettings();
+  // Read-only: suppress decoration during an existing focus session.
+  const activeFocus = useApi(focusService.getActiveSession, { immediate: true });
+  const motionDisabled = settingsLoading || Boolean(settings?.reduceMotion) ||
+    activeFocus.isLoading || ['in_progress', 'paused'].includes(activeFocus.data?.status);
 
   const list = tab === 'emojis' ? rewards.emojis : rewards.stickers;
   const nextText = rewards.next
@@ -139,7 +147,7 @@ export default function RewardsPage() {
         ) : (
           <ul className="rw-grid">
             {list.map((reward, i) => (
-              <RewardTile key={reward.id} reward={reward} index={i} />
+              <RewardTile key={reward.id} reward={reward} index={i} motionDisabled={motionDisabled} />
             ))}
           </ul>
         )}

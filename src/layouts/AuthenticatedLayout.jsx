@@ -1,9 +1,11 @@
+import { useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { LuPanelLeft } from 'react-icons/lu';
 import { Toast } from '../components/common';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
 import { useAuth } from '../hooks/useAuth';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { MainScrollContainerContext } from '../hooks/useMainScrollContainer';
 import { useSyncUserLocale } from '../hooks/useSyncUserLocale';
 import NotificationBell from '../modules/notifications/components/NotificationBell';
 import NotificationBellLink from '../modules/notifications/components/NotificationBellLink';
@@ -53,6 +55,7 @@ export function AuthenticatedLayout({
   children,
 }) {
   const { user } = useAuth();
+  const mainScrollRef = useRef(null);
   // Below lg, not md: at tablet-portrait widths (768-1023) a 16rem sidebar
   // leaves pages too narrow for their tables and filter rows, so tablets get
   // the tab bar too - the same split the K-4 shell (KidLayout) uses.
@@ -109,11 +112,13 @@ export function AuthenticatedLayout({
           applied here rather than on each page's root so every page gets the
           same gap and reading width and a new page cannot forget it.
         */}
-        <main className={`ui-shell__main min-w-0 flex-1 overflow-y-auto${phoneShell ? ' ui-shell__main--phone' : ''}`}>
+        <main ref={mainScrollRef} className={`ui-shell__main min-w-0 flex-1 overflow-y-auto${phoneShell ? ' ui-shell__main--phone' : ''}`}>
           {/* A page that throws shows "This page ran into a problem" here, with
               the navigation still working; moving to another page clears it. */}
           <AppErrorBoundary inShell resetKey={pathname}>
-            {children ?? <Outlet />}
+            <MainScrollContainerContext.Provider value={mainScrollRef}>
+              {children ?? <Outlet />}
+            </MainScrollContainerContext.Provider>
           </AppErrorBoundary>
         </main>
 

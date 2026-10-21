@@ -2,7 +2,7 @@
  * Grade 6+ Rewards page (RewardsPage.jsx), built to the Grade 6-12 rewards
  * mockup: a progress card (ring + "N points earned so far" + bar), a
  * Stickers / Emojis segmented switch, and a grid of collectible tiles.
- * Collected tiles show the art in full colour and bob gently (RewardArt);
+ * Collected tiles show the art in full colour with gentle parallax;
  * locked tiles are faded with "N pts to unlock".
  */
 .rw-page {
@@ -138,12 +138,30 @@
   border-radius: 14px;
   background: var(--color-bg-surface);
   text-align: center;
-  transition: border-color 0.15s, box-shadow 0.2s, transform 0.2s;
+  transition: border-color 0.15s, box-shadow 0.2s;
 }
 .rw-tile[data-collected='true']:hover {
   border-color: color-mix(in srgb, var(--accent-base) 35%, transparent);
   box-shadow: 0 10px 22px -14px rgba(46, 35, 20, 0.35);
-  transform: translateY(-2px);
+}
+.rw-parallax-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 64px;
+  height: 64px;
+}
+.rw-parallax-art__layer {
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rw-parallax-art__layer {
+    transform: none !important;
+    will-change: auto !important;
+  }
 }
 .rw-tile[data-new='true'] {
   border-color: color-mix(in srgb, var(--accent-base) 50%, transparent);
