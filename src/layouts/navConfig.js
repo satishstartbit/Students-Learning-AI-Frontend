@@ -34,6 +34,18 @@ export function accountMenuPosition(rect, { collapsed, viewportWidth, viewportHe
 }
 
 /**
+ * The label of the collapsible sidebar menu that holds the current page, or
+ * null. `sections` are `{ items }` sections; `isPathActive(to, end)` matches a
+ * link against the current address. Labels are unique within a sidebar.
+ */
+export function activeMenuLabel(sections = [], isPathActive) {
+  const menu = sections
+    .flatMap((section) => section.items ?? [])
+    .find((entry) => Array.isArray(entry.items) && entry.items.some((child) => isPathActive(child.to, child.end)));
+  return menu?.label ?? null;
+}
+
+/**
  * A role's sidebar entries as one list of links: `{ group, items }` sections
  * and collapsible parents (`{ label, items }`) are unwrapped, so the phone
  * shell can list whatever isn't one of its tabs.

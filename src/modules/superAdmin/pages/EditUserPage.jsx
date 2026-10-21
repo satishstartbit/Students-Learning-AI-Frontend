@@ -19,6 +19,7 @@ import { useForm } from '../../../hooks/useForm';
 import { usePhotoField } from '../../../hooks/usePhotoField';
 import { toast } from '../../../hooks/useToast';
 import { required, emailRules, phone as phoneRule } from '../../../utils/validation';
+import { isRequiredField, withRequiredFields, yearsExperienceRule } from '../../../utils/profileRequirements';
 import { formatPhoneForDisplay } from '../../../utils/phone';
 import { ROLE_LABELS, listPathForRole } from '../../../utils/constants';
 import adminUserService from '../services/adminUser.service';
@@ -58,12 +59,12 @@ export default function EditUserPage() {
 
   const form = useForm({
     initialValues: {},
-    validationSchema: {
+    validationSchema: withRequiredFields(user?.role, {
       firstName: [required('Enter a first name')],
       ...(isStudent
         ? {}
-        : { email: emailRules(), phone: [phoneRule()] }),
-    },
+        : { email: emailRules(), phone: [phoneRule()], yearsExperience: [yearsExperienceRule] }),
+    }),
     async onSubmit(values) {
       const payload = {
         firstName: values.firstName,
@@ -156,11 +157,11 @@ export default function EditUserPage() {
           <SectionHeader title="Account details" as="h3" />
 
           <Input label="First name" required {...form.getFieldProps('firstName')} />
-          <Input label="Last name" {...form.getFieldProps('lastName')} />
+          <Input label="Last name" required={isRequiredField(user.role, 'lastName')} {...form.getFieldProps('lastName')} />
           {!isStudent && (
             <>
               <EmailInput label="Email" required autoComplete="off" {...form.getFieldProps('email')} />
-              <PhoneInput label="Phone" {...form.getFieldProps('phone')} />
+              <PhoneInput label="Phone" required={isRequiredField(user.role, 'phone')} {...form.getFieldProps('phone')} />
             </>
           )}
 

@@ -19,6 +19,7 @@ import { formatPhoneForDisplay } from '../../../utils/phone';
 import { CHANGE_PLAN_PATH, hasRoomFor, parentLimitReason, usageLabel } from '../familyLimits';
 import parentService from '../services/parent.service';
 import AddParentModal from './AddParentModal';
+import EditParentModal from './EditParentModal';
 import './parentFamily.css';
 
 /** How full one of the plan's limits is. No bar when the plan sets no limit. */
@@ -63,7 +64,7 @@ export function PlanUsage({ family }) {
   );
 }
 
-function MemberCard({ member, isYou, canManage, canActivate, activateReason, onRemove, onDeactivate, onActivate }) {
+function MemberCard({ member, isYou, canManage, canActivate, activateReason, onEdit, onRemove, onDeactivate, onActivate }) {
   const name = formatName(member);
   const inactive = member.active === false;
   return (
@@ -97,6 +98,9 @@ function MemberCard({ member, isYou, canManage, canActivate, activateReason, onR
 
       {canManage && (
         <div className="pm-foot">
+          <Button size="sm" variant="secondary" onClick={() => onEdit(member)}>
+            Edit
+          </Button>
           {inactive ? (
             <Button size="sm" variant="secondary" onClick={() => onActivate(member)} disabled={!canActivate} title={canActivate ? undefined : activateReason}>
               Activate
@@ -117,12 +121,13 @@ function MemberCard({ member, isYou, canManage, canActivate, activateReason, onR
 
 /**
  * The parents who share this family's plan and children. The account holder
- * adds and removes parents; everyone else sees the list.
+ * adds, edits, switches off and removes parents; everyone else sees the list.
  *
  * `family` is the useApi result for GET /parent/family; `onChanged` reloads it.
  */
 export function ParentsSection({ family, currentUserId, onChanged }) {
   const addModal = useModal();
+  const editModal = useModal(); // payload: the member
   const removeModal = useModal();
   const deactivateModal = useModal();
   const data = family.data;
@@ -214,6 +219,7 @@ export function ParentsSection({ family, currentUserId, onChanged }) {
                 canManage={data.isAccountHolder && !member.isAccountHolder}
                 canActivate={canActivate}
                 activateReason={activateReason}
+                onEdit={editModal.open}
                 onRemove={removeModal.open}
                 onDeactivate={deactivateModal.open}
                 onActivate={handleActivate}
@@ -224,6 +230,10 @@ export function ParentsSection({ family, currentUserId, onChanged }) {
       )}
 
       <AddParentModal isOpen={addModal.isOpen} onClose={addModal.close} onCreated={onChanged} />
+
+      {editModal.isOpen && editModal.payload && (
+        <EditParentModal key={editModal.payload.id} member={editModal.payload} onClose={editModal.close} onSaved={onChanged} />
+      )}
 
       <ConfirmationModal
         isOpen={deactivateModal.isOpen}

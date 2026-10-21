@@ -289,12 +289,9 @@
 
 /* --- Small bits -------------------------------------------------------- */
 @media (max-width: 640px) {
-  /* Menus anchored near the right edge never run off the screen. */
+  /* Menus never run off the screen (Dropdown.jsx keeps them inside it). */
   .ui-dropdown__menu {
     max-width: calc(100vw - 24px);
-  }
-  .ui-dropdown__menu--end {
-    right: 0;
   }
   /* Toasts span the width instead of hugging a corner. */
   .ui-toast-region {

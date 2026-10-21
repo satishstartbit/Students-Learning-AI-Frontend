@@ -10,6 +10,7 @@ import { toast } from '../../../hooks/useToast';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import { emailRules, phone as phoneRule, required } from '../../../utils/validation';
+import { withRequiredFields } from '../../../utils/profileRequirements';
 import AddressFields from '../../auth/components/AddressFields';
 import ChangePasswordForm from '../../auth/components/ChangePasswordForm';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
@@ -66,11 +67,11 @@ export default function ParentProfilePage() {
 
   const form = useForm({
     initialValues: valuesFromMe(null),
-    validationSchema: {
+    validationSchema: withRequiredFields('PARENT', {
       firstName: [required('Enter your first name')],
       email: emailRules(),
       phone: [phoneRule()],
-    },
+    }),
     async onSubmit(values) {
       const { data } = await authService.updateMe({
         firstName: values.firstName,
@@ -145,14 +146,14 @@ export default function ParentProfilePage() {
           />
           <div className="pf-grid">
             <Input label="First name" required autoComplete="given-name" {...form.getFieldProps('firstName')} />
-            <Input label="Last name" autoComplete="family-name" {...form.getFieldProps('lastName')} />
+            <Input label="Last name" required autoComplete="family-name" {...form.getFieldProps('lastName')} />
             <EmailInput
               label="Email"
               required
               hint={emailChanged ? "Saving signs you out - we'll email a link to confirm the new address." : undefined}
               {...form.getFieldProps('email')}
             />
-            <PhoneInput label="Phone" {...form.getFieldProps('phone')} />
+            <PhoneInput label="Phone" required {...form.getFieldProps('phone')} />
           </div>
         </ProfileSection>
 

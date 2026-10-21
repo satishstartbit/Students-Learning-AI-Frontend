@@ -4,6 +4,7 @@ import { useApi } from '../../../hooks/useApi';
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required } from '../../../utils/validation';
+import { isRequiredField, withRequiredFields } from '../../../utils/profileRequirements';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import { formatName } from '../../../utils/format';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
@@ -69,9 +70,9 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
 
   const form = useForm({
     initialValues: valuesFromChild(null),
-    validationSchema: {
+    validationSchema: withRequiredFields('STUDENT', {
       firstName: [required('Enter a first name')],
-    },
+    }),
     async onSubmit(values) {
       await parentService.updateChild(childId, {
         firstName: values.firstName,
@@ -152,7 +153,7 @@ export default function EditChildModal({ isOpen, childId, onClose, onUpdated }) 
           <ProfileSection title="Personal details">
             <div className="pf-grid">
               <Input label="First name" required autoComplete="off" {...form.getFieldProps('firstName')} />
-              <Input label="Last name" autoComplete="off" {...form.getFieldProps('lastName')} />
+              <Input label="Last name" required={isRequiredField('STUDENT', 'lastName')} autoComplete="off" {...form.getFieldProps('lastName')} />
             </div>
           </ProfileSection>
 

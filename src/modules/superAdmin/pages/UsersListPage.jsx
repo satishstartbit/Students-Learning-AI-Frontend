@@ -47,7 +47,7 @@ const VERIFIED_OPTIONS = [
 /** Sub-heading for each per-role view. */
 const DESCRIPTIONS = {
   [USER_ROLES.STUDENT]: 'Students are added by their parent, who also sets up their account.',
-  [USER_ROLES.PARENT]: 'Parents manage their own children from their record.',
+  [USER_ROLES.PARENT]: 'Account holders. Each one’s family - children and extra parents - is on their record.',
   [USER_ROLES.TEACHER]: 'Teachers are assigned students from the Relationships page.',
 };
 
@@ -100,6 +100,8 @@ export default function UsersListPage({ fixedRole = null }) {
         limit,
         search: debouncedSearch,
         role: effectiveRole,
+        // Account holders only: extra parents are listed on their account holder's record.
+        accountHoldersOnly: effectiveRole === USER_ROLES.PARENT ? true : undefined,
         status,
         emailVerified,
         sortBy: sort.by,

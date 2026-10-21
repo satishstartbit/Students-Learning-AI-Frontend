@@ -16,6 +16,7 @@ import { useEffect } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getMe } from '../modules/auth/services/auth.service';
 import ConsentGate from '../components/legal/ConsentGate';
+import ProfileCompletionGate from '../modules/auth/components/ProfileCompletionGate';
 import AppSettingsProvider from '../components/appearance/AppSettingsProvider';
 import SubjectColorsProvider from '../components/subjects/SubjectColorsProvider';
 import AuthenticatedLayout from './AuthenticatedLayout';
@@ -73,19 +74,22 @@ export function TeacherLayout({ children }) {
     <AppSettingsProvider>
       {/* The admin's subject colours, so a subject looks the same to teachers as to their students. */}
       <SubjectColorsProvider>
-        {/* The bell is a link to Notifications (no dropdown list). */}
-        <AuthenticatedLayout
-          navItems={NAV_ITEMS}
-          mobileTabs={MOBILE_TABS}
-          title="Teacher Portal"
-          subtitle="Teacher"
-          brand="TP"
-          accountSubtitle={school}
-          notificationsPath="/teacher/notifications"
-        >
-          {/* Agree to the current Terms/Privacy before anything else (Phase 1 §12). */}
-          <ConsentGate>{children}</ConsentGate>
-        </AuthenticatedLayout>
+        {/* Required details still empty (e.g. signed up on /register): that page, with no navigation, first. */}
+        <ProfileCompletionGate role="TEACHER">
+          {/* The bell is a link to Notifications (no dropdown list). */}
+          <AuthenticatedLayout
+            navItems={NAV_ITEMS}
+            mobileTabs={MOBILE_TABS}
+            title="Teacher Portal"
+            subtitle="Teacher"
+            brand="TP"
+            accountSubtitle={school}
+            notificationsPath="/teacher/notifications"
+          >
+            {/* Agree to the current Terms/Privacy before anything else (Phase 1 §12). */}
+            <ConsentGate>{children}</ConsentGate>
+          </AuthenticatedLayout>
+        </ProfileCompletionGate>
       </SubjectColorsProvider>
     </AppSettingsProvider>
   );

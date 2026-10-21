@@ -34,7 +34,7 @@ import { useStudentSettings } from '../modules/student/hooks/useStudentSettings'
 import { APP_NAME, ROLE_LABELS } from '../utils/constants';
 import { formatName, getInitials } from '../utils/format';
 import { NOTIFICATIONS_PAGE_BY_ROLE } from '../modules/notifications/notificationPath';
-import { PROFILE_PATH_BY_ROLE, accountMenuPosition } from './navConfig';
+import { PROFILE_PATH_BY_ROLE, accountMenuPosition, activeMenuLabel } from './navConfig';
 
 /**
  * The application sidebar.
@@ -92,31 +92,14 @@ function NavLeaf({ item, Button = SidebarMenuButton, isActive }) {
 /**
  * A parent whose children collapse.
  *
- * Starts expanded when one of its children is the current route, so a deep
- * link never lands on a page whose nav entry is hidden.
+ * Whether it is open is AppSidebar's call (`open` / `onOpenChange`): only one
+ * menu is open at a time, so opening this one closes any other.
  */
-function NavCollapsible({ entry, isPathActive }) {
+function NavCollapsible({ entry, isPathActive, open, onOpenChange }) {
   const hasActiveChild = entry.items.some((child) => isPathActive(child.to, child.end));
   const Icon = entry.icon;
   const { state, isMobile, setOpen } = useSidebar();
   const collapsed = state === 'collapsed' && !isMobile;
-
-  // `setOpen` here would shadow the sidebar's own setter, so it is named apart.
-  const [open, setLocalOpen] = useState(hasActiveChild);
-  const [wasActive, setWasActive] = useState(hasActiveChild);
-
-  /*
-   * Expand when navigation moves into this section, while still letting the
-   * user collapse it by hand.
-   *
-   * Adjusted during render rather than in an effect - React's documented
-   * pattern for state derived from changing props. An effect would render
-   * once with the section shut, then again to open it.
-   */
-  if (hasActiveChild !== wasActive) {
-    setWasActive(hasActiveChild);
-    if (hasActiveChild) setLocalOpen(true);
-  }
 
   /*
    * On the collapsed rail the submenu is hidden, so this button would do
@@ -126,10 +109,10 @@ function NavCollapsible({ entry, isPathActive }) {
   const handleToggle = () => {
     if (collapsed) {
       setOpen(true);
-      setLocalOpen(true);
+      onOpenChange(true);
       return;
     }
-    setLocalOpen((v) => !v);
+    onOpenChange(!open);
   };
 
   return (
@@ -169,9 +152,16 @@ function NavCollapsible({ entry, isPathActive }) {
   );
 }
 
-function NavEntry({ entry, isPathActive }) {
+function NavEntry({ entry, isPathActive, openMenu, onMenuOpenChange }) {
   if (Array.isArray(entry.items)) {
-    return <NavCollapsible entry={entry} isPathActive={isPathActive} />;
+    return (
+      <NavCollapsible
+        entry={entry}
+        isPathActive={isPathActive}
+        open={openMenu === entry.label}
+        onOpenChange={(next) => onMenuOpenChange(entry.label, next)}
+      />
+    );
   }
 
   // `badge` (a count, e.g. unread notifications): a number on the right, a dot on the collapsed rail.
@@ -405,6 +395,26 @@ export default function AppSidebar({ subtitle, navItems = [], accountSubtitle, s
   // sidebarExtra goes inside the section that asks for it, else above them all.
   const extraInSection = sections.some((section) => section.withExtra);
 
+  /*
+   * Only one collapsible menu is open at a time (by label). The menu holding
+   * the current page opens on arrival, so a deep link never lands on a page
+   * whose nav entry is hidden, and opening any other menu closes it.
+   *
+   * Adjusted during render rather than in an effect - React's documented
+   * pattern for state derived from changing props. An effect would render
+   * once with the menu shut, then again to open it.
+   */
+  const activeMenu = activeMenuLabel(sections, isPathActive);
+  const [openMenu, setOpenMenu] = useState(activeMenu);
+  const [lastActiveMenu, setLastActiveMenu] = useState(activeMenu);
+  if (activeMenu !== lastActiveMenu) {
+    setLastActiveMenu(activeMenu);
+    if (activeMenu) setOpenMenu(activeMenu);
+  }
+  const handleMenuOpenChange = (label, next) => {
+    setOpenMenu((current) => (next ? label : current === label ? null : current));
+  };
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -444,6 +454,8 @@ export default function AppSidebar({ subtitle, navItems = [], accountSubtitle, s
                     key={entry.to ?? entry.label}
                     entry={entry}
                     isPathActive={isPathActive}
+                    openMenu={openMenu}
+                    onMenuOpenChange={handleMenuOpenChange}
                   />
                 ))}
               </SidebarMenu>

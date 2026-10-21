@@ -107,6 +107,9 @@ export const getFamily = () => api.get('/parent/family');
 /** Account holder only: creates the parent's account and links them to every child. */
 export const addFamilyParent = (payload) => api.post('/parent/family/parents', payload);
 
+/** Account holder only: name and phone; the email only while their invite is pending (a fresh invite goes out). */
+export const updateFamilyParent = (id, payload) => api.patch(`/parent/family/parents/${id}`, payload);
+
 /** Account holder only: the parent loses the family's children and plan; their account is kept. */
 export const removeFamilyParent = (id) => api.delete(`/parent/family/parents/${id}`);
 
@@ -173,6 +176,7 @@ export default {
   restoreChild,
   getFamily,
   addFamilyParent,
+  updateFamilyParent,
   removeFamilyParent,
   deactivateFamilyParent,
   activateFamilyParent,

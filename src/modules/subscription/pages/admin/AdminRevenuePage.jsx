@@ -122,11 +122,11 @@ export default function AdminRevenuePage() {
         title="Revenue"
         description={`Subscription revenue over time and by plan. All figures in ${currency}, before tax unless shown.`}
         breadcrumbs={[{ label: 'Subscriptions', to: '/admin/subscriptions' }, { label: 'Revenue' }]}
-        actions={
-          <Button variant="secondary" onClick={exportTax} loading={exportingTax} startIcon={<LuDownload aria-hidden="true" />}>
-            Export sales tax (GST/HST)
-          </Button>
-        }
+        // actions={
+        //   <Button variant="secondary" onClick={exportTax} loading={exportingTax} startIcon={<LuDownload aria-hidden="true" />}>
+        //     Export sales tax (GST/HST)
+        //   </Button>
+        // }
       />
 
       {error && (

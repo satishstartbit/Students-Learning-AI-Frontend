@@ -4,6 +4,7 @@ import { fillPlaceholders, useLegalContent } from '../../../components/legal/use
 import { useForm } from '../../../hooks/useForm';
 import { toast } from '../../../hooks/useToast';
 import { required, password as passwordRule, matches } from '../../../utils/validation';
+import { isRequiredField, withRequiredFields } from '../../../utils/profileRequirements';
 import { formatName } from '../../../utils/format';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
@@ -37,13 +38,13 @@ export default function AddChildModal({ isOpen, onClose, onCreated }) {
 
   const form = useForm({
     initialValues: INITIAL_VALUES,
-    validationSchema: {
+    validationSchema: withRequiredFields('STUDENT', {
       firstName: [required('Enter a first name')],
       password: [required('Choose a password for your child'), passwordRule()],
       confirmPassword: [required('Type the password again'), matches('password')],
       // Phase 1 §12: the parent consents for the child (recorded with the documents' version).
       guardianConsent: [(value) => (value ? null : 'Please give your consent for your child')],
-    },
+    }),
     async onSubmit(values) {
       const { data } = await parentService.addChild({
         firstName: values.firstName,
@@ -114,7 +115,7 @@ export default function AddChildModal({ isOpen, onClose, onCreated }) {
         <ProfileSection title="Personal details">
           <div className="pf-grid">
             <Input label="First name" required autoComplete="off" {...form.getFieldProps('firstName')} />
-            <Input label="Last name" autoComplete="off" {...form.getFieldProps('lastName')} />
+            <Input label="Last name" required={isRequiredField('STUDENT', 'lastName')} autoComplete="off" {...form.getFieldProps('lastName')} />
           </div>
         </ProfileSection>
 

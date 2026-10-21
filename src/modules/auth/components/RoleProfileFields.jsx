@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
 import { Input, Textarea, Select, MultiSelect, ImageUpload, DatePicker } from '../../../components/common';
-import masterGenericService from '../../masterManagement/services/masterGeneric.service';
 import { getDateKey } from '../../../utils/date';
+import { isRequiredField } from '../../../utils/profileRequirements';
+import { useMasterOptions } from './useMasterOptions';
 
 const GENDER_OPTIONS = [
   { value: 'female', label: 'Female' },
@@ -11,50 +11,10 @@ const GENDER_OPTIONS = [
   { value: 'prefer_not_to_say', label: 'Prefer not to say' },
 ];
 
-/** The default lookup source: Master Management, for Super-Admin sessions only. */
-const defaultLookupFetcher = (masterType) =>
-  masterGenericService
-    .listItems(masterType, { status: 'active', sortBy: 'display_order', sortOrder: 'asc', limit: 100 })
-    .then((res) => (res?.data ?? []).map((item) => ({ value: item.name, label: item.name })));
-
-/**
- * Options for one master lookup (Subjects, Grade Levels, ...).
- *
- * Defaults to `/admin/master`, which requires a Super Admin session. Callers
- * without one (the parent's Add Child form) pass `lookupFetcher` to read the
- * same data from a role-appropriate endpoint instead.
- */
-function useMasterOptions(masterType, lookupFetcher = defaultLookupFetcher) {
-  const [options, setOptions] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    lookupFetcher(masterType)
-      .then((items) => {
-        if (cancelled) return;
-        setOptions(items ?? []);
-      })
-      .catch(() => {
-        /* an empty list just means nothing to pick from */
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [masterType, lookupFetcher]);
-
-  return { options, loading };
-}
-
 /** A field that can hold several master values at once (subjects, grade levels, ...). */
-function MasterMultiSelectField({ masterType, name, label, getProps, hint, lookupFetcher }) {
+function MasterMultiSelectField({ masterType, name, label, getProps, hint, required, lookupFetcher }) {
   const { options, loading } = useMasterOptions(masterType, lookupFetcher);
-  const { value, onChange } = getProps(name);
+  const { value, onChange, error } = getProps(name);
   const selected = Array.isArray(value) ? value : [];
 
   return (
@@ -64,6 +24,8 @@ function MasterMultiSelectField({ masterType, name, label, getProps, hint, looku
       searchable
       searchPlaceholder={`Search ${label.toLowerCase()}…`}
       hint={loading ? 'Loading…' : hint}
+      error={error}
+      required={required}
       options={options}
       value={selected}
       onChange={(next) => onChange({ target: { name, value: next } })}
@@ -157,28 +119,33 @@ export default function RoleProfileFields({
   showFamilyContext = true,
   layout = 'stacked',
 }) {
+  // The asterisks follow utils/profileRequirements.js - the same list the API enforces.
+  const isRequired = (field) => isRequiredField(role, field);
+
   if (role === 'STUDENT') {
     const grade = includeAdminOnly ? (
       <MasterSelectField
         masterType="grade_levels"
         name="grade"
         label="Grade"
+        required={isRequired('grade')}
         getProps={getProps}
         lookupFetcher={lookupFetcher}
       />
     ) : (
-      <Input label="Grade" placeholder="e.g. Grade 9" {...getProps('grade')} />
+      <Input label="Grade" placeholder="e.g. Grade 9" required={isRequired('grade')} {...getProps('grade')} />
     );
 
     const dateOfBirth = (
       <DatePicker
         label="Date of birth"
+        required={isRequired('date_of_birth')}
         // Today on the user's calendar - the UTC date is already tomorrow on a Canadian evening.
         max={getDateKey()}
         {...getProps('date_of_birth')}
       />
     );
-    const gender = <Select label="Gender" options={GENDER_OPTIONS} {...getProps('gender')} />;
+    const gender = <Select label="Gender" options={GENDER_OPTIONS} required={isRequired('gender')} {...getProps('gender')} />;
 
     const workingStyle = (
       <Textarea
@@ -221,6 +188,7 @@ export default function RoleProfileFields({
             masterType="subjects"
             name="subjects"
             label="Subjects"
+            required={isRequired('subjects')}
             getProps={getProps}
             lookupFetcher={lookupFetcher}
           />,
@@ -229,7 +197,7 @@ export default function RoleProfileFields({
           <Textarea key="strengths" label="Strengths" rows={2} {...getProps('strengths')} />,
           <Textarea key="challenges" label="Challenges" rows={2} {...getProps('challenges')} />,
           <Textarea key="interests" label="Interests" rows={2} {...getProps('interests')} />,
-          <Textarea key="subjects" label="Subjects" rows={2} {...getProps('subjects')} />,
+          <Textarea key="subjects" label="Subjects" rows={2} required={isRequired('subjects')} {...getProps('subjects')} />,
         ];
 
     const notes = includeAdminOnly && (
@@ -315,6 +283,7 @@ export default function RoleProfileFields({
               name="subjects"
               label="Subjects taught"
               hint="From the Subjects master"
+              required={isRequired('subjects')}
               getProps={getProps}
               lookupFetcher={lookupFetcher}
             />
@@ -323,6 +292,7 @@ export default function RoleProfileFields({
               name="gradeLevels"
               label="Grade levels taught"
               hint="From the Grade Levels master"
+              required={isRequired('gradeLevels')}
               getProps={getProps}
               lookupFetcher={lookupFetcher}
             />
@@ -332,6 +302,7 @@ export default function RoleProfileFields({
             label="Subjects taught"
             hint="Comma separated"
             placeholder="Math, Science"
+            required={isRequired('subjects')}
             {...getProps('subjects')}
           />
         )}
@@ -341,6 +312,7 @@ export default function RoleProfileFields({
           type="number"
           min="0"
           max="70"
+          required={isRequired('yearsExperience')}
           {...getProps('yearsExperience')}
         />
         <Textarea label="Short bio" rows={3} {...getProps('bio')} />
