@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { LuArrowLeft } from 'react-icons/lu';
 import {
   PageHeader,
   Card,
@@ -23,6 +24,7 @@ import { ROLE_LABELS, USER_ROLES, USER_STATUS, listPathForRole } from '../../../
 import { emailProblemText } from '../../../utils/emailProblem';
 import { getErrorMessage, parseApiError } from '../../../utils/errorHandler';
 import adminUserService from '../services/adminUser.service';
+import { userBackTarget } from '../userBack';
 import ParentFamilyPanel from '../components/ParentFamilyPanel';
 import SetChildPasswordModal from '../../parent/components/SetChildPasswordModal';
 
@@ -53,6 +55,7 @@ const GRID = {
 export default function UserDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { data: user, error, isLoading, run } = useApi(adminUserService.getUser);
 
@@ -182,8 +185,20 @@ export default function UserDetailPage() {
     }
   };
 
+  const back = userBackTarget(location.state, user.role);
+
   return (
     <div className="td-page">
+      <Button
+        as={Link}
+        to={back.to}
+        variant="ghost"
+        size="sm"
+        startIcon={<LuArrowLeft aria-hidden="true" />}
+        style={{ justifySelf: 'start', margin: '0 0 var(--spacing-xs) calc(-1 * var(--spacing-sm))' }}
+      >
+        {back.label}
+      </Button>
       <PageHeader
         title={formatName(user)}
         description={isStudent ? `@${user.username} · signs in with username` : user.email}
@@ -194,7 +209,7 @@ export default function UserDetailPage() {
         ]}
         actions={
           <>
-            <Button as={Link} to={`/admin/users/${id}/edit`} variant="secondary">
+            <Button as={Link} to={`/admin/users/${id}/edit`} state={location.state} variant="secondary">
               Edit
             </Button>
             {isStudent ? (

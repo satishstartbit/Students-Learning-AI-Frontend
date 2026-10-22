@@ -1,5 +1,5 @@
 ﻿import { useEffect } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   PageHeader,
   Card,
@@ -45,6 +45,8 @@ import { buildProfilePayload } from '../../auth/components/profilePayload';
 export default function EditUserPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  // The record's Back target (userBack.js), handed back on Save and Cancel.
+  const { state: recordState } = useLocation();
 
   const { data: user, error, isLoading, run } = useApi(adminUserService.getUser);
   const photo = usePhotoField(user?.profile?.profileImageUrl ?? null);
@@ -76,7 +78,7 @@ export default function EditUserPage() {
 
       await adminUserService.updateUser(id, payload);
       toast.success('User updated');
-      navigate(`/admin/users/${id}`);
+      navigate(`/admin/users/${id}`, { state: recordState });
     },
   });
 
@@ -180,7 +182,7 @@ export default function EditUserPage() {
             <Button type="submit" loading={form.isSubmitting} disabled={!form.isDirty}>
               Save changes
             </Button>
-            <Button as={Link} to={`/admin/users/${id}`} variant="secondary">
+            <Button as={Link} to={`/admin/users/${id}`} state={recordState} variant="secondary">
               Cancel
             </Button>
           </ButtonGroup>
