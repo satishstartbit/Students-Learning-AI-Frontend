@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { MotionConfig } from 'motion/react';
 import '@fontsource-variable/fredoka';
@@ -8,6 +8,7 @@ import '@fontsource/patrick-hand/400.css';
 import '../styles/kid-theme.css';
 import { Toast } from '../components/common';
 import { useAuth } from '../hooks/useAuth';
+import { MainScrollContainerContext } from '../hooks/useMainScrollContainer';
 import { useSyncUserLocale } from '../hooks/useSyncUserLocale';
 import { KidPreferencesContext, useCalmPreference } from '../modules/student/hooks/useKidPreferences';
 import { StudentSettingsProvider } from '../modules/student/components/StudentSettingsProvider';
@@ -30,6 +31,7 @@ import AppErrorBoundary from '../components/status/AppErrorBoundary';
 export function KidLayout({ children }) {
   const { user } = useAuth();
   const { pathname } = useLocation();
+  const mainScrollRef = useRef(null);
   useSyncUserLocale(user);
 
   const [calm, setCalm] = useCalmPreference(user?.id);
@@ -54,11 +56,12 @@ export function KidLayout({ children }) {
               <KidTopBar />
               {/* The only scrolling region; bottom padding clears the mobile tab bar. */}
               <main
+                ref={mainScrollRef}
                 id="kid-main"
                 className="min-w-0 flex-1 overflow-y-auto p-4 pb-28 sm:p-6 sm:pb-28 lg:p-8 has-[[data-kid-page]]:p-0 has-[[data-kid-page]]:pb-24 lg:has-[[data-kid-page]]:pb-0"
               >
                 <AppErrorBoundary inShell resetKey={pathname}>
-                  {children ?? <Outlet />}
+                  <MainScrollContainerContext.Provider value={mainScrollRef}>{children ?? <Outlet />}</MainScrollContainerContext.Provider>
                 </AppErrorBoundary>
               </main>
             </div>
