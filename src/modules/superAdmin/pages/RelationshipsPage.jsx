@@ -28,6 +28,9 @@ import adminUserService from '../services/adminUser.service';
 import masterGenericService from '../../masterManagement/services/masterGeneric.service';
 import academicService from '../../masterManagement/services/academic.service';
 import InviteTeachersModal from '../components/InviteTeachersModal';
+import { backTo } from '../userBack';
+
+const FROM_ASSIGNMENTS = backTo('/admin/relationships', 'Back to Assignments');
 
 /**
  * Teacher <-> Student assignments - many-to-many, scoped to a subject and
@@ -206,7 +209,7 @@ export default function RelationshipsPage() {
       key: 'owner',
       header: 'Teacher',
       render: (row) => (
-        <Link to={`/admin/users/${row.owner?.id}`} className="font-semibold">
+        <Link to={`/admin/users/${row.owner?.id}`} state={FROM_ASSIGNMENTS} className="font-semibold">
           {formatName(row.owner)}
         </Link>
       ),
@@ -214,7 +217,11 @@ export default function RelationshipsPage() {
     {
       key: 'related',
       header: 'Student',
-      render: (row) => <Link to={`/admin/users/${row.related?.id}`}>{formatName(row.related)}</Link>,
+      render: (row) => (
+        <Link to={`/admin/users/${row.related?.id}`} state={FROM_ASSIGNMENTS}>
+          {formatName(row.related)}
+        </Link>
+      ),
     },
     {
       key: 'subject',

@@ -18,7 +18,7 @@ import DashboardStickers from '../../components/stickers/DashboardStickers';
 /**
  * K-4 Home - "My Day", built to the "Good morning, Alex!" mockup.
  *
- *   hero          greeting, bear, sun (HeroScene)
+ *   hero          greeting, bear, sun (HeroScene, in parallax layers)
  *   main column   Your next task · Still to finish · Other tasks today ·
  *                 Want to do more? · My next step (plan + "Got new work?")
  *   rail          Check-in · My progress · This week · Remember!
@@ -110,9 +110,10 @@ export default function KidHomePage() {
         </div>
       </div>
 
-      {/* The meadow sits at the foot even when there is little on the page, alive like the hero. */}
+      {/* The meadow sits at the foot even when there is little on the page, alive like the
+          hero, and rises into place as the page scrolls down to it. */}
       <div className="flex-1" />
-      <MeadowFooter />
+      <MeadowFooter parallax />
     </div>
   );
 }

@@ -1,0 +1,37 @@
+name: Frontend deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    environment: lightsail
+    steps:
+      - name: SSH setup
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Server par build aur publish
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /home/deploy/apps/frontend
+          git fetch origin
+          git checkout -f -B main origin/main
+          npm ci
+          NODE_OPTIONS=--max-old-space-size=1536 npm run build
+          rm -rf /home/deploy/frontend-prev && cp -a /var/www/growing-focus /home/deploy/frontend-prev
+          rsync -rl --omit-dir-times --delete --chmod=D755,F644 dist/ /var/www/growing-focus/
+          echo "Frontend deploy OK: $(git rev-parse --short HEAD)"
+          REMOTE

@@ -28,6 +28,7 @@ import { formatName } from '../../../utils/format';
 import { formatDate } from '../../../utils/date';
 import { getErrorMessage } from '../../../utils/errorHandler';
 import adminUserService from '../services/adminUser.service';
+import { backTo } from '../userBack';
 import RoleProfileFields from '../../auth/components/RoleProfileFields';
 import { buildProfilePayload } from '../../auth/components/profilePayload';
 import { usePhotoField } from '../../../hooks/usePhotoField';
@@ -44,11 +45,11 @@ const SUBSCRIPTION_STATUS = {
 const EMPTY_CHILD = { firstName: '', lastName: '', password: '', confirmPassword: '', academic_year_id: '' };
 
 /** One person in the family: who, badges, and the row's icon actions. */
-function MemberRow({ to, name, meta, badges, actions }) {
+function MemberRow({ to, state, name, meta, badges, actions }) {
   return (
     <li className="fp-row">
       <div className="fp-row__who">
-        <Link to={to} className="fp-row__name">
+        <Link to={to} state={state} className="fp-row__name">
           {name}
         </Link>
         {meta && <div className="ui-hint">{meta}</div>}
@@ -89,6 +90,8 @@ function RowAction({ label, icon, variant, onClick, disabled, title }) {
  */
 export default function ParentFamilyPanel({ parent, family, familyError, onChanged }) {
   const parentId = parent.id;
+  // A family member's record opened from here comes back here.
+  const fromHere = backTo(`/admin/users/${parentId}`, `Back to ${formatName(parent)}`);
   const children = useApi(adminUserService.listParentChildren);
   const { run: runChildren } = children;
 
@@ -208,7 +211,7 @@ export default function ParentFamilyPanel({ parent, family, familyError, onChang
       {!family.isAccountHolder && (
         <Alert variant="info" className="ui-field">
           {formatName(parent)} is an extra parent in{' '}
-          <Link to={`/admin/users/${family.accountHolder?.id}`}>{holderName}</Link>&apos;s family. The family&apos;s plan,
+          <Link to={`/admin/users/${family.accountHolder?.id}`} state={fromHere}>{holderName}</Link>&apos;s family. The family&apos;s plan,
           children and parents are managed together; changes here apply to the whole family.
         </Alert>
       )}
@@ -268,6 +271,7 @@ export default function ParentFamilyPanel({ parent, family, familyError, onChang
               <MemberRow
                 key={child.id}
                 to={`/admin/users/${child.id}`}
+                state={fromHere}
                 name={formatName(child)}
                 meta={`@${child.username}`}
                 badges={
@@ -292,7 +296,7 @@ export default function ParentFamilyPanel({ parent, family, familyError, onChang
                 actions={
                   <>
                     <Tooltip label="Edit" side="top">
-                      <IconButton icon={<LuPencil aria-hidden="true" />} label="Edit" variant="primary" size="sm" as={Link} to={`/admin/users/${child.id}/edit`} />
+                      <IconButton icon={<LuPencil aria-hidden="true" />} label="Edit" variant="primary" size="sm" as={Link} to={`/admin/users/${child.id}/edit`} state={fromHere} />
                     </Tooltip>
                     {child.archived ? (
                       <RowAction
@@ -399,7 +403,7 @@ export default function ParentFamilyPanel({ parent, family, familyError, onChang
               </>
             );
             return (
-              <MemberRow key={member.id} to={`/admin/users/${member.id}`} name={formatName(member)} meta={member.email} badges={badges} actions={actions} />
+              <MemberRow key={member.id} to={`/admin/users/${member.id}`} state={fromHere} name={formatName(member)} meta={member.email} badges={badges} actions={actions} />
             );
           })}
         </ul>
